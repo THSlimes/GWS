@@ -1,0 +1,94 @@
+/* Google ICONS IMPORT */
+@font-face {
+    font-family: "icon";
+    font-style: normal;
+    font-weight: 100 700;
+    src: url(https://fonts.gstatic.com/s/materialsymbolsoutlined/v138/kJEhBvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oFsI.woff2) format('woff2');
+}
+  
+.icon {
+    font-family: "icon";
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+}
+
+/* THEME */
+
+:root {
+    --primary: white;
+    --secondary: black;
+    --tertiary: #666666;
+
+    --text: white;
+    --accent: salmon;
+}
+
+body {
+    padding:0px;
+    margin:0px;
+
+    background-color: var(--primary);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+p, h1, h2, h3, h4, h5, h6, label { color: var(--text); }
+
+h5 { font-weight: 500; }
+
+
+/* PAGE HEADER */
+
+header.page-header {
+    padding: .5em 2em .5em 2em;
+
+    height:min-content;
+
+    background-color: var(--secondary);
+
+    & > .desc > * { margin:0px; }
+    & > .links { gap:2em; }
+}
+
+/* UTILITY CLASSES */
+
+.light-weight { font-weight: 300; }
+.normal-weight { font-weight: 400; }
+.bold-weight { font-weight: 700; }
+
+.flex-rows {
+    display: flex;
+    flex-direction: column;
+    &.reverse { flex-direction: column-reverse; }
+}
+
+.flex-column {
+    display: flex;
+    flex-direction: row;
+    &.reverse { flex-direction: row-reverse; }
+}
+
+.main-axis-space-evenly { justify-content: space-evenly; }
+.main-axis-space-around { justify-content: space-around; }
+.main-axis-space-between { justify-content: space-between; }
+.main-axis-center { justify-content: center; }
+
+.cross-axis-space-evenly { align-items: space-evenly; }
+.cross-axis-space-around { align-items: space-around; }
+.cross-axis-space-between { align-items: space-between; }
+.cross-axis-center { align-items: center; }
+
+.center-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

@@ -1,0 +1,36 @@
+{
+  "name": "gws-website",
+  "version": "0.0.1",
+  "description": "website for Den Geitenwollen Soc",
+  "main": "webpack.config.js",
+  "scripts": {
+    "server": "webpack-dev-server",
+    "build": "del-cli --force ./public/scripts && webpack",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/THSlimes/GWS.git"
+  },
+  "keywords": [
+    "website"
+  ],
+  "author": "Thom Kastelein",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/THSlimes/GWS/issues"
+  },
+  "homepage": "https://github.com/THSlimes/GWS#readme",
+  "dependencies": {
+    "@types/jquery": "^3.5.22",
+    "jquery": "^3.7.1",
+    "ts-loader": "^9.5.0",
+    "typescript": "^5.2.2",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.1"
+  },
+  "devDependencies": {
+    "del-cli": "^5.1.0"
+  }
+}
