@@ -30,7 +30,7 @@ span.icon { font-size: inherit; }
 :root {
     --primary: white;
     --secondary: black;
-    --tertiary: #666666;
+    --tertiary: #1c1c1c;
 
     --text: white;
     --accent: #d65050;
@@ -46,6 +46,7 @@ body {
 
 p, h1, h2, h3, h4, h5, h6, label { color: var(--text); }
 
+p { font-weight: 300; }
 h1 { font-weight: 800; }
 h4 { font-weight: 600; }
 h5 { font-weight: 500; }
@@ -63,6 +64,7 @@ header.page-header {
     & > .links {
         margin: 0px 5em 0px 5em;
         flex-grow:2;
+        flex-wrap: wrap;
 
         & folder-element {
             &[open] > .topper > .heading { color: var(--accent); }
@@ -91,7 +93,25 @@ header.page-header {
     }
 }
 
-/* Folder styling */
+/* FOOTER */
+
+footer {
+    padding:1em 1em 0px 1em;
+
+    background-color: var(--tertiary);
+
+    > .social-media-links {
+        min-width: 50%;
+
+        & img {
+            min-height: 21px; /* https://brand.linkedin.com/downloads */
+            height: 4em;
+        }
+    }
+    > .copyright-notice { margin-top: 2.5em; }
+}
+
+/* FOLDER-ELEMENT DEFAULT STYLE */
 
 folder-element {
     > .topper {
