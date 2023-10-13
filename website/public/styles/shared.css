@@ -30,7 +30,7 @@ span.icon { font-size: inherit; }
 :root {
     --primary: white;
     --secondary: black;
-    --tertiary: #1c1c1c;
+    --tertiary: #111111;
 
     --text: white;
     --accent: #d65050;
@@ -96,19 +96,29 @@ header.page-header {
 /* FOOTER */
 
 footer {
-    padding:1em 1em 0px 1em;
+    padding: .25em 1em 2.25em 1em;
 
     background-color: var(--tertiary);
 
     > .social-media-links {
-        min-width: 50%;
+        min-width: 30%;
 
         & img {
             min-height: 21px; /* https://brand.linkedin.com/downloads */
             height: 4em;
         }
     }
-    > .copyright-notice { margin-top: 2.5em; }
+}
+
+.copyright-notice {
+    padding:1em;
+    margin:0px;
+
+    box-sizing: border-box;
+    width:100%;
+
+    background-color: var(--secondary);
+    text-align: center;
 }
 
 /* FOLDER-ELEMENT DEFAULT STYLE */
