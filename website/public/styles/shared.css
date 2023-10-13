@@ -7,6 +7,7 @@
 }
   
 .icon {
+    margin: 0px;
     font-family: "icon";
     font-weight: normal;
     font-style: normal;
@@ -22,6 +23,8 @@
     -webkit-font-smoothing: antialiased;
 }
 
+span.icon { font-size: inherit; }
+
 /* THEME */
 
 :root {
@@ -30,7 +33,7 @@
     --tertiary: #666666;
 
     --text: white;
-    --accent: salmon;
+    --accent: #d65050;
 }
 
 body {
@@ -43,20 +46,63 @@ body {
 
 p, h1, h2, h3, h4, h5, h6, label { color: var(--text); }
 
+h1 { font-weight: 800; }
+h4 { font-weight: 600; }
 h5 { font-weight: 500; }
-
 
 /* PAGE HEADER */
 
 header.page-header {
-    padding: .5em 2em .5em 2em;
+    padding: 1em 2em 1em 2em;
 
     height:min-content;
 
     background-color: var(--secondary);
 
     & > .desc > * { margin:0px; }
-    & > .links { gap:2em; }
+    & > .links {
+        margin: 0px 5em 0px 5em;
+        flex-grow:2;
+
+        & folder-element {
+            &[open] > .topper > .heading { color: var(--accent); }
+
+            > .topper {
+                > * { margin: 0px; }
+            }
+
+            > .contents {
+                width: max-content;
+                padding: .5em .25em .5em .25em;
+            }
+        }
+
+        > h5.link { margin: 0px; }
+        & h5.link {
+            > a {
+                color: var(--text);
+                text-decoration: none;
+            }
+
+            transform-origin: left;
+            &:hover { scale: 1.05; }
+            &:active { scale: .975; }
+        }
+    }
+}
+
+/* Folder styling */
+
+folder-element {
+    > .topper {
+        > .heading { transition: color 250ms ease-in; }
+        > .arrow { transition: rotate 250ms ease-in; }
+    }
+    
+    > .contents {
+        background-color: var(--secondary);
+        > * { margin: .5em 1em .5em 1em; }
+    }
 }
 
 /* UTILITY CLASSES */
@@ -71,7 +117,7 @@ header.page-header {
     &.reverse { flex-direction: column-reverse; }
 }
 
-.flex-column {
+.flex-columns {
     display: flex;
     flex-direction: row;
     &.reverse { flex-direction: row-reverse; }
@@ -80,11 +126,17 @@ header.page-header {
 .main-axis-space-evenly { justify-content: space-evenly; }
 .main-axis-space-around { justify-content: space-around; }
 .main-axis-space-between { justify-content: space-between; }
+.main-axis-baseline { justify-content: baseline; }
+.main-axis-start { justify-content: flex-start; }
+.main-axis-end { justify-content: flex-end; }
 .main-axis-center { justify-content: center; }
 
 .cross-axis-space-evenly { align-items: space-evenly; }
 .cross-axis-space-around { align-items: space-around; }
 .cross-axis-space-between { align-items: space-between; }
+.cross-axis-baseline { align-items: baseline; }
+.cross-axis-start { align-items: flex-start; }
+.cross-axis-end { align-items: flex-end; }
 .cross-axis-center { align-items: center; }
 
 .center-content {

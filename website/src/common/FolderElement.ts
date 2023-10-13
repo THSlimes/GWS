@@ -1,0 +1,98 @@
+import $ from "jquery";
+import ElementFactory from "./html-element-factory/HTMLElementFactory";
+
+export type FoldingDirection = "down" | "right";
+
+export default class FolderElement extends HTMLElement {
+
+    private readonly foldDir:FoldingDirection;
+    public closingDelay:number;
+    private closingTimeout?:NodeJS.Timeout;
+
+    private readonly topper:HTMLDivElement;
+    private readonly heading:HTMLHeadingElement;
+    private readonly arrow:HTMLHeadingElement;
+    
+    private readonly contents:HTMLDivElement;
+
+    public get isOpen() { return this.hasAttribute("open"); }
+
+    constructor(heading:string, foldDir:FoldingDirection="right", closingDelay=0) {
+        super();
+        this.style.display = "block";
+
+        this.foldDir = foldDir;
+        this.closingDelay = closingDelay;
+
+        // initializing element
+        this.style.position = "relative";
+        this.heading = ElementFactory.h5().class("heading").text(heading).make();
+        this.arrow = ElementFactory.h5()
+            .class("arrow", "light-weight", "icon")
+            .text(foldDir === "down" ? "expand_more" : "chevron_right")
+            .make();
+        this.topper = super.appendChild(
+            ElementFactory.div()
+                .class("topper", "flex-columns", "main-axis-space-between", "cross-axis-start")
+                .children(this.heading, this.arrow)
+                .make()
+        );
+
+        this.contents = super.appendChild(
+            ElementFactory.div()
+                .class("contents", "flex-rows")
+                .style({"position":"absolute"})
+                .make()
+        );
+
+        // initializing interactivity
+        $(this.contents).hide(); // start closed
+        this.topper.addEventListener("mouseenter", () => this.open());
+        this.addEventListener("mouseenter", () => clearTimeout(this.closingTimeout));
+        this.addEventListener("mouseleave", () => {
+            this.closingTimeout = setTimeout(() => this.close(), this.closingDelay);
+        });
+    }
+
+    public override appendChild<T extends Node>(node: T): T {
+        return this.contents.appendChild(node);
+    }
+
+    public override append(...nodes: (string | Node)[]): void {
+        return this.contents.append(...nodes);
+    }
+
+    /**
+     * Immediately opens the FolderElement.
+     */
+    public open() {
+        const headingBB = this.heading.getBoundingClientRect();            
+        switch (this.foldDir) {
+            case "down":
+                this.contents.style.left = "0px";
+                this.contents.style.top = this.clientHeight + "px";
+                break;
+            case "right":
+                this.contents.style.left = this.clientWidth + "px";
+                this.contents.style.top = "0px";
+
+                this.arrow.style.rotate = "90deg";
+                break;
+        }
+
+        $(this.contents).stop().slideDown(250);
+        this.setAttribute("open", "");
+    }
+
+    /**
+     * Immediately closes the FolderElement.
+     */
+    public close() {
+        $(this.contents).stop().slideUp(250);
+        this.arrow.style.rotate = "0deg";
+        this.removeAttribute("open");
+    }
+
+}
+
+customElements.define("folder-element", FolderElement);
