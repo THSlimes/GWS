@@ -1,1 +1,14 @@
 @import url("../shared.css");
+
+#main-carousel {
+    width: 100%;
+    height: unset;
+    aspect-ratio: 16 / 8;
+
+    > h1[cover] {
+        translate: 0px -2em;
+        text-align: center;
+        text-decoration: underline 2.5px var(--accent);
+        text-underline-offset: .125em;
+    }
+}

@@ -19,7 +19,7 @@ export default class FolderElement extends HTMLElement {
 
     constructor(heading:string, foldDir:FoldingDirection="right", closingDelay=0) {
         super();
-        this.style.display = "block";
+        this.style.display = "inline";
 
         this.foldDir = foldDir;
         this.closingDelay = closingDelay;

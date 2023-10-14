@@ -47,7 +47,7 @@ body {
 p, h1, h2, h3, h4, h5, h6, label { color: var(--text); }
 
 p { font-weight: 300; }
-h1 { font-weight: 800; }
+h1 { font-size: 3.5em; font-weight: 700; }
 h4 { font-weight: 600; }
 h5 { font-weight: 500; }
 
@@ -55,6 +55,7 @@ h5 { font-weight: 500; }
 
 header.page-header {
     padding: 1em 2em 1em 2em;
+    margin-bottom: 1.5em;
 
     height:min-content;
 
@@ -63,6 +64,7 @@ header.page-header {
     & > .desc > * { margin:0px; }
     & > .links {
         margin: 0px 5em 0px 5em;
+        column-gap:2.25em;
         flex-grow:2;
         flex-wrap: wrap;
 
@@ -97,11 +99,12 @@ header.page-header {
 
 footer {
     padding: .25em 1em 2.25em 1em;
+    margin-top: 1.5em;
 
     background-color: var(--tertiary);
 
     > .social-media-links {
-        min-width: 30%;
+        min-width: 25%;
 
         & img {
             min-height: 21px; /* https://brand.linkedin.com/downloads */
@@ -130,8 +133,32 @@ folder-element {
     }
     
     > .contents {
+        z-index: 99;
         background-color: var(--secondary);
         > * { margin: .5em 1em .5em 1em; }
+    }
+}
+
+/* ELEMENT-CAROUSEL DEFAULT STYLE */
+
+element-carousel {
+    position:relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 80vw;
+    height: 80vh;
+
+    overflow: hidden;
+    user-select: text;
+
+    > img {
+        position:absolute;
+        object-fit: cover;
+        object-position: center 12.5%;
+        width: 100%;
+        height: 100%;
     }
 }
 

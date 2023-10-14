@@ -124,7 +124,7 @@ function insertHeader(config:NavbarConfig) {
                     ElementFactory.p().text("Studievereniging Sociologie Nijmegen")
                 ),
             ElementFactory.div()
-                .class("links", "flex-columns", "main-axis-space-around", "cross-axis-baseline")
+                .class("links", "flex-columns", "main-axis-center", "cross-axis-baseline")
                 .children(
                     ...createFolderContents(config)
                 ),
