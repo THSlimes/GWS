@@ -1,0 +1,24 @@
+@import url("./shared.css");
+
+article {
+    margin-bottom: 4em;
+
+    & * { color: var(--secondary) };
+
+    > .heading { margin: .5em 0px .5em 0px; }
+    > .body > p { margin: .5em 0px .5em 0px; }
+
+    &[is-preview] {
+        > .body {
+            overflow: hidden;
+        }
+    
+        & .read-more {
+            margin: 0px;
+            color: var(--accent) !important;
+            font-style: italic;
+            white-space: nowrap;
+        }
+    }
+
+}

@@ -28,9 +28,7 @@ document.querySelectorAll("*[parallax-factor]").forEach(e => {
 document.addEventListener("scroll", () => {
     parallaxElements.forEach(e => {
         const offset = window.scrollY * (e[1] - 1);
-        console.log(e[3]);
-        
-        
+                
         if (e[2]) e[0].style.objectPosition = `${e[3][0]} calc(${e[3][1]} + ${offset}px)`;
         else e[0].style.translate = `${e[3][0]} calc(${e[3][1]} + ${offset}px)`;
     });

@@ -1,4 +1,4 @@
-import FolderElement, { FoldingDirection } from "../common/FolderElement";
+import FolderElement, { FoldingDirection } from "../common/custom-elements/FolderElement";
 import ElementFactory from "../common/html-element-factory/HTMLElementFactory";
 
 const DEFAULT_LINK = "/";
@@ -121,7 +121,7 @@ function insertHeader(config:NavbarConfig) {
                 .class("desc")
                 .children(
                     ElementFactory.h4().text("Den Geitenwollen Soc."),
-                    ElementFactory.p().text("Studievereniging Sociologie Nijmegen")
+                    ElementFactory.p().class("subtitle").text("Studievereniging Sociologie Nijmegen")
                 ),
             ElementFactory.div()
                 .class("links", "flex-columns", "main-axis-center", "cross-axis-baseline")

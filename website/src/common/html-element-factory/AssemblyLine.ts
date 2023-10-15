@@ -43,7 +43,12 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
     private _text?:string;
     public text(txt:string) {
         this._text = txt;
-        
+        return this;
+    }
+
+    private _html?:string;
+    public html(html:string) {
+        this._html = html;
         return this;
     }
 
@@ -66,8 +71,11 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
 
         // id, class and attributes
         if (this._id !== undefined) out.id = this._id;
-        out.classList.add(...this._classes);
+        if (this._classes.size > 0) out.classList.add(...this._classes);
         for (const k in this._attributes) out.setAttribute(k, this._attributes[k]);
+
+        // innerHTML
+        if (this._html) out.innerHTML = this._html;
 
         // text
         if (this._text !== undefined) out.innerText = this._text;

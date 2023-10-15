@@ -53,5 +53,6 @@ export default abstract class ElementFactory {
     public static optgroup() { return AssemblyLine.specific("optgroup", ["label"]) }
 
     public static hr() { return new AssemblyLine("hr"); }
+    public static br() { return new AssemblyLine("br"); }
 
 }
