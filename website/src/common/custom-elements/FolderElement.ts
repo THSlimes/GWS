@@ -19,13 +19,13 @@ export default class FolderElement extends HTMLElement {
 
     constructor(heading:string, foldDir:FoldingDirection="right", closingDelay=0) {
         super();
-        this.style.display = "inline";
+        this.style.position = "relative";
+        this.style.display = "block";
 
         this.foldDir = foldDir;
         this.closingDelay = closingDelay;
 
         // initializing element
-        this.style.position = "relative";
         this.heading = ElementFactory.h5().class("heading").text(heading).make();
         this.arrow = ElementFactory.h5()
             .class("arrow", "light-weight", "icon")
@@ -40,8 +40,7 @@ export default class FolderElement extends HTMLElement {
 
         this.contents = super.appendChild(
             ElementFactory.div()
-                .class("contents", "flex-rows")
-                .style({"position":"absolute"})
+                .class("contents")
                 .make()
         );
 
@@ -66,21 +65,22 @@ export default class FolderElement extends HTMLElement {
      * Immediately opens the FolderElement.
      */
     public open() {
-        const headingBB = this.heading.getBoundingClientRect();            
+        const headingBB = this.heading.getBoundingClientRect();
         switch (this.foldDir) {
             case "down":
                 this.contents.style.left = "0px";
                 this.contents.style.top = this.clientHeight + "px";
                 break;
             case "right":
-                this.contents.style.left = this.clientWidth + "px";
+                this.contents.style.left = (this.topper.clientWidth + this.parentElement!.getBoundingClientRect().right - this.topper.getBoundingClientRect().right) + "px";
                 this.contents.style.top = "0px";
 
                 this.arrow.style.rotate = "90deg";
                 break;
         }
+        this.contents.style.setProperty("--top", this.contents.style.top??"0px");
 
-        $(this.contents).stop().slideDown(250);
+        $(this.contents).stop().slideDown(200);
         this.setAttribute("open", "");
     }
 
@@ -88,7 +88,7 @@ export default class FolderElement extends HTMLElement {
      * Immediately closes the FolderElement.
      */
     public close() {
-        $(this.contents).stop().slideUp(250);
+        $(this.contents).stop().slideUp(200);
         this.arrow.style.rotate = "0deg";
         this.removeAttribute("open");
     }

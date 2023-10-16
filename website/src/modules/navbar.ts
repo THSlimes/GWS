@@ -79,26 +79,26 @@ const NAVBAR_CONFIG:NavbarConfig = {
     "Inschrijven Den Geitenwollen Soc.": DEFAULT_LINK
 };
 
-function createLink(text:string, url:string):HTMLHeadingElement {
+function createLink(text:string, url:string):HTMLAnchorElement {
     let isExternal = false;
     try {
         const parsed = new URL(url);
         isExternal = parsed.hostname !== window.location.hostname;
     } catch (e) { /* assume internal link */ }
 
-    return ElementFactory.h5()
+    return ElementFactory.a()
         .class("link")
+        .href(url)
+        .openInNewTab(isExternal)
         .children(
-            ElementFactory.a()
+            ElementFactory.h5()
                 .text(text)
-                .href(url)
-                .openInNewTab(isExternal)
                 .children(isExternal ? ElementFactory.span().class("icon").text(" open_in_new") : null)
         ).make();
 }
 
-function createFolderContents(config:NavbarConfig, nestingLvl=0):(FolderElement|HTMLHeadingElement)[] {
-    const out:(FolderElement|HTMLHeadingElement)[] = [];
+function createFolderContents(config:NavbarConfig, nestingLvl=0):(FolderElement|HTMLAnchorElement)[] {
+    const out:(FolderElement|HTMLAnchorElement)[] = [];
     
     for (const heading in config) {
         const v = config[heading];

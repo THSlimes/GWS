@@ -1,12 +1,10 @@
-@import url("./shared.css");
-
 article {
-    margin-bottom: 4em;
+    margin-bottom: 2em;
 
     & * { color: var(--secondary) };
 
-    > .heading { margin: .5em 0px .5em 0px; }
-    > .body > p { margin: .5em 0px .5em 0px; }
+    & .heading { margin: .5em 0px .5em 0px; }
+    > .body > p { margin: .255em 0px .25em 0px; }
 
     &[is-preview] {
         > .body {
