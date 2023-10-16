@@ -103,7 +103,7 @@ export default abstract class Markdown {
                 }
                 else intermediate.at(-1)![1] += "<br>" + this.parseLine(line); // part of known paragraph
             }
-        }        
+        }     
 
         // applying parsing options
         if (options.maxChars !== undefined || options.maxWords !== undefined) { // limit number of characters and words
@@ -141,6 +141,7 @@ export default abstract class Markdown {
             }
         }
 
+        
         // convert to HTML element
         return ElementFactory.div()
             .class("markdown")
