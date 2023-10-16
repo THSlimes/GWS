@@ -1,15 +1,21 @@
 import AssemblyLine, { AnchorElementAssemblyLine, ButtonLikeInputAssemblyLine, CheckableInputAssemblyLine, DateInputAssemblyLine, InputAssemblyLine, NumberInputAssemblyLine, RangedInputAssemblyLine, TextInputAssemblyLine } from "./AssemblyLine";
 
+/** Limits 'n' between 'lower' and 'upper' */
 function clamp(n:number, lower=-Infinity, upper=Infinity) {
     return Math.max(lower, Math.min(upper, n));
 }
 
+/**
+ * The ElementFactory helper-class provides static methods that allow
+ * for easier creation of HTMLElement objects.
+ */
 export default abstract class ElementFactory {
 
     public static header() { return new AssemblyLine("header"); }
 
     public static div() { return new AssemblyLine("div"); }
 
+    /** A heading with the given size. */
     public static heading(size:number) {
         size = clamp(Math.floor(size), 1, 6);
         return this[`h${size as 1|2|3|4|5|6}`]();
@@ -26,6 +32,7 @@ export default abstract class ElementFactory {
     public static span() { return new AssemblyLine('span'); }
     public static a() { return new AnchorElementAssemblyLine(); }
     
+    /** Methods for specific input-types. */
     public static readonly input = {
         button() { return new ButtonLikeInputAssemblyLine("button"); },
         checkbox() { return new CheckableInputAssemblyLine("checkbox"); },

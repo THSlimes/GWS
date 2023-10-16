@@ -3,6 +3,10 @@ import ElementFactory from "../html-element-factory/HTMLElementFactory";
 
 export type FoldingDirection = "down" | "right";
 
+/**
+ * A FolderElement is a custom type of HTMLElement. It allows other elements
+ * to only be shown when hovering over its name.
+ */
 export default class FolderElement extends HTMLElement {
 
     private readonly foldDir:FoldingDirection;
@@ -15,8 +19,15 @@ export default class FolderElement extends HTMLElement {
     
     private readonly contents:HTMLDivElement;
 
+    /** Whether the folder is currently open. */
     public get isOpen() { return this.hasAttribute("open"); }
 
+    /**
+     * Creates a new FolderElement.
+     * @param heading name displayed at the top
+     * @param foldDir what direction it folds out
+     * @param closingDelay time from the mouse leaving to when it closes
+     */
     constructor(heading:string, foldDir:FoldingDirection="right", closingDelay=0) {
         super();
         this.style.position = "relative";
@@ -53,10 +64,21 @@ export default class FolderElement extends HTMLElement {
         });
     }
 
+    /**
+     * Appends the given node as a child.
+     * NOTE: the node is added to the ```contents``` div
+     * @param node 
+     * @returns the added node
+     */
     public override appendChild<T extends Node>(node: T): T {
         return this.contents.appendChild(node);
     }
 
+    /**
+     * Appends multiple nodes as children.
+     * NOTE: the children are added to the ```contents``` div
+     * @param nodes 
+     */
     public override append(...nodes: (string | Node)[]): void {
         return this.contents.append(...nodes);
     }
@@ -72,7 +94,7 @@ export default class FolderElement extends HTMLElement {
                 this.contents.style.top = this.clientHeight + "px";
                 break;
             case "right":
-                this.contents.style.left = (this.topper.clientWidth + this.parentElement!.getBoundingClientRect().right - this.topper.getBoundingClientRect().right) + "px";
+                this.contents.style.left = (this.parentElement!.getBoundingClientRect().right - this.getBoundingClientRect().left) + "px";
                 this.contents.style.top = "0px";
 
                 this.arrow.style.rotate = "90deg";

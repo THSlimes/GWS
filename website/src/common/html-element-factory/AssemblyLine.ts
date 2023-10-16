@@ -1,9 +1,22 @@
 type HexColor = `#${string}`;
 
+/**
+ * OptionalElementProperties defines a mapping for values of a specific
+ * type of HTMLElement/
+ * 
+ * @param TN tag of the HTMLElement that the mapping is used for
+ */
 type OptionalElementProperties<TN extends keyof HTMLElementTagNameMap> = {
     [K in keyof HTMLElementTagNameMap[TN]]?: HTMLElementTagNameMap[TN][K];
 }
 
+/**
+ * An AssemblyLine is a type of object that makes the construction
+ * of HTMLElement objects easier. All methods (except for ```make()```)
+ * return ```this```, making for easy method-chaining.
+ * 
+ * @param TN tag of the HTMLElement that will be output by its ```make()``` method
+ */
 export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
 
     private readonly tagName:TN;
@@ -11,7 +24,7 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
     private readonly elementTypeSpecific:OptionalElementProperties<TN> = {};
 
     constructor(tagName:TN) {
-        this.tagName = tagName;
+        this.tagName = tagName; // store tag for element creation
     }
 
     protected _id?:string;
@@ -41,18 +54,21 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
     }
 
     private _text?:string;
+    /** Sets the ```innerText``` property. */
     public text(txt:string) {
         this._text = txt;
         return this;
     }
 
     private _html?:string;
+    /** Sets the ```innerHTML``` property. */
     public html(html:string) {
         this._html = html;
         return this;
     }
 
     private _children:Node[] = [];
+    /** Provides child elements to be appended to the output element. */
     public children(...nodes:(Node|null|AssemblyLine<any>)[]) {
         nodes = nodes.filter(n => n !== null);
         this._children.push(...nodes.map(n => n instanceof AssemblyLine ? n.make() : n));
@@ -60,6 +76,7 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
     }
 
     private _styleProps:Record<string,string> = {};
+    /** Defines key-value pairs for CSS-properties. */
     public style(styleDef:Record<string,string>) {
         for (const k in styleDef) this._styleProps[k] = styleDef[k];
         return this;
@@ -92,6 +109,13 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
         return out;
     }
 
+    /**
+     * Provides a way to create an AssemblyLine for a specific element type, without
+     * creating a new class for each one.
+     * @param tagName tag of the HTMLElement of the output AssemblyLine
+     * @param exposedKeys keys of specific properties of the out HTMLElement type
+     * @returns AssemblyLine with extra methods to set the properties with the keys from 'exposedKeys'
+     */
     public static specific<TN extends keyof HTMLElementTagNameMap, EKs extends keyof HTMLElementTagNameMap[TN]>(tagName:TN, exposedKeys:EKs[]) {
         const out = new AssemblyLine(tagName) as AssemblyLine<TN> & {
             [K in EKs]:(newVal:HTMLElementTagNameMap[TN][K])=>typeof out;
@@ -110,6 +134,9 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
 
 }
 
+/**
+ * An AnchorElementAssemblyLine is a type of AssemblyLine for creating anchor (\<a>) tags
+ */
 export class AnchorElementAssemblyLine extends AssemblyLine<"a"> {
 
     constructor() {
@@ -117,12 +144,14 @@ export class AnchorElementAssemblyLine extends AssemblyLine<"a"> {
     }
 
     private _href?:string;
+    /** Provides the URL that the anchor will link to. */
     public href(linkTo:string) {
         this._href = linkTo;
         return this;
     }
 
     private _openInNewTab = false;
+    /** Determines whether the link opens in a new tab. */
     public openInNewTab(openInNewTab:boolean) {
         this._openInNewTab = openInNewTab;
         return this;
@@ -139,6 +168,7 @@ export class AnchorElementAssemblyLine extends AssemblyLine<"a"> {
 
 }
 
+/** Maps the 'type' field of an HTMLInputElement to the type of its 'value' field */
 type HTMLInputElementTypeMap = {
     "button": string,
     "checkbox": string,
@@ -164,6 +194,7 @@ type HTMLInputElementTypeMap = {
     "week": `${number}-W${number}`
 };
 
+/** Default values for each input type.  */
 const DEFAULT_VALUES:{[T in keyof HTMLInputElementTypeMap]:HTMLInputElementTypeMap[T]} = {
     button: "Button",
     checkbox: "Checkbox",
@@ -189,7 +220,14 @@ const DEFAULT_VALUES:{[T in keyof HTMLInputElementTypeMap]:HTMLInputElementTypeM
     week: `${new Date().getFullYear()}-W01`
 };
 
+/** SmartInputs remember their previous value. */
 type SmartInput = HTMLInputElement & { prevValue:string };
+/**
+ * An InputAssemblyLine is a type of AssemblyLine specifically for
+ * creating HTMLInputElements.
+ * 
+ * @param T 'type' field of the HTMLInputElement
+ */
 export class InputAssemblyLine<T extends keyof HTMLInputElementTypeMap> extends AssemblyLine<"input"> {
 
     private readonly type:T;
@@ -202,14 +240,23 @@ export class InputAssemblyLine<T extends keyof HTMLInputElementTypeMap> extends 
     }
 
     protected _value:HTMLInputElementTypeMap[T];
+    /** Provides the inputs 'value'. */
     public value(value:HTMLInputElementTypeMap[T]) {
         this._value = value;
         return this;
     }
     
     protected _name?:string;
+    /** Provides the inputs 'name', to be used by forms. */
     public name(name:string) {
         this._name = name;
+        return this;
+    }
+
+    protected _disabled?:boolean;
+    /** Determines whether the input is non-interactive. */
+    public disabled(disabled:boolean) {
+        this._disabled = disabled;
         return this;
     }
 
@@ -225,6 +272,7 @@ export class InputAssemblyLine<T extends keyof HTMLInputElementTypeMap> extends 
     }
 
     private _onValueChanged?:(curr:string, prev:string)=>void;
+    /** Provides a callback function that is called just after the input value changes. */
     public onValueChanged(callback:(curr:string, prev:string)=>void) {
         this._onValueChanged = callback;
         return this;
@@ -246,6 +294,7 @@ export class InputAssemblyLine<T extends keyof HTMLInputElementTypeMap> extends 
         }
 
         if (this._name !== undefined) out.name = this._name;
+        if (this._disabled) out.disabled = true;
 
         return out;
     }
@@ -256,6 +305,7 @@ type ButtonLikeType = "button"|"reset"|"submit";
 export class ButtonLikeInputAssemblyLine<BLT extends ButtonLikeType> extends InputAssemblyLine<BLT> {
 
     protected _onClick?:(val:string)=>void;
+    /** Provides a callback function for when the button is clicked. */
     public onClick(callback:(val:string)=>void) {
         this._onClick = callback;
         return this;
@@ -282,12 +332,14 @@ export class CheckableInputAssemblyLine<CT extends CheckableInputType> extends I
     }
 
     private _checked = false;
+    /** Determines whether the checkbox starts out checked. */
     public checked(checked:boolean) {
         this._checked = checked;
         return this;
     }
 
     private _onCheckedChanged?:(curr:boolean, prev:boolean)=>void;
+    /** Provides a callback for just after the input is (un)checked. */
     public onCheckedChanged(callback:(curr:boolean, prev:boolean)=>void) {
         this._onCheckedChanged = callback;
         return this;
@@ -323,18 +375,21 @@ export class RangedInputAssemblyLine<RT extends RangedInputType> extends InputAs
     }
 
     protected _min = this._value;
+    /** Provides a minimum value for the input. */
     public min(minValue:HTMLInputElementTypeMap[RT]) {
         this._min = minValue;
         return this;
     }
 
     protected _max = this._value;
+    /** Provides a maximum value for the input. */
     public max(minValue:HTMLInputElementTypeMap[RT]) {
         this._min = minValue;
         return this;
     }
 
     protected _step = 1;
+    /** Defines the smallest amount the input value can change. */
     public step(step:number) {
         this._step = step;
         return this;
@@ -396,42 +451,49 @@ export class TextInputAssemblyLine<TT extends TextInputType> extends InputAssemb
     }
 
     protected _list?:string;
+    /** Provides the datalist (by id or reference) for suggestions on the input value. */
     public list(listId:string|HTMLDataListElement) {
         this._list = typeof listId === "string" ? listId : listId.id;
         return this;
     }
 
     protected _minLength?:number;
+    /** Determines the minimum allowed length. */
     public minLength(bound:number) {
         this._minLength = Math.floor(bound);
         return this;
     }
 
     protected _maxLength?:number;
+    /** Determines the maximum allowed length. */
     public maxLength(bound:number) {
         this._maxLength = Math.floor(bound);
         return this;
     }
 
     private _placeholder?:string;
+    /** Provides a placeholder which is shown when the input is empty. */
     public placeholder(placeholder:string) {
         this._placeholder = placeholder;
         return this;
     }
 
     private _readonly?:boolean;
+    /** Determines whether the text-like input accepts user-input. */
     public readonly(ro:boolean) {
         this._readonly = ro;
         return this;
     }
 
     private _size?:number;
+    /** Provides the input width (in characters). */
     public size(size:number) {
         this._size = Math.floor(size);
         return this;
     }
 
     private _spellcheck?:boolean;
+    /** Whether spellcheck is enabled. */
     public spellcheck(doSpellcheck:boolean) {
         this._spellcheck = doSpellcheck;
         return this;
