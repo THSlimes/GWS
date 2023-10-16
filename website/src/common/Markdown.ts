@@ -1,5 +1,6 @@
 import ElementFactory from "./html-element-factory/HTMLElementFactory";
 
+/** Options used when parsing markdown */
 type ParsingOptions = {
     allowMultilineBreaks?:boolean,
     allowDoubleSpaces?:boolean,
@@ -10,14 +11,22 @@ type ParsingOptions = {
     cutoffMarker?:string
 };
 
+// types for intermediate representation
 type HeadingElement = ["heading", string, number];
 type BreakElement = ["line break"];
 type ParagraphElement = ["paragraph", string];
 
 type MarkdownElement = HeadingElement | BreakElement | ParagraphElement;
 
+/**
+ * The Markdown helper-class provides utility to parse the
+ * Markdown text format to HTML.
+ * 
+ * @see https://www.markdownguide.org/basic-syntax/
+ */
 export default abstract class Markdown {
 
+    /** Maps certain characters to their HTML escape-code. */
     private static readonly ESCAPE_CONFIG:Record<string,string> = {
         '<': "&lt;",
         '>': "&gt;",
@@ -32,6 +41,7 @@ export default abstract class Markdown {
         '=': "&#61;",
         '`': "&#96;",
     };
+    /** Makes a piece of text HTML-safe. */
     public static sanitize(text:string):string {
         for (let c in this.ESCAPE_CONFIG) text = text.replaceAll(c, this.ESCAPE_CONFIG[c]);
         return text;
@@ -57,18 +67,21 @@ export default abstract class Markdown {
         line = this.sanitize(line);        
 
         // apply bold
-        line = line.replaceAll(this.BOLD_REGEX, s => {
-            console.log(s);
-            
-            return `<span class="bold">${s.substring(2, s.length-2)}</span>`
-        });
+        line = line.replaceAll(this.BOLD_REGEX, s => `<span class="bold">${s.substring(2, s.length-2)}</span>`);
         // apply italic
         line = line.replaceAll(this.ITALIC_REGEX, s => `<span class="italic">${s.substring(1, s.length-1)}</span>`);
 
         return line;
     }
 
+    /** RegExp of characters that do not occur within a word. */
     private static readonly ENDS_WORD = /(\ |\t|\,|\;|\:|\.|\!|\?)+/g;
+    /**
+     * Turns markdown-formatted text into HTML.
+     * @param text markdown-formatted text
+     * @param options options used while parsing
+     * @returns converted markdown
+     */
     public static parse(text:string, options:ParsingOptions={}):HTMLDivElement {
 
         if (!options.allowDoubleSpaces) text.replaceAll(/ {2,}/g, ' '); // remove double spaces
@@ -78,7 +91,7 @@ export default abstract class Markdown {
         while (lines.length > 0 && lines[0].length === 0) lines.shift(); // remove initial whitespace
         while (lines.at(-1)!.length === 0) lines.pop(); // remove trailing whitespace
 
-        // parse to intermediate form
+        // parse to intermediate form which is easier to handle
         const intermediate:MarkdownElement[] = [];
         
         for (const line of lines) {
@@ -93,7 +106,7 @@ export default abstract class Markdown {
         }        
 
         // applying parsing options
-        if (options.maxChars !== undefined || options.maxWords !== undefined) { // limit number of characters
+        if (options.maxChars !== undefined || options.maxWords !== undefined) { // limit number of characters and words
             let charsLeft = options.maxChars ?? Infinity;
             let wordsLeft = options.maxWords ?? Infinity;
 
