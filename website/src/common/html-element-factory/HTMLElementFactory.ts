@@ -1,9 +1,5 @@
+import { clamp } from "../NumberUtil";
 import AssemblyLine, { AnchorElementAssemblyLine, ButtonLikeInputAssemblyLine, CheckableInputAssemblyLine, DateInputAssemblyLine, InputAssemblyLine, NumberInputAssemblyLine, RangedInputAssemblyLine, TextInputAssemblyLine } from "./AssemblyLine";
-
-/** Limits 'n' between 'lower' and 'upper' */
-function clamp(n:number, lower=-Infinity, upper=Infinity) {
-    return Math.max(lower, Math.min(upper, n));
-}
 
 /**
  * The ElementFactory helper-class provides static methods that allow

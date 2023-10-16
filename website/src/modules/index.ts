@@ -83,11 +83,11 @@ const ARTICLES:Article[] = [
         Ik vond het begin van vorig jaar heel spannend, maar toen ik eenmaal bij den GWS werd betrokken waren mijn zorgen weg. Ik heb zoveel leuke mensen ontmoet en heel veel fantastische activiteiten meegemaakt! Bij den GWS zat ik vorig jaar in de jaarboek- en de lustrumcommissie en ik zat in de S-Cape commissie van Kompanio. Verder zit ik vaak hele dagen in de kamer koekjes te eten, spelletjes te spelen en thee te drinken.
         Ik loop nu al iets meer dan twee jaar rond bij De Kindertelefoon en ik heb het ook daar enorm naar mijn zin! Bellen en chatten met kinderen die een luisterend oor nodig hebben en grappig reageren op originele pranks is altijd een geweldig om te doen!
         Ik hou verder erg veel van spelletjes spelen, afspreken met vrienden en heel veel kletsen.
-        
+
         Ik heb heeeel veel zin in het komende jaar, we gaan er als XXXIe bestuur een feestje van maken! Tot bij de intro, tot bij een activiteit of tot in de kamer!!
         
         Groetjes van Hannah`
     }
 ];
 
-RECENT_MESSAGES_ELEM.append(...ARTICLES.map(a => new SmartArticle(a.heading, a.body, true, "/")));
+RECENT_MESSAGES_ELEM.append(...ARTICLES.map(a => new SmartArticle(a.heading, a.body, false, "/")));
