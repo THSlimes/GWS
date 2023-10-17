@@ -1,48 +1,49 @@
-import { DocumentData, Query, QueryConstraint, QuerySnapshot, Timestamp, collection, documentId, getDocs, getFirestore, limit, orderBy, query, where } from "@firebase/firestore";
-import Database, { ArticleDatabase, ArticleQueryOptions, DBArticle } from "../Database";
+import { DocumentData, Query, QueryConstraint, QueryDocumentSnapshot, QuerySnapshot, Timestamp, collection, documentId, getDocs, getFirestore, limit, orderBy, query, where } from "@firebase/firestore";
+import Database, { ArticleDatabase, ArticleFilterOptions, ArticleInfo } from "../Database";
 import FIREBASE_APP from "./init-firebase";
 import { clamp } from "../NumberUtil";
 
 // initialize Firebase Firestore
 const DB = getFirestore(FIREBASE_APP);
 
+/** An article as it appears in the database. */
+type DBArticle = { id:string, heading:string, body:string, created_at:Timestamp, category:string };
 class FirestoreArticleDatabase implements ArticleDatabase {
 
+    /** Reference to the collection of articles. */
+    private static readonly COLLECTION = collection(DB, "articles").withConverter({
+        toFirestore(article:ArticleInfo):DBArticle {
+            return {
+                ...article,
+                created_at: Timestamp.fromDate(article.created_at)
+            }
+        },
+        fromFirestore(snapshot:QueryDocumentSnapshot<DBArticle, ArticleInfo>):ArticleInfo {
+            const data = snapshot.data();
+            return {
+                ...data,
+                created_at: data.created_at.toDate()
+            };
+        }
+    });
+
     public byId(id: string) {
-        return new Promise<DBArticle|undefined>(async (resolve, reject) => {
-            const query = FirestoreArticleDatabase.createQuery({id:id});
-            try {
-                const snapshot = await getDocs(query); // execute query
-                if (snapshot.empty) resolve(undefined);
-                else resolve(FirestoreArticleDatabase.articlesFromSnapshot(snapshot)[0]);
-            }
-            catch (e) { reject(e); } // some error occurred
+        return new Promise<ArticleInfo|undefined>(async (resolve, reject) => {
+            FirestoreArticleDatabase.getArticles({id})
+            .then(articles => resolve(articles.length > 0 ? articles[0] : undefined))
+            .catch(reject);
         });
     }
 
-    public recent(limit=5, before=new Date(), options?:Omit<ArticleQueryOptions, "limit"|"before"|"createdAtSort">) {
-        return new Promise<DBArticle[]>(async (resolve, reject) => {
-            const query = FirestoreArticleDatabase.createQuery({limit, before, createdAtSort:"descending", ...options});
-            try {
-                const snapshot = await getDocs(query); // execute query                
-                resolve(FirestoreArticleDatabase.articlesFromSnapshot(snapshot));
-            }
-            catch (e) { reject(e); } // some error occurred
-        });
+    public recent(limit=5, before=new Date(), options?:Omit<ArticleFilterOptions, "limit"|"before"|"createdAtSort">) {
+        return FirestoreArticleDatabase.getArticles({limit, before, createdAtSort:"descending", ...options});
     }
 
-    public byCategory(category:string, options?:Omit<ArticleQueryOptions, "id">) {
-        return new Promise<DBArticle[]>(async (resolve, reject) => {
-            const query = FirestoreArticleDatabase.createQuery({category, ...options});
-            try {
-                const snapshot = await getDocs(query); // execute query
-                resolve(FirestoreArticleDatabase.articlesFromSnapshot(snapshot));
-            }
-            catch (e) { reject(e); } // some error occurred
-        });
+    public byCategory(category:string, options?:Omit<ArticleFilterOptions, "id">) {
+        return FirestoreArticleDatabase.getArticles({category, ...options});
     }
 
-    private static createQuery(options:ArticleQueryOptions):Query<DocumentData, DocumentData> {
+    private static getArticles(options:ArticleFilterOptions):Promise<ArticleInfo[]> {
         // convert options into constraints
         const constraints:QueryConstraint[] = [];
         if (options.limit) constraints.push(limit(clamp(options.limit, 0, 20)));
@@ -52,16 +53,17 @@ class FirestoreArticleDatabase implements ArticleDatabase {
         if (typeof options.category === "string") constraints.push(where("category", "==", options.category));
         if (options.notId) constraints.push(where(documentId(), "!=", options.notId));
 
-        return query(collection(DB, "articles"), ...constraints);
-    }
-    private static articlesFromSnapshot(snapshot:QuerySnapshot<DocumentData, DocumentData>):DBArticle[] {
-        const out:DBArticle[] = [];
-
-        snapshot.forEach(doc => {
-            out.push({id:doc.id, ...doc.data()} as DBArticle);
+        return new Promise(async (resolve, reject) => {
+            const q = query(FirestoreArticleDatabase.COLLECTION, ...constraints); // create query
+            try {
+                const snapshot = await getDocs(q);
+                const out:ArticleInfo[] = [];
+                snapshot.forEach(doc => out.push(doc.data()));
+                resolve(out);
+            }
+            catch (e) { reject(e); }
         });
 
-        return out;
     }
 
 }

@@ -1,5 +1,5 @@
 import Markdown from "../Markdown";
-import { DBArticle } from "../Database";
+import { ArticleInfo } from "../Database";
 import ElementFactory from "../html-element-factory/HTMLElementFactory";
 
 /**
@@ -48,11 +48,11 @@ export default class SmartArticle extends HTMLElement {
         }
     }
 
-    public static fromDB(article:DBArticle, isPreview:boolean=true) {        
+    public static fromDB(article:ArticleInfo, isPreview:boolean=true) {        
         return new SmartArticle(
             article.heading,
             article.body,
-            article.created_at.toDate(),
+            article.created_at,
             isPreview,
             isPreview ? `/article.html?id=${article.id}` : undefined
         );

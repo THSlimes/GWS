@@ -1,8 +1,7 @@
 import { Timestamp } from "@firebase/firestore";
 
-/** Structure of an article stored in the database */
-export type DBArticle = { id:string, heading:string, body:string, created_at:Timestamp, category:string };
-export type ArticleQueryOptions = {
+export type ArticleInfo = { id:string, heading:string, body:string, created_at:Date, category:string }
+export type ArticleFilterOptions = {
     /** Maximum number of retrieved records. */
     limit?:number,
     /** Way of sorting by the creation timestamp. */
@@ -20,9 +19,9 @@ export type ArticleQueryOptions = {
 };
 
 export abstract class ArticleDatabase {
-    abstract byId(id:string):Promise<DBArticle|undefined>;
-    abstract recent(limit:number, before?:Date, options?:ArticleQueryOptions):Promise<DBArticle[]>;
-    abstract byCategory(category:string, options?:ArticleQueryOptions):Promise<DBArticle[]>;
+    abstract byId(id:string):Promise<ArticleInfo|undefined>;
+    abstract recent(limit:number, before?:Date, options?:ArticleFilterOptions):Promise<ArticleInfo[]>;
+    abstract byCategory(category:string, options?:ArticleFilterOptions):Promise<ArticleInfo[]>;
 }
 
 /**
