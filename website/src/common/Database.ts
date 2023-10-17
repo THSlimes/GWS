@@ -13,14 +13,16 @@ export type ArticleQueryOptions = {
     after?:Date,
     /** Category of retrieved records. */
     category?:string,
+    /** Specific ID of record to be retrieved. */
+    id?:string,
     /** Specific ID excluded from retrieved records. */
-    isNot?:string
+    notId?:string
 };
 
-export interface ArticleDatabase {
-    byId(id:string, options?:ArticleQueryOptions):Promise<DBArticle>;
-    recent(limit?:number, before?:Date, options?:ArticleQueryOptions):Promise<DBArticle[]>;
-    byCategory(category:string, options?:ArticleQueryOptions):Promise<DBArticle[]>;
+export abstract class ArticleDatabase {
+    abstract byId(id:string):Promise<DBArticle|undefined>;
+    abstract recent(limit:number, before?:Date, options?:ArticleQueryOptions):Promise<DBArticle[]>;
+    abstract byCategory(category:string, options?:ArticleQueryOptions):Promise<DBArticle[]>;
 }
 
 /**
