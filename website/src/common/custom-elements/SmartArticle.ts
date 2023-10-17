@@ -1,4 +1,5 @@
 import Markdown from "../Markdown";
+import { DBArticle } from "../Database";
 import ElementFactory from "../html-element-factory/HTMLElementFactory";
 
 /**
@@ -7,10 +8,12 @@ import ElementFactory from "../html-element-factory/HTMLElementFactory";
  */
 export default class SmartArticle extends HTMLElement {
 
-    private static DEFAULT_PREVIEW_CUTOFF = 30;
+    private static DEFAULT_PREVIEW_CUTOFF = 40;
 
     private readonly heading:HTMLHeadingElement;
     private readonly body:HTMLDivElement;
+
+    private readonly createdAt:Date;
 
     /**
      * Creates a new SmartArticle.
@@ -19,7 +22,7 @@ export default class SmartArticle extends HTMLElement {
      * @param isPreview whether the article is shown as a non-full version
      * @param linkToFull URL to the full version of the article (ignored if not a preview)
      */
-    constructor(heading:string, body:string, isPreview=true, linkToFull?:string) {
+    constructor(heading:string, body:string, createdAt:Date, isPreview=true, linkToFull?:string) {
         super();
         this.style.display = "block";
         
@@ -31,6 +34,7 @@ export default class SmartArticle extends HTMLElement {
         );
         this.body = this.appendChild(Markdown.parse(body, isPreview ? {maxWords:SmartArticle.DEFAULT_PREVIEW_CUTOFF, cutoffMarker:" "} : {}));
         this.body.classList.add("body");
+        this.createdAt = createdAt;
 
         if (isPreview) {
             this.setAttribute("is-preview", "");
@@ -42,6 +46,16 @@ export default class SmartArticle extends HTMLElement {
                     .make()
             );
         }
+    }
+
+    public static fromDB(article:DBArticle, isPreview:boolean=true) {        
+        return new SmartArticle(
+            article.heading,
+            article.body,
+            article.created_at.toDate(),
+            isPreview,
+            isPreview ? `/article.html?id=${article.id}` : undefined
+        );
     }
 
 }

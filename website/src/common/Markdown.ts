@@ -108,17 +108,16 @@ function toIntermediate(lines:string[], options:ParsingOptions):IntermediateMark
         const line = lines[i];
 
         if (isHeading(line)) intermediate.push(parseHeading(line)); // is heading
-        else if (HEADING_ALT_1.test(lines[i+1]?.trim() ?? "")) { // alternative heading syntax
-            console.log("matches 1");
-            
+        else if (HEADING_ALT_1.test(lines[i+1]?.trim() ?? "")) { // alternative heading syntax            
             intermediate.push(parseHeading(line, 1));
             lines.splice(i+1,1);
         }
         else if (HEADING_ALT_2.test(lines[i+1]?.trim() ?? "")) { // alternative heading syntax
-            console.log("matches 2");
-
             intermediate.push(parseHeading(line, 2));
             lines.splice(i+1,1);
+        }
+        else if (isBlockQuote(line)) {
+            
         }
         else if (line.length === 0) intermediate.push(["line break"]); // empty line
         else { // part of paragraph

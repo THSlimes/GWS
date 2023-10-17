@@ -1,6 +1,6 @@
 {
   "name": "gws-website",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "website for Den Geitenwollen Soc",
   "main": "webpack.config.js",
   "scripts": {
@@ -22,7 +22,10 @@
   },
   "homepage": "https://github.com/THSlimes/GWS#readme",
   "dependencies": {
+    "@firebase/firestore": "^4.3.0",
+    "@types/firebase": "^3.2.1",
     "@types/jquery": "^3.5.22",
+    "firebase": "^10.5.0",
     "jquery": "^3.7.1",
     "ts-loader": "^9.5.0",
     "typescript": "^5.2.2",
