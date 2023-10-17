@@ -23,22 +23,26 @@
             <img parallax-factor=".75" src="./images/carousel/DSC00626-scaled.jpg" alt="Carousel afbeelding #5">
         </element-carousel>
 
-        <div id="info">
-            <div id="recent-messages">
+        <div id="split-view">
+            <div id="recent-messages" class="info flex-rows main-axis-space-evenly">
+                <div class="page-navigator flex-columns">
+                    <input type="button" class="icon previous-page" value="arrow_left">
+                    <input type="button" class="icon next-page" value="arrow_right">
+                </div>
             </div>
 
-            <div id="news-letters">
+            <div id="news-letters" class="boxed">
                 <h3>Nieuwsbrieven</h3>
-                <ul>
-                    <li>Nieuwsbrief juni 2023</li>
-                    <li>Nieuwsbrief april 🐥🌻</li>
-                    <li>Nieuwsbrief maart🌹</li>
-                    <li>Nieuwsbrief februari💚💛</li>
-                    <li>Nieuwsbrief December</li>
-                </ul>
+                <div id="news-letters-list" class="flex-rows main-axis-start">
+                    <p>Nieuwsbrief juni 2023</p>
+                    <p>Nieuwsbrief april 🐥🌻</p>
+                    <p>Nieuwsbrief maart🌹</p>
+                    <p>Nieuwsbrief februari💚💛</p>
+                    <p>Nieuwsbrief December</p>
+                </div>
             </div>
             
-            <div id="sponsors">
+            <div id="sponsors" class="boxed">
                 <h3>Onze sponsoren</h3>
                 
                 <a href="https://www.bol.com/nl/"><img src="./images/logos/bol_com.png" alt="Bol.com"></a>

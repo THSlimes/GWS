@@ -1,0 +1,8 @@
+@import url("../shared.css");
+
+.content {
+    padding: 1em 4em 1em 4em;
+    min-height: 100vh;
+
+    & * { color: var(--secondary); }
+}

@@ -25,6 +25,7 @@ export default class SmartArticle extends HTMLElement {
     constructor(heading:string, body:string, createdAt:Date, isPreview=true, linkToFull?:string) {
         super();
         this.style.display = "block";
+        // this.classList.add("boxed");
         
         this.heading = this.appendChild(
             ElementFactory.heading(isPreview ? 2 : 1)
@@ -46,7 +47,7 @@ export default class SmartArticle extends HTMLElement {
         }
     }
 
-    public static fromDB(article:ArticleInfo, isPreview:boolean=true) {        
+    public static fromInfo(article:ArticleInfo, isPreview:boolean=true) {                
         return new SmartArticle(
             article.heading,
             article.body,

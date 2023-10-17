@@ -120,7 +120,7 @@ function insertHeader(config:NavbarConfig) {
             ElementFactory.div()
                 .class("desc")
                 .children(
-                    ElementFactory.h4("Den Geitenwollen Soc."),
+                    ElementFactory.a('/').children(ElementFactory.h4("Den Geitenwollen Soc.")),
                     ElementFactory.p("Studievereniging Sociologie Nijmegen").class("subtitle")
                 ),
             ElementFactory.div()

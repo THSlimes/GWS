@@ -20,7 +20,7 @@ export type ArticleFilterOptions = {
 
 export abstract class ArticleDatabase {
     abstract byId(id:string):Promise<ArticleInfo|undefined>;
-    abstract recent(limit:number, before?:Date, options?:ArticleFilterOptions):Promise<ArticleInfo[]>;
+    abstract recent(limit:number, options?:ArticleFilterOptions):Promise<ArticleInfo[]>;
     abstract byCategory(category:string, options?:ArticleFilterOptions):Promise<ArticleInfo[]>;
 }
 

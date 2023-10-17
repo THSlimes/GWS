@@ -7,7 +7,7 @@ import { clamp } from "../NumberUtil";
 const DB = getFirestore(FIREBASE_APP);
 
 /** An article as it appears in the database. */
-type DBArticle = { id:string, heading:string, body:string, created_at:Timestamp, category:string };
+type DBArticle = { heading:string, body:string, created_at:Timestamp, category:string };
 class FirestoreArticleDatabase implements ArticleDatabase {
 
     /** Reference to the collection of articles. */
@@ -22,6 +22,7 @@ class FirestoreArticleDatabase implements ArticleDatabase {
             const data = snapshot.data();
             return {
                 ...data,
+                id: snapshot.id,
                 created_at: data.created_at.toDate()
             };
         }
@@ -35,8 +36,8 @@ class FirestoreArticleDatabase implements ArticleDatabase {
         });
     }
 
-    public recent(limit=5, before=new Date(), options?:Omit<ArticleFilterOptions, "limit"|"before"|"createdAtSort">) {
-        return FirestoreArticleDatabase.getArticles({limit, before, createdAtSort:"descending", ...options});
+    public recent(limit=5, options?:Omit<ArticleFilterOptions, "limit"|"createdAtSort">) {
+        return FirestoreArticleDatabase.getArticles({limit, createdAtSort:"descending", ...options});
     }
 
     public byCategory(category:string, options?:Omit<ArticleFilterOptions, "id">) {
@@ -51,6 +52,7 @@ class FirestoreArticleDatabase implements ArticleDatabase {
         if (options.before) constraints.push(where("created_at", '<', Timestamp.fromDate(options.before)));
         if (options.after) constraints.push(where("created_at", '>', Timestamp.fromDate(options.after)));
         if (typeof options.category === "string") constraints.push(where("category", "==", options.category));
+        if (options.id) constraints.push(where(documentId(), "==", options.id));
         if (options.notId) constraints.push(where(documentId(), "!=", options.notId));
 
         return new Promise(async (resolve, reject) => {
