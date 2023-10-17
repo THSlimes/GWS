@@ -67,8 +67,10 @@ const HEADING_ALT_2 = /^-+$/g;
 
 // PARAGRAPHS
 function makeParagraph(lines:string[]) {
-    const out = ElementFactory.p().class("paragraph").make();
-    out.innerHTML = lines.map(line => Markdown.parseLine(line)).join("<br>");
+    const out = ElementFactory.p()
+        .class("paragraph")
+        .html(lines.map(line => Markdown.parseLine(line)).join("<br>"))
+        .make();
     return out;
 }
 

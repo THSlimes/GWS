@@ -39,10 +39,8 @@ export default class SmartArticle extends HTMLElement {
         if (isPreview) {
             this.setAttribute("is-preview", "");
             if (linkToFull) this.body.lastChild!.appendChild(
-                ElementFactory.a()
+                ElementFactory.a(linkToFull, "lees verder »")
                     .class("read-more")
-                    .href(linkToFull)
-                    .text("lees verder »")
                     .make()
             );
         }

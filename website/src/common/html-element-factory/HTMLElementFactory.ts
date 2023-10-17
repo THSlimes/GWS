@@ -8,25 +8,60 @@ import AssemblyLine, { AnchorElementAssemblyLine, ButtonLikeInputAssemblyLine, C
 export default abstract class ElementFactory {
 
     public static header() { return new AssemblyLine("header"); }
+    public static footer() { return new AssemblyLine("footer"); }
 
     public static div() { return new AssemblyLine("div"); }
 
     /** A heading with the given size. */
-    public static heading(size:number) {
+    public static heading(size:number, text?:string) {
         size = clamp(Math.floor(size), 1, 6);
         return this[`h${size as 1|2|3|4|5|6}`]();
     }
 
-    public static h1() { return new AssemblyLine("h1"); }
-    public static h2() { return new AssemblyLine("h2"); }
-    public static h3() { return new AssemblyLine("h3"); }
-    public static h4() { return new AssemblyLine("h4"); }
-    public static h5() { return new AssemblyLine("h5"); }
-    public static h6() { return new AssemblyLine("h6"); }
+    public static h1(text?:string) {
+        const out = new AssemblyLine("h1");
+        return text ? out.text(text) : out;
+    }
+    public static h2(text?:string) {
+        const out = new AssemblyLine("h2");
+        return text ? out.text(text) : out;
+    }
+    public static h3(text?:string) {
+        const out = new AssemblyLine("h3");
+        return text ? out.text(text) : out;
+    }
+    public static h4(text?:string) {
+        const out = new AssemblyLine("h4");
+        return text ? out.text(text) : out;
+    }
+    public static h5(text?:string) {
+        const out = new AssemblyLine("h5");
+        return text ? out.text(text) : out;
+    }
+    public static h6(text?:string) {
+        const out = new AssemblyLine("h6");
+        return text ? out.text(text) : out;
+    }
 
-    public static p() { return new AssemblyLine('p'); }
-    public static span() { return new AssemblyLine('span'); }
-    public static a() { return new AnchorElementAssemblyLine(); }
+    public static p(text?:string) {
+        const out = new AssemblyLine('p');
+        return text ? out.text(text) : out;
+    }
+    public static span(text?:string) {
+        const out = new AssemblyLine('span');
+        return text ? out.text(text) : out;
+    }
+    public static a(href?:string, text?:string) {
+        const out = new AnchorElementAssemblyLine();
+        if (href) out.href(href);
+        return text ? out.text(text) : out;
+    }
+
+    public static img(src?:string, alt?:string) {
+        const out = AssemblyLine.specific("img", ["src","alt"])
+        if (src) out.src(src);
+        return alt ? out.alt(alt) : out;
+    }
     
     /** Methods for specific input-types. */
     public static readonly input = {

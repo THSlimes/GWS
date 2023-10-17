@@ -37,10 +37,9 @@ export default class FolderElement extends HTMLElement {
         this.closingDelay = closingDelay;
 
         // initializing element
-        this.heading = ElementFactory.h5().class("heading").text(heading).make();
-        this.arrow = ElementFactory.h5()
+        this.heading = ElementFactory.h5(heading).class("heading").make();
+        this.arrow = ElementFactory.h5(foldDir === "down" ? "expand_more" : "chevron_right")
             .class("arrow", "light-weight", "icon")
-            .text(foldDir === "down" ? "expand_more" : "chevron_right")
             .make();
         this.topper = super.appendChild(
             ElementFactory.div()

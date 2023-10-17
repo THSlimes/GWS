@@ -1,6 +1,8 @@
 import FolderElement, { FoldingDirection } from "../common/custom-elements/FolderElement";
 import ElementFactory from "../common/html-element-factory/HTMLElementFactory";
 
+// HEADER / NAVBAR
+
 const DEFAULT_LINK = "/";
 
 type NavbarConfig = { [name:string]: NavbarConfig | string }
@@ -86,14 +88,12 @@ function createLink(text:string, url:string):HTMLAnchorElement {
         isExternal = parsed.hostname !== window.location.hostname;
     } catch (e) { /* assume internal link */ }
 
-    return ElementFactory.a()
+    return ElementFactory.a(url)
         .class("link")
-        .href(url)
         .openInNewTab(isExternal)
         .children(
-            ElementFactory.h5()
-                .text(text)
-                .children(isExternal ? ElementFactory.span().class("icon").text(" open_in_new") : null)
+            ElementFactory.h5(text)
+                .children(isExternal ? ElementFactory.span(" open_in_new").class("icon") : null)
         ).make();
 }
 
@@ -120,8 +120,8 @@ function insertHeader(config:NavbarConfig) {
             ElementFactory.div()
                 .class("desc")
                 .children(
-                    ElementFactory.h4().text("Den Geitenwollen Soc."),
-                    ElementFactory.p().class("subtitle").text("Studievereniging Sociologie Nijmegen")
+                    ElementFactory.h4("Den Geitenwollen Soc."),
+                    ElementFactory.p("Studievereniging Sociologie Nijmegen").class("subtitle")
                 ),
             ElementFactory.div()
                 .class("links", "flex-columns", "main-axis-center", "cross-axis-baseline")
@@ -131,13 +131,47 @@ function insertHeader(config:NavbarConfig) {
             ElementFactory.div()
                 .class("search", "center-content")
                 .children(
-                    ElementFactory.p().class("icon").text("search")
+                    ElementFactory.p("search").class("icon")
                 )
         ).make();
     
     document.body.prepend(header);
 }
 
+
+
+// FOOTER + COPYRIGHT NOTICE
+function insertFooter() {
+    document.body.append( // footer
+        ElementFactory.footer()
+            .class("page-footer", "center-content", "flex-rows")
+            .children(
+                ElementFactory.h4("Je vindt ons ook op ..."),
+                ElementFactory.div()
+                    .class("social-media-links", "flex-columns", "main-axis-space-between")
+                    .children(
+                        ElementFactory.a("https://www.instagram.com/svdengeitenwollensoc/")
+                            .children(ElementFactory.img("./images/logos/Instagram_Glyph_Gradient.png", "Instagram")),
+                        ElementFactory.a("https://nl.linkedin.com/in/s-v-den-geitenwollen-soc-496145163")
+                            .children(ElementFactory.img("./images/logos/LI-In-Bug.png", "Linked-In")),
+                        ElementFactory.a("https://www.facebook.com/dengeitenwollensoc/")
+                            .children(ElementFactory.img("./images/logos/Facebook_Logo_Primary.png", "Facebook")),
+                    )
+            )
+            .make()
+    );
+
+    document.body.append(
+        ElementFactory.h5(`© ${new Date().getFullYear()} Den Geitenwollen Soc.`)
+            .class("copyright-notice")
+            .make()
+    );
+}
+
+
+// INSERTING BOTH
+
 window.addEventListener("load", () => {
     insertHeader(NAVBAR_CONFIG);
+    insertFooter();
 });
