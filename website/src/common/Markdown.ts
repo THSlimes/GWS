@@ -4,6 +4,7 @@ import ElementFactory from "./html-element-factory/HTMLElementFactory";
 /** Options used when parsing markdown */
 type ParsingOptions = {
     allowMultilineBreaks?:boolean,
+    skipLineBreaks?:boolean,
     allowDoubleSpaces?:boolean,
 
     maxWords?:number,
@@ -91,7 +92,8 @@ function parseBlockQuote(line:string):BlockQuoteElement {
 /** Splits into lines */
 function preprocess(text:string, options:ParsingOptions={}):string[] {
 
-    if (!options.allowDoubleSpaces) text.replaceAll(/ {2,}/g, ' '); // remove double spaces
+    if (!options.allowDoubleSpaces) text = text.replaceAll(/ {2,}/g, ' '); // remove double spaces
+    if (!options.skipLineBreaks) text = text.replaceAll(/(\r\n)|(\n)/g, "");
 
     // split into lines
     const lines = text.split(/(?:\r\n)|(?:\n)/g);

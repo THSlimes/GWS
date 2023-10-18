@@ -20,6 +20,7 @@
     word-wrap: normal;
     direction: ltr;
     -webkit-font-feature-settings: 'liga';
+    font-feature-settings: "liga";
     -webkit-font-smoothing: antialiased;
 }
 
@@ -45,9 +46,14 @@ body {
 
     background-color: var(--primary);
     font-family: var(--std-font);
+
+    & * {
+        user-select: text;
+        -webkit-user-drag: none;
+    }
 }
 
-p, h1, h2, h3, h4, h5, h6, label { color: var(--text); }
+p, h1, h2, h3, h4, h5, h6, input, label { color: var(--text); }
 
 .subtitle { font-size: 80% }
 
@@ -98,6 +104,7 @@ header.page-header {
     background-color: var(--secondary);
 
     & > .desc * {
+        color: var(--text);
         margin:0px;
         text-decoration: none;
     }
@@ -124,11 +131,6 @@ header.page-header {
         & .link {
             color: var(--text);
             text-decoration: none;
-            display: table-cell;
-            
-            transform-origin: left;
-            &:hover { text-decoration: underline; }
-            &:active { scale: .975; }
 
             > * { margin: 0px; }
         }
@@ -205,7 +207,6 @@ element-carousel {
     height: 80vh;
 
     overflow: hidden;
-    user-select: text;
 
     > img {
         position:absolute;
@@ -289,3 +290,25 @@ article {
 .cross-axis-start { align-items: flex-start; }
 .cross-axis-end { align-items: flex-end; }
 .cross-axis-center { align-items: center; }
+
+/* standard indication of being click-able */
+button, input[type="button"], .click-action {
+    &:disabled {
+        filter: grayscale(.65);
+        opacity: .75; 
+    }
+    &:not(:disabled) {
+        transform-origin: center;
+        &:hover { scale:1.05; }
+        &:active { scale:0.95; }
+    }
+}
+
+/* standard indication of being a link */
+a, .link {
+    &:not(:disabled) {
+        transform-origin: left;
+        &:hover { text-decoration: 1.25px underline currentColor !important; }
+        &:active { scale: .95; }
+    }
+}

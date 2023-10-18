@@ -65,7 +65,11 @@ export default abstract class ElementFactory {
     
     /** Methods for specific input-types. */
     public static readonly input = {
-        button() { return new ButtonLikeInputAssemblyLine("button"); },
+        button(value?:string, onClick?:(val:string)=>void) {
+            const out =  new ButtonLikeInputAssemblyLine("button");
+            if (value !== undefined) out.value(value);
+            return onClick ? out.onClick(onClick) : out;
+        },
         checkbox() { return new CheckableInputAssemblyLine("checkbox"); },
         color() { return new InputAssemblyLine("color"); },
         localDatetime() { return new DateInputAssemblyLine("datetime-local"); },

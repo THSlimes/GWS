@@ -280,6 +280,7 @@ export class InputAssemblyLine<T extends keyof HTMLInputElementTypeMap> extends 
 
     public override make() {
         const out = super.make() as SmartInput;
+        out.type = this.type;
 
         out.value = this._value.toString();
         out.prevValue = out.value;

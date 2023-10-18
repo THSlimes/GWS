@@ -8,7 +8,7 @@ const DB = new FirestoreDatabase();
 const articleId = new URLSearchParams(window.location.search).get("id");
 
 if (articleId) {
-    DB.articles.byId(articleId)
+    DB.articles.getById(articleId)
     .then(article => {
         if (article) ARTICLE_DIV.appendChild(SmartArticle.fromInfo(article, false));
     })

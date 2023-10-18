@@ -8,7 +8,7 @@ import ElementFactory from "../html-element-factory/HTMLElementFactory";
  */
 export default class SmartArticle extends HTMLElement {
 
-    private static DEFAULT_PREVIEW_CUTOFF = 40;
+    private static DEFAULT_PREVIEW_CUTOFF = 100;
 
     private readonly heading:HTMLHeadingElement;
     private readonly body:HTMLDivElement;
@@ -25,7 +25,6 @@ export default class SmartArticle extends HTMLElement {
     constructor(heading:string, body:string, createdAt:Date, isPreview=true, linkToFull?:string) {
         super();
         this.style.display = "block";
-        // this.classList.add("boxed");
         
         this.heading = this.appendChild(
             ElementFactory.heading(isPreview ? 2 : 1)
@@ -33,7 +32,9 @@ export default class SmartArticle extends HTMLElement {
                 .html(Markdown.parseLine(heading))
                 .make()
         );
-        this.body = this.appendChild(Markdown.parse(body, isPreview ? {maxWords:SmartArticle.DEFAULT_PREVIEW_CUTOFF, cutoffMarker:" "} : {}));
+        this.body = this.appendChild(
+            Markdown.parse(body, isPreview ? {maxWords:SmartArticle.DEFAULT_PREVIEW_CUTOFF, cutoffMarker:" ", skipLineBreaks:true} : undefined)
+        );
         this.body.classList.add("body");
         this.createdAt = createdAt;
 

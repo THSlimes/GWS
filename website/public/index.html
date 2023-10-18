@@ -24,10 +24,14 @@
         </element-carousel>
 
         <div id="split-view">
-            <div id="recent-messages" class="info flex-rows main-axis-space-evenly">
-                <div class="page-navigator flex-columns">
-                    <input type="button" class="icon previous-page" value="arrow_left">
-                    <input type="button" class="icon next-page" value="arrow_right">
+            <div id="recent-messages" class="info flex-rows main-axis-space-between">
+                <div id="page-navigator" class="flex-columns cross-axis-center">
+                    <input type="button" id="first-page" value="first_page" class="icon">
+                    <input type="button" id="previous-page" value="navigate_before" class="icon">
+                    <input type="button" id="next-page" value="navigate_next" class="icon">
+                    <input type="button" id="last-page" value="last_page" class="icon">
+
+                    <p id="page-indicator">Pagina 1 / ?</p>
                 </div>
             </div>
 

@@ -16,6 +16,8 @@
     }
 }
 
-.page-navigator {
+#page-navigator {
     padding: 1em;
+
+    > #page-indicator { margin: 0px 0px 0px 1em }
 }
