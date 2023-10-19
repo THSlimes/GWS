@@ -1,4 +1,4 @@
-import Markdown from "../Markdown";
+import RichText from "../RichText";
 import { ArticleInfo } from "../Database";
 import ElementFactory from "../html-element-factory/HTMLElementFactory";
 
@@ -29,11 +29,11 @@ export default class SmartArticle extends HTMLElement {
         this.heading = this.appendChild(
             ElementFactory.heading(isPreview ? 2 : 1)
                 .class("heading", "markdown")
-                .html(Markdown.parseLine(heading))
+                .html(RichText.parseLine(heading))
                 .make()
         );
         this.body = this.appendChild(
-            Markdown.parse(body, isPreview ? {maxWords:SmartArticle.DEFAULT_PREVIEW_CUTOFF, cutoffMarker:" ", skipLineBreaks:true} : undefined)
+            RichText.parse(body, isPreview ? {maxWords:SmartArticle.DEFAULT_PREVIEW_CUTOFF, cutoffMarker:" ", skipLineBreaks:true} : undefined)
         );
         this.body.classList.add("body");
         this.createdAt = createdAt;

@@ -4,36 +4,32 @@ export type QueryOptions = {
     /** Specific ID of record to be retrieved. */
     id?:string,
     /** Specific ID excluded from retrieved records. */
-    notId?:string,
-    startAt?:number,
-    startAfter?:number,
-    endAt?:number,
-    endBefore?:number
+    notId?:string
 }
 
-export type ArticleInfo = { index:number, id:string, heading:string, body:string, created_at:Date, category:string }
+export type ArticleInfo = { id:string, heading:string, body:string, created_at:Date, category:string, show_on_homepage:boolean }
 export type ArticleFilterOptions = QueryOptions & {
     /** Way of sorting by the creation timestamp. */
-    sortByIndex?:"ascending"|"descending",
+    sortByCreatedAt?:"ascending"|"descending",
     /** Latest possibly date (exclusive) of retrieved records. */
     before?:Date,
     /** Earliest possibly date (exclusive) of retrieved records. */
     after?:Date,
     /** Category of retrieved records. */
-    category?:string
+    category?:string,
+    /** Whether to only retrieve articles to be shown on the homepage. */
+    forHomepage?:boolean
 };
 
 export abstract class ArticleDatabase {
     /** Attempts to get a specific article using its ID. */
     abstract getById(id:string):Promise<ArticleInfo|undefined>;
-    /** Gets the most recent articles. */
-    abstract getRecent(limit:number, options?:ArticleFilterOptions):Promise<ArticleInfo[]>;
-    /** Retrieves the number of articles posted before the given date. */
-    abstract getNumBefore(before:Date, options?:ArticleFilterOptions):Promise<number>;
-    /** Retrieves the number of articles posted after the given date. */
-    abstract getNumAfter(after:Date, options?:ArticleFilterOptions):Promise<number>;
+    /** Retrieves articles from the database. */
+    abstract get(limit:number, options?:ArticleFilterOptions):Promise<ArticleInfo[]>;
     /** Gets articles with the given category. */
     abstract getByCategory(category:string, options?:ArticleFilterOptions):Promise<ArticleInfo[]>;
+    /** Gets the amount of articles that match the filtering options. */
+    abstract getCount(options?:ArticleFilterOptions):Promise<number>;
 }
 
 /**

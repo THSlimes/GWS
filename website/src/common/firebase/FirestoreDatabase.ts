@@ -7,7 +7,7 @@ import { clamp } from "../NumberUtil";
 const DB = getFirestore(FIREBASE_APP);
 
 /** An article as it appears in the database. */
-type DBArticle = { index:number, heading:string, body:string, created_at:Timestamp, category:string };
+type DBArticle = { heading:string, body:string, created_at:Timestamp, category:string, show_on_homepage:boolean };
 /** Defines database interactions related to articles. */
 class FirestoreArticleDatabase implements ArticleDatabase {
 
@@ -37,8 +37,8 @@ class FirestoreArticleDatabase implements ArticleDatabase {
         });
     }
 
-    public getRecent(limit=5, options?:Omit<ArticleFilterOptions, "limit"|"sortByIndex">) {
-        return FirestoreArticleDatabase.getArticles({limit, sortByIndex:"descending", ...options});
+    public get(limit=5, options?:Omit<ArticleFilterOptions, "limit">) {
+        return FirestoreArticleDatabase.getArticles({limit, sortByCreatedAt:"descending", ...options});
     }
 
     public getByCategory(category:string, options?:Omit<ArticleFilterOptions, "id">) {
@@ -49,31 +49,21 @@ class FirestoreArticleDatabase implements ArticleDatabase {
         return FirestoreArticleDatabase.getArticles({...options}, true);
     }
 
-    public getNumBefore(before:Date, options?:Omit<ArticleFilterOptions, "before">):Promise<number> {
-        return FirestoreArticleDatabase.getArticles({before, ...options}, true);
-    }
-
-    public getNumAfter(after:Date, options?:Omit<ArticleFilterOptions, "after">):Promise<number> {
-        return FirestoreArticleDatabase.getArticles({after, ...options}, true);
-    }
-
     private static getArticles(options:ArticleFilterOptions, doCount?:false):Promise<ArticleInfo[]>
     private static getArticles(options:ArticleFilterOptions, doCount?:true):Promise<number>
     private static getArticles(options:ArticleFilterOptions, doCount=false):Promise<ArticleInfo[]|number> {
         const constraints:QueryConstraint[] = []; // convert options into constraints
-        // article-specific
-        if (typeof options.endBefore === "number") constraints.push(endBefore(options.endBefore));
-        if (options.sortByIndex) constraints.push(orderBy("index", options.sortByIndex === "ascending" ? "asc" : "desc"));
-        if (options.before) constraints.push(where("created_at", '<', Timestamp.fromDate(options.before)));
-        if (options.after) constraints.push(where("created_at", '>', Timestamp.fromDate(options.after)));
-        if (typeof options.category === "string") constraints.push(where("category", "==", options.category));
         // general
         if (options.limit) constraints.push(limit(clamp(options.limit, 0, 20)));
         if (options.id) constraints.push(where(documentId(), "==", options.id));
         if (options.notId) constraints.push(where(documentId(), "!=", options.notId));
-        if (typeof options.startAt === "number") constraints.push(startAt(options.startAt));
-        if (typeof options.startAfter === "number") constraints.push(startAfter(options.startAfter));
-        if (typeof options.endAt === "number") constraints.push(endAt(options.endAt));        
+
+        // article-specific
+        if (options.sortByCreatedAt) constraints.push(orderBy("created_at", options.sortByCreatedAt === "ascending" ? "asc" : "desc"));
+        if (options.before) constraints.push(where("created_at", '<', Timestamp.fromDate(options.before)));
+        if (options.after) constraints.push(where("created_at", '>', Timestamp.fromDate(options.after)));
+        if (typeof options.category === "string") constraints.push(where("category", "==", options.category));
+        if (options.forHomepage) constraints.push(where("show_on_homepage", "==", true));
 
         return new Promise(async (resolve, reject) => {
             const q = query(FirestoreArticleDatabase.COLLECTION, ...constraints); // create query
