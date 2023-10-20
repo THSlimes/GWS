@@ -8,6 +8,9 @@ import SmartArticle from "../common/custom-elements/SmartArticle";
 import { ArticleDatabase, ArticleInfo } from "../common/Database";
 import { clamp } from "../common/NumberUtil";
 
+const CAROUSEL_COVER = $("#photo-carousel > h1[cover]");
+CAROUSEL_COVER.css({"opacity":"0"}).animate({ "scale": "1", "opacity": "1" }, {duration:750, easing: "swing"});
+
 const RECENT_MESSAGES_ELEM = document.getElementById("recent-messages")!;
 
 const FIRST_PAGE_BUTTON = document.getElementById("first-page") as HTMLInputElement;
@@ -34,7 +37,7 @@ function getPeriod(articles:ArticleInfo[]):[Date, Date] {
 }
 
 async function init() {
-    const PAGE_SIZE = 3;
+    const PAGE_SIZE = 5;
     const NUM_ARTICLES = await DB.getCount({ forHomepage:true }); // get from database
     const NUM_PAGES = Math.ceil(NUM_ARTICLES / PAGE_SIZE);
 

@@ -8,6 +8,8 @@
     aspect-ratio: 16 / 8;
 
     > h1[cover] {
+        color: var(--primary);
+
         translate: 0px -2em;
         font-size: 3.5em;
         text-align: center;

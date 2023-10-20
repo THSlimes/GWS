@@ -8,7 +8,7 @@ import ElementFactory from "../html-element-factory/HTMLElementFactory";
  */
 export default class SmartArticle extends HTMLElement {
 
-    private static DEFAULT_PREVIEW_CUTOFF = 100;
+    private static DEFAULT_PREVIEW_CUTOFF = 50;
 
     private readonly heading:HTMLHeadingElement;
     private readonly body:HTMLDivElement;
@@ -33,18 +33,26 @@ export default class SmartArticle extends HTMLElement {
                 .make()
         );
         this.body = this.appendChild(
-            RichText.parse(body, isPreview ? {maxWords:SmartArticle.DEFAULT_PREVIEW_CUTOFF, cutoffMarker:" ", skipLineBreaks:true} : undefined)
+            RichText.parse(body, isPreview ? {
+                maxWords:SmartArticle.DEFAULT_PREVIEW_CUTOFF,
+                cutoffMarker:" ",
+                skipLineBreaks:true,
+                disallowedTags: ["img"]
+            } : undefined)
         );
         this.body.classList.add("body");
         this.createdAt = createdAt;
 
         if (isPreview) {
             this.setAttribute("is-preview", "");
-            if (linkToFull) this.body.lastChild!.appendChild(
+            if (linkToFull) {
+                const readMoreParent = this.body.lastChild instanceof Text || this.body.lastChild === null ? this.body : this.body.lastChild;
+                readMoreParent.appendChild(
                 ElementFactory.a(linkToFull, "lees verder »")
                     .class("read-more")
                     .make()
-            );
+                );
+            }
         }
     }
 

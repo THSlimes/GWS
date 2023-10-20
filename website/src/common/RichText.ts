@@ -7,9 +7,9 @@ type ParsingOptions = {
     allowDoubleSpaces?:boolean,
 
     maxWords?:number,
-    maxChars?:number,
-    allowBrokenWords?:boolean,
-    cutoffMarker?:string
+    cutoffMarker?:string,
+
+    disallowedTags?:string[]
 };
 
 
@@ -31,44 +31,82 @@ const ESCAPE_CONFIG:Record<string,string> = {
 };
 Object.seal(ESCAPE_CONFIG);
 
-
-
-// CONFIG
-type TagConfig = {
-    name:string,
-    isContainer:true,
-    pattern: { open:RegExp, close:RegExp },
-    parse(contents:string, attr:Record<string,string>):string
-} | {
-    name:string,
-    isContainer:false,
-    pattern:RegExp,
-    parse(attr:Record<string,string>):string
-};
-const RT_TAG_CONFIG:Record<string,TagConfig> = {
-    p: {
-        name: "p",
-        isContainer: true,
-        pattern: { open: /<p>/g, close: /<\/p>/g },
-        parse(contents, attr) {
-            return RichText.parseLine(contents);
-        },
-    },
-    br: {
-        name: "br",
-        isContainer: false,
-        pattern: /<br>/g,
-        parse(attr) { return "\r\n" },
+/**
+ * Recursively removes all nodes with a certain tag
+ * @param node node to remove children from
+ * @param tags tags to remove
+ * @returns 'node', after processing
+ */
+function removeTags(node:ParentNode, ...tags:string[]) {
+    for (let i = 0; i < node.childElementCount; i ++) {
+        const c = node.children[i];
+        if (tags.some(t => t.toLowerCase() === c.tagName.toLowerCase())) c.remove();
+        else if (c.childElementCount !== 0) removeTags(c, ...tags);
     }
-};
 
-enum TagType { OPEN, CLOSE, SINGLE }
-type TagMatch = {
-    name: string,
-    match: string,
-    range: { from:number, to:number},
-    type: TagType
+    return node;
+}
+
+function isJSLink(link:string|URL) {
+    if (typeof link === "string") link = new URL(link);
+    return link.protocol === "javascript:";
+}
+const URI_ATTRIBUTES:Record<string, string|string[]> = {
+    a: "href",
+    applet: "codebase",
+    area: "href",
+    base: "href",
+    blockquote: "cite",
+    body: "background",
+    del: "cite",
+    form: "action",
+    frame: ["longdesc", "src"],
+    head: "profile",
+    iframe: ["longdesc", "src"],
+    img: ["longdesc", "src", "usemap"],
+    input: ["src", "usemap", "formaction"],
+    ins: "cite",
+    link: "href",
+    object: ["classid", "codebase", "data", "usemap"],
+    q: "cite",
+    script: "src",
+    audio: "src",
+    button: "formaction",
+    command: "icon",
+    embed: "src",
+    html: "manifest",
+    source: "src",
+    track: "src",
+    video: ["poster", "src"] 
 };
+const URI_SPECIAL:Record<string, string> = {
+    img: "srcset",
+    source: "srcset",
+    object: "archive",
+    applet: "archive",
+    meta: "content"
+}
+
+/** Recursively removes a "javascript:" protocol links from the element and its children. */
+function removeJSLinks(elem:ParentNode) {
+    if (elem instanceof Element) {
+        let attr:string|string[];
+        if (attr = URI_ATTRIBUTES[elem.tagName.toLowerCase()]) { // can have a URI attribute
+            if (typeof attr === "string") elem.removeAttribute(attr);
+            else attr.forEach(a => {
+                if (elem.hasAttribute(a) && isJSLink(elem.getAttribute(a)!)) elem.removeAttribute(a);
+            });
+        }
+        if (attr = URI_SPECIAL[elem.tagName.toLowerCase()]) { // special uri attributes
+            if (elem.hasAttribute(attr)) elem.setAttribute(attr, elem.getAttribute(attr)!.replaceAll("javascript:", ""));
+        }
+    }
+
+    // remove in children
+    for (let i = 0; i < elem.childElementCount; i ++) removeJSLinks(elem.children[i]);
+
+    return elem;
+}
 
 /** Makes a piece of text HTML-safe. */
 function sanitize(text:string):string {
@@ -76,16 +114,18 @@ function sanitize(text:string):string {
     return text;
 }
 
+const ENDS_WORD = /\ |\n|\,|\;|\:|\.|\?|\!/g
+
 export default abstract class RichText {
 
-    public static parseLine(text:string):string {
-        text = sanitize(text);
-        text = text
-            .replaceAll(/\/(.*)\//g, s => `<span class="italic">${s.substring(1,s.length-1)}</span>`) // italic
-            .replaceAll(/\*(.*)\*/g, s => `<span class="bold">${s.substring(1,s.length-1)}</span>`) // bold
-            .replaceAll(/_(.*)_/g, s => `<span class="underlined">${s.substring(1,s.length-1)}</span>`) // underlined
-            .replaceAll(/~(.*)~/g, s => `<span class="strikethrough">${s.substring(1,s.length-1)}</span>`) // strikethrough
-            .replaceAll(/```(.*)```/g, s => `<span class="monospace">${s.substring(3,s.length-3)}</span>`); // monospace
+    public static parseLine(text:string, doSanitize=true):string {
+        if (doSanitize) text = sanitize(text);
+        // text = text
+        //     .replaceAll(/\/((?!(<\/*[a-zA-Z0-9 ]*>)).|\n)*?\//g, s => `<span class="italic">${s.substring(1,s.length-1)}</span>`) // italic
+        //     .replaceAll(/\*((?!(<\/*[a-zA-Z0-9 ]*>)).|\n)*\*/g, s => `<span class="bold">${s.substring(1,s.length-1)}</span>`) // bold
+        //     .replaceAll(/_((?!(<\/*[a-zA-Z0-9 ]*>)).|\n)*_/g, s => `<span class="underlined">${s.substring(1,s.length-1)}</span>`) // underlined
+        //     .replaceAll(/~((?!(<\/*[a-zA-Z0-9 ]*>)).|\n)*~/g, s => `<span class="strikethrough">${s.substring(1,s.length-1)}</span>`) // strikethrough
+        //     .replaceAll(/```((?!(<\/*[a-zA-Z0-9 ]*>)).|\n)*```/g, s => `<span class="monospace">${s.substring(3,s.length-3)}</span>`); // monospace
 
         return text;
     }
@@ -97,48 +137,57 @@ export default abstract class RichText {
      * @returns converted richtext
      */
     public static parse(text:string, options:ParsingOptions={}):HTMLDivElement {
-        const out = ElementFactory.div().class("rich-text");
+        text = this.parseLine(text, false); // apply text styling
 
-        const tags = this.findTags(text);
+        if (!options.allowDoubleSpaces) text = text.replaceAll(/ +/g, ' ');
+        if (options.skipLineBreaks) text = text.replaceAll(/(<br>)|(\n)/g, "");
+        else if (!options.allowMultilineBreaks) text = text.replaceAll(/(<br>)+/g, "<br>").replaceAll("\n+", '\n');
 
-        out.children(ElementFactory.p().html(this.parseLine(text))); // TODO: IMPLEMENT RICHTEXT PARSER
-        return out.make();
-    }
+        // parse as HTML
+        const parser = new DOMParser();
+        
+        const doc = parser.parseFromString(text, "text/html");
+        // remove XSS sources
+        removeTags(doc, "script", ...(options.disallowedTags ?? []));
+        removeJSLinks(doc);
 
-    private static findTags(text:string):TagMatch[] {
-        const out:TagMatch[] = [];
+        if (typeof options.maxWords === "number") { // limit number of words / letters
+            let wordsLeft = options.maxWords;
 
-        for (const name in RT_TAG_CONFIG) {
-            const tagConfig = RT_TAG_CONFIG[name];
-            if (tagConfig.isContainer) { // find opening and closing matches
-                const openMatches = [...text.matchAll(tagConfig.pattern.open)];
-                out.push(...openMatches.map(m => ({
-                    name,
-                    match: m[0],
-                    range: { from: m.index!, to: m.index! + m.length },
-                    type: TagType.OPEN
-                })));
+            // count using depth-first-search of dom-tree
+            const frontier:Node[] = [doc.body];
+            while (frontier.length !== 0) {
+                const elem = frontier.shift()!;
 
-                const closeMatches = [...text.matchAll(tagConfig.pattern.close)];
-                out.push(...closeMatches.map(m => ({
-                    name,
-                    match: m[0],
-                    range: { from: m.index!, to: m.index! + m.length },
-                    type: TagType.CLOSE
-                })));
-            }
-            else { // only match single tags
-                const matches = [...text.matchAll(tagConfig.pattern)];
-                out.push(...matches.map(m => ({
-                    name,
-                    match: m[0],
-                    range: { from: m.index!, to: m.index! + m.length },
-                    type: TagType.SINGLE
-                })));
+                if (wordsLeft <= 0) elem.parentElement?.removeChild(elem); // remove everything after word limit
+                else { // word limit not hit yet
+                    if (elem instanceof Text) { // only count words in text-nodes
+                        for (let i = 1; i < elem.data.length; i ++) {
+                            if (!ENDS_WORD.test(elem.data[i-1]) && ENDS_WORD.test(elem.data[i])) {
+                                if (--wordsLeft <= 0) { // hit word limit
+                                    elem.data = elem.data.substring(0,i) + options.cutoffMarker ?? "";
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    // expand frontier
+                    const expansion:Node[] = [];
+                    elem.childNodes.forEach(n => expansion.push(n));
+                    frontier.unshift(...expansion);
+                }
             }
         }
 
-        return out;
+        // extract children :)
+        const children:Node[] = [];
+        doc.body.childNodes.forEach(c => children.push(c));
+
+        return ElementFactory.div()
+            .class("rich-text")
+            .children(...children)
+            .make();
     }
 
 }
