@@ -3,7 +3,7 @@
     font-family: "icon";
     font-style: normal;
     font-weight: 100 700;
-    src: url(https://fonts.gstatic.com/s/materialsymbolsoutlined/v138/kJEhBvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oFsI.woff2) format('woff2');
+    src: url("../fonts/google-icons.woff2") format('woff2');
 }
   
 .icon {
@@ -129,9 +129,6 @@ header.page-header {
         }
 
         & .link {
-            color: var(--text);
-            text-decoration: none;
-
             > * { margin: 0px; }
         }
     }
@@ -322,7 +319,9 @@ button, input[type="button"], .click-action {
 a, .link {
     &:not(:disabled) {
         transform-origin: left;
+        color: inherit;
         &:hover { text-decoration: 1.25px underline currentColor !important; }
+        &:not(:hover) { text-decoration: none; }
         &:active { scale: .95; }
     }
 }

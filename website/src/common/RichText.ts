@@ -9,7 +9,8 @@ type ParsingOptions = {
     maxWords?:number,
     cutoffMarker?:string,
 
-    disallowedTags?:string[]
+    disallowedTags?:string[],
+    classes?:string[]
 };
 
 
@@ -185,7 +186,7 @@ export default abstract class RichText {
         doc.body.childNodes.forEach(c => children.push(c));
 
         return ElementFactory.div()
-            .class("rich-text")
+            .class("rich-text", ...(options.classes ?? []))
             .children(...children)
             .make();
     }

@@ -29,7 +29,11 @@ export default class SmartArticle extends HTMLElement {
         this.heading = this.appendChild(
             ElementFactory.heading(isPreview ? 2 : 1)
                 .class("heading", "markdown")
-                .html(RichText.parseLine(heading))
+                .children(
+                    linkToFull ? 
+                        ElementFactory.a(linkToFull).openInNewTab(true).html(RichText.parseLine(heading)) : // link to full article
+                        new Text(RichText.parseLine(heading)) // don't use link
+                )
                 .make()
         );
         this.body = this.appendChild(
@@ -49,6 +53,7 @@ export default class SmartArticle extends HTMLElement {
                 const readMoreParent = this.body.lastChild instanceof Text || this.body.lastChild === null ? this.body : this.body.lastChild;
                 readMoreParent.appendChild(
                 ElementFactory.a(linkToFull, "lees verder »")
+                    .openInNewTab(true)
                     .class("read-more")
                     .make()
                 );

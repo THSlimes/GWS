@@ -31,7 +31,7 @@ module.exports = {
     resolve: {
         extensions: ['.ts', '.js']
     },
-    mode: 'development',
+    mode: "production",
     devServer: {
         liveReload: true,
         port: 8080,

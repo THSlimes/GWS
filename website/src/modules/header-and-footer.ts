@@ -1,4 +1,4 @@
-import FolderElement, { FoldingDirection } from "../common/custom-elements/FolderElement";
+import FolderElement from "../common/custom-elements/FolderElement";
 import ElementFactory from "../common/html-element-factory/HTMLElementFactory";
 
 // HEADER / NAVBAR
@@ -113,8 +113,8 @@ function createFolderContents(config:NavbarConfig, nestingLvl=0):(FolderElement|
     return out;
 }
 
-function insertHeader(config:NavbarConfig) {
-    const header = ElementFactory.header()
+function createHeader(config:NavbarConfig):HTMLElement {
+    return ElementFactory.header()
         .class("page-header", "flex-columns", "main-axis-space-between", "cross-axis-center")
         .children(
             ElementFactory.div()
@@ -134,15 +134,13 @@ function insertHeader(config:NavbarConfig) {
                     ElementFactory.p("search").class("icon")
                 )
         ).make();
-    
-    document.body.prepend(header);
 }
 
 
 
 // FOOTER + COPYRIGHT NOTICE
-function insertFooter() {
-    document.body.append( // footer
+function createFooter():Node[] {
+    return [
         ElementFactory.footer()
             .class("page-footer", "center-content", "flex-rows")
             .children(
@@ -158,20 +156,21 @@ function insertFooter() {
                             .children(ElementFactory.img("./images/logos/Facebook_Logo_Primary.png", "Facebook")),
                     )
             )
-            .make()
-    );
-
-    document.body.append(
+            .make(),
+        
         ElementFactory.h5(`© ${new Date().getFullYear()} Den Geitenwollen Soc.`)
             .class("copyright-notice")
             .make()
-    );
+    ];
 }
 
 
-// INSERTING BOTH
+// create header and footer before page-load
+const HEADER = createHeader(NAVBAR_CONFIG);
+const FOOTER = createFooter();
 
-window.addEventListener("load", () => {
-    insertHeader(NAVBAR_CONFIG);
-    insertFooter();
+// insert both after page-load
+window.addEventListener("DOMContentLoaded", () => {    
+    document.body.prepend(HEADER);
+    document.body.append(...FOOTER);
 });
