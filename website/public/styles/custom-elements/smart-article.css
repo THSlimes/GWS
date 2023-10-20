@@ -1,0 +1,28 @@
+/* ARTICLE DEFAULT STYLE */
+
+article {
+    padding: 0px 1em 0px 1em;
+
+    & .heading {
+        margin: 0px 0px .5em 0px;
+    }
+    &:not([is-preview]) .heading { font-size: 2.5em; }
+    > .body > p {
+        margin: .25em 0px .25em 0px;
+        line-height: 1.6em;
+    }
+
+    &[is-preview] {
+        > .body {
+            overflow: hidden;
+        }
+    
+        & .read-more {
+            margin: 0px;
+            color: var(--accent) !important;
+            font-style: italic;
+            white-space: nowrap;
+        }
+    }
+
+}

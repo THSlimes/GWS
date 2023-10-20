@@ -1,0 +1,71 @@
+@import url("./custom-elements/folder-element.css");
+
+/* PAGE HEADER */
+
+header.page-header {
+    padding: 1em 2em 1em 2em;
+    height:min-content;
+
+    background-color: var(--secondary);
+
+    & * { color: var(--primary); }
+
+    & > .desc * {
+        margin:0px;
+        text-decoration: none;
+    }
+    & > .links {
+        padding: 0px 2em 0px 2em;
+        column-gap:2em;
+        flex-grow:2;
+        flex-wrap: wrap;
+
+        & * { font-weight: 500; }
+        & folder-element {
+            &[open] > .topper > .heading { color: var(--accent); }
+
+            > .topper {
+                > * { margin: 0px; }
+            }
+
+            > .contents {
+                padding: .5em 1em .5em 1em;
+                > * { margin: .25em 0px .25em 0px; height:17.6px; }
+            }
+        }
+
+        & .link {
+            > * { margin: 0px; }
+        }
+    }
+}
+
+/* FOOTER */
+
+footer {
+    padding: .25em 1em 2em 1em;
+    margin-top: 2em;
+
+    background-color: var(--tertiary);
+
+    > .social-media-links {
+        min-width: 25%;
+
+        & img {
+            min-height: 21px; /* https://brand.linkedin.com/downloads */
+            height: 4em;
+        }
+    }
+}
+
+.copyright-notice {
+    padding:1em;
+    margin:0px;
+
+    box-sizing: border-box;
+    width:100%;
+
+    background-color: var(--secondary);
+    color: var(--primary);
+    text-align: center;
+}

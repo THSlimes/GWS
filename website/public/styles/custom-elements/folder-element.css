@@ -1,0 +1,21 @@
+/* FOLDER-ELEMENT DEFAULT STYLE */
+
+folder-element {
+    > .topper {
+        > .heading { transition: color 200ms ease-in; }
+        > .arrow { transition: rotate 200ms ease-in; }
+    }
+    
+    > .contents {
+        position: absolute;
+        z-index: 99;
+
+        display: grid;
+        grid-auto-flow: column;
+        grid-template-rows: repeat(15, min-content);
+        grid-auto-columns: max-content;
+        column-gap: 1em;
+        
+        background-color: var(--secondary);
+    }
+}

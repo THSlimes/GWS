@@ -1,13 +1,13 @@
 @import url("../shared.css");
+@import url("../custom-elements/element-carousel.css");
+@import url("../custom-elements/smart-article.css");
 
 #photo-carousel {
-    margin-bottom: 2em;
+    margin: 1em 0px 1em 0px;
 
     width: 100%;
     height: unset;
     aspect-ratio: 16 / 8;
-    /* border-top: .25em solid var(--secondary);
-    border-bottom: .25em solid var(--secondary); */
 
     > h1[cover] {
         color: var(--primary);
