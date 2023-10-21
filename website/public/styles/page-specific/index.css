@@ -17,6 +17,8 @@
         text-align: center;
         text-decoration: underline 2.5px var(--accent);
         text-underline-offset: .125em;
+
+        animation: 1500ms cubic-bezier(0.175, 0.885, 0.32, 1.275) 0ms zoom-in;
     }
 
     > div[cover] {
@@ -25,6 +27,12 @@
         height: 100%;
         box-shadow: inset 0px 0px 1em 0px var(--secondary);
     }
+}
+
+@keyframes zoom-in {
+    0% { opacity: 0; scale: 0; }
+    50% { opacity: 0; scale: 0; }
+    100% { opacity: 1; scale: 1; }
 }
 
 #page-navigator {

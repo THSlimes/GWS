@@ -75,6 +75,7 @@ div#split-view {
 
     > .content {
         grid-area: 1 / 1 / 11 / 17;
+        padding: 1em 0px 1em 0px;
         row-gap: 1em;
     }
 

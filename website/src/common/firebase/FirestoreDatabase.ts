@@ -6,8 +6,14 @@ import { clamp } from "../NumberUtil";
 // initialize Firebase Firestore
 const DB = getFirestore(FIREBASE_APP);
 
+enum Permission {
+    HAS_ACCOUNT = "HAS_ACCOUNT",
+    READ_MEMBER_ARTICLES = "READ_MEMBER_ARTICLES"
+}
+type PermissionGuarded = { required_permissions: Permission[] };
+
 /** An article as it appears in the database. */
-type DBArticle = { heading:string, body:string, created_at:Timestamp, category:string, show_on_homepage:boolean };
+type DBArticle = PermissionGuarded & { heading:string, body:string, created_at:Timestamp, category:string, show_on_homepage:boolean };
 /** Defines database interactions related to articles. */
 class FirestoreArticleDatabase implements ArticleDatabase {
 
@@ -16,7 +22,8 @@ class FirestoreArticleDatabase implements ArticleDatabase {
         toFirestore(article:ArticleInfo):DBArticle {
             return {
                 ...article,
-                created_at: Timestamp.fromDate(article.created_at)
+                created_at: Timestamp.fromDate(article.created_at),
+                required_permissions: []
             }
         },
         fromFirestore(snapshot:QueryDocumentSnapshot<DBArticle, ArticleInfo>):ArticleInfo {

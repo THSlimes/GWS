@@ -31,10 +31,6 @@ function getPeriod(articles:ArticleInfo[]):[Date, Date] {
 window.addEventListener("DOMContentLoaded", async () => {
     const NUM_ARTICLES = await DB.getCount({ forHomepage:true }); // total number of articles
 
-    // association name into animation
-    const CAROUSEL_COVER = document.getElementById("carousel-name") as HTMLHeadingElement;
-    $(CAROUSEL_COVER).css({"opacity":"0"}).animate({ "scale": "1", "opacity": "1" }, {duration:750, easing: "swing"});
-
     // where to put article previews
     const RECENT_MESSAGES_ELEM = document.getElementById("recent-messages")!;
     // navigation buttons

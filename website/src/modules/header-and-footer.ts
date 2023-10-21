@@ -4,13 +4,15 @@ import ElementFactory from "../common/html-element-factory/HTMLElementFactory";
 // HEADER / NAVBAR
 
 const DEFAULT_LINK = "/";
+/** Creates the link to an article given its ID. */
+function articleLink(id:string) { return `/article.html?id=${id}` }
 
 type NavbarConfig = { [name:string]: NavbarConfig | string }
 const NAVBAR_CONFIG:NavbarConfig = {
     "Vereniging": {
-        "Algemeen": DEFAULT_LINK,
-        "Verenigingsblad 't blaatje": DEFAULT_LINK,
-        "Lidmaatschap": DEFAULT_LINK,
+        "Algemeen": articleLink("vereniging-algemeen"),
+        "Verenigingsblad 't blaatje": articleLink("vereniging-verenigingsblad-t-blaatje"),
+        "Lidmaatschap": articleLink("vereniging-lidmaatschap"),
         "Huidig bestuur": {
             "Voorzitter": DEFAULT_LINK,
             "Penningmeester en Commissaris Interne Betrekkingen": DEFAULT_LINK,
