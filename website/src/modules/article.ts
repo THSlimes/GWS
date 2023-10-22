@@ -1,5 +1,5 @@
 import SmartArticle from "../common/custom-elements/SmartArticle";
-import FirestoreDatabase from "../common/firebase/FirestoreDatabase";
+import FirestoreDatabase from "../common/firebase/database/FirestoreDatabase";
 
 const DB = new FirestoreDatabase();
 const articleId = new URLSearchParams(window.location.search).get("id");

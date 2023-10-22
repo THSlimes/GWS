@@ -3,7 +3,7 @@ import $ from "jquery";
 import "../common/parallax-scrolling";
 import "../common/custom-elements/ElementCarousel";
 
-import FirestoreDatabase from "../common/firebase/FirestoreDatabase";
+import FirestoreDatabase from "../common/firebase/database/FirestoreDatabase";
 import SmartArticle from "../common/custom-elements/SmartArticle";
 import { ArticleDatabase, ArticleInfo } from "../common/Database";
 import { clamp } from "../common/NumberUtil";
@@ -29,7 +29,7 @@ function getPeriod(articles:ArticleInfo[]):[Date, Date] {
 
 
 window.addEventListener("DOMContentLoaded", async () => {
-    const NUM_ARTICLES = await DB.getCount({ forHomepage:true }); // total number of articles
+    const NUM_ARTICLES = await DB.count({ forHomepage:true }); // total number of articles
 
     // where to put article previews
     const RECENT_MESSAGES_ELEM = document.getElementById("recent-messages")!;

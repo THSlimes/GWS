@@ -22,14 +22,18 @@ export type ArticleFilterOptions = QueryOptions & {
 };
 
 export abstract class ArticleDatabase {
-    /** Attempts to get a specific article using its ID. */
-    abstract getById(id:string):Promise<ArticleInfo|undefined>;
     /** Retrieves articles from the database. */
     abstract get(limit:number, options?:ArticleFilterOptions):Promise<ArticleInfo[]>;
+
+    /** Gets the amount of articles that match the filtering options. */
+    abstract count(options?:ArticleFilterOptions):Promise<number>;
+
+    /** Attempts to get a specific article using its ID. */
+    abstract getById(id:string):Promise<ArticleInfo|undefined>;
+
     /** Gets articles with the given category. */
     abstract getByCategory(category:string, options?:ArticleFilterOptions):Promise<ArticleInfo[]>;
-    /** Gets the amount of articles that match the filtering options. */
-    abstract getCount(options?:ArticleFilterOptions):Promise<number>;
+
 }
 
 /**
