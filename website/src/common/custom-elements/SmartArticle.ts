@@ -1,6 +1,6 @@
 import RichText from "../RichText";
 import { ArticleInfo } from "../Database";
-import ElementFactory from "../html-element-factory/HTMLElementFactory";
+import ElementFactory from "../html-element-factory/ElementFactory";
 
 /**
  * A SmartArticle is a custom type of article. It provides a consistent way

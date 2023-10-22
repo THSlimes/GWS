@@ -1,0 +1,65 @@
+event-calender {
+    display: grid;
+    grid-template-rows: 4em auto;
+
+    padding:.5em;
+
+    box-sizing: border-box;
+    width: 100%;
+    aspect-ratio: 2 / 1;
+
+    border: 2.5px solid var(--shadow);
+    border-radius: .25em;
+
+    > .controls {
+        gap:1em;
+        width: 100%;
+        > .month-input { border: none; }
+        > .nav-button {
+            height: min-content;
+        }
+    }
+    
+    > .day-cells {
+        display: grid;
+        grid-template-rows: auto repeat(6, 1fr);
+        grid-template-columns: repeat(7, 1fr);
+
+        grid-row: 2 / 3;
+
+        padding:2.5px;
+
+        background-color: var(--tertiary);
+
+        > .day-name {
+            margin: 0px;
+            justify-self: center;
+            align-self: center;
+            color: var(--primary);
+            user-select: none;
+        }
+        
+        > .day-cell {
+            position: relative;
+
+            background-color: var(--primary);
+            border: 1px solid var(--shadow);
+
+            &.different-month { filter: grayscale(.8) blur(.5px); }
+            &.today {
+                border: 2px solid var(--accent);
+                > .day-number { color: var(--accent); }
+            }
+
+            > .day-number {
+                position: absolute;
+                top:0px;
+                left:2px;
+
+                margin: 0px;
+                
+                user-select: none;
+            }
+        }
+    }
+}

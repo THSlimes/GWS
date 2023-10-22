@@ -1,5 +1,6 @@
 import { clamp } from "../NumberUtil";
-import AssemblyLine, { AnchorElementAssemblyLine, ButtonLikeInputAssemblyLine, CheckableInputAssemblyLine, DateInputAssemblyLine, InputAssemblyLine, NumberInputAssemblyLine, RangedInputAssemblyLine, TextInputAssemblyLine } from "./AssemblyLine";
+import AssemblyLine, { AnchorElementAssemblyLine } from "./AssemblyLine";
+import { ButtonLikeInputAssemblyLine, CheckableInputAssemblyLine, DateInputAssemblyLine, InputAssemblyLine, NumberInputAssemblyLine, RangedInputAssemblyLine, TextInputAssemblyLine } from "./InputAssemblyLine";
 
 /**
  * The ElementFactory helper-class provides static methods that allow
@@ -76,7 +77,13 @@ export default abstract class ElementFactory {
         email() { return new TextInputAssemblyLine("email"); },
         file() { return new TextInputAssemblyLine("file"); },
         image() { return new InputAssemblyLine("image"); },
-        month() { return new RangedInputAssemblyLine("month"); },
+        month(year?:number, month?: number) {
+            const out = new RangedInputAssemblyLine("month");
+            if (year !== undefined && month !== undefined) out.value(year, month);
+            else if (year !== undefined) out.value(year, new Date().getMonth());
+            else if (month !== undefined) out.value(new Date().getFullYear(), month);
+            return out;
+        },
         number() { return new NumberInputAssemblyLine("number"); },
         password() { return new TextInputAssemblyLine("password"); },
         radio() { return new CheckableInputAssemblyLine("radio"); },

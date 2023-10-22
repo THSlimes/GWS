@@ -1,5 +1,5 @@
 import $ from "jquery";
-import ElementFactory from "../html-element-factory/HTMLElementFactory";
+import ElementFactory from "../html-element-factory/ElementFactory";
 
 export type FoldingDirection = "down" | "right";
 

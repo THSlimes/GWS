@@ -1,5 +1,5 @@
 import FolderElement from "../common/custom-elements/FolderElement";
-import ElementFactory from "../common/html-element-factory/HTMLElementFactory";
+import ElementFactory from "../common/html-element-factory/ElementFactory";
 
 // HEADER / NAVBAR
 
@@ -38,7 +38,7 @@ const NAVBAR_CONFIG:NavbarConfig = {
         },
         "GWS-kamer": DEFAULT_LINK
     },
-    "Agenda": DEFAULT_LINK,
+    "Agenda": "/calender.html",
     "Onderwijs": {
         "Aankomende studente": DEFAULT_LINK,
         "Sociologie": DEFAULT_LINK,

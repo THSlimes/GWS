@@ -1,0 +1,7 @@
+@import url("../shared.css");
+
+@import url("../custom-elements/event-calender.css");
+
+.content {
+    width: 100%;
+}
