@@ -63,7 +63,7 @@ export default abstract class ElementFactory {
         if (src) out.src(src);
         return alt ? out.alt(alt) : out;
     }
-    
+
     /** Methods for specific input-types. */
     public static readonly input = {
         button(value?:string, onClick?:(val:string)=>void) {
@@ -73,12 +73,23 @@ export default abstract class ElementFactory {
         },
         checkbox() { return new CheckableInputAssemblyLine("checkbox"); },
         color() { return new InputAssemblyLine("color"); },
-        localDatetime() { return new DateInputAssemblyLine("datetime-local"); },
+        date(year?:number, month?:number, date?:number) {
+            const out = new DateInputAssemblyLine("date");
+            if (year !== undefined || month !== undefined || date !== undefined) {
+                const now = new Date();
+                year ??= now.getFullYear();
+                month ??= now.getMonth();
+                date ??= now.getDate();
+                out.value(year, month, date);
+            }
+            return out;
+        },
+        dateTimeLocal() { return new DateInputAssemblyLine("datetime-local"); },
         email() { return new TextInputAssemblyLine("email"); },
         file() { return new TextInputAssemblyLine("file"); },
         image() { return new InputAssemblyLine("image"); },
         month(year?:number, month?: number) {
-            const out = new RangedInputAssemblyLine("month");
+            const out = new DateInputAssemblyLine("month");
             if (year !== undefined && month !== undefined) out.value(year, month);
             else if (year !== undefined) out.value(year, new Date().getMonth());
             else if (month !== undefined) out.value(new Date().getFullYear(), month);
@@ -94,7 +105,14 @@ export default abstract class ElementFactory {
         tel() { return new TextInputAssemblyLine("tel"); },
         text() { return new TextInputAssemblyLine("text"); },
         time() { return new RangedInputAssemblyLine("time"); },
-        url() { return new TextInputAssemblyLine("url"); }
+        url() { return new TextInputAssemblyLine("url"); },
+        week(year?:number, week?:number) {
+            const out = new DateInputAssemblyLine("week");
+            if (year !== undefined && week !== undefined) out.value(year, week);
+            else if (year !== undefined) out.value(year, 1);
+            else if (week !== undefined) out.value(new Date().getFullYear(), week);
+            return out;
+        }
     };
 
     public static option() { return AssemblyLine.specific("option", ["value", "selected"]); }

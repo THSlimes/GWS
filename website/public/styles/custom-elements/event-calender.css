@@ -8,13 +8,10 @@ event-calender {
     width: 100%;
     aspect-ratio: 2 / 1;
 
-    border: 2.5px solid var(--shadow);
-    border-radius: .25em;
-
     > .controls {
         gap:1em;
         width: 100%;
-        > .month-input { border: none; }
+        > .period-input { border: none; text-align: center; }
         > .nav-button {
             height: min-content;
         }
@@ -27,7 +24,7 @@ event-calender {
 
         grid-row: 2 / 3;
 
-        padding:2.5px;
+        padding:2px;
 
         background-color: var(--tertiary);
 
@@ -42,16 +39,20 @@ event-calender {
         > .day-cell {
             position: relative;
 
+            padding: 2em 2px 2px 2px;
+
             background-color: var(--primary);
             border: 1px solid var(--shadow);
 
-            &.different-month { filter: grayscale(.8) blur(.5px); }
+            &.different-month { filter: grayscale(.25) blur(.5px); }
             &.today {
                 border: 2px solid var(--accent);
                 > .day-number { color: var(--accent); }
             }
 
             > .day-number {
+                z-index: 0;
+
                 position: absolute;
                 top:0px;
                 left:2px;
@@ -59,6 +60,20 @@ event-calender {
                 margin: 0px;
                 
                 user-select: none;
+            }
+
+            > .event-note {
+                position:relative;
+                z-index: 1;
+
+                margin-bottom: 2px;
+                padding: 2px;
+
+                box-sizing: border-box;
+                width: 100%;
+                background-color: var(--accent);
+
+                > * { margin:0px; }
             }
         }
     }

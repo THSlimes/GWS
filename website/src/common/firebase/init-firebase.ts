@@ -1,3 +1,4 @@
+import { getFirestore } from "@firebase/firestore";
 import { FirebaseOptions, initializeApp } from "firebase/app";
 
 // initialize firebase connection
@@ -13,3 +14,5 @@ Object.freeze(FIREBASE_CONFIG);
 
 const FIREBASE_APP = initializeApp(FIREBASE_CONFIG);
 export default FIREBASE_APP;
+
+export const DB = getFirestore(FIREBASE_APP); // initialize Firebase Firestore

@@ -15,7 +15,7 @@
         translate: 0px -2em;
         font-size: 3.5em;
         text-align: center;
-        text-decoration: underline 2.5px var(--accent);
+        text-decoration: underline 2px var(--accent);
         text-underline-offset: .125em;
 
         animation: 1000ms cubic-bezier(0.175, 0.885, 0.32, 1.275) 0ms zoom-in;

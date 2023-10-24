@@ -47,7 +47,6 @@ body {
     margin:0px;
 
     background-color: var(--primary);
-    font-family: var(--std-font);
 
     & * {
         user-select: text;
@@ -55,8 +54,14 @@ body {
     }
 }
 
-h1, h2, h3, h4, h5, h6 { color: var(--tertiary); }
-p, input, label { color: var(--text); }
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--std-font);
+    color: var(--tertiary);
+}
+p, input, label {
+    font-family: var(--std-font);
+    color: var(--text);
+}
 
 .subtitle { font-size: 80% }
 
@@ -119,7 +124,7 @@ div#split-view {
 .bold-weight { font-weight: 700; }
 
 .boxed {
-    border: 2.5px solid var(--shadow);
+    border: 2px solid var(--shadow);
     border-radius: .25em;
     box-shadow: .125em .125em .5em 0px var(--shadow);
 }

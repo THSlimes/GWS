@@ -1,5 +1,5 @@
 import RichText from "../RichText";
-import { ArticleInfo } from "../Database";
+import { ArticleInfo } from "../database-def";
 import ElementFactory from "../html-element-factory/ElementFactory";
 
 /**

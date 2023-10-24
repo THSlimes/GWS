@@ -23,7 +23,7 @@ export type ArticleFilterOptions = QueryOptions & {
 
 export abstract class ArticleDatabase {
     /** Retrieves articles from the database. */
-    abstract get(limit:number, options?:ArticleFilterOptions):Promise<ArticleInfo[]>;
+    abstract get(limit:number, options?:Omit<ArticleFilterOptions,"limit">):Promise<ArticleInfo[]>;
 
     /** Gets the amount of articles that match the filtering options. */
     abstract count(options?:ArticleFilterOptions):Promise<number>;
@@ -32,15 +32,25 @@ export abstract class ArticleDatabase {
     abstract getById(id:string):Promise<ArticleInfo|undefined>;
 
     /** Gets articles with the given category. */
-    abstract getByCategory(category:string, options?:ArticleFilterOptions):Promise<ArticleInfo[]>;
+    abstract getByCategory(category:string, options?:Omit<ArticleFilterOptions,"category">):Promise<ArticleInfo[]>;
 
 }
 
-/**
- * A Database interacts with a data storage in a controlled way.
- */
-export default interface Database {
+export type EventInfo = { id:string, name:string, description:string, starts_at:Date, ends_at:Date, category:string };
+export type EventFilterOptions = QueryOptions & {
+    before?:Date,
+    after?:Date,
+    category?:string
+};
 
-    readonly articles:ArticleDatabase;
+export abstract class EventDatabase {
+    abstract get(limit:number, options?:Omit<EventFilterOptions,"limit">):Promise<EventInfo[]>;
 
+    abstract count(options?:EventFilterOptions):Promise<number>;
+
+    abstract getRange(before:Date, after:Date, options?:Omit<EventFilterOptions,"before"|"after">):Promise<EventInfo[]>;
+
+    abstract getById(id:string):Promise<EventInfo|undefined>;
+
+    abstract getByCategory(category:string, options?:Omit<EventFilterOptions,"category">):Promise<EventInfo[]>;
 }

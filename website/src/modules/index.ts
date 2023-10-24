@@ -3,10 +3,10 @@ import $ from "jquery";
 import "../common/parallax-scrolling";
 import "../common/custom-elements/ElementCarousel";
 
-import FirestoreDatabase from "../common/firebase/database/FirestoreDatabase";
 import SmartArticle from "../common/custom-elements/SmartArticle";
-import { ArticleDatabase, ArticleInfo } from "../common/Database";
+import { ArticleDatabase, ArticleInfo } from "../common/database-def";
 import { clamp } from "../common/NumberUtil";
+import { FirestoreArticleDatabase } from "../common/firebase/database/FirestoreArticleDatabase";
 
 type PageInfo = {
     pageNum: number,
@@ -16,7 +16,7 @@ type PageInfo = {
 };
 type PageCollection = Record<number, PageInfo>;
 
-const DB:ArticleDatabase = new FirestoreDatabase().articles;
+const DB:ArticleDatabase = new FirestoreArticleDatabase();
 const PAGE_SIZE = 5; // number of articles per page
 
 /** Computes the [latest, earliest] creation dates of the given articles. */

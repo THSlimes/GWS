@@ -35,7 +35,7 @@ const INPUT_TYPE_TRANSLATORS:InputTypeTranslators = {
     checkbox: value => value,
     color: (r,g,b) => `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`,
     date: (...args) => {
-        return `${args[0].toString().padStart(4,'0')}-${args[1].toString().padStart(4,'0')}-${args[2].toString().padStart(4,'0')}`;
+        return `${args[0].toString().padStart(4,'0')}-${(args[1]+1).toString().padStart(2,'0')}-${args[2].toString().padStart(2,'0')}`;
     },
     "datetime-local": (...args) => {
         if (args[0] instanceof Date) return args[0].toISOString();
@@ -57,7 +57,7 @@ const INPUT_TYPE_TRANSLATORS:InputTypeTranslators = {
     text: text => text,
     time: (hrs, min) => `${hrs.toString().padStart(2,'0')}:${min.toString().padStart(2,'0')}`,
     url: url => url,
-    week: (year, weekInd) => `${year.toString().padStart(4,'0')}-W${year.toString().padStart(2,'0')}`
+    week: (year, weekInd) => `${year.toString().padStart(4,'0')}-W${weekInd.toString().padStart(2,'0')}`
 };
 
 /** SmartInputs remember their previous value. */
@@ -121,7 +121,11 @@ export class InputAssemblyLine<T extends keyof HTMLInputElementTypeMap> extends 
         const out = super.make() as SmartInput;
         out.type = this.type;
 
-        if (this._value !== undefined) out.value = INPUT_TYPE_TRANSLATORS[this.type](...this._value);
+        if (this._value !== undefined) {
+            const v = INPUT_TYPE_TRANSLATORS[this.type](...this._value);
+            console.log(v);
+            out.value = v;
+        }
         out.prevValue = out.value;
 
         window.addEventListener("change", e => {
@@ -204,7 +208,7 @@ export class CheckableInputAssemblyLine<CT extends CheckableInputType> extends I
         return out;
     }
 }
-type RangedInputType = "date" | "datetime-local" | "month" | "number" | "range" | "time";
+type RangedInputType = "date" | "datetime-local" | "month" | "number" | "range" | "time" | "week";
 export class RangedInputAssemblyLine<RT extends RangedInputType> extends InputAssemblyLine<RT> {
 
     constructor(type: RT) {
@@ -260,7 +264,7 @@ export class NumberInputAssemblyLine<NT extends NumberInputType> extends RangedI
     }
 
 }
-type DateInputType = "date" | "datetime-local";
+type DateInputType = "date" | "datetime-local" | "month" | "week";
 type DateInput = SmartInput & { prevValueAsDate: Date; };
 export class DateInputAssemblyLine<DT extends DateInputType> extends RangedInputAssemblyLine<DT> {
 

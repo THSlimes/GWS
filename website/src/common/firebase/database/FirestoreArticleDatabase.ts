@@ -1,12 +1,19 @@
 import { QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, documentId, getCountFromServer, getDocs, limit, orderBy, query, where } from "@firebase/firestore";
-import { ArticleDatabase, ArticleFilterOptions, ArticleInfo } from "../../Database";
+import { ArticleDatabase, ArticleFilterOptions, ArticleInfo } from "../../database-def";
 import { clamp } from "../../NumberUtil";
-import { PermissionGuarded, DB } from "./FirestoreDatabase";
+import { PermissionGuarded } from "./Permission";
+import { DB } from "../init-firebase";
 
 /** An article as it appears in the database. */
-type DBArticle = PermissionGuarded & { heading: string; body: string; created_at: Timestamp; category: string; show_on_homepage: boolean; };
+type DBArticle = PermissionGuarded & {
+    heading: string,
+    body: string,
+    created_at: Timestamp,
+    category: string,
+    show_on_homepage: boolean
+};
 /** Defines database interactions related to articles. */
-export class FirestoreArticleDatabase implements ArticleDatabase {
+export class FirestoreArticleDatabase extends ArticleDatabase {
 
     /** Reference to the collection of articles. */
     private static readonly COLLECTION = collection(DB, "articles").withConverter({
@@ -39,7 +46,7 @@ export class FirestoreArticleDatabase implements ArticleDatabase {
         return FirestoreArticleDatabase.getArticles({ limit, sortByCreatedAt: "descending", ...options });
     }
 
-    public getByCategory(category: string, options?: Omit<ArticleFilterOptions, "id">) {
+    public getByCategory(category: string, options?: Omit<ArticleFilterOptions, "category">) {
         return FirestoreArticleDatabase.getArticles({ category, ...options });
     }
 
