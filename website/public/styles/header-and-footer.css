@@ -47,6 +47,7 @@ footer {
     margin-top: 2em;
 
     background-color: var(--tertiary);
+    & * { color: var(--primary) !important; }
 
     > .social-media-links {
         min-width: 25%;

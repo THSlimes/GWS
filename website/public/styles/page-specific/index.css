@@ -23,7 +23,7 @@
 
     > div[cover] {
         position: absolute;
-        width: 100%;
+        width: 125%; /* hides horizontal shadow */
         height: 100%;
         box-shadow: inset 0px 0px 1em 0px var(--secondary);
     }

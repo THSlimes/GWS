@@ -7,7 +7,7 @@
     font-weight: 100 700;
     src: url("../fonts/google-icons.woff2") format('woff2');
 }
-  
+
 .icon {
     margin: 0px;
     font-family: "icon";
@@ -24,6 +24,8 @@
     -webkit-font-feature-settings: 'liga';
     font-feature-settings: "liga";
     -webkit-font-smoothing: antialiased;
+
+    user-select: none !important;
 }
 
 span.icon { font-size: inherit; }
@@ -47,6 +49,15 @@ body {
     margin:0px;
 
     background-color: var(--primary);
+
+    scrollbar-color: var(--shadow) transparent;
+    &::-webkit-scrollbar { width: 1em; height: 1em; }
+    &::-webkit-scrollbar-thumb {
+        background: var(--shadow);
+        border-radius: .25em;
+    }
+    &::-webkit-scrollbar-track { background: transparent; }
+
 
     & * {
         user-select: text;
@@ -96,13 +107,6 @@ div#split-view {
         & > *:not(:first-child) { margin-bottom: 8em; display: block; }
         & img { max-width:100%; }
     }
-}
-
-/* MARKDOWN */
-
-.markdown {
-    & span.bold { font-weight: 700; }
-    & span.italic { font-style: italic; }
 }
 
 /* RICH-TEXT */
@@ -167,7 +171,7 @@ div#split-view {
 button, input[type="button"], .click-action {
     &:disabled {
         filter: grayscale(.65);
-        opacity: .75; 
+        opacity: .75;
     }
     &:not(:disabled) {
         transform-origin: center;
