@@ -10,7 +10,7 @@ export default class SmartArticle extends HTMLElement {
 
     private static DEFAULT_PREVIEW_CUTOFF = 50;
 
-    private readonly heading:HTMLHeadingElement;
+    private readonly heading:HTMLAnchorElement;
     private readonly body:HTMLDivElement;
 
     private readonly createdAt:Date;
@@ -27,12 +27,9 @@ export default class SmartArticle extends HTMLElement {
         this.style.display = "block";
         
         this.heading = this.appendChild(
-            ElementFactory.heading(isPreview ? 2 : 1)
-                .class("heading", "markdown")
+            ElementFactory.a(linkToFull)
                 .children(
-                    linkToFull ? 
-                        ElementFactory.a(linkToFull).openInNewTab(true).html(RichText.parseLine(heading)) : // link to full article
-                        new Text(RichText.parseLine(heading)) // don't use link
+                    ElementFactory.heading(isPreview ? 2 : 1).html(RichText.parseLine(heading))
                 )
                 .make()
         );

@@ -26,6 +26,7 @@
     -webkit-font-smoothing: antialiased;
 
     user-select: none !important;
+    transform-origin: center !important;
 }
 
 span.icon { font-size: inherit; }
@@ -175,18 +176,16 @@ button, input[type="button"], .click-action {
     }
     &:not(:disabled) {
         transform-origin: center;
-        &:hover { scale:1.05; }
+        &:hover { scale:1.075; }
         &:active { scale:0.95; }
     }
 }
 
 /* standard indication of being a link */
-a, .link {
-    &:not(:disabled) {
-        transform-origin: left;
-        color: inherit;
-        &:hover { text-decoration: 1.25px underline currentColor !important; }
-        &:not(:hover) { text-decoration: none; }
-        &:active { scale: .95; }
-    }
+a[href], .link:not(:disabled) {
+    transform-origin: left;
+    color: inherit;
+    &:hover { text-decoration: 1.25px underline currentColor !important; }
+    &:not(:hover) { text-decoration: none; }
+    &:active { scale: .95; }
 }

@@ -14,6 +14,7 @@ header.page-header {
         margin:0px;
         text-decoration: none;
     }
+
     & > .links {
         padding: 0px 2em 0px 2em;
         column-gap:2em;
@@ -36,6 +37,14 @@ header.page-header {
 
         & .link {
             > * { margin: 0px; }
+        }
+    }
+
+    > .quick-actions {
+        > * {
+            margin: 0px .25em 0px .25em;
+            background: none;
+            border: none;
         }
     }
 }

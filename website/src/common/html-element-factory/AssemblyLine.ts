@@ -3,18 +3,22 @@ export type HexColor = `#${string}`;
 /**
  * OptionalElementProperties defines a mapping for values of a specific
  * type of HTMLElement/
- * 
+ *
  * @param TN tag of the HTMLElement that the mapping is used for
  */
 type OptionalElementProperties<TN extends keyof HTMLElementTagNameMap> = {
     [K in keyof HTMLElementTagNameMap[TN]]?: HTMLElementTagNameMap[TN][K];
 }
 
+type EventHandlers<S> = {
+    [T in keyof HTMLElementEventMap]?: (event:HTMLElementEventMap[T], self:S) => void;
+}
+
 /**
  * An AssemblyLine is a type of object that makes the construction
  * of HTMLElement objects easier. All methods (except for ```make()```)
  * return ```this```, making for easy method-chaining.
- * 
+ *
  * @param TN tag of the HTMLElement that will be output by its ```make()``` method
  */
 export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
@@ -62,6 +66,13 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
         return this;
     }
 
+    private _tooltip?:string;
+    /** Provides text to be displayed when hovering over the element (value for the ```title``` attribute) */
+    public tooltip(txt:string) {
+        this._tooltip = txt;
+        return this;
+    }
+
     private _html?:string;
     /** Sets the ```innerHTML``` property. */
     public html(html:string) {
@@ -84,6 +95,12 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
         return this;
     }
 
+    private _handlers:EventHandlers<HTMLElementTagNameMap[TN]> = {};
+    public on<T extends keyof HTMLElementEventMap>(keyword:T, handler:EventHandlers<HTMLElementTagNameMap[TN]>[T]) {
+        this._handlers[keyword] = handler;
+        return this;
+    }
+
     /** Finalizes and creates the new element. */
     public make():HTMLElementTagNameMap[TN] {
         const out = document.createElement(this.tagName);
@@ -98,6 +115,7 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
 
         // text
         if (this._text !== undefined) out.innerText = this._text;
+        if (this._tooltip !== undefined) out.title = this._tooltip;
 
         // children
         out.append(...this._children);
@@ -107,6 +125,13 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
 
         // element-type specific properties
         for (const k in this.elementTypeSpecific) out[k] = this.elementTypeSpecific[k]!;
+
+        // event-handlers
+        for (const keyword of Object.keys(this._handlers)) {
+            const key = keyword as keyof typeof this._handlers;
+            const handler = this._handlers[key]!;
+            out.addEventListener(key, e => handler(e as any, out));
+        }
 
         return out;
     }
@@ -125,7 +150,7 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
 
         for (const k of exposedKeys) Reflect.defineProperty(out, k, {
             writable:false,
-            value:(newVal:any) => {                
+            value:(newVal:any) => {
                 out.elementTypeSpecific[k] = newVal;
                 return out;
             }

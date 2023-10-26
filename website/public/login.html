@@ -3,21 +3,28 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="description" content="Den Geitenwollen Soc, Studievereniging sociologie, Radboud, Nijmegen, agenda, activiteiten">
+        <meta name="description" content="Den Geitenwollen Soc, Studievereniging sociologie, Radboud, Nijmegen, login, inloggen, registreren">
         <title>Den Geitenwollen Soc. - Studievereniging Sociologie Nijmegen</title>
         <link rel="shortcut icon" href="./images/logos/favicon.ico" type="image/x-icon">
     
-        <link rel="stylesheet" href="./styles/page-specific/calender.css">
+        <link rel="stylesheet" href="./styles/page-specific/login.css">
     
         <script type="module" src="./scripts/header-and-footer.js"></script>
-        <script type="module" src="./scripts/calender.js"></script>
     </head>
 <body>
 
     <div id="split-view">
-        <div id="calender" class="content">
-            <h1>Agenda</h1>
-        </div>
+        <form id="login-form" class="content">
+            <h1>Inloggen</h1>
+            <p>Email-adres</p>
+            <input type="email" name="login-email" id="login-email">
+            <p>Wachtwoord</p>
+            <input type="password" name="login-password" id="login-password">
+            <button type="button" class="center-content">
+                <p>Log in</p>
+                <span class="icon">navigate_next</span>
+            </button>
+        </form>
 
         <div id="news-letters" class="boxed">
             <h3>Nieuwsbrieven</h3>

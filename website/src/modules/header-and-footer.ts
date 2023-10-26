@@ -1,3 +1,4 @@
+import ColorThemes, { ColorTheme } from "../common/ColorThemes";
 import FolderElement from "../common/custom-elements/FolderElement";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
 
@@ -101,11 +102,11 @@ function createLink(text:string, url:string):HTMLAnchorElement {
 
 function createFolderContents(config:NavbarConfig, nestingLvl=0):(FolderElement|HTMLAnchorElement)[] {
     const out:(FolderElement|HTMLAnchorElement)[] = [];
-    
+
     for (const heading in config) {
         const v = config[heading];
         if (typeof v === "string") out.push(createLink(heading, v));
-        else {            
+        else {
             const folder = new FolderElement(heading, nestingLvl === 0 ? "down" : "right", 200);
             folder.append(...createFolderContents(v, nestingLvl+1));
             out.push(folder);
@@ -120,7 +121,7 @@ function createHeader(config:NavbarConfig):HTMLElement {
         .class("page-header", "flex-columns", "main-axis-space-between", "cross-axis-center")
         .children(
             ElementFactory.div()
-                .class("desc")
+                .class("desc", "flex-rows", "main-axis-center")
                 .children(
                     ElementFactory.a('/').children(ElementFactory.h4("Den Geitenwollen Soc.")),
                     ElementFactory.p("Studievereniging Sociologie Nijmegen").class("subtitle")
@@ -131,9 +132,27 @@ function createHeader(config:NavbarConfig):HTMLElement {
                     ...createFolderContents(config)
                 ),
             ElementFactory.div()
-                .class("search", "center-content")
+                .class("quick-actions", "center-content", "main-axis-space-between")
                 .children(
-                    ElementFactory.p("search").class("icon")
+                    ElementFactory.input.button("search").class("icon"),
+                    ElementFactory.input.button("login")
+                        .class("icon")
+                        .tooltip("Inloggen")
+                        .onClick(() => window.location.href = "/login.html"),
+                    ElementFactory.input.button(ColorThemes.theme === ColorTheme.LIGHT ? "light_mode" : "dark_mode")
+                        .class("icon")
+                        .tooltip("Kleurenthema")
+                        .on("click", (e, self) => {
+                            switch (ColorThemes.cycle()) {
+                                case ColorTheme.LIGHT:
+                                    self.value = "light_mode";
+                                    break;
+                                case ColorTheme.DARK:
+                                    self.value = "dark_mode";
+                                    break;
+                            }
+                            
+                        })
                 )
         ).make();
 }

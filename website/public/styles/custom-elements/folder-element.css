@@ -2,8 +2,15 @@
 
 folder-element {
     > .topper {
+        position: relative;
+        padding-right: 1.5em;
+
         > .heading { transition: color 200ms ease-in; }
-        > .arrow { transition: rotate 200ms ease-in; }
+        > .arrow {
+            position: absolute;
+            right: 0px;
+            transition: rotate 200ms ease-in;
+        }
     }
 
     > .contents {
