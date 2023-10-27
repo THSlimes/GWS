@@ -123,7 +123,6 @@ export class InputAssemblyLine<T extends keyof HTMLInputElementTypeMap> extends 
 
         if (this._value !== undefined) {
             const v = INPUT_TYPE_TRANSLATORS[this.type](...this._value);
-            console.log(v);
             out.value = v;
         }
         out.prevValue = out.value;

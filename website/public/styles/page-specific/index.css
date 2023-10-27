@@ -6,13 +6,12 @@
     margin: 1em 0px 1em 0px;
 
     width: 100%;
-    height: unset;
-    aspect-ratio: 16 / 8;
+    height: 90vh;
 
     > h1[cover] {
         color: var(--primary);
 
-        translate: 0px -2em;
+        translate: 0px -1em;
         font-size: 3.5em;
         text-align: center;
         text-decoration: underline 2px var(--accent);
@@ -39,4 +38,12 @@
     padding: 1em;
 
     > #page-indicator { margin: 0px 0px 0px 1em }
+}
+
+/* PHONE-VIEWPORT OVERRIDE */
+
+@media (max-aspect-ratio: 4/3) {
+    #photo-carousel > h1[cover] {
+        font-size: 2em;
+    }
 }

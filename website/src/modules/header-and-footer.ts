@@ -139,20 +139,20 @@ function createHeader(config:NavbarConfig):HTMLElement {
                         .class("icon")
                         .tooltip("Inloggen")
                         .onClick(() => window.location.href = "/login.html"),
-                    ElementFactory.input.button(ColorThemes.theme === ColorTheme.LIGHT ? "light_mode" : "dark_mode")
-                        .class("icon")
-                        .tooltip("Kleurenthema")
-                        .on("click", (e, self) => {
-                            switch (ColorThemes.cycle()) {
-                                case ColorTheme.LIGHT:
-                                    self.value = "light_mode";
-                                    break;
-                                case ColorTheme.DARK:
-                                    self.value = "dark_mode";
-                                    break;
-                            }
+                    // ElementFactory.input.button(ColorThemes.theme === ColorTheme.LIGHT ? "light_mode" : "dark_mode")
+                    //     .class("icon")
+                    //     .tooltip("Kleurenthema")
+                    //     .on("click", (e, self) => {
+                    //         switch (ColorThemes.cycle()) {
+                    //             case ColorTheme.LIGHT:
+                    //                 self.value = "light_mode";
+                    //                 break;
+                    //             case ColorTheme.DARK:
+                    //                 self.value = "dark_mode";
+                    //                 break;
+                    //         }
                             
-                        })
+                    //     })
                 )
         ).make();
 }
@@ -165,13 +165,14 @@ function createFooter():Node[] {
         ElementFactory.footer()
             .class("page-footer", "center-content", "flex-rows")
             .children(
-                ElementFactory.h4("Je vindt ons ook op ..."),
+                ElementFactory.h4("Je vindt ons ook op ...").id("link-text"),
                 ElementFactory.div()
                     .class("social-media-links", "flex-columns", "main-axis-space-between")
                     .children(
                         ElementFactory.a("https://www.instagram.com/svdengeitenwollensoc/")
                             .children(ElementFactory.img("./images/logos/Instagram_Glyph_Gradient.png", "Instagram")),
                         ElementFactory.a("https://nl.linkedin.com/in/s-v-den-geitenwollen-soc-496145163")
+                            .id("linked-in-link")
                             .children(ElementFactory.img("./images/logos/LI-In-Bug.png", "Linked-In")),
                         ElementFactory.a("https://www.facebook.com/dengeitenwollensoc/")
                             .children(ElementFactory.img("./images/logos/Facebook_Logo_Primary.png", "Facebook")),
@@ -191,7 +192,7 @@ const HEADER = createHeader(NAVBAR_CONFIG);
 const FOOTER = createFooter();
 
 // insert both after page-load
-window.addEventListener("DOMContentLoaded", () => {    
+window.addEventListener("DOMContentLoaded", () => {
     document.body.prepend(HEADER);
     document.body.append(...FOOTER);
 });

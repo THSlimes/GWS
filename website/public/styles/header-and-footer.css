@@ -59,12 +59,15 @@ footer {
     & * { color: var(--primary) !important; }
 
     > .social-media-links {
+        gap:1em;
         min-width: 25%;
 
         & img {
             min-height: 21px; /* https://brand.linkedin.com/downloads */
             height: 4em;
         }
+
+        #linked-in-link { margin-left: .5em; }
     }
 }
 
@@ -78,4 +81,28 @@ footer {
     background-color: var(--secondary);
     color: var(--primary);
     text-align: center;
+}
+
+
+/* TABLET-VIEWPORT OVERRIDE */
+
+@media (max-aspect-ratio: 3 / 4) {
+    header.page-header {
+        > .desc * { white-space: nowrap; }
+    }
+}
+
+/* PHONE-VIEWPORT OVERRIDE */
+
+@media (max-aspect-ratio: 3 / 5) {
+    header.page-header {
+        > .links { display: none; }
+    }
+
+    footer {
+        padding: 1em 1em .5em 1em;
+
+        > #link-text { display: none; }
+        > .social-media-links img { height: 2em; }
+    }
 }
