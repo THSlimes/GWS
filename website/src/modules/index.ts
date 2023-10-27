@@ -45,6 +45,12 @@ window.addEventListener("DOMContentLoaded", async () => {
     PREV_PAGE_BUTTON.addEventListener("click", () => insertPage(--currPage));
     NEXT_PAGE_BUTTON.addEventListener("click", () => insertPage(++currPage));
     LAST_PAGE_BUTTON.addEventListener("click", () => insertPage(currPage = NUM_PAGES-1));
+    [FIRST_PAGE_BUTTON, PREV_PAGE_BUTTON, NEXT_PAGE_BUTTON, LAST_PAGE_BUTTON].forEach(b => {
+        b.addEventListener("click", () => window.scrollTo({
+            top: RECENT_MESSAGES_ELEM.scrollTop + window.innerHeight,
+            behavior:"smooth"
+        }));
+    });
 
 
     // divide into pages
@@ -99,7 +105,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     
     /** Inserts the articles in a page into the webpage. */
     async function insertPage(pageNum:number) {
-        const info = await getPage(pageNum);        
+        const info = await getPage(pageNum);
         
         $(RECENT_MESSAGES_ELEM).children("article").remove();
         RECENT_MESSAGES_ELEM.prepend(...info.articles.map(a => SmartArticle.fromInfo(a, true)));
