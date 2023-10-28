@@ -2,7 +2,7 @@
 
 article {
     padding: 0px 1em 0px 1em;
-    & img { width: 100%; }
+    & img { max-width: 100%; }
 
     & .heading {
         margin: 0px 0px .5em 0px;
@@ -27,4 +27,16 @@ article {
         }
     }
 
+}
+
+/* TABLET-VIEWPORT OVERRIDE */
+
+@media (max-aspect-ratio: 3 / 4) {
+    article:not([is=preview]) .heading { font-size: 2em; }
+}
+
+/* PHONE-VIEWPORT OVERRIDE */
+
+@media (max-aspect-ratio: 3 / 5) {
+    article:not([is=preview]) .heading { font-size: 1.25em; }
 }

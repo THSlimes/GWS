@@ -81,7 +81,7 @@ const NAVBAR_CONFIG:NavbarConfig = {
     "Contact": {
         "Contactgegevens": DEFAULT_LINK
     },
-    "Inschrijven Den Geitenwollen Soc.": DEFAULT_LINK
+    "Inschrijven": DEFAULT_LINK
 };
 
 function createLink(text:string, url:string):HTMLAnchorElement {
@@ -127,7 +127,7 @@ function createHeader(config:NavbarConfig):HTMLElement {
                     ElementFactory.p("Studievereniging Sociologie Nijmegen").class("subtitle")
                 ),
             ElementFactory.div()
-                .class("links", "flex-columns", "main-axis-center", "cross-axis-baseline")
+                .class("links", "flex-columns", "main-axis-space-around", "cross-axis-baseline")
                 .children(
                     ...createFolderContents(config)
                 ),
@@ -138,21 +138,7 @@ function createHeader(config:NavbarConfig):HTMLElement {
                     ElementFactory.input.button("login")
                         .class("icon")
                         .tooltip("Inloggen")
-                        .onClick(() => window.location.href = "/login.html"),
-                    // ElementFactory.input.button(ColorThemes.theme === ColorTheme.LIGHT ? "light_mode" : "dark_mode")
-                    //     .class("icon")
-                    //     .tooltip("Kleurenthema")
-                    //     .on("click", (e, self) => {
-                    //         switch (ColorThemes.cycle()) {
-                    //             case ColorTheme.LIGHT:
-                    //                 self.value = "light_mode";
-                    //                 break;
-                    //             case ColorTheme.DARK:
-                    //                 self.value = "dark_mode";
-                    //                 break;
-                    //         }
-                            
-                    //     })
+                        .onClick(() => window.location.href = "/login.html")
                 )
         ).make();
 }

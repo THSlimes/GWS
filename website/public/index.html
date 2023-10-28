@@ -12,6 +12,9 @@
 
     <script type="module" src="./scripts/header-and-footer.js"></script>
     <script type="module" src="./scripts/index.js"></script>
+
+    <script type="module" src="./scripts/create-split-view.js"></script>
+
 </head>
 <body>
 
@@ -25,36 +28,14 @@
         <img parallax-factor=".75" src="./images/carousel/1-b75a81e6ff.webp" loading="lazy" alt="Carousel afbeelding #5">
     </element-carousel>
 
-    <div id="split-view">
-        <div id="recent-messages" class="content flex-rows main-axis-space-between">
-            <div id="page-navigator" class="flex-columns cross-axis-center">
-                <input type="button" id="first-page" value="first_page" class="icon">
-                <input type="button" id="previous-page" value="navigate_before" class="icon">
-                <input type="button" id="next-page" value="navigate_next" class="icon">
-                <input type="button" id="last-page" value="last_page" class="icon">
+    <div id="recent-messages" class="content flex-rows main-axis-space-between">
+        <div id="page-navigator" class="flex-columns cross-axis-center">
+            <input type="button" id="first-page" value="first_page" class="icon">
+            <input type="button" id="previous-page" value="navigate_before" class="icon">
+            <input type="button" id="next-page" value="navigate_next" class="icon">
+            <input type="button" id="last-page" value="last_page" class="icon">
 
-                <p id="page-indicator">Pagina 1 / ?</p>
-            </div>
-        </div>
-
-        <div id="news-letters" class="boxed">
-            <h3 class="section-name">Nieuwsbrieven</h3>
-            <div id="news-letters-list" class="flex-rows main-axis-start">
-                <p>Nieuwsbrief juni 2023</p>
-                <p>Nieuwsbrief april 🐥🌻</p>
-                <p>Nieuwsbrief maart🌹</p>
-                <p>Nieuwsbrief februari💚💛</p>
-                <p>Nieuwsbrief December</p>
-            </div>
-        </div>
-        
-        <div id="sponsors" class="boxed">
-            <h3 class="section-name">Onze sponsoren</h3>
-            <div class="logos flex-rows main-axis-center">
-                <a href="https://www.bol.com/nl/"><img src="./images/logos/bol_com.png" alt="Bol.com"></a>
-                <a href="https://www.dressmeclothing.nl/"><img src="./images/logos/dressme.png" alt="Dress-me kleding"></a>
-                <a href="https://www.knaek.nl/studentenkorting/nijmegen"><img src="./images/logos/Knaek-logo.png" alt="Knaek studentenkorting"></a>
-            </div>
+            <p id="page-indicator">Pagina 1 / ?</p>
         </div>
     </div>
 

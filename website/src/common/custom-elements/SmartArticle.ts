@@ -29,7 +29,7 @@ export default class SmartArticle extends HTMLElement {
         this.heading = this.appendChild(
             ElementFactory.a(linkToFull)
                 .children(
-                    ElementFactory.heading(isPreview ? 2 : 1).html(RichText.parseLine(heading))
+                    ElementFactory.heading(isPreview ? 2 : 1).class("heading").html(RichText.parseLine(heading))
                 )
                 .make()
         );

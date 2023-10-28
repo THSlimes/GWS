@@ -57,6 +57,7 @@ export default class FolderElement extends HTMLElement {
         // initializing interactivity
         $(this.contents).hide(); // start closed
         this.topper.addEventListener("mouseenter", () => this.open());
+        this.topper.addEventListener("click", e => e.preventDefault());
         this.addEventListener("mouseenter", () => clearTimeout(this.closingTimeout));
         this.addEventListener("mouseleave", () => {
             this.closingTimeout = setTimeout(() => this.close(), this.closingDelay);
@@ -66,7 +67,7 @@ export default class FolderElement extends HTMLElement {
     /**
      * Appends the given node as a child.
      * NOTE: the node is added to the ```contents``` div
-     * @param node 
+     * @param node
      * @returns the added node
      */
     public override appendChild<T extends Node>(node: T): T {

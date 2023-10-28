@@ -10,14 +10,11 @@ header.page-header {
 
     & * { color: var(--primary); }
 
-    & > .desc * {
-        margin:0px;
-        text-decoration: none;
-    }
+    & > .desc * { margin:0px; }
 
     & > .links {
-        padding: 0px 2em 0px 2em;
-        column-gap:2em;
+        padding: 0px 8em 0px 8em;
+        gap: 1em 2em;
         flex-grow:2;
         flex-wrap: wrap;
 
@@ -89,16 +86,13 @@ footer {
 @media (max-aspect-ratio: 3 / 4) {
     header.page-header {
         > .desc * { white-space: nowrap; }
+        > .links { display: none; }
     }
 }
 
 /* PHONE-VIEWPORT OVERRIDE */
 
 @media (max-aspect-ratio: 3 / 5) {
-    header.page-header {
-        > .links { display: none; }
-    }
-
     footer {
         padding: 1em 1em .5em 1em;
 
