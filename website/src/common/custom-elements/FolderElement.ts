@@ -1,7 +1,11 @@
 import $ from "jquery";
 import ElementFactory from "../html-element-factory/ElementFactory";
+import Responsive, { Viewport } from "../Responsive";
 
 export type FoldingDirection = "down" | "right";
+
+/** Viewport-types which open/close using clicking instead of hovering. */
+const USES_CLICK_INTERACTION:Viewport[] = ["mobile-portrait", "tablet-portrait"];
 
 /**
  * A FolderElement is a custom type of HTMLElement. It allows other elements
@@ -9,7 +13,11 @@ export type FoldingDirection = "down" | "right";
  */
 export default class FolderElement extends HTMLElement {
 
-    private readonly foldDir:FoldingDirection;
+    private _foldDir:FoldingDirection;
+    public set foldDir(newDir:FoldingDirection) {
+        this._foldDir = newDir;
+        this.arrow.innerText = newDir === "down" ? "expand_more" : "chevron_right";
+    }
     public closingDelay:number;
     private closingTimeout?:NodeJS.Timeout;
 
@@ -33,7 +41,7 @@ export default class FolderElement extends HTMLElement {
         this.style.position = "relative";
         this.style.display = "block";
 
-        this.foldDir = foldDir;
+        this._foldDir = foldDir;
         this.closingDelay = closingDelay;
 
         // initializing element
@@ -56,11 +64,20 @@ export default class FolderElement extends HTMLElement {
 
         // initializing interactivity
         $(this.contents).hide(); // start closed
-        this.topper.addEventListener("mouseenter", () => this.open());
-        this.topper.addEventListener("click", e => e.preventDefault());
+        this.topper.addEventListener("mouseenter", () => { // only for hover-interactions
+            if (!Responsive.isAnyOf(...USES_CLICK_INTERACTION)) this.open();
+        });
+        this.topper.addEventListener("click", e => { // only for click-interactions
+            if (Responsive.isAnyOf(...USES_CLICK_INTERACTION)) this.isOpen ? this.close() : this.open();
+            e.preventDefault();
+        });
+
         this.addEventListener("mouseenter", () => clearTimeout(this.closingTimeout));
         this.addEventListener("mouseleave", () => {
-            this.closingTimeout = setTimeout(() => this.close(), this.closingDelay);
+            this.closingTimeout = setTimeout(
+                () => this.close(),
+                Responsive.isAnyOf(...USES_CLICK_INTERACTION) ? 0 : this.closingDelay
+            );
         });
     }
 
@@ -77,7 +94,7 @@ export default class FolderElement extends HTMLElement {
     /**
      * Appends multiple nodes as children.
      * NOTE: the children are added to the ```contents``` div
-     * @param nodes 
+     * @param nodes
      */
     public override append(...nodes: (string | Node)[]): void {
         return this.contents.append(...nodes);
@@ -88,7 +105,7 @@ export default class FolderElement extends HTMLElement {
      */
     public open() {
         const headingBB = this.heading.getBoundingClientRect();
-        switch (this.foldDir) {
+        switch (this._foldDir) {
             case "down":
                 this.contents.style.left = "0px";
                 this.contents.style.top = this.clientHeight + "px";

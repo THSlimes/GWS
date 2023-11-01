@@ -184,6 +184,8 @@ div#split-view {
 .cross-axis-end { align-items: flex-end; }
 .cross-axis-center { align-items: center; }
 
+.no-scroll { overflow: hidden; }
+
 /* standard indication of being click-able */
 button, input[type="button"], .click-action {
     &:disabled {
@@ -229,7 +231,7 @@ a[href], .link:not(:disabled) {
     /* body { box-shadow: inset 0px 0px 0px 2px red !important; } */
     div#split-view {
         grid-template-areas: "c" "n" "s" !important;
-        padding-top: 0px;
+        padding-top: 1em;
         > .content { padding-top: 0px; }
 
         > #sponsors > .logos > * { margin: .5em; }

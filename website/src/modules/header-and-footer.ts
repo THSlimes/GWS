@@ -1,6 +1,8 @@
-import ColorThemes, { ColorTheme } from "../common/ColorThemes";
+import $ from "jquery";
+
 import FolderElement from "../common/custom-elements/FolderElement";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
+import Responsive, { Viewport } from "../common/Responsive";
 
 // HEADER / NAVBAR
 
@@ -116,31 +118,76 @@ function createFolderContents(config:NavbarConfig, nestingLvl=0):(FolderElement|
     return out;
 }
 
+const USES_SIDEBAR:Viewport[] = ["mobile-portrait", "tablet-portrait"];
 function createHeader(config:NavbarConfig):HTMLElement {
-    return ElementFactory.header()
-        .class("page-header", "flex-columns", "main-axis-space-between", "cross-axis-center")
+    const out = ElementFactory.header()
+        .class("page-header")
         .children(
-            ElementFactory.div()
-                .class("desc", "flex-rows", "main-axis-center")
+            ElementFactory.div("header-container", "flex-columns", "main-axis-space-between", "cross-axis-center")
                 .children(
-                    ElementFactory.a('/').children(ElementFactory.h4("Den Geitenwollen Soc.")),
-                    ElementFactory.p("Studievereniging Sociologie Nijmegen").class("subtitle")
+                    ElementFactory.div()
+                        .class("desc", "flex-rows", "main-axis-center")
+                        .children(
+                            ElementFactory.a('/').children(ElementFactory.h4("Den Geitenwollen Soc.")),
+                            ElementFactory.p("Studievereniging Sociologie Nijmegen").class("subtitle")
+                        ),
+                    ElementFactory.div()
+                        .class("links", "flex-columns", "main-axis-center", "cross-axis-baseline")
+                        .children(
+                            ...createFolderContents(config)
+                        ),
+                    ElementFactory.div()
+                        .class("quick-actions", "center-content", "main-axis-space-between")
+                        .children(
+                            ElementFactory.input.button("search").id("search-button")
+                                .class("icon"),
+                            ElementFactory.input.button("login")
+                                .class("icon")
+                                .tooltip("Inloggen")
+                                .onClick(() => window.location.href = "/login.html"),
+                            ElementFactory.input.button("menu").id("open-menu-button")
+                                .class("icon")
+                                .style({"display": "none"})
+                                .onClick(() => {
+                                    $(sidebarContainer).fadeToggle();
+                                    document.body.classList.toggle("no-scroll");
+                                })
+                        )
                 ),
-            ElementFactory.div()
-                .class("links", "flex-columns", "main-axis-space-around", "cross-axis-baseline")
-                .children(
-                    ...createFolderContents(config)
-                ),
-            ElementFactory.div()
-                .class("quick-actions", "center-content", "main-axis-space-between")
-                .children(
-                    ElementFactory.input.button("search").class("icon"),
-                    ElementFactory.input.button("login")
-                        .class("icon")
-                        .tooltip("Inloggen")
-                        .onClick(() => window.location.href = "/login.html")
-                )
-        ).make();
+                ElementFactory.div("sidebar-container")
+                    .children(
+                        ElementFactory.div("sidebar", "links")
+                    )
+        )
+        .make();
+
+    const sidebarContainer = out.querySelector("#sidebar-container")!;
+
+    const linksDiv = out.querySelector(".links")!;
+    const sidebarDiv = out.querySelector("#sidebar")!;
+    const linksTree = Array.from(out.querySelectorAll(".links > *"));
+
+    function checkMoveLinks() {
+        if (Responsive.isAnyOf(...USES_SIDEBAR)) {
+            sidebarDiv.prepend(...linksTree); // move links to sidebar
+            linksTree.forEach(e => {
+                if (e instanceof FolderElement) e.foldDir = "right";
+            });
+        }
+        else { // move links to navbar
+            linksDiv.prepend(...linksTree);
+            // force-close sidebar
+            $(sidebarContainer).hide();
+            document.body.classList.remove("no-scroll");
+            linksTree.forEach(e => {
+                if (e instanceof FolderElement) e.foldDir = "down";
+            });
+        }
+    }
+    Responsive.onChange = () => checkMoveLinks();
+    checkMoveLinks(); // initial check
+
+    return out;
 }
 
 

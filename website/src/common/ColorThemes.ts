@@ -44,7 +44,7 @@ export default abstract class ColorThemes {
     }
 
     static { // apply while loading
-        let stored = localStorage.getItem("theme");        
+        let stored = localStorage.getItem("theme");
         stored ??= (matchMedia && matchMedia("(prefers-color-scheme: dark)").matches) ? ColorTheme.DARK : ColorTheme.LIGHT;
                 
         this.theme = Object.values(ColorTheme).includes(stored as any) ? stored as ColorTheme : ColorTheme.LIGHT;

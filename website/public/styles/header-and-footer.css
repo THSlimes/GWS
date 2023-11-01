@@ -3,17 +3,12 @@
 /* PAGE HEADER */
 
 header.page-header {
-    padding: 1em 2em 1em 2em;
-    height:min-content;
-
-    background-color: var(--secondary);
+    width: 100%;
 
     & * { color: var(--primary); }
 
-    & > .desc * { margin:0px; }
-
-    & > .links {
-        padding: 0px 8em 0px 8em;
+    & .links {
+        padding: 0px 2em 0px 2em;
         gap: 1em 2em;
         flex-grow:2;
         flex-wrap: wrap;
@@ -33,15 +28,72 @@ header.page-header {
         }
 
         & .link {
+            height: min-content;
             > * { margin: 0px; }
         }
     }
+    
+    #header-container {
+        padding: 1em 2em 1em 2em;
+        
+        box-sizing: border-box;
+        width: 100%;
+        height: min-content;
+    
+        background-color: var(--secondary);
+        
+        & > .desc * { margin:0px; }
 
-    > .quick-actions {
-        > * {
-            margin: 0px .25em 0px .25em;
-            background: none;
-            border: none;
+        > .quick-actions {
+            gap: 0px .5em;
+            > * {
+                background: none;
+                border: none;
+            }
+        }
+    }
+
+    > #sidebar-container {
+        display: none;
+        z-index: 98;
+        position: fixed;
+    
+        width: 100vw;
+        height: 100vh;
+        
+        backdrop-filter: blur(4px);
+        
+        > #sidebar {
+            padding: 1em;
+            width: 75%;
+            height: 100%;
+
+            background-color: var(--secondary);
+            
+            overflow-y: scroll;
+            
+            > * {
+                display: block;
+                margin-bottom: 1em;
+                font-size: 1.5em;
+            }
+
+            & folder-element {
+                > .topper {
+                    align-items: end;
+                    width: max-content;
+                }
+                > .contents {
+                    display: block;
+                    position: static;
+                    > * {
+                        display: block;
+                        margin-bottom: .5em;
+                        font-size: 1.25rem;
+                        height: unset;
+                    }
+                }
+            }
         }
     }
 }
@@ -85,8 +137,20 @@ footer {
 
 @media (max-aspect-ratio: 3 / 4) {
     header.page-header {
-        > .desc * { white-space: nowrap; }
-        > .links { display: none; }
+        position: fixed;
+        z-index: 99;
+        top:0px;
+        left:0px;
+
+        > #header-container {
+            padding: 1em 1em 1em 1em;
+    
+            > .desc * { white-space: nowrap; }
+            > .links { display:none; }
+    
+            & #open-menu-button { display: block !important; }
+            & #search-button { display: none; }
+        }
     }
 }
 
