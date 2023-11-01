@@ -34,24 +34,38 @@ export class FirestoreArticleDatabase extends ArticleDatabase {
         }
     });
 
+    public get(limit = 5, options?: Omit<ArticleFilterOptions, "limit">) {
+        return FirestoreArticleDatabase.getArticles({ limit, sortByCreatedAt: "descending", ...options });
+    }
+
+    public count(options?: ArticleFilterOptions) {
+        return FirestoreArticleDatabase.getArticles({ ...options }, true);
+    }
+
     public getById(id: string) {
         return new Promise<ArticleInfo | undefined>(async (resolve, reject) => {
             FirestoreArticleDatabase.getArticles({ id })
-                .then(articles => resolve(articles.length > 0 ? articles[0] : undefined))
-                .catch(reject);
+            .then(articles => resolve(articles.length > 0 ? articles[0] : undefined))
+            .catch(reject);
         });
-    }
-
-    public get(limit = 5, options?: Omit<ArticleFilterOptions, "limit">) {
-        return FirestoreArticleDatabase.getArticles({ limit, sortByCreatedAt: "descending", ...options });
     }
 
     public getByCategory(category: string, options?: Omit<ArticleFilterOptions, "category">) {
         return FirestoreArticleDatabase.getArticles({ category, ...options });
     }
 
-    public count(options?: ArticleFilterOptions) {
-        return FirestoreArticleDatabase.getArticles({ ...options }, true);
+    public getNext(article: ArticleInfo, options?: Omit<ArticleFilterOptions, "limit"|"before"|"after"> | undefined): Promise<ArticleInfo|undefined> {
+        return new Promise((resolve, reject) => {
+            FirestoreArticleDatabase.getArticles({ after: article.created_at, limit:1, ...options })
+            .then(articles => resolve(articles.length > 0 ? articles[0] : undefined));
+        });
+    }
+
+    public getPrevious(article: ArticleInfo, options?: Omit<ArticleFilterOptions, "limit"|"before"|"after"> | undefined): Promise<ArticleInfo|undefined> {
+        return new Promise((resolve, reject) => {
+            FirestoreArticleDatabase.getArticles({ before: article.created_at, limit:1, ...options })
+            .then(articles => resolve(articles.length > 0 ? articles[0] : undefined));
+        });
     }
 
     private static getArticles(options: ArticleFilterOptions, doCount?: false): Promise<ArticleInfo[]>;

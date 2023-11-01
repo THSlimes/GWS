@@ -9,6 +9,7 @@ folder-element {
         > .arrow {
             position: absolute;
             right: 0px;
+            font-size: inherit;
             transition: rotate 200ms ease-in;
         }
     }

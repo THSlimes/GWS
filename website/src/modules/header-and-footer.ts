@@ -43,7 +43,7 @@ const NAVBAR_CONFIG:NavbarConfig = {
     },
     "Agenda": "/calender.html",
     "Onderwijs": {
-        "Aankomende studente": DEFAULT_LINK,
+        "Aankomende studenten": DEFAULT_LINK,
         "Sociologie": DEFAULT_LINK,
         "Studieadviseur": DEFAULT_LINK,
         "Medezeggenschap": DEFAULT_LINK,
@@ -148,9 +148,10 @@ function createHeader(config:NavbarConfig):HTMLElement {
                             ElementFactory.input.button("menu").id("open-menu-button")
                                 .class("icon")
                                 .style({"display": "none"})
-                                .onClick(() => {
-                                    $(sidebarContainer).fadeToggle();
-                                    document.body.classList.toggle("no-scroll");
+                                .on("click", (e, self) => {
+                                    $(sidebarContainer).stop().fadeToggle(200);
+                                    sidebar.toggleAttribute("shown");
+                                    self.value = document.body.classList.toggle("no-scroll") ? "menu_open" : "menu";
                                 })
                         )
                 ),
@@ -162,6 +163,7 @@ function createHeader(config:NavbarConfig):HTMLElement {
         .make();
 
     const sidebarContainer = out.querySelector("#sidebar-container")!;
+    const sidebar = out.querySelector("#sidebar")!;
 
     const linksDiv = out.querySelector(".links")!;
     const sidebarDiv = out.querySelector("#sidebar")!;
@@ -178,7 +180,9 @@ function createHeader(config:NavbarConfig):HTMLElement {
             linksDiv.prepend(...linksTree);
             // force-close sidebar
             $(sidebarContainer).hide();
+            sidebar.removeAttribute("shown");
             document.body.classList.remove("no-scroll");
+            (out.querySelector("#open-menu-button") as HTMLInputElement).value = "menu";
             linksTree.forEach(e => {
                 if (e instanceof FolderElement) e.foldDir = "down";
             });

@@ -1,3 +1,19 @@
 @import url("../shared.css");
 
 @import url("../custom-elements/smart-article.css");
+
+#navigation-buttons {
+    > * {
+        padding: .5em 1em .5em 1em;
+        width: 50%;
+    }
+}
+
+/* TABLET-VIEWPORT OVERRIDE */
+
+@media (max-aspect-ratio: 3 / 4) {
+    #navigation-buttons {
+        flex-direction: column;
+        > * { width: 100%; }
+    }
+}

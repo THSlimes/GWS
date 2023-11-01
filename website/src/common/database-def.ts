@@ -34,6 +34,12 @@ export abstract class ArticleDatabase {
     /** Gets articles with the given category. */
     abstract getByCategory(category:string, options?:Omit<ArticleFilterOptions,"category">):Promise<ArticleInfo[]>;
 
+    /** Retrieves the next posted article. */
+    abstract getNext(article:ArticleInfo, options?:Omit<ArticleFilterOptions,"limit"|"before"|"after">):Promise<ArticleInfo|undefined>;
+    
+    /** Retrieves the previous posted article. */
+    abstract getPrevious(article:ArticleInfo, options?:Omit<ArticleFilterOptions,"limit"|"before"|"after">):Promise<ArticleInfo|undefined>;
+
 }
 
 export type EventInfo = { id:string, name:string, description:string, starts_at:Date, ends_at:Date, category:string };

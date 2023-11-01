@@ -64,18 +64,22 @@ header.page-header {
         backdrop-filter: blur(4px);
         
         > #sidebar {
-            padding: 1em;
-            width: 75%;
+            padding: 1em 1em 1em 2em;
+            width: 50%;
             height: 100%;
 
             background-color: var(--secondary);
             
             overflow-y: scroll;
+
+            translate: -100% 0px;
+            &[shown] { translate: 0px 0px; }
+            transition: translate 200ms ease-in-out;
             
             > * {
                 display: block;
                 margin-bottom: 1em;
-                font-size: 1.5em;
+                font-size: 1.25rem;
             }
 
             & folder-element {
@@ -89,7 +93,7 @@ header.page-header {
                     > * {
                         display: block;
                         margin-bottom: .5em;
-                        font-size: 1.25rem;
+                        font-size: 1rem;
                         height: unset;
                     }
                 }
@@ -136,15 +140,16 @@ footer {
 /* TABLET-VIEWPORT OVERRIDE */
 
 @media (max-aspect-ratio: 3 / 4) {
+    body { padding-top: 4em !important; }
+
     header.page-header {
         position: fixed;
         z-index: 99;
         top:0px;
         left:0px;
-
+        
         > #header-container {
-            padding: 1em 1em 1em 1em;
-    
+            padding: 1em;
             > .desc * { white-space: nowrap; }
             > .links { display:none; }
     
