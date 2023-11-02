@@ -4,12 +4,12 @@ import FolderElement from "../common/custom-elements/FolderElement";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
 import Responsive, { Viewport } from "../common/Responsive";
 
+/** Creates the link to an article given its ID. */
+export function articleLink(id: string) { return `/article.html?id=${id}`; }
+
 // HEADER / NAVBAR
 
 const DEFAULT_LINK = "/";
-/** Creates the link to an article given its ID. */
-function articleLink(id:string) { return `/article.html?id=${id}` }
-
 type NavbarConfig = { [name:string]: NavbarConfig | string }
 const NAVBAR_CONFIG:NavbarConfig = {
     "Vereniging": {

@@ -95,7 +95,7 @@ div#split-view {
     padding: 2em 8vw 2em 8vw;
 
     box-sizing: border-box;
-    width: 100vw;
+    width: 100%;
     height: min-content;
 
     > * > .section-name { text-align: center; }
@@ -142,6 +142,8 @@ div#split-view {
 .light-weight { font-weight: 300; }
 .normal-weight { font-weight: 400; }
 .bold-weight { font-weight: 700; }
+
+.italic { font-style: italic; }
 
 .boxed {
     border: 2px solid var(--shadow);
@@ -195,8 +197,8 @@ button, input[type="button"], .click-action {
     }
     &:not(:disabled) {
         transform-origin: center;
-        &:hover { scale: 1.075; }
-        &:active { scale: 0.95; }
+        &:hover { scale: 1.05; }
+        &:active { scale: 1; }
     }
 }
 

@@ -27,6 +27,8 @@ article {
         }
     }
 
+    > .created-at { color: var(--accent); }
+
 }
 
 /* TABLET-VIEWPORT OVERRIDE */

@@ -13,8 +13,6 @@ export default class SmartArticle extends HTMLElement {
     private readonly heading:HTMLAnchorElement;
     private readonly body:HTMLDivElement;
 
-    private readonly createdAt:Date;
-
     /**
      * Creates a new SmartArticle.
      * @param heading heading/title of the article (markdown)
@@ -42,7 +40,6 @@ export default class SmartArticle extends HTMLElement {
             } : undefined)
         );
         this.body.classList.add("body");
-        this.createdAt = createdAt;
 
         if (isPreview) {
             this.setAttribute("is-preview", "");
@@ -56,9 +53,20 @@ export default class SmartArticle extends HTMLElement {
                 );
             }
         }
+        else {
+            this.appendChild(
+                ElementFactory.p(`Geplaatst op ${createdAt.toLocaleDateString(navigator.languages, {dateStyle:"medium"})}`)
+                    .class("created-at", "italic")
+                    .children(
+                        ElementFactory.span(` (${createdAt.toLocaleTimeString(navigator.languages, {timeStyle:"short"})})`)
+                            .class("subtitle")
+                    )
+                    .make()
+            );
+        }
     }
 
-    public static fromInfo(article:ArticleInfo, isPreview:boolean=true) {                
+    public static fromInfo(article:ArticleInfo, isPreview:boolean=true) {
         return new SmartArticle(
             article.heading,
             article.body,

@@ -54,16 +54,16 @@ export class FirestoreArticleDatabase extends ArticleDatabase {
         return FirestoreArticleDatabase.getArticles({ category, ...options });
     }
 
-    public getNext(article: ArticleInfo, options?: Omit<ArticleFilterOptions, "limit"|"before"|"after"> | undefined): Promise<ArticleInfo|undefined> {
+    public getNext(article: ArticleInfo, options?: Omit<ArticleFilterOptions, "limit"|"before"|"after"|"sortByCreatedAt"> | undefined): Promise<ArticleInfo|undefined> {
         return new Promise((resolve, reject) => {
-            FirestoreArticleDatabase.getArticles({ after: article.created_at, limit:1, ...options })
+            FirestoreArticleDatabase.getArticles({ after: article.created_at, limit:1, sortByCreatedAt:"ascending", ...options })
             .then(articles => resolve(articles.length > 0 ? articles[0] : undefined));
         });
     }
 
-    public getPrevious(article: ArticleInfo, options?: Omit<ArticleFilterOptions, "limit"|"before"|"after"> | undefined): Promise<ArticleInfo|undefined> {
+    public getPrevious(article: ArticleInfo, options?: Omit<ArticleFilterOptions, "limit"|"before"|"after"|"sortByCreatedAt"> | undefined): Promise<ArticleInfo|undefined> {
         return new Promise((resolve, reject) => {
-            FirestoreArticleDatabase.getArticles({ before: article.created_at, limit:1, ...options })
+            FirestoreArticleDatabase.getArticles({ before: article.created_at, limit:1, sortByCreatedAt:"descending", ...options })
             .then(articles => resolve(articles.length > 0 ? articles[0] : undefined));
         });
     }

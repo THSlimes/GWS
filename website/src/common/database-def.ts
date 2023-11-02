@@ -35,10 +35,10 @@ export abstract class ArticleDatabase {
     abstract getByCategory(category:string, options?:Omit<ArticleFilterOptions,"category">):Promise<ArticleInfo[]>;
 
     /** Retrieves the next posted article. */
-    abstract getNext(article:ArticleInfo, options?:Omit<ArticleFilterOptions,"limit"|"before"|"after">):Promise<ArticleInfo|undefined>;
+    abstract getNext(article:ArticleInfo, options?:Omit<ArticleFilterOptions,"limit"|"before"|"after"|"sortByCreatedAt">):Promise<ArticleInfo|undefined>;
     
     /** Retrieves the previous posted article. */
-    abstract getPrevious(article:ArticleInfo, options?:Omit<ArticleFilterOptions,"limit"|"before"|"after">):Promise<ArticleInfo|undefined>;
+    abstract getPrevious(article:ArticleInfo, options?:Omit<ArticleFilterOptions,"limit"|"before"|"after"|"sortByCreatedAt">):Promise<ArticleInfo|undefined>;
 
 }
 
