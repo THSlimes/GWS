@@ -159,6 +159,13 @@ function createHeader(config:NavbarConfig):HTMLElement {
                     .children(
                         ElementFactory.div("sidebar", "links")
                     )
+                    .on("click", (e, self) => {
+                        if (e.target === self) {
+                            $(self).fadeOut(200);
+                            sidebar.removeAttribute("shown");
+                            (out.querySelector("#open-menu-button") as HTMLInputElement).value = "menu";
+                        }
+                    })
         )
         .make();
 
