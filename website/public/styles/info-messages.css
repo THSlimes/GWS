@@ -1,0 +1,40 @@
+#info-messages {
+    z-index: 100;
+    position: fixed;
+    top:0px;
+    left:0px;
+    width: 100%;
+    
+    pointer-events: none;
+
+    > * {
+        padding: .5em 1em .5em 1em;
+        max-width: 80%;
+        border-radius: .25em;
+        text-align: center;
+
+        animation: fade-in 200ms ease-out 0ms 1;
+
+        &.info { background-color: whitesmoke; }
+        &.warning { background-color: lightyellow; }
+        &.error {
+            background-color: var(--accent);
+            color: var(--primary);
+        }
+
+        /* & ~ * { translate: 0px 2em; } */
+    }
+}
+
+@keyframes fade-in {
+    0% {
+        opacity: 0;
+        margin-bottom: -2em;
+        translate: 0px -2em;
+    }
+    100% {
+        opacity: 1;
+        margin-bottom: 0px;
+        translate: 0px 0px;
+    }
+}

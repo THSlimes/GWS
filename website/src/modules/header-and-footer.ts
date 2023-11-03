@@ -2,7 +2,8 @@ import $ from "jquery";
 
 import FolderElement from "../common/custom-elements/FolderElement";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
-import Responsive, { Viewport } from "../common/Responsive";
+import Responsive, { Viewport } from "../common/ui/Responsive";
+import { AUTH } from "../common/firebase/init-firebase";
 
 /** Creates the link to an article given its ID. */
 export function articleLink(id: string) { return `/article.html?id=${id}`; }
@@ -144,7 +145,11 @@ function createHeader(config:NavbarConfig):HTMLElement {
                             ElementFactory.input.button("login")
                                 .class("icon")
                                 .tooltip("Inloggen")
-                                .onClick(() => window.location.href = "/login.html"),
+                                .onClick(() => window.location.href = "/login.html")
+                                .onMake(self => { // hide login button when already logged in
+                                    self.style.display = AUTH.currentUser !== null || localStorage.getItem("loggedIn") === "true" ? "none" : "";
+                                    AUTH.onAuthStateChanged(user => self.style.display = user ? "none" : "");
+                                }),
                             ElementFactory.input.button("menu").id("open-menu-button")
                                 .class("icon")
                                 .style({"display": "none"})

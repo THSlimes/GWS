@@ -1,6 +1,9 @@
 import $ from "jquery";
 
-import "../common/parallax-scrolling";
+import "./header-and-footer";
+import "./create-split-view";
+
+import "../common/ui/parallax-scrolling";
 import "../common/custom-elements/ElementCarousel";
 
 import SmartArticle from "../common/custom-elements/SmartArticle";

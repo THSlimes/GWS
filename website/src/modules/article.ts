@@ -1,7 +1,10 @@
+import "./header-and-footer";
+import "./create-split-view";
+
 import { ArticleDatabase } from "../common/database-def";
 import SmartArticle from "../common/custom-elements/SmartArticle";
 import { FirestoreArticleDatabase } from "../common/firebase/database/FirestoreArticleDatabase";
-import RichText from "../common/RichText";
+import RichText from "../common/ui/RichText";
 
 /** Creates the link to an article given its ID. */
 export function articleLink(id: string) { return `/article.html?id=${id}`; }

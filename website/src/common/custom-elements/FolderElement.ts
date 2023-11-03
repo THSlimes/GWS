@@ -1,6 +1,6 @@
 import $ from "jquery";
 import ElementFactory from "../html-element-factory/ElementFactory";
-import Responsive, { Viewport } from "../Responsive";
+import Responsive, { Viewport } from "../ui/Responsive";
 
 export type FoldingDirection = "down" | "right";
 

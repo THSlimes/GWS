@@ -205,7 +205,7 @@ export default class EventCalender extends HTMLElement {
         for (let y = firstDate.getFullYear(); y <= lastDate.getFullYear(); y ++) {
             for (let m = firstDate.getMonth(); m <= lastDate.getMonth(); m ++) {
                 this.getEvents(y,m)
-                .then(events => {                            
+                .then(events => {
                     for (const dayCell of newDays) {
                         const onDay = events.filter(e => isBetweenDays(dayCell.date, e.starts_at, e.ends_at));
                         dayCell.events = onDay;

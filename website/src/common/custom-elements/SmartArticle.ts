@@ -1,4 +1,4 @@
-import RichText from "../RichText";
+import RichText from "../ui/RichText";
 import { ArticleInfo } from "../database-def";
 import ElementFactory from "../html-element-factory/ElementFactory";
 

@@ -1,4 +1,4 @@
-import ElementFactory from "./html-element-factory/ElementFactory";
+import ElementFactory from "../html-element-factory/ElementFactory";
 
 /** Options used when parsing markdown */
 type ParsingOptions = {

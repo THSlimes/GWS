@@ -9,10 +9,8 @@
     
         <link rel="stylesheet" href="./styles/page-specific/login.css">
     
-        <script type="module" src="./scripts/header-and-footer.js"></script>
-
-        <script type="module" src="./scripts/create-split-view.js"></script>
-        
+        <script type="module" src="./scripts/login.js"></script>
+                
     </head>
 <body>
 
@@ -22,9 +20,10 @@
         <input type="email" name="login-email" id="login-email">
         <p>Wachtwoord</p>
         <input type="password" name="login-password" id="login-password">
-        <button type="button" class="center-content">
+        <input type="checkbox" name="stay-logged-in" id="stay-logged-in"><label for="stay-logged-in">Ingelogd blijven?</label>
+        <button type="button" id="login-button" class="center-content">
             <p>Log in</p>
-            <span class="icon">navigate_next</span>
+            <span class="icon">chevron_right</span>
         </button>
     </form>
     

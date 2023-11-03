@@ -101,6 +101,13 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
         return this;
     }
 
+    private _onMake?:(self:HTMLElementTagNameMap[TN])=>void;
+    /** Provides a callback to be run after the element is created. */
+    public onMake(handler:(self:HTMLElementTagNameMap[TN])=>void) {
+        this._onMake = handler;
+        return this;
+    }
+
     /** Finalizes and creates the new element. */
     public make():HTMLElementTagNameMap[TN] {
         const out = document.createElement(this.tagName);
@@ -132,6 +139,8 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
             const handler = this._handlers[key]!;
             out.addEventListener(key, e => handler(e as any, out));
         }
+
+        if (this._onMake !== undefined) this._onMake(out);
 
         return out;
     }
