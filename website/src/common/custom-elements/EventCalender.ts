@@ -1,6 +1,6 @@
 import $ from "jquery";
 import ElementFactory from "../html-element-factory/ElementFactory";
-import { EventDatabase, EventInfo } from "../database-def";
+import { EventDatabase, EventInfo } from "../firebase/database/database-def";
 
 function isSameDay(a:Date, b:Date) {
     return a.getFullYear() === b.getFullYear()

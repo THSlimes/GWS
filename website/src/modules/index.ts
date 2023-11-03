@@ -7,7 +7,7 @@ import "../common/ui/parallax-scrolling";
 import "../common/custom-elements/ElementCarousel";
 
 import SmartArticle from "../common/custom-elements/SmartArticle";
-import { ArticleDatabase, ArticleInfo } from "../common/database-def";
+import { ArticleDatabase, ArticleInfo } from "../common/firebase/database/database-def";
 import { clamp } from "../common/NumberUtil";
 import { FirestoreArticleDatabase } from "../common/firebase/database/FirestoreArticleDatabase";
 

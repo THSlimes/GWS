@@ -3,10 +3,13 @@
 import "./header-and-footer";
 import "./create-split-view";
 
-import { UserCredential, browserLocalPersistence, browserSessionPersistence, setPersistence, signInWithEmailAndPassword } from "@firebase/auth";
+import { UserCredential, browserLocalPersistence, browserSessionPersistence, signInWithEmailAndPassword } from "@firebase/auth";
 import { AUTH } from "../common/firebase/init-firebase";
-import { showError, showMessage, showWarning } from "../common/ui/info-messages";
+import { showError, showWarning } from "../common/ui/info-messages";
 import getErrorMessage from "../common/firebase/error-messages";
+import { redirectIfLoggedIn } from "../common/firebase/auth-based-redirect";
+
+redirectIfLoggedIn("/", true); // can't log in when already logged in
 
 function login(email:string, password:string, stayLoggedIn:boolean=false) {
     return new Promise<UserCredential>(async (resolve, reject) => {

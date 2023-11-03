@@ -1,7 +1,7 @@
 import "./header-and-footer";
 import "./create-split-view";
 
-import { ArticleDatabase } from "../common/database-def";
+import { ArticleDatabase } from "../common/firebase/database/database-def";
 import SmartArticle from "../common/custom-elements/SmartArticle";
 import { FirestoreArticleDatabase } from "../common/firebase/database/FirestoreArticleDatabase";
 import RichText from "../common/ui/RichText";
