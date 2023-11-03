@@ -1,5 +1,5 @@
 import RichText from "../ui/RichText";
-import { ArticleInfo } from "../database-def";
+import { ArticleInfo } from "../firebase/database/database-def";
 import ElementFactory from "../html-element-factory/ElementFactory";
 
 /**

@@ -1,5 +1,5 @@
 import { QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, documentId, getCountFromServer, getDocs, limit, orderBy, query, where } from "@firebase/firestore";
-import { ArticleFilterOptions, ArticleInfo, EventDatabase, EventFilterOptions, EventInfo } from "../../database-def";
+import { ArticleFilterOptions, EventDatabase, EventFilterOptions, EventInfo } from "./database-def";
 import { DB } from "../init-firebase";
 import { clamp } from "../../NumberUtil";
 

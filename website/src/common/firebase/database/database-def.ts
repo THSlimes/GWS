@@ -1,3 +1,5 @@
+import { Permission } from "./Permission";
+
 export type QueryOptions = {
     /** Maximum number of retrieved records. */
     limit?:number,
@@ -59,4 +61,20 @@ export abstract class EventDatabase {
     abstract getById(id:string):Promise<EventInfo|undefined>;
 
     abstract getByCategory(category:string, options?:Omit<EventFilterOptions,"category">):Promise<EventInfo[]>;
+}
+
+export type UserInfo = { id:string, joined_at:Date, member_until:Date, first_name:string, family_name:string, permissions:Permission[] };
+export type UserFilterOptions = QueryOptions & {
+    joined_before?:Date,
+    joined_after?:Date,
+    is_member?:boolean,
+    has_permission?: Permission
+};
+
+export abstract class UserDatabase {
+    abstract get(limit:number, options?:Omit<UserFilterOptions,"limit">):Promise<UserInfo[]>;
+
+    abstract count(options?:UserFilterOptions):Promise<number>;
+
+    abstract getById(id:string):Promise<UserInfo|undefined>;
 }
