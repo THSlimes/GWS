@@ -145,10 +145,21 @@ function createHeader(config:NavbarConfig):HTMLElement {
                             ElementFactory.input.button("login")
                                 .class("icon")
                                 .tooltip("Inloggen")
-                                .onClick(() => window.location.href = "/login.html")
+                                .onClick(() => location.href = "/login.html")
                                 .onMake(self => { // hide login button when already logged in
                                     self.style.display = AUTH.currentUser !== null || localStorage.getItem("loggedIn") === "true" ? "none" : "";
                                     AUTH.onAuthStateChanged(user => self.style.display = user ? "none" : "");
+                                }),
+                            ElementFactory.input.button("logout")
+                                .class("icon")
+                                .tooltip("Uitloggen")
+                                .onClick(() => {
+                                    AUTH.signOut();
+                                    location.href = '/';
+                                })
+                                .onMake(self => { // hide account button when not logged in
+                                    self.style.display = AUTH.currentUser === null && localStorage.getItem("loggedIn") !== "true" ? "none" : "";
+                                    AUTH.onAuthStateChanged(user => self.style.display = user ? "" : "none");
                                 }),
                             ElementFactory.input.button("menu").id("open-menu-button")
                                 .class("icon")
