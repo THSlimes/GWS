@@ -90,8 +90,8 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
 
     private _styleProps:Record<string,string> = {};
     /** Defines key-value pairs for CSS-properties. */
-    public style(styleDef:Record<string,string>) {
-        for (const k in styleDef) this._styleProps[k] = styleDef[k];
+    public style(styleDef:Record<string,{ toString():string }>) {
+        for (const k in styleDef) this._styleProps[k] = styleDef[k].toString();
         return this;
     }
 

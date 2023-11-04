@@ -10,7 +10,62 @@ import SmartArticle from "../common/custom-elements/SmartArticle";
 import { ArticleDatabase, ArticleInfo } from "../common/firebase/database/database-def";
 import { clamp } from "../common/NumberUtil";
 import { FirestoreArticleDatabase } from "../common/firebase/database/FirestoreArticleDatabase";
+import { STORAGE } from "../common/firebase/init-firebase";
+import { getDownloadURL, listAll, ref } from "@firebase/storage";
+import ElementCarousel from "../common/custom-elements/ElementCarousel";
+import ElementFactory from "../common/html-element-factory/ElementFactory";
 
+// INSERTING CAROUSEL IMAGES
+
+const CAROUSEL_IMAGES:Record<number,HTMLImageElement> = {};
+
+function createCarouselImg(url:string, priority:"high"|"low"|"auto"="auto"):HTMLImageElement {
+    return ElementFactory.img(url, "Afbeelding")
+        .attrs({ "parallax-factor": .75, "fetchPriority": priority })
+        .style({opacity: 0})
+        .on("load", (e, self) => self.style.opacity = "1")
+        .onMake(self => {
+            if (self.complete) self.style.opacity = "1";
+        })
+        .make();
+}
+
+const carouselImagesFolder = ref(STORAGE, "/photos/homepage");
+listAll(carouselImagesFolder)
+.then(photoRefs => {
+    photoRefs.items.forEach((photoRef, i) => {
+        getDownloadURL(photoRef)
+        .then(url => {
+            CAROUSEL_IMAGES[i] = CAROUSEL.appendChild(createCarouselImg(url, i === 0 ? "high" : "low"));
+
+            for (let i in CAROUSEL_IMAGES) {
+                CAROUSEL.currentIndex.toString() === i ? $(CAROUSEL_IMAGES[i]).show() : $(CAROUSEL_IMAGES[i]).hide();
+            }
+            CAROUSEL.revolvingElements.splice(0, Infinity, ...Object.values(CAROUSEL_IMAGES));
+        })
+        .catch(console.warn);
+    });
+})
+.catch(console.warn);
+
+// creating as soon as possible
+const CAROUSEL = new ElementCarousel(5000, 800);
+CAROUSEL.append(
+    ElementFactory.h1("Studievereniging Den Geitenwollen Soc.")
+        .id("carousel-name")
+        .attrs({ "cover":"", "parallax-factor":.7 })
+        .make(),
+    ElementFactory.div().attr("cover").make()
+);
+CAROUSEL.id = "photo-carousel";
+
+window.addEventListener("DOMContentLoaded", () => { // inserting after page load
+    document.getElementById("carousel-placeholder")!.replaceWith(CAROUSEL);
+});
+
+// RETRIEVING ARTICLES
+
+/** Information of a page of articles. */
 type PageInfo = {
     pageNum: number,
     retrieved:boolean,
@@ -28,8 +83,6 @@ function getPeriod(articles:ArticleInfo[]):[Date, Date] {
     const sorted = articles.map(a => a.created_at).toSorted((a,b) => b.getTime()-a.getTime());
     return [sorted[0], sorted.at(-1)!];
 }
-
-
 
 window.addEventListener("DOMContentLoaded", async () => {
     const NUM_ARTICLES = await DB.count({ forHomepage:true }); // total number of articles

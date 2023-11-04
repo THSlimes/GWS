@@ -2,7 +2,7 @@
 @import url("../custom-elements/element-carousel.css");
 @import url("../custom-elements/smart-article.css");
 
-#photo-carousel {
+#photo-carousel, #carousel-placeholder {
     margin: 1em 0px 1em 0px;
 
     width: 100%;
