@@ -29,27 +29,28 @@ export default class ElementCarousel extends HTMLElement {
 
         this.fadeTime = Number.parseFloat(this.getAttribute("fade-time")!);
         if (isNaN(this.fadeTime)) this.fadeTime = fadeTime;
+        this.style.setProperty("--fade-time", this.fadeTime + "ms");
 
         this.current = Number.parseInt(this.getAttribute("current")!);
         if (isNaN(this.current)) this.current = current;
 
         // initializing display
         this.revolvingElements.push(...Array.from(this.children).filter(e => e.hasAttribute("cover")));
-        this.revolvingElements.filter((e,i) => i !== this.current).forEach(e => $(e).hide());
+        this.revolvingElements.filter((e,i) => i !== this.current).forEach(e => e.setAttribute("hide", ""));
 
         setInterval(() => { // loops through children in interval
             const prev = this.current;
             this.current = (this.current + 1) % this.revolvingElements.length;
 
-            $(this.revolvingElements[prev]).fadeOut(this.fadeTime);
-            $(this.revolvingElements[this.current]).fadeIn(this.fadeTime);
+            this.revolvingElements[prev].setAttribute("hide", "");
+            this.revolvingElements[this.current].removeAttribute("hide");
 
         }, this.delay);
     }
 
     public override appendChild<T extends Node>(node: T): T {
         if (node instanceof Element && !node.hasAttribute("cover")) {
-            if (this.revolvingElements.push(node)-1 !== this.current) $(node).hide();
+            if (this.revolvingElements.push(node)-1 !== this.current) node.setAttribute("hide", "");
         }
         
         return super.appendChild(node);

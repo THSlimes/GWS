@@ -22,10 +22,9 @@ const CAROUSEL_IMAGES:Record<number,HTMLImageElement> = {};
 function createCarouselImg(url:string, priority:"high"|"low"|"auto"="auto"):HTMLImageElement {
     return ElementFactory.img(url, "Afbeelding")
         .attrs({ "parallax-factor": .75, "fetchPriority": priority })
-        .style({opacity: 0})
-        .on("load", (e, self) => self.style.opacity = "1")
+        .on("load", (e, self) => self.setAttribute("loaded",""))
         .onMake(self => {
-            if (self.complete) self.style.opacity = "1";
+            if (self.complete) self.setAttribute("loaded","");
         })
         .make();
 }
@@ -36,10 +35,11 @@ listAll(carouselImagesFolder)
     photoRefs.items.forEach((photoRef, i) => {
         getDownloadURL(photoRef)
         .then(url => {
-            CAROUSEL_IMAGES[i] = CAROUSEL.appendChild(createCarouselImg(url, i === 0 ? "high" : "low"));
+            CAROUSEL_IMAGES[i] = createCarouselImg(url, i === 0 ? "high" : "low");
+            CAROUSEL.prepend(CAROUSEL_IMAGES[i]);
 
             for (let i in CAROUSEL_IMAGES) {
-                CAROUSEL.currentIndex.toString() === i ? $(CAROUSEL_IMAGES[i]).show() : $(CAROUSEL_IMAGES[i]).hide();
+                CAROUSEL.currentIndex.toString() === i ? CAROUSEL_IMAGES[i].removeAttribute("hide") : CAROUSEL_IMAGES[i].setAttribute("hide", "");
             }
             CAROUSEL.revolvingElements.splice(0, Infinity, ...Object.values(CAROUSEL_IMAGES));
         })

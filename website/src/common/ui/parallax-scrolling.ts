@@ -5,40 +5,59 @@ function isReplacedElement(e:HTMLElement) {
         || e instanceof HTMLImageElement;
 }
 
+/** Initializes parallax scrolling of the given element. */
+function initParallax(elem:HTMLElement) {
+    const factor = Number.parseFloat(elem.getAttribute("parallax-factor")!);
+    if (!isNaN(factor)) { // check if valid number
+        elem.style.setProperty("--parallax-factor", factor.toString());
+
+        // get original displacement
+        const style = getComputedStyle(elem);
+        const originalDisplacement = isReplacedElement(elem) ? style.objectPosition.split(' ') : style.translate.split(' ');
+        
+        elem.style.setProperty("--original-displacement-x", originalDisplacement[0]);
+        elem.style.setProperty("--original-displacement-y", originalDisplacement[1]);
+
+        if (elem instanceof HTMLImageElement) {
+            const bb = elem.getBoundingClientRect();
+            elem.style.setProperty("--min-displacement-y", `${bb.height - elem.naturalHeight}px`);
+            elem.style.setProperty("--max-displacement-y", `calc(100% + ${elem.naturalHeight - bb.height}px)`);
+            
+        }
+        else {
+            elem.style.setProperty("--min-displacement-y", "0%");
+            elem.style.setProperty("--max-displacement-y", "100%");
+        }
+
+        elem.setAttribute("parallax-scrolling", "");
+    }
+}
+
 // initial search for parallax elements
 window.addEventListener("DOMContentLoaded", () => {
     // store initial scroll position
     document.body.style.setProperty("--scroll-x", window.scrollX + "px");
     document.body.style.setProperty("--scroll-y", window.scrollY + "px");
 
+    // for current elements
     document.querySelectorAll("*[parallax-factor]").forEach(e => {
-        if (e instanceof HTMLElement) {
-            const factor = Number.parseFloat(e.getAttribute("parallax-factor")!);
-            if (!isNaN(factor)) { // check if valid number
-                e.style.setProperty("--parallax-factor", factor.toString());
-    
-                // get original displacement
-                const style = getComputedStyle(e);
-                const originalDisplacement = isReplacedElement(e) ? style.objectPosition.split(' ') : style.translate.split(' ');
-                
-                e.style.setProperty("--original-displacement-x", originalDisplacement[0]);
-                e.style.setProperty("--original-displacement-y", originalDisplacement[1]);
+        if (e instanceof HTMLElement) initParallax(e);
+    });
 
-                if (e instanceof HTMLImageElement) {
-                    const bb = e.getBoundingClientRect();
-                    e.style.setProperty("--min-displacement-y", `${bb.height - e.naturalHeight}px`);
-                    e.style.setProperty("--max-displacement-y", `calc(100% + ${e.naturalHeight - bb.height}px)`);
-                    
+    // for future elements
+    const mutationObserver = new MutationObserver(mutations => {
+        for (const mutation of mutations) {
+            if (mutation.type === "childList" && mutation.target instanceof Element) {
+                // traverse target and ancestors to find parallax-scrolling elements
+                const frontier:Element[] = [mutation.target];
+                while (frontier.length) {
+                    const elem = frontier.pop()!;
+                    if (elem instanceof HTMLElement && elem.hasAttribute("parallax-factor") && !elem.hasAttribute("parallax-scrolling")) initParallax(elem);
+                    frontier.push(...Array.from(elem.children));
                 }
-                else {
-                    e.style.setProperty("--min-displacement-y", "0%");
-                    e.style.setProperty("--max-displacement-y", "100%");
-                }
-
-                e.setAttribute("parallax-scrolling", "");
             }
         }
-    });
+    }).observe(document.body, { attributes:true, childList:true, subtree:true });
 });
 
 document.addEventListener("scroll", () => {
