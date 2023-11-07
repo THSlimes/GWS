@@ -8,7 +8,7 @@ import "../common/custom-elements/ElementCarousel";
 
 import SmartArticle from "../common/custom-elements/SmartArticle";
 import { ArticleDatabase, ArticleInfo } from "../common/firebase/database/database-def";
-import { clamp } from "../common/NumberUtil";
+import { clamp } from "../common/util/NumberUtil";
 import { FirestoreArticleDatabase } from "../common/firebase/database/FirestoreArticleDatabase";
 import { STORAGE } from "../common/firebase/init-firebase";
 import { getDownloadURL, listAll, ref } from "@firebase/storage";

@@ -2,7 +2,7 @@
 
 /* ELEMENT-CAROUSEL DEFAULT STYLE */
 
-element-carousel {
+element-carousel, #carousel-placeholder {
     position:relative;
     display: flex;
     justify-content: center;

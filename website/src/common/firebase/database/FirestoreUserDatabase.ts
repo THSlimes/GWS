@@ -2,7 +2,7 @@ import { QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, document
 import { Permission } from "./Permission";
 import { UserDatabase, UserFilterOptions, UserInfo } from "./database-def";
 import { DB } from "../init-firebase";
-import { clamp } from "../../NumberUtil";
+import { clamp } from "../../util/NumberUtil";
 
 /** A user as they're stored in the database. */
 type DBUser = {

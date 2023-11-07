@@ -17,16 +17,18 @@ event-calender {
         }
     }
     
-    > .day-cells {
+    > .day-cell-container {
+        grid-row: 2 / 3;
+        
         display: grid;
         grid-template-rows: auto repeat(6, 1fr);
         grid-template-columns: repeat(7, 1fr);
 
-        grid-row: 2 / 3;
-
         padding:2px;
 
         background-color: var(--tertiary);
+
+        overflow-x: hidden;
 
         > .day-name {
             margin: 0px;
@@ -39,42 +41,54 @@ event-calender {
         > .day-cell {
             position: relative;
 
-            padding: 2em 2px 2px 2px;
+            display: grid;
+            grid-template-rows: max-content repeat(var(--max-overlap), 1fr);
+
+            --day-cell-padding: .25em;
+            padding: var(--day-cell-padding);
 
             background-color: var(--primary);
-            border: 1px solid var(--shadow);
+            outline: 2px solid var(--shadow);
+
+            overflow-x: visible;
 
             &.different-month { filter: grayscale(.25) blur(.5px); }
             &.today {
-                border: 2px solid var(--accent);
-                > .day-number { color: var(--accent); }
+                background-color: lightyellow;
+                > .day-number { color: orangered; }
             }
 
             > .day-number {
-                z-index: 0;
-
-                position: absolute;
-                top:0px;
-                left:2px;
-
                 margin: 0px;
-                
                 user-select: none;
             }
 
-            > .event-note {
-                position:relative;
-                z-index: 1;
+            > event-note {
+                grid-row: calc(var(--offset) + 2) / span 1;
+                width: calc(var(--length) * 100% + 2 * (var(--length) - 1) * var(--day-cell-padding));
 
-                margin-bottom: 2px;
-                padding: 2px;
+                --hover-scale-factor: 1.0125;
 
-                box-sizing: border-box;
-                width: 100%;
-                background-color: var(--accent);
-
-                > * { margin:0px; }
+                &.starts-in-earlier-week {
+                    padding-left: 20px;
+                    width: calc(var(--length) * 100% + 2 * (var(--length) - 1) * var(--day-cell-padding) + 1em);
+                    translate: -1em 0px;
+                }
             }
         }
     }
+}
+
+event-note {
+    display: block;
+    position: relative;
+    
+    margin-bottom: 2px;
+    padding: 2px 4px 2px 4px;
+
+    box-sizing: border-box;
+    
+    border-radius: .25em;
+
+    > * { margin:0px; }
 }

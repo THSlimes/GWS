@@ -1,6 +1,6 @@
 import { QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, documentId, getCountFromServer, getDocs, limit, orderBy, query, where } from "@firebase/firestore";
 import { ArticleDatabase, ArticleFilterOptions, ArticleInfo } from "./database-def";
-import { clamp } from "../../NumberUtil";
+import { clamp } from "../../util/NumberUtil";
 import { PermissionGuarded } from "./Permission";
 import { DB } from "../init-firebase";
 

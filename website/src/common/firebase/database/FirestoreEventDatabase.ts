@@ -1,7 +1,8 @@
-import { QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, documentId, getCountFromServer, getDocs, limit, orderBy, query, where } from "@firebase/firestore";
+import { QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, documentId, getCountFromServer, getDocs, limit, query, where } from "@firebase/firestore";
 import { ArticleFilterOptions, EventDatabase, EventFilterOptions, EventInfo } from "./database-def";
 import { DB } from "../init-firebase";
-import { clamp } from "../../NumberUtil";
+import { clamp } from "../../util/NumberUtil";
+import { HexColor } from "../../html-element-factory/AssemblyLine";
 
 /** An event as it is stored in the database. */
 type DBEvent = {
@@ -9,7 +10,8 @@ type DBEvent = {
     description:string,
     starts_at:Timestamp,
     ends_at:Timestamp,
-    category:string
+    category:string,
+    color?:HexColor
 };
 
 export class FirestoreEventDatebase extends EventDatabase {

@@ -191,6 +191,7 @@ div#split-view {
 /* standard indication of being click-able */
 button, input[type="button"], .click-action {
     user-select: none;
+    --hover-scale-factor: 1.05;
     
     &:disabled {
         filter: grayscale(.65);
@@ -198,7 +199,7 @@ button, input[type="button"], .click-action {
     }
     &:not(:disabled) {
         transform-origin: center;
-        &:hover { scale: 1.05; }
+        &:hover { scale: var(--hover-scale-factor); }
         &:active { scale: 1; }
     }
 }

@@ -121,12 +121,12 @@ export default abstract class RichText {
 
     public static parseLine(text:string, doSanitize=true):string {
         if (doSanitize) text = sanitize(text);
-        // text = text
-        //     .replaceAll(/\/((?!(<\/*[a-zA-Z0-9 ]*>)).|\n)*?\//g, s => `<span class="italic">${s.substring(1,s.length-1)}</span>`) // italic
-        //     .replaceAll(/\*((?!(<\/*[a-zA-Z0-9 ]*>)).|\n)*\*/g, s => `<span class="bold">${s.substring(1,s.length-1)}</span>`) // bold
-        //     .replaceAll(/_((?!(<\/*[a-zA-Z0-9 ]*>)).|\n)*_/g, s => `<span class="underlined">${s.substring(1,s.length-1)}</span>`) // underlined
-        //     .replaceAll(/~((?!(<\/*[a-zA-Z0-9 ]*>)).|\n)*~/g, s => `<span class="strikethrough">${s.substring(1,s.length-1)}</span>`) // strikethrough
-        //     .replaceAll(/```((?!(<\/*[a-zA-Z0-9 ]*>)).|\n)*```/g, s => `<span class="monospace">${s.substring(3,s.length-3)}</span>`); // monospace
+        text = text
+            // .replaceAll(/\/((?!(<\/*[a-zA-Z0-9 ]*>)).|\n)*?\//g, s => `<span class="italic">${s.substring(1,s.length-1)}</span>`) // italic
+            .replaceAll(/\*((?!(<\/*[a-zA-Z0-9 ]*>)).|\n)*\*/g, s => `<span class="bold">${s.substring(1,s.length-1)}</span>`) // bold
+            .replaceAll(/_((?!(<\/*[a-zA-Z0-9 ]*>)).|\n)*_/g, s => `<span class="underlined">${s.substring(1,s.length-1)}</span>`) // underlined
+            .replaceAll(/~((?!(<\/*[a-zA-Z0-9 ]*>)).|\n)*~/g, s => `<span class="strikethrough">${s.substring(1,s.length-1)}</span>`) // strikethrough
+            .replaceAll(/```((?!(<\/*[a-zA-Z0-9 ]*>)).|\n)*```/g, s => `<span class="monospace">${s.substring(3,s.length-3)}</span>`); // monospace
 
         return text;
     }

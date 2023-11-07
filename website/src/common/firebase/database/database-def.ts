@@ -1,3 +1,4 @@
+import { HexColor } from "../../html-element-factory/AssemblyLine";
 import { Permission } from "./Permission";
 
 export type QueryOptions = {
@@ -44,7 +45,7 @@ export abstract class ArticleDatabase {
 
 }
 
-export type EventInfo = { id:string, name:string, description:string, starts_at:Date, ends_at:Date, category:string };
+export type EventInfo = { id:string, name:string, description:string, starts_at:Date, ends_at:Date, category:string, color?:HexColor };
 export type EventFilterOptions = QueryOptions & {
     before?:Date,
     after?:Date,

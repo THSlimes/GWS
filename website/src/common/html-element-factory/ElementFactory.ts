@@ -1,4 +1,4 @@
-import { clamp } from "../NumberUtil";
+import { clamp } from "../util/NumberUtil";
 import AssemblyLine, { AnchorElementAssemblyLine } from "./AssemblyLine";
 import { ButtonLikeInputAssemblyLine, CheckableInputAssemblyLine, DateInputAssemblyLine, InputAssemblyLine, NumberInputAssemblyLine, RangedInputAssemblyLine, TextInputAssemblyLine } from "./InputAssemblyLine";
 

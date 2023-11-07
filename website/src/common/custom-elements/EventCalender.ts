@@ -1,6 +1,7 @@
 import $ from "jquery";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import { EventDatabase, EventInfo } from "../firebase/database/database-def";
+import { EventNote } from "./EventNote";
 
 function isSameDay(a:Date, b:Date) {
     return a.getFullYear() === b.getFullYear()
@@ -13,6 +14,26 @@ function isBetweenDays(date:Date, start:Date, end:Date) {
     start = new Date(start.getFullYear(), start.getMonth(), start.getDate());
     end = new Date(end.getFullYear(), end.getMonth(), end.getDate());
     return date.getTime() >= start.getTime() && date.getTime() <= end.getTime();
+}
+
+const MS_PER_DAY = 24*60*60*1000;
+function spanInDays(from:Date, to:Date) {
+    return Math.ceil((to.getTime() - from.getTime()) / MS_PER_DAY);
+}
+
+function daysOverlap(a:EventInfo, b:EventInfo) {
+    return isBetweenDays(a.starts_at, b.starts_at, b.ends_at) || isBetweenDays(a.ends_at, b.starts_at, b.ends_at);
+}
+
+function computeNonOverlappingOffsets(events:EventInfo[]) {
+    events.sort((a,b) => a.starts_at.getTime() - b.starts_at.getTime());
+    const out:Record<string, number> = {};
+    events.forEach(e => {
+        out[e.id] = 0;
+        while (events.some(other => e !== other && daysOverlap(e, other) && out[e.id] === out[other.id])) out[e.id]++;
+    }); // initialize
+    
+    return out;
 }
 
 const DAY_ABBREVIATIONS = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
@@ -47,6 +68,22 @@ export default class EventCalender extends HTMLElement {
             }
         });
     }
+    private getEventsBetween(from:Date, to:Date):Promise<EventInfo[]> {
+        const d = new Date(from);
+        const promises:Promise<EventInfo[]>[] = [];
+
+        while (!(d.getFullYear() == to.getFullYear() && d.getMonth() == to.getMonth())) {
+            promises.push(this.getEvents(d.getFullYear(), d.getMonth()));
+            d.setMonth(d.getMonth() + 1);
+        }
+        promises.push(this.getEvents(d.getFullYear(), d.getMonth())); // add last month
+
+        return new Promise((resolve,reject) => {
+            Promise.all(promises)
+            .then(res => resolve(res.flat().filter(e => isBetweenDays(e.starts_at, from, to) || isBetweenDays(e.ends_at, from, to))))
+            .catch(reject);
+        });
+    }
 
     private _viewMode:CalenderViewMode;
     set viewMode(newViewMode:CalenderViewMode) {
@@ -67,7 +104,7 @@ export default class EventCalender extends HTMLElement {
     }
     public toToday() { this.lookingAt = new Date(); }
 
-    private dayCells:HTMLDivElement = this.appendChild(ElementFactory.div().class("day-cells").make());
+    private dayCellContainer:HTMLDivElement = this.appendChild(ElementFactory.div().class("day-cell-container").make());
 
     constructor(db:EventDatabase, date=new Date(), viewMode:CalenderViewMode="month") {
         super();
@@ -85,7 +122,7 @@ export default class EventCalender extends HTMLElement {
         const dateCopy = new Date(date); // make copy for controls
 
         $(this.controls).empty(); // clear controls
-        $(this.dayCells).empty(); // clear grid
+        $(this.dayCellContainer).empty(); // clear grid
 
         const newDays:DayCell[] = [];
         let firstDate:Date;
@@ -110,20 +147,19 @@ export default class EventCalender extends HTMLElement {
 
                 // add day names
                 DAY_ABBREVIATIONS.forEach((v,i) => {
-                    this.dayCells.appendChild(ElementFactory.p(v).class("day-name").style({"grid-area": `1 / ${i+1} / 2 / ${i+2}`}).make());
+                    this.dayCellContainer.appendChild(ElementFactory.p(v).class("day-name").style({"grid-area": `1 / ${i+1} / 2 / ${i+2}`}).make());
                 });
 
                 // find previous Monday
                 while (date.getDay() !== 1) date.setDate(date.getDate() - 1);
-
                 firstDate = new Date(date);
 
+                // insert day-cells
                 for (let i = 0; i < 7; i ++) {
                     newDays.push({
                         element: ElementFactory.div()
                             .class(
                                 "day-cell",
-                                date.getMonth() !== date.getMonth() ? "different-month" : null,
                                 isSameDay(date, new Date()) ? "today" : null
                             )
                             .style({ "grid-area": `2 / ${i+1} / 8 / ${i+2}` })
@@ -158,17 +194,16 @@ export default class EventCalender extends HTMLElement {
 
                 // add day names
                 DAY_ABBREVIATIONS.forEach((v,i) => {
-                    this.dayCells.appendChild(ElementFactory.p(v).class("day-name").style({"grid-area": `1 / ${i+1} / 2 / ${i+2}`}).make());
+                    this.dayCellContainer.appendChild(ElementFactory.p(v).class("day-name").style({"grid-area": `1 / ${i+1} / 2 / ${i+2}`}).make());
                 });
 
                 // find first day to display
                 date.setHours(0,0,0,0); // set time to midnight
                 date.setDate(1); // get first day of month
                 while (date.getDay() !== 1) date.setDate(date.getDate()-1); // get first Monday before
-
                 firstDate = new Date(date);
 
-                // insert day cells
+                // insert day-cells
                 for (let i = 0; i < 42; i ++) { // 6 weeks are displayed
                     const x = i % 7 + 1;
                     const y = Math.floor(i / 7) + 2;
@@ -177,7 +212,7 @@ export default class EventCalender extends HTMLElement {
                         element: ElementFactory.div()
                             .class(
                                 "day-cell",
-                                date.getMonth() !== date.getMonth() ? "different-month" : null,
+                                date.getMonth() !== dateCopy.getMonth() ? "different-month" : null,
                                 isSameDay(date, new Date()) ? "today" : null
                             )
                             .style({ "grid-area": `${y} / ${x} / ${y + 1} / ${x + 1}` })
@@ -199,28 +234,35 @@ export default class EventCalender extends HTMLElement {
                 break;
         }
 
-        this.dayCells.append(...newDays.map(d=>d.element)); // append in correct order
+        this.dayCellContainer.append(...newDays.map(d=>d.element)); // append new day-cells
 
-        // populate day-cells with events
-        for (let y = firstDate.getFullYear(); y <= lastDate.getFullYear(); y ++) {
-            for (let m = firstDate.getMonth(); m <= lastDate.getMonth(); m ++) {
-                this.getEvents(y,m)
-                .then(events => {
-                    for (const dayCell of newDays) {
-                        const onDay = events.filter(e => isBetweenDays(dayCell.date, e.starts_at, e.ends_at));
-                        dayCell.events = onDay;
-                        dayCell.element.append(...onDay.map(e => ElementFactory.div()
-                            .class("event-note")
-                            .children(
-                                ElementFactory.h5(isSameDay(dayCell.date, e.starts_at) || dayCell.date.getDay() === 1 ? e.name : "\u200c")
-                            )
-                            .make()
-                        ));
+        // insert event-notes
+        this.getEventsBetween(firstDate, lastDate)
+        .then(events => {
+            const offsets = computeNonOverlappingOffsets(events);
+            this.dayCellContainer.style.setProperty("--max-overlap", (Math.max(0, ...Object.values(offsets)) + 1).toString());
+
+            events.forEach(e => {
+                let cellInd = newDays.findIndex(dc => isSameDay(e.starts_at, dc.date));
+                if (cellInd !== -1) {
+                    let daysLeft = spanInDays(e.starts_at, e.ends_at);
+                    for (let w = 1; daysLeft >= 1 && cellInd < newDays.length; w ++) {
+                        newDays[cellInd].element.style.zIndex = (newDays.length - cellInd + 1).toString();
+                        const note = newDays[cellInd].element.appendChild(new EventNote(e));
+                        note.classList.add("click-action");
+                        note.style.setProperty("--length", daysLeft.toString());
+                        note.style.setProperty("--offset", offsets[e.id].toString());
+                        if (w > 1) note.classList.add("starts-in-earlier-week");
+                        
+                        do { // find next Monday
+                            cellInd++;
+                            daysLeft--;
+                        } while (daysLeft >= 1 && cellInd < newDays.length && newDays[cellInd].date.getDay() !== 1);
                     }
-                })
-                .catch(console.log)
-            }
-        }
+                }
+            });
+        })
+        .catch(console.error);
     }
 
 }

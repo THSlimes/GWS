@@ -4,4 +4,9 @@
 
 .content {
     width: 100%;
+
+    > event-calender {
+        flex-grow: 1;
+    }
+    
 }
