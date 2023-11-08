@@ -6,6 +6,13 @@ import { dayEarlierThan, earliest, isBetweenDays, isSameDay, isWeekend, latest, 
 import { daysOverlap } from "../util/DateUtil";
 import { spanInDays } from "../util/DateUtil";
 
+const DAY_ABBREVIATIONS = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
+
+/**
+ * Computes an id -> height offset mapping where no events which overlap have the same height offset.
+ * @param events events to generate offsets for
+ * @returns non-overlapping id -> height offset mapping
+ */
 function computeNonOverlappingOffsets(events:EventInfo[]) {
     events.sort((a,b) => a.starts_at.getTime() - b.starts_at.getTime());
     const out:Record<string, number> = {};
@@ -17,7 +24,6 @@ function computeNonOverlappingOffsets(events:EventInfo[]) {
     return out;
 }
 
-const DAY_ABBREVIATIONS = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
 
 type CalenderViewMode = "week" | "month" | "list";
 
@@ -25,6 +31,26 @@ type CalenderEvent = {};
 type DayCell = { element:HTMLDivElement, date:Date, events:CalenderEvent[] };
 
 export default class EventCalender extends HTMLElement {
+
+    private static FULLSCREEN_EVENT_CONTAINER = ElementFactory.div("fullscreen-event-container", "center-content").attr("hidden").make();
+    static { // add container to body
+        window.addEventListener("DOMContentLoaded", () => document.body.appendChild(this.FULLSCREEN_EVENT_CONTAINER));
+        this.FULLSCREEN_EVENT_CONTAINER.addEventListener("click", e => {
+            if (e.target === this.FULLSCREEN_EVENT_CONTAINER) this.closeFullscreenNote();
+        });
+    }
+    public static expandNote(event:EventInfo|EventNote) {
+        const fsNote = event instanceof EventNote ? event.copy(true) : new EventNote(event, true);
+        $(this.FULLSCREEN_EVENT_CONTAINER).empty().append(fsNote);
+        this.FULLSCREEN_EVENT_CONTAINER.removeAttribute("hidden");
+        document.body.classList.add("no-scroll");
+
+        return fsNote;
+    }
+    public static closeFullscreenNote() {
+        document.body.classList.remove("no-scroll");
+        this.FULLSCREEN_EVENT_CONTAINER.setAttribute("hidden", "");
+    }
 
     private readonly db:EventDatabase;
     private readonly retrievedRange = { from:new Date(), to:new Date() };
@@ -34,12 +60,9 @@ export default class EventCalender extends HTMLElement {
         return new Promise((resolve,reject) => {
             if (this.retrievedRange.from.getTime() <= from.getTime() && to.getTime() <= this.retrievedRange.to.getTime()) {
                 // entire range already retrieved
-                console.log("from cache");
                 resolve(Object.values(this.events).filter(e => timespansOverlap(from, to, e.starts_at, e.ends_at)));
             }
             else { // have to retrieve some events
-                console.log("from DB");
-                
                 this.db.getRange(from, to)
                 .then(newEvents => {
                     newEvents.forEach(e => this.events[e.id] = e); // save for later
@@ -210,13 +233,9 @@ export default class EventCalender extends HTMLElement {
         this.dayCellContainer.append(...newDays.map(d=>d.element)); // append new day-cells
 
         // insert event-notes
-        console.log("firstDate:", firstDate);
-        console.log("lastDate: ", lastDate);
         
         this.getEvents(firstDate, lastDate)
         .then(events => {
-            console.log(events);
-            
             const offsets = computeNonOverlappingOffsets(events);
             this.dayCellContainer.style.setProperty("--max-overlap", (Math.max(0, ...Object.values(offsets)) + 1).toString());
 
@@ -231,6 +250,8 @@ export default class EventCalender extends HTMLElement {
                         note.style.setProperty("--length", daysLeft.toString());
                         note.style.setProperty("--offset", offsets[e.id].toString());
                         if (dayEarlierThan(e.starts_at, newDays[cellInd].date)) note.classList.add("starts-in-earlier-week");
+
+                        note.addEventListener("click", () => EventCalender.expandNote(note) );
                         
                         do { // find next Monday
                             cellInd++;

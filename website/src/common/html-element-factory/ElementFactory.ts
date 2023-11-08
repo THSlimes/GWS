@@ -120,6 +120,12 @@ export default abstract class ElementFactory {
         }
     };
 
+    public static button(onClick?:(e:MouseEvent, self:HTMLButtonElement)=>void) {
+        const out = new AssemblyLine("button");
+        if (onClick) out.on("click", onClick);
+        return out;
+    }
+
     public static option() { return AssemblyLine.specific("option", ["value", "selected"]); }
 
     public static optgroup() { return AssemblyLine.specific("optgroup", ["label"]) }

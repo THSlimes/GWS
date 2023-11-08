@@ -51,6 +51,7 @@ body {
     margin:0px;
 
     background-color: var(--primary);
+    font-family: var(--std-font);
 
     /* Scrollbar */
     scrollbar-color: var(--shadow) transparent;
@@ -190,8 +191,11 @@ div#split-view {
 
 /* standard indication of being click-able */
 button, input[type="button"], .click-action {
-    user-select: none;
+    border-radius: .25em;
     --hover-scale-factor: 1.05;
+
+    user-select: none;
+    & * { user-select: none; }
     
     &:disabled {
         filter: grayscale(.65);

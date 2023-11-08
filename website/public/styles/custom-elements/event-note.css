@@ -1,0 +1,49 @@
+event-note {
+    display: block;
+    position: relative;
+    
+    margin-bottom: 2px;
+    padding: 2px 4px 2px 4px;
+
+    box-sizing: border-box;
+    
+    border-radius: .25em;
+    
+    &[expanded] {
+        padding: 1em 2em 1em 2em;
+
+        > .timespan { font-size: large; }
+    }
+
+    > * {
+        margin: 1em 2em 1em 2em;
+        color: inherit;
+    }
+
+    > .name { margin: 0px; }
+    > .timespan { margin: 0px; }
+    > .description {
+        max-height: 50vh;
+        overflow-y: scroll;
+
+        text-align: justify;
+    }
+    > .register-button {
+        padding: .5em 1em .5em 1em;
+    }
+}
+
+/* PHONE-VIEWPORT OVERRIDE */
+
+@media (max-aspect-ratio: 3 / 5) {
+    event-note[expanded] {
+        display: flex;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        align-items: center;
+
+        > * { margin: 2em 1em 2em 1em; }
+        > .name { margin: 0px; }
+        > .timespan { margin: 0px; }
+    }
+}
