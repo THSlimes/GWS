@@ -47,8 +47,10 @@ export abstract class ArticleDatabase {
 
 export type EventInfo = { id:string, name:string, description:string, starts_at:Date, ends_at:Date, category:string, color?:HexColor };
 export type EventFilterOptions = QueryOptions & {
-    before?:Date,
-    after?:Date,
+    range?: {
+        from:Date,
+        to:Date
+    }
     category?:string
 };
 
@@ -57,7 +59,7 @@ export abstract class EventDatabase {
 
     abstract count(options?:EventFilterOptions):Promise<number>;
 
-    abstract getRange(before:Date, after:Date, options?:Omit<EventFilterOptions,"before"|"after">):Promise<EventInfo[]>;
+    abstract getRange(from:Date, to:Date, options?:Omit<EventFilterOptions,"range">):Promise<EventInfo[]>;
 
     abstract getById(id:string):Promise<EventInfo|undefined>;
 

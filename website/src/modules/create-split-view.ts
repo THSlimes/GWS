@@ -17,10 +17,10 @@ const SPLIT_VIEW = ElementFactory.div("split-view")
                         ElementFactory.p("Nieuwsbrief December")
                     )
             ),
-        ElementFactory.div("sponsors", "boxed")
+        ElementFactory.div("sponsors", "boxed", "flex-rows")
             .children(
                 ElementFactory.h3("Onze sponsoren").class("section-name"),
-                ElementFactory.div(undefined, "logos", "flex-rows", "main-axis-center")
+                ElementFactory.div(undefined, "logos", "flex-rows", "main-axis-center", "cross-axis-center")
                     .children(
                         ElementFactory.a("https://www.bol.com/nl/").openInNewTab(true)
                             .class("center-content")

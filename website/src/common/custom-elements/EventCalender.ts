@@ -2,7 +2,7 @@ import $ from "jquery";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import { EventDatabase, EventInfo } from "../firebase/database/database-def";
 import { EventNote } from "./EventNote";
-import { dayEarlierThan, isBetweenDays, isSameDay, isWeekend, timespansDaysOverlap } from "../util/DateUtil";
+import { dayEarlierThan, earliest, isBetweenDays, isSameDay, isWeekend, latest, timespansDaysOverlap, timespansOverlap } from "../util/DateUtil";
 import { daysOverlap } from "../util/DateUtil";
 import { spanInDays } from "../util/DateUtil";
 
@@ -27,42 +27,29 @@ type DayCell = { element:HTMLDivElement, date:Date, events:CalenderEvent[] };
 export default class EventCalender extends HTMLElement {
 
     private readonly db:EventDatabase;
-    private readonly events:Record<number, Record<number, EventInfo[]>> = {};
-    private getEvents(year:number, monthInd:number):Promise<EventInfo[]> {
-        return new Promise((resolve, reject) => {
-            if (year in this.events && monthInd in this.events[year]) {
-                resolve(this.events[year][monthInd]); // already retrieved events
-            }
-            else { // get from database
-                const before = new Date(year, (monthInd + 1) % 12);
-                const after = new Date(year, monthInd);
-                after.setMilliseconds(-1);
+    private readonly retrievedRange = { from:new Date(), to:new Date() };
+    private readonly events:Record<string,EventInfo> = {}; // id to data mapping
+    private getEvents(from:Date, to:Date):Promise<EventInfo[]> {
 
-                this.db.getRange(before, after)
-                .then(events => {
-                    events.sort((a,b) => a.starts_at.getTime() - b.starts_at.getTime())
-                    if (!(year in this.events)) this.events[year] = {};
-                    this.events[year][monthInd] = events; // store for later
-                    resolve(events);
+        return new Promise((resolve,reject) => {
+            if (this.retrievedRange.from.getTime() <= from.getTime() && to.getTime() <= this.retrievedRange.to.getTime()) {
+                // entire range already retrieved
+                console.log("from cache");
+                resolve(Object.values(this.events).filter(e => timespansOverlap(from, to, e.starts_at, e.ends_at)));
+            }
+            else { // have to retrieve some events
+                console.log("from DB");
+                
+                this.db.getRange(from, to)
+                .then(newEvents => {
+                    newEvents.forEach(e => this.events[e.id] = e); // save for later
+                    // update range
+                    this.retrievedRange.from = earliest(this.retrievedRange.from, from);
+                    this.retrievedRange.to = latest(this.retrievedRange.to, to);
+                    resolve(newEvents);
                 })
                 .catch(reject);
             }
-        });
-    }
-    private getEventsBetween(from:Date, to:Date):Promise<EventInfo[]> {
-        const d = new Date(from);
-        const promises:Promise<EventInfo[]>[] = [];
-
-        while (!(d.getFullYear() == to.getFullYear() && d.getMonth() == to.getMonth())) {
-            promises.push(this.getEvents(d.getFullYear(), d.getMonth()));
-            d.setMonth(d.getMonth() + 1);
-        }
-        promises.push(this.getEvents(d.getFullYear(), d.getMonth())); // add last month
-
-        return new Promise((resolve,reject) => {
-            Promise.all(promises)
-            .then(res => resolve(res.flat().filter(e => timespansDaysOverlap(from, to, e.starts_at, e.ends_at))))
-            .catch(reject);
         });
     }
 
@@ -134,6 +121,7 @@ export default class EventCalender extends HTMLElement {
                 // find previous Monday
                 while (date.getDay() !== 1) date.setDate(date.getDate() - 1);
                 firstDate = new Date(date);
+                firstDate.setHours(0,0,0,0);
 
                 // insert day-cells
                 for (let i = 0; i < 7; i ++) {
@@ -157,6 +145,7 @@ export default class EventCalender extends HTMLElement {
                 }
 
                 lastDate = new Date(date);
+                lastDate.setHours(0,0,0,0-1);
                 break;
             case "month":
                 this.controls.append( // add controls
@@ -184,6 +173,7 @@ export default class EventCalender extends HTMLElement {
                 date.setDate(1); // get first day of month
                 while (date.getDay() !== 1) date.setDate(date.getDate()-1); // get first Monday before
                 firstDate = new Date(date);
+                firstDate.setHours(0,0,0,0);
 
                 // insert day-cells
                 for (let i = 0; i < 42; i ++) { // 6 weeks are displayed
@@ -210,7 +200,7 @@ export default class EventCalender extends HTMLElement {
                 }
 
                 lastDate = new Date(date);
-
+                lastDate.setHours(0,0,0,-1);
                 break;
             case "list":
                 throw new Error("Not implemented yet");
@@ -220,8 +210,13 @@ export default class EventCalender extends HTMLElement {
         this.dayCellContainer.append(...newDays.map(d=>d.element)); // append new day-cells
 
         // insert event-notes
-        this.getEventsBetween(firstDate, lastDate)
+        console.log("firstDate:", firstDate);
+        console.log("lastDate: ", lastDate);
+        
+        this.getEvents(firstDate, lastDate)
         .then(events => {
+            console.log(events);
+            
             const offsets = computeNonOverlappingOffsets(events);
             this.dayCellContainer.style.setProperty("--max-overlap", (Math.max(0, ...Object.values(offsets)) + 1).toString());
 

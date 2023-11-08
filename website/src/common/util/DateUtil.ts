@@ -17,14 +17,6 @@ export function isBetweenDays(date: Date, start: Date, end: Date) {
     return date.getTime() >= start.getTime() && date.getTime() <= end.getTime();
 }
 
-export function daysOverlap(a: EventInfo, b: EventInfo) {
-    return isBetweenDays(a.starts_at, b.starts_at, b.ends_at) || isBetweenDays(a.ends_at, b.starts_at, b.ends_at);
-}
-
-export function timespansOverlap(aFrom:Date, aTo:Date, bFrom:Date, bTo:Date) {
-    return bTo.getTime() >= aFrom.getTime() && bFrom.getTime() <= aTo.getTime();
-}
-
 /**
  * Determines whether the day 'a' falls in is an earlier one than that of 'b'.
  * @param a Date 'a'
@@ -59,11 +51,30 @@ function dayLaterOrSame(a:Date, b:Date) {
     return isSameDay(a,b) || dayLaterThan(a,b);
 }
 
+export function timespansOverlap(aFrom:Date, aTo:Date, bFrom:Date, bTo:Date) {
+    return bTo.getTime() >= aFrom.getTime() && bFrom.getTime() <= aTo.getTime();
+}
+
 export function timespansDaysOverlap(aFrom:Date, aTo:Date, bFrom:Date, bTo:Date) {
     return dayLaterOrSame(bTo, aFrom) && dayEarlierOrSame(bFrom, aTo);
 }
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
+export function daysOverlap(a: EventInfo, b: EventInfo) {
+    return timespansDaysOverlap(a.starts_at, a.ends_at, b.starts_at, b.ends_at);
+}
+
+export function earliest(d1:Date, ...dRest:Date[]) {
+    let earliest = d1;
+    dRest.forEach(d => earliest = d.getTime() < earliest.getTime() ? d : earliest);
+    return earliest;
+}
+
+export function latest(d1:Date, ...dRest:Date[]) {
+    let earliest = d1;
+    dRest.forEach(d => earliest = d.getTime() > earliest.getTime() ? d : earliest);
+    return earliest;
+}
+
 export function spanInDays(from: Date, to: Date) {
     if (from.getTime() > to.getTime()) [from, to] = [to, from];
 

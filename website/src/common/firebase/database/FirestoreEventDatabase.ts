@@ -3,6 +3,7 @@ import { ArticleFilterOptions, EventDatabase, EventFilterOptions, EventInfo } fr
 import { DB } from "../init-firebase";
 import { clamp } from "../../util/NumberUtil";
 import { HexColor } from "../../html-element-factory/AssemblyLine";
+import { timespansOverlap } from "../../util/DateUtil";
 
 /** An event as it is stored in the database. */
 type DBEvent = {
@@ -13,6 +14,13 @@ type DBEvent = {
     category:string,
     color?:HexColor
 };
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+/**
+ * Arbitrary limit on the length (in ms) of an event.
+ * @note any event longer than this may be incorrectly retrieved from the database
+ */
+const EVENT_LENGTH_LIMIT = 30 * MS_PER_DAY;
 
 export class FirestoreEventDatebase extends EventDatabase {
 
@@ -43,8 +51,8 @@ export class FirestoreEventDatebase extends EventDatabase {
         return FirestoreEventDatebase.getEvents(options ?? {}, true);
     }
 
-    getRange(before: Date, after: Date, options?: Omit<ArticleFilterOptions, "before" | "after"> | undefined): Promise<EventInfo[]> {
-        return FirestoreEventDatebase.getEvents({before, after, ...options});
+    getRange(from: Date, to: Date, options?: Omit<ArticleFilterOptions, "before" | "after"> | undefined): Promise<EventInfo[]> {
+        return FirestoreEventDatebase.getEvents({range: {from, to}, ...options});
     }
 
     getById(id: string): Promise<EventInfo | undefined> {
@@ -73,8 +81,10 @@ export class FirestoreEventDatebase extends EventDatabase {
         if (options.notId) constraints.push(where(documentId(), "!=", options.notId));
 
         // event-specific
-        if (options.before) constraints.push(where("starts_at", '<', Timestamp.fromDate(options.before)));
-        if (options.after) constraints.push(where("starts_at", '>', Timestamp.fromDate(options.after)));
+        if (options.range) { // apply range filter
+            const lowerBound = new Date(options.range.from.getTime() - EVENT_LENGTH_LIMIT);
+            constraints.push(where("starts_at", ">=", Timestamp.fromDate(lowerBound)), where("starts_at", "<=", Timestamp.fromDate(options.range.to)));
+        }
         if (typeof options.category === "string") constraints.push(where("category", "==", options.category));
 
         return new Promise(async (resolve, reject) => {
@@ -83,8 +93,9 @@ export class FirestoreEventDatebase extends EventDatabase {
                 if (doCount) resolve((await getCountFromServer(q)).data().count); // get count
                 else { // get documents
                     const snapshot = await getDocs(q);
-                    const out: EventInfo[] = [];
+                    let out: EventInfo[] = [];
                     snapshot.forEach(doc => out.push(doc.data()));
+                    if (options.range) out = out.filter(e => timespansOverlap(options.range!.from, options.range!.to, e.starts_at, e.ends_at));
                     resolve(out);
                 }
             }
