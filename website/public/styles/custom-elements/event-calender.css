@@ -67,7 +67,7 @@ event-calender {
                 grid-row: calc(var(--offset) + 2) / span 1;
                 width: calc(var(--length) * 100% + 2 * (var(--length) - 1) * var(--day-cell-padding));
 
-                --hover-scale-factor: 1.0125;
+                --hover-scale-factor: calc(1 + (0.05 / var(--length)));
 
                 &.starts-in-earlier-week {
                     padding-left: 20px;
@@ -91,4 +91,8 @@ event-note {
     border-radius: .25em;
 
     > * { margin:0px; }
+    > .name { color: inherit; }
+    > .timespan {
+        color: inherit;
+    }
 }

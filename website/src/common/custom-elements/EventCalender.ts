@@ -2,28 +2,9 @@ import $ from "jquery";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import { EventDatabase, EventInfo } from "../firebase/database/database-def";
 import { EventNote } from "./EventNote";
-
-function isSameDay(a:Date, b:Date) {
-    return a.getFullYear() === b.getFullYear()
-        && a.getMonth() == b.getMonth()
-        && a.getDate() === b.getDate()
-}
-
-function isBetweenDays(date:Date, start:Date, end:Date) {
-    date = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    start = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-    end = new Date(end.getFullYear(), end.getMonth(), end.getDate());
-    return date.getTime() >= start.getTime() && date.getTime() <= end.getTime();
-}
-
-const MS_PER_DAY = 24*60*60*1000;
-function spanInDays(from:Date, to:Date) {
-    return Math.ceil((to.getTime() - from.getTime()) / MS_PER_DAY);
-}
-
-function daysOverlap(a:EventInfo, b:EventInfo) {
-    return isBetweenDays(a.starts_at, b.starts_at, b.ends_at) || isBetweenDays(a.ends_at, b.starts_at, b.ends_at);
-}
+import { isBetweenDays, isSameDay } from "../util/DateUtil";
+import { daysOverlap } from "../util/DateUtil";
+import { spanInDays } from "../util/DateUtil";
 
 function computeNonOverlappingOffsets(events:EventInfo[]) {
     events.sort((a,b) => a.starts_at.getTime() - b.starts_at.getTime());
