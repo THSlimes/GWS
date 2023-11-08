@@ -2,7 +2,7 @@ import $ from "jquery";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import { EventDatabase, EventInfo } from "../firebase/database/database-def";
 import { EventNote } from "./EventNote";
-import { isBetweenDays, isSameDay } from "../util/DateUtil";
+import { dayEarlierThan, isBetweenDays, isSameDay, isWeekend, timespansDaysOverlap } from "../util/DateUtil";
 import { daysOverlap } from "../util/DateUtil";
 import { spanInDays } from "../util/DateUtil";
 
@@ -61,7 +61,7 @@ export default class EventCalender extends HTMLElement {
 
         return new Promise((resolve,reject) => {
             Promise.all(promises)
-            .then(res => resolve(res.flat().filter(e => isBetweenDays(e.starts_at, from, to) || isBetweenDays(e.ends_at, from, to))))
+            .then(res => resolve(res.flat().filter(e => timespansDaysOverlap(from, to, e.starts_at, e.ends_at))))
             .catch(reject);
         });
     }
@@ -141,7 +141,8 @@ export default class EventCalender extends HTMLElement {
                         element: ElementFactory.div()
                             .class(
                                 "day-cell",
-                                isSameDay(date, new Date()) ? "today" : null
+                                isSameDay(date, new Date()) ? "today" : null,
+                                isWeekend(date) ? "weekend" : null
                             )
                             .style({ "grid-area": `2 / ${i+1} / 8 / ${i+2}` })
                             .children(
@@ -193,8 +194,9 @@ export default class EventCalender extends HTMLElement {
                         element: ElementFactory.div()
                             .class(
                                 "day-cell",
-                                date.getMonth() !== dateCopy.getMonth() ? "different-month" : null,
-                                isSameDay(date, new Date()) ? "today" : null
+                                isSameDay(date, new Date()) ? "today" : null,
+                                isWeekend(date) ? "weekend" : null,
+                                date.getMonth() !== dateCopy.getMonth() ? "different-month" : null
                             )
                             .style({ "grid-area": `${y} / ${x} / ${y + 1} / ${x + 1}` })
                             .children(
@@ -224,16 +226,16 @@ export default class EventCalender extends HTMLElement {
             this.dayCellContainer.style.setProperty("--max-overlap", (Math.max(0, ...Object.values(offsets)) + 1).toString());
 
             events.forEach(e => {
-                let cellInd = newDays.findIndex(dc => isSameDay(e.starts_at, dc.date));
+                let cellInd = newDays.findIndex(dc => isBetweenDays(dc.date, e.starts_at, e.ends_at));
                 if (cellInd !== -1) {
-                    let daysLeft = spanInDays(e.starts_at, e.ends_at);
+                    let daysLeft = spanInDays(newDays[cellInd].date, e.ends_at);
                     for (let w = 1; daysLeft >= 1 && cellInd < newDays.length; w ++) {
                         newDays[cellInd].element.style.zIndex = (newDays.length - cellInd + 1).toString();
                         const note = newDays[cellInd].element.appendChild(new EventNote(e));
                         note.classList.add("click-action");
                         note.style.setProperty("--length", daysLeft.toString());
                         note.style.setProperty("--offset", offsets[e.id].toString());
-                        if (w > 1) note.classList.add("starts-in-earlier-week");
+                        if (dayEarlierThan(e.starts_at, newDays[cellInd].date)) note.classList.add("starts-in-earlier-week");
                         
                         do { // find next Monday
                             cellInd++;

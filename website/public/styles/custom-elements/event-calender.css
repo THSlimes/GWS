@@ -21,7 +21,7 @@ event-calender {
         grid-row: 2 / 3;
         
         display: grid;
-        grid-template-rows: auto repeat(6, 1fr);
+        grid-template-rows: max-content repeat(6, 1fr);
         grid-template-columns: repeat(7, 1fr);
 
         padding:2px;
@@ -31,7 +31,7 @@ event-calender {
         overflow-x: hidden;
 
         > .day-name {
-            margin: 0px;
+            margin: .25em;
             justify-self: center;
             align-self: center;
             color: var(--primary);
@@ -52,10 +52,14 @@ event-calender {
 
             overflow-x: visible;
 
-            &.different-month { filter: grayscale(.25) blur(.5px); }
             &.today {
                 background-color: lightyellow;
                 > .day-number { color: orangered; }
+            }
+            &.different-month { filter: grayscale(.25) blur(.5px); }
+            &.weekend {
+                background-color: mistyrose;
+                > .day-number { color: tomato; }
             }
 
             > .day-number {

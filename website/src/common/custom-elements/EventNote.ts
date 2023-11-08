@@ -26,10 +26,7 @@ export class EventNote extends HTMLElement {
         // event name
         this.nameElement = this.appendChild(ElementFactory.h5().html(RichText.parseLine(event.name)).class("name", "rich-text").make());
 
-        // event start/end time
-        console.log(event.starts_at, event.ends_at);
-        console.log(spanInDays(event.starts_at, event.ends_at), isSameDay(event.starts_at, event.ends_at));
-        
+        // event start/end time        
         let timespanText = isSameDay(event.starts_at, event.ends_at) ?
             `${event.starts_at.toLocaleTimeString(navigator.languages, {timeStyle:"short"})} - ${event.ends_at.toLocaleTimeString(navigator.languages, {timeStyle:"short"})}` :
             areFullDays(event.starts_at, event.ends_at) ?
