@@ -119,6 +119,8 @@ export default class EventCalender extends HTMLElement {
         let firstDate:Date;
         let lastDate:Date;
 
+        this.setAttribute("display", viewMode);
+
         switch (viewMode) {
             case "week":
                 this.controls.append( // add controls
@@ -226,7 +228,31 @@ export default class EventCalender extends HTMLElement {
                 lastDate.setHours(0,0,0,-1);
                 break;
             case "list":
-                throw new Error("Not implemented yet");
+                this.dayCellContainer.appendChild(ElementFactory.p("Aanstaande evenementen").class("day-name").make());
+                firstDate = new Date(date);
+                firstDate.setHours(0,0,0,0);
+
+                // load one month initially
+                for (let i = 0; i <= 31; i ++) {
+                    newDays.push({
+                        element: ElementFactory.div()
+                            .class(
+                                "day-cell",
+                                isSameDay(date, new Date()) ? "today" : null,
+                                isWeekend(date) ? "weekend" : null
+                            )
+                            .children(
+                                ElementFactory.p(date.toLocaleDateString(navigator.languages, {weekday:"long", day:"numeric", month:"long"})).class("day-number")
+                            )
+                            .make(),
+                        date: new Date(date),
+                        events: []
+                    });
+                    date.setDate(date.getDate() + 1);
+                }
+
+                lastDate = new Date(date);
+                lastDate.setHours(0,0,0,-1);
                 break;
         }
 
@@ -235,33 +261,62 @@ export default class EventCalender extends HTMLElement {
         // insert event-notes
         
         this.getEvents(firstDate, lastDate)
-        .then(events => {
-            const offsets = computeNonOverlappingOffsets(events);
-            this.dayCellContainer.style.setProperty("--max-overlap", (Math.max(0, ...Object.values(offsets)) + 1).toString());
+        .then(events => this.insertEventNotes(events, newDays, viewMode))
+        .catch(console.error);
+    }
 
-            events.forEach(e => {
-                let cellInd = newDays.findIndex(dc => isBetweenDays(dc.date, e.starts_at, e.ends_at));
-                if (cellInd !== -1) {
-                    let daysLeft = spanInDays(newDays[cellInd].date, e.ends_at);
-                    for (let w = 1; daysLeft >= 1 && cellInd < newDays.length; w ++) {
-                        newDays[cellInd].element.style.zIndex = (newDays.length - cellInd + 1).toString();
-                        const note = newDays[cellInd].element.appendChild(new EventNote(e));
-                        note.classList.add("click-action");
-                        note.style.setProperty("--length", daysLeft.toString());
-                        note.style.setProperty("--offset", offsets[e.id].toString());
-                        if (dayEarlierThan(e.starts_at, newDays[cellInd].date)) note.classList.add("starts-in-earlier-week");
+    private insertEventNotes(events:EventInfo[], dayCells:DayCell[], viewMode:CalenderViewMode) {
+        switch (viewMode) {
+            case "week":
+            case "month":
+                const offsets = computeNonOverlappingOffsets(events);
+                this.dayCellContainer.style.setProperty("--max-overlap", (Math.max(0, ...Object.values(offsets)) + 1).toString());
+    
+                events.forEach(e => {
+                    let cellInd = dayCells.findIndex(dc => isBetweenDays(dc.date, e.starts_at, e.ends_at));
+                    if (cellInd !== -1) {
+                        let daysLeft = spanInDays(dayCells[cellInd].date, e.ends_at);
+                        for (let w = 1; daysLeft >= 1 && cellInd < dayCells.length; w ++) {
+                            dayCells[cellInd].events.push(e);
+                            dayCells[cellInd].element.style.zIndex = (dayCells.length - cellInd + 1).toString();
+                            const note = dayCells[cellInd].element.appendChild(new EventNote(e));
+                            note.classList.add("click-action");
+                            note.style.setProperty("--length", daysLeft.toString());
+                            note.style.setProperty("--offset", offsets[e.id].toString());
+                            if (dayEarlierThan(e.starts_at, dayCells[cellInd].date)) note.classList.add("starts-in-earlier-week");
+    
+                            note.addEventListener("click", () => EventCalender.expandNote(note) );
+                            
+                            do { // find next Monday
+                                cellInd++;
+                                daysLeft--;
+                            } while (daysLeft >= 1 && cellInd < dayCells.length && dayCells[cellInd].date.getDay() !== 1);
+                        }
+                    }
+                });
+                break;
+            case "list":
+                events.forEach(e => {
+                    let cellInd = dayCells.findIndex(dc => isBetweenDays(dc.date, e.starts_at, e.ends_at));
+                    
+                    if (cellInd !== -1) {
+                        let daysLeft = spanInDays(dayCells[cellInd].date, e.ends_at);
+                        while (cellInd < dayCells.length && daysLeft >= 1) {
+                            dayCells[cellInd].events.push(e);
+                            const note = dayCells[cellInd].element.appendChild(new EventNote(e));
+                            note.classList.add("click-action");
+                            note.style.setProperty("--length", '1');
+                            note.addEventListener("click", () => EventCalender.expandNote(note) );
 
-                        note.addEventListener("click", () => EventCalender.expandNote(note) );
-                        
-                        do { // find next Monday
                             cellInd++;
                             daysLeft--;
-                        } while (daysLeft >= 1 && cellInd < newDays.length && newDays[cellInd].date.getDay() !== 1);
+                        }
                     }
-                }
-            });
-        })
-        .catch(console.error);
+                });
+
+                dayCells.forEach(dc => dc.element.style.display = dc.events.length === 0 ? "none" : "");
+                break;
+        }
     }
 
 }

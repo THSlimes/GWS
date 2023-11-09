@@ -13,20 +13,25 @@ function rgbToHex([r,g,b]:RGBColor) {
 
 const DEFAULT_COLOR:HexColor = "#aaaaaa";
 const STRING_COLORS:HexColor[] = [
-    "#F94144",
-    "#F3722C",
-    "#F8961E",
-    "#F9C74F",
-    "#90BE6D",
-    "#43AA8B",
-    "#577590",
+    "#ff8700", // orange
+    "#580aff", // purple
+    "#ff0000", // red
+    "#deff0a", // yellow
+    "#a1ff0a", // lime
+    "#0aefff", // light blue
+    "#147df5", // blue
+    "#ffd300", // gold
+    "#be0aff", // magenta
+    "#0aff99", // mint
 ];
 export function getStringColor(cat: string):HexColor {
     if (!cat) return DEFAULT_COLOR;
+    cat = cat.toLowerCase();
 
     let ind = 0;
-    for (let i = 0; i < cat.length; i++) ind ^= (cat.charCodeAt(i) << i);
-    return STRING_COLORS[ind % STRING_COLORS.length];
+    for (let i = 0; i < cat.length; i++) ind = ((ind << 5) - ind) + cat.charCodeAt(i);
+    
+    return STRING_COLORS[Math.abs(ind) % STRING_COLORS.length];
 }
 
 const DISTANCE_METRICS = {
