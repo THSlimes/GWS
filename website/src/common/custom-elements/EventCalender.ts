@@ -84,7 +84,7 @@ export default class EventCalender extends HTMLElement {
         }
     }
 
-    private controls:HTMLDivElement = this.appendChild(ElementFactory.div().class("controls", "flex-columns", "main-axis-center", "cross-axis-center").make());
+    private controls:HTMLDivElement = this.appendChild(ElementFactory.div().class("controls", "center-content", "main-axis-space-between").make());
 
     private _lookingAt:Date = new Date();
     public set lookingAt(newDate:Date) {
@@ -99,7 +99,6 @@ export default class EventCalender extends HTMLElement {
 
     constructor(db:EventDatabase, date=new Date(), viewMode:CalenderViewMode="month") {
         super();
-        this.classList.add("boxed");
 
         this.db = db;
         
@@ -123,19 +122,23 @@ export default class EventCalender extends HTMLElement {
 
         switch (viewMode) {
             case "week":
-                this.controls.append( // add controls
-                    ElementFactory.input.button("navigate_before", () => {
-                        dateCopy.setDate(dateCopy.getDate() - 7);
-                        this.populate(dateCopy, this._viewMode);
-                    }).class("nav-button", "icon").make(),
-                    ElementFactory.input.date(dateCopy.getFullYear(), dateCopy.getMonth(), dateCopy.getDate())
-                        .class("period-input")
-                        .onValueChanged(v => this.lookingAt = new Date(v))
-                        .make(),
-                    ElementFactory.input.button("navigate_next", () => {
-                        dateCopy.setDate(dateCopy.getDate() + 7);
-                        this.populate(dateCopy, this._viewMode);
-                    }).class("nav-button", "icon").make()
+                this.controls.appendChild( // add controls
+                    ElementFactory.div(undefined, "timespan-controls", "center-content")
+                        .children(
+                            ElementFactory.input.button("navigate_before", () => {
+                                dateCopy.setDate(dateCopy.getDate() - 7);
+                                this.populate(dateCopy, this._viewMode);
+                            }).class("nav-button", "icon").make(),
+                            ElementFactory.input.date(dateCopy.getFullYear(), dateCopy.getMonth(), dateCopy.getDate())
+                                .class("period-input")
+                                .onValueChanged(v => this.lookingAt = new Date(v))
+                                .make(),
+                            ElementFactory.input.button("navigate_next", () => {
+                                dateCopy.setDate(dateCopy.getDate() + 7);
+                                this.populate(dateCopy, this._viewMode);
+                            }).class("nav-button", "icon").make()
+                        )
+                        .make()
                 );
 
                 // add day names
@@ -174,18 +177,22 @@ export default class EventCalender extends HTMLElement {
                 break;
             case "month":
                 this.controls.append( // add controls
-                    ElementFactory.input.button("navigate_before", () => {
-                        dateCopy.setMonth(dateCopy.getMonth() - 1);
-                        this.populate(dateCopy, this._viewMode);
-                    }).class("nav-button", "icon").make(),
-                    ElementFactory.input.month(dateCopy.getFullYear(), dateCopy.getMonth())
-                        .class("period-input")
-                        .onValueChanged(v => this.lookingAt = new Date(v))
-                        .make(),
-                    ElementFactory.input.button("navigate_next", () => {
-                        dateCopy.setMonth(dateCopy.getMonth()+1);
-                        this.populate(dateCopy, this._viewMode);
-                    }).class("nav-button", "icon").make()
+                    ElementFactory.div(undefined, "timespan-controls", "center-content")
+                        .children(
+                            ElementFactory.input.button("navigate_before", () => {
+                                dateCopy.setMonth(dateCopy.getMonth() - 1);
+                                this.populate(dateCopy, this._viewMode);
+                            }).class("nav-button", "icon").make(),
+                            ElementFactory.input.month(dateCopy.getFullYear(), dateCopy.getMonth())
+                                .class("period-input")
+                                .onValueChanged(v => this.lookingAt = new Date(v))
+                                .make(),
+                            ElementFactory.input.button("navigate_next", () => {
+                                dateCopy.setMonth(dateCopy.getMonth()+1);
+                                this.populate(dateCopy, this._viewMode);
+                            }).class("nav-button", "icon").make()
+                        )
+                        .make()
                 );
 
                 // add day names
@@ -258,8 +265,18 @@ export default class EventCalender extends HTMLElement {
 
         this.dayCellContainer.append(...newDays.map(d=>d.element)); // append new day-cells
 
+        // add viewmode controls
+        this.controls.append(
+            ElementFactory.select({"week":"Week", "month":"Maand", "list":"Lijst"})
+                .class("viewmode-controls")
+                .value(this._viewMode)
+                .onValueChanged(val => {
+                    this.viewMode = val as CalenderViewMode;
+                })
+                .make()
+        );
+
         // insert event-notes
-        
         this.getEvents(firstDate, lastDate)
         .then(events => this.insertEventNotes(events, newDays, viewMode))
         .catch(console.error);

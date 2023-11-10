@@ -20,7 +20,13 @@ event-note {
         color: inherit;
     }
 
-    > .name { margin: 0px; }
+    > .name {
+        margin: 0px;
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
     > .timespan { margin: 0px; }
     > .description {
         max-height: 50vh;

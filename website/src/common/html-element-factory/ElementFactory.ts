@@ -1,5 +1,5 @@
 import { clamp } from "../util/NumberUtil";
-import AssemblyLine, { AnchorElementAssemblyLine } from "./AssemblyLine";
+import AssemblyLine, { AnchorElementAssemblyLine, SelectAssemblyLine } from "./AssemblyLine";
 import { ButtonLikeInputAssemblyLine, CheckableInputAssemblyLine, DateInputAssemblyLine, InputAssemblyLine, NumberInputAssemblyLine, RangedInputAssemblyLine, TextInputAssemblyLine } from "./InputAssemblyLine";
 
 /**
@@ -126,8 +126,11 @@ export default abstract class ElementFactory {
         return out;
     }
 
+    public static select(options:string[]|Record<string,string> = []) {
+        const out = new SelectAssemblyLine();
+        return out.options(options);
+    }
     public static option() { return AssemblyLine.specific("option", ["value", "selected"]); }
-
     public static optgroup() { return AssemblyLine.specific("optgroup", ["label"]) }
 
     public static hr() { return new AssemblyLine("hr"); }

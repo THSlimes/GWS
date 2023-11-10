@@ -203,3 +203,61 @@ export class AnchorElementAssemblyLine extends AssemblyLine<"a"> {
     }
 
 }
+
+type SmartSelect = HTMLSelectElement & { prevValue?:string };
+export class SelectAssemblyLine extends AssemblyLine<"select"> {
+
+    constructor() {
+        super("select");
+    }
+
+    private _options:Record<string,string> = {};
+    /** Adds a single option to the select element. */
+    public option(value:string, displayText=value) {
+        this._options[value] = displayText;
+        return this;
+    }
+    /** Adds multiple options at once to the select element. */
+    public options(values:string[]|Record<string,string>) {
+        if (Array.isArray(values)) values.forEach(v => this._options[v] = v);
+        else for (const v in values) this._options[v] = values[v];
+
+        return this;
+    }
+
+    private _value?:string;
+    public value(value:string) {
+        this._value = value;
+        return this;
+    }
+
+    private _onValueChanged?:(curr:string, prev?:string)=>void
+    public onValueChanged(callback:(curr:string, prev?:string)=>void) {
+        this._onValueChanged = callback;
+        return this;
+    }
+
+    public override make(): SmartSelect {
+        const out = super.make() as SmartSelect;
+
+        for (const v in this._options) {
+            const option = document.createElement("option");
+            option.value = v;
+            option.selected = v === this._value;
+            option.innerText = this._options[v];
+            out.options.add(option);
+        }
+
+        window.addEventListener("change", e => {
+            if (e.target === out) out.prevValue = out.value;
+        });
+
+        if (this._onValueChanged) {
+            const valueCallback = this._onValueChanged;
+            out.addEventListener("change", () => valueCallback(out.value, out.prevValue));
+        }
+
+        return out;
+    }
+
+}

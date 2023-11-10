@@ -61,7 +61,7 @@ const INPUT_TYPE_TRANSLATORS:InputTypeTranslators = {
 };
 
 /** SmartInputs remember their previous value. */
-type SmartInput = HTMLInputElement & { prevValue: string; };
+type SmartInput = HTMLInputElement & { prevValue: string };
 /**
  * An InputAssemblyLine is a type of AssemblyLine specifically for
  * creating HTMLInputElements.
