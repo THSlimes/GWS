@@ -22,7 +22,7 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
  */
 const EVENT_LENGTH_LIMIT = 30 * MS_PER_DAY;
 
-export class FirestoreEventDatebase extends EventDatabase {
+export default class FirestoreEventDatebase extends EventDatabase {
 
     private static readonly COLLECTION = collection(DB, "events").withConverter({
         toFirestore(event: EventInfo): DBEvent {

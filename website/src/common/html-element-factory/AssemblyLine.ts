@@ -88,10 +88,12 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
         return this;
     }
 
-    private _styleProps:Record<string,string> = {};
+    private _styleProps:Record<string,string|null> = {};
     /** Defines key-value pairs for CSS-properties. */
-    public style(styleDef:Record<string,{ toString():string }>) {
-        for (const k in styleDef) this._styleProps[k] = styleDef[k].toString();
+    public style(styleMap:Record<string,{ toString():string }|null>) {
+        for (const k in styleMap) {
+            if (styleMap[k] !== null) this._styleProps[k] = styleMap[k]!.toString();
+        }
         return this;
     }
 

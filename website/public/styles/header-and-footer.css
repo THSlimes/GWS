@@ -88,8 +88,8 @@ header.page-header {
                     width: max-content;
                 }
                 > .contents {
-                    display: block;
                     position: static;
+                    &[open] { display: block; }
                     > * {
                         display: block;
                         margin-bottom: .5em;

@@ -5,6 +5,8 @@ import { EventNote } from "./EventNote";
 import { dayEarlierThan, earliest, isBetweenDays, isSameDay, isWeekend, latest, timespansDaysOverlap, timespansOverlap } from "../util/DateUtil";
 import { daysOverlap } from "../util/DateUtil";
 import { spanInDays } from "../util/DateUtil";
+import CachingEventDatebase from "../firebase/database/CachingEventDatebase";
+import { isAtScrollBottom, isAtScrollTop, whenInsertedIn } from "../util/ElementUtil";
 
 const DAY_ABBREVIATIONS = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
 
@@ -24,11 +26,20 @@ function computeNonOverlappingOffsets(events:EventInfo[]) {
     return out;
 }
 
-
 type CalenderViewMode = "week" | "month" | "list";
 
 type CalenderEvent = {};
 type DayCell = { element:HTMLDivElement, date:Date, events:CalenderEvent[] };
+type DayCellTypes = "today" | "weekend" | "different-month";
+const DC_TYPE_DETECTORS:Record<DayCellTypes, (cellDate:Date, viewDate:Date) => boolean> = {
+    today: (cellDate, viewDate) => isSameDay(viewDate,cellDate),
+    weekend: cellDate => cellDate.getDay() === 0 || cellDate.getDay() === 6,
+    "different-month": (cellDate, viewDate) => cellDate.getFullYear() !== viewDate.getFullYear() || cellDate.getMonth() !== viewDate.getMonth()
+};
+type DayCellCreationOptions = {
+    markedTypes?: DayCellTypes[],
+    gridArea?:[number,number,number,number]
+}
 
 export default class EventCalender extends HTMLElement {
 
@@ -52,30 +63,9 @@ export default class EventCalender extends HTMLElement {
         this.FULLSCREEN_EVENT_CONTAINER.setAttribute("hidden", "");
     }
 
-    private readonly db:EventDatabase;
-    private readonly retrievedRange = { from:new Date(), to:new Date() };
-    private readonly events:Record<string,EventInfo> = {}; // id to data mapping
-    private getEvents(from:Date, to:Date):Promise<EventInfo[]> {
+    private readonly db:CachingEventDatebase;
 
-        return new Promise((resolve,reject) => {
-            if (this.retrievedRange.from.getTime() <= from.getTime() && to.getTime() <= this.retrievedRange.to.getTime()) {
-                // entire range already retrieved
-                resolve(Object.values(this.events).filter(e => timespansOverlap(from, to, e.starts_at, e.ends_at)));
-            }
-            else { // have to retrieve some events
-                this.db.getRange(from, to)
-                .then(newEvents => {
-                    newEvents.forEach(e => this.events[e.id] = e); // save for later
-                    // update range
-                    this.retrievedRange.from = earliest(this.retrievedRange.from, from);
-                    this.retrievedRange.to = latest(this.retrievedRange.to, to);
-                    resolve(newEvents);
-                })
-                .catch(reject);
-            }
-        });
-    }
-
+    private static readonly LIST_VIEW_INITIAL_TIMESPAN_DAYS = 30;
     private _viewMode:CalenderViewMode;
     set viewMode(newViewMode:CalenderViewMode) {
         if (this._viewMode !== newViewMode) {
@@ -95,16 +85,40 @@ export default class EventCalender extends HTMLElement {
     }
     public toToday() { this.lookingAt = new Date(); }
 
-    private dayCellContainer:HTMLDivElement = this.appendChild(ElementFactory.div().class("day-cell-container").make());
+    private dayCellContainer:HTMLDivElement = this.appendChild(ElementFactory.div(undefined, "day-cell-container").make());
+
+    private static readonly LOAD_MORE_SCROLL_TOLERANCE = 2.5;
+    private static readonly LOAD_MORE_TIMESPAN_DAYS = 15;
+    private scrollEventListener?:(e:Event)=>void;
 
     constructor(db:EventDatabase, date=new Date(), viewMode:CalenderViewMode="month") {
         super();
 
-        this.db = db;
+        this.db = db instanceof CachingEventDatebase ? db : new CachingEventDatebase(db);
         
         this._lookingAt = date;
         this._viewMode = viewMode;
         this.populate(this._lookingAt, this._viewMode);
+    }
+
+    static createDayCellElement(cellDate:Date, viewDate:Date, viewMode:CalenderViewMode, options:DayCellCreationOptions={}):HTMLDivElement {
+        return ElementFactory.div()
+            .class(
+                "day-cell",
+                ...(options.markedTypes ?? []).map(mt => DC_TYPE_DETECTORS[mt](cellDate,viewDate) ? mt : null)
+            )
+            .style({
+                "grid-area": options.gridArea ? options.gridArea.join(" / ") : "unset"
+            })
+            .children(
+                ElementFactory.p(
+                    viewMode === "list" ?
+                        cellDate.toLocaleDateString(navigator.languages, {weekday:"long", day:"numeric", month:"long"}) :
+                        cellDate.getDate().toString()
+                )
+                .class("day-number")
+            )
+            .make();
     }
 
     private populate(date:Date, viewMode:CalenderViewMode) {
@@ -113,6 +127,7 @@ export default class EventCalender extends HTMLElement {
 
         $(this.controls).empty(); // clear controls
         $(this.dayCellContainer).empty(); // clear grid
+        if (this.scrollEventListener) this.dayCellContainer.removeEventListener("scroll", this.scrollEventListener);
 
         const newDays:DayCell[] = [];
         let firstDate:Date;
@@ -120,9 +135,20 @@ export default class EventCalender extends HTMLElement {
 
         this.setAttribute("display", viewMode);
 
+        // add viewmode controls
+        this.controls.append(
+            ElementFactory.select({"week":"Week", "month":"Maand", "list":"Lijst"})
+                .class("viewmode-controls")
+                .value(this._viewMode)
+                .onValueChanged(val => {
+                    this.viewMode = val as CalenderViewMode;
+                })
+                .make()
+        );
+
         switch (viewMode) {
             case "week":
-                this.controls.appendChild( // add controls
+                this.controls.prepend( // add controls
                     ElementFactory.div(undefined, "timespan-controls", "center-content")
                         .children(
                             ElementFactory.input.button("navigate_before", () => {
@@ -154,17 +180,10 @@ export default class EventCalender extends HTMLElement {
                 // insert day-cells
                 for (let i = 0; i < 7; i ++) {
                     newDays.push({
-                        element: ElementFactory.div()
-                            .class(
-                                "day-cell",
-                                isSameDay(date, new Date()) ? "today" : null,
-                                isWeekend(date) ? "weekend" : null
-                            )
-                            .style({ "grid-area": `2 / ${i+1} / 8 / ${i+2}` })
-                            .children(
-                                ElementFactory.p(date.getDate().toString()).class("day-number")
-                            )
-                            .make(),
+                        element: EventCalender.createDayCellElement(date, dateCopy, viewMode, {
+                            gridArea: [2, i+1, 8, i+2],
+                            markedTypes: ["today", "weekend"]
+                        }),
                         date: new Date(date),
                         events: []
                     });
@@ -174,9 +193,10 @@ export default class EventCalender extends HTMLElement {
 
                 lastDate = new Date(date);
                 lastDate.setHours(0,0,0,0-1);
+                this.dayCellContainer.append(...newDays.map(d=>d.element)); // append new day-cells
                 break;
             case "month":
-                this.controls.append( // add controls
+                this.controls.prepend( // add controls
                     ElementFactory.div(undefined, "timespan-controls", "center-content")
                         .children(
                             ElementFactory.input.button("navigate_before", () => {
@@ -213,18 +233,10 @@ export default class EventCalender extends HTMLElement {
                     const y = Math.floor(i / 7) + 2;
                     
                     newDays.push({
-                        element: ElementFactory.div()
-                            .class(
-                                "day-cell",
-                                isSameDay(date, new Date()) ? "today" : null,
-                                isWeekend(date) ? "weekend" : null,
-                                date.getMonth() !== dateCopy.getMonth() ? "different-month" : null
-                            )
-                            .style({ "grid-area": `${y} / ${x} / ${y + 1} / ${x + 1}` })
-                            .children(
-                                ElementFactory.p(date.getDate().toString()).class("day-number")
-                            )
-                            .make(),
+                        element: EventCalender.createDayCellElement(date, dateCopy, viewMode, {
+                            gridArea: [y, x, y+1, x+1],
+                            markedTypes: ["today", "weekend", "different-month"]
+                        }),
                         date: new Date(date),
                         events: []
                     });
@@ -233,25 +245,19 @@ export default class EventCalender extends HTMLElement {
 
                 lastDate = new Date(date);
                 lastDate.setHours(0,0,0,-1);
+                this.dayCellContainer.append(...newDays.map(d=>d.element)); // append new day-cells
                 break;
             case "list":
-                this.dayCellContainer.appendChild(ElementFactory.p("Aanstaande evenementen").class("day-name").make());
+                this.controls.prepend(
+                    ElementFactory.p("Aanstaande activiteiten").make()
+                );
                 firstDate = new Date(date);
                 firstDate.setHours(0,0,0,0);
 
                 // load one month initially
-                for (let i = 0; i <= 31; i ++) {
+                for (let i = 0; i <= EventCalender.LIST_VIEW_INITIAL_TIMESPAN_DAYS; i ++) {
                     newDays.push({
-                        element: ElementFactory.div()
-                            .class(
-                                "day-cell",
-                                isSameDay(date, new Date()) ? "today" : null,
-                                isWeekend(date) ? "weekend" : null
-                            )
-                            .children(
-                                ElementFactory.p(date.toLocaleDateString(navigator.languages, {weekday:"long", day:"numeric", month:"long"})).class("day-number")
-                            )
-                            .make(),
+                        element: EventCalender.createDayCellElement(date, dateCopy, viewMode, { markedTypes: ["today","weekend"] }),
                         date: new Date(date),
                         events: []
                     });
@@ -260,24 +266,40 @@ export default class EventCalender extends HTMLElement {
 
                 lastDate = new Date(date);
                 lastDate.setHours(0,0,0,-1);
+
+                this.dayCellContainer.append(...newDays.map(d=>d.element)); // append new day-cells
+
+                // adding load before/after triggers
+                const loadBefore = ElementFactory.p("").class("center-content", "load-more", "load-before").make();
+                this.dayCellContainer.prepend(loadBefore);
+                const loadAfter = this.dayCellContainer.appendChild(ElementFactory.p("").class("center-content", "load-more", "load-after").make());
+
+                whenInsertedIn(this.dayCellContainer, document.body)
+                .then(() => {
+                    console.log("inserted");
+                    
+                    this.dayCellContainer.scroll(1000, loadBefore.clientHeight);
+                    let prevScrollTop = this.dayCellContainer.scrollTop;
+                    this.dayCellContainer.addEventListener("scroll", () => {
+                        const scrollDelta = prevScrollTop - this.dayCellContainer.scrollTop;
+                        prevScrollTop = this.dayCellContainer.scrollTop;
+                        
+                        if (scrollDelta > 0 && isAtScrollTop(this.dayCellContainer, EventCalender.LOAD_MORE_SCROLL_TOLERANCE)) {
+                            console.log("load before");
+                            
+                        }
+                        else if (scrollDelta < 0 && isAtScrollBottom(this.dayCellContainer, EventCalender.LOAD_MORE_SCROLL_TOLERANCE)) {
+                            console.log("load after");
+                            
+                        }
+
+                    });
+                });
                 break;
         }
 
-        this.dayCellContainer.append(...newDays.map(d=>d.element)); // append new day-cells
-
-        // add viewmode controls
-        this.controls.append(
-            ElementFactory.select({"week":"Week", "month":"Maand", "list":"Lijst"})
-                .class("viewmode-controls")
-                .value(this._viewMode)
-                .onValueChanged(val => {
-                    this.viewMode = val as CalenderViewMode;
-                })
-                .make()
-        );
-
         // insert event-notes
-        this.getEvents(firstDate, lastDate)
+        this.db.getRange(firstDate, lastDate)
         .then(events => this.insertEventNotes(events, newDays, viewMode))
         .catch(console.error);
     }
@@ -331,7 +353,10 @@ export default class EventCalender extends HTMLElement {
                     }
                 });
 
-                dayCells.forEach(dc => dc.element.style.display = dc.events.length === 0 ? "none" : "");
+                dayCells.forEach(dc => {
+                    if (dc.events.length === 0) dc.element.parentElement?.removeChild(dc.element);
+                });
+
                 break;
         }
     }
