@@ -7,9 +7,9 @@ import "../common/ui/parallax-scrolling";
 import "../common/custom-elements/ElementCarousel";
 
 import SmartArticle from "../common/custom-elements/SmartArticle";
-import { ArticleDatabase, ArticleInfo } from "../common/firebase/database/database-def";
+import ArticleDatabase, { ArticleInfo } from "../common/firebase/database/articles/ArticleDatabase";
 import { clamp } from "../common/util/NumberUtil";
-import { FirestoreArticleDatabase } from "../common/firebase/database/FirestoreArticleDatabase";
+import { FirestoreArticleDatabase } from "../common/firebase/database/articles/FirestoreArticleDatabase";
 import { STORAGE } from "../common/firebase/init-firebase";
 import { getDownloadURL, listAll, ref } from "@firebase/storage";
 import ElementCarousel from "../common/custom-elements/ElementCarousel";

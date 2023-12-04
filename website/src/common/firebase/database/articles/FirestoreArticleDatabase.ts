@@ -1,8 +1,8 @@
 import { QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, documentId, getCountFromServer, getDocs, limit, orderBy, query, where } from "@firebase/firestore";
-import { ArticleDatabase, ArticleFilterOptions, ArticleInfo } from "./database-def";
-import { clamp } from "../../util/NumberUtil";
-import { PermissionGuarded } from "./Permission";
-import { DB } from "../init-firebase";
+import ArticleDatabase, { ArticleFilterOptions, ArticleInfo } from "./ArticleDatabase";
+import { clamp } from "../../../util/NumberUtil";
+import { PermissionGuarded } from "../Permission";
+import { DB } from "../../init-firebase";
 
 /** An article as it appears in the database. */
 type DBArticle = PermissionGuarded & {
@@ -26,11 +26,14 @@ export class FirestoreArticleDatabase extends ArticleDatabase {
         },
         fromFirestore(snapshot: QueryDocumentSnapshot<DBArticle, ArticleInfo>): ArticleInfo {
             const data = snapshot.data();
-            return {
-                ...data,
-                id: snapshot.id,
-                created_at: data.created_at.toDate()
-            };
+            return new ArticleInfo(
+                snapshot.id,
+                data.heading,
+                data.body,
+                data.created_at.toDate(),
+                data.category,
+                data.show_on_homepage
+            );
         }
     });
 

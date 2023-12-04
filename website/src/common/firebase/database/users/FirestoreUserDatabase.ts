@@ -1,13 +1,13 @@
 import { QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, documentId, getCountFromServer, getDocs, limit, query, where } from "@firebase/firestore";
-import { Permission } from "./Permission";
-import { UserDatabase, UserFilterOptions, UserInfo } from "./database-def";
-import { DB } from "../init-firebase";
-import { clamp } from "../../util/NumberUtil";
+import { Permission } from "../Permission";
+import UserDatabase, { UserFilterOptions, UserInfo } from "./UserDatabase";
+import { DB } from "../../init-firebase";
+import { clamp } from "../../../util/NumberUtil";
 
 /** A user as they're stored in the database. */
 type DBUser = {
     joined_at:Timestamp,
-    member_until:Timestamp,
+    member_until?:Timestamp,
     first_name:string,
     family_name:string,
     permissions:Permission[]
@@ -20,17 +20,19 @@ export class FirestoreUserDatabase extends UserDatabase {
             return {
                 ...user,
                 joined_at: Timestamp.fromDate(user.joined_at),
-                member_until: Timestamp.fromDate(user.member_until)
+                member_until: user.member_until ? Timestamp.fromDate(user.member_until) : undefined
             }
         },
         fromFirestore(snapshot: QueryDocumentSnapshot<DBUser, UserInfo>):UserInfo {
             const data = snapshot.data();
-            return {
-                ...data,
-                id: snapshot.id,
-                joined_at: data.joined_at.toDate(),
-                member_until: data.member_until.toDate()
-            };
+            return new UserInfo(
+                snapshot.id,
+                data.joined_at.toDate(),
+                data.member_until?.toDate(),
+                data.first_name,
+                data.family_name,
+                data.permissions ?? []
+            );
         }
     });
 

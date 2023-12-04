@@ -1,5 +1,5 @@
 import RichText from "../ui/RichText";
-import { ArticleInfo } from "../firebase/database/database-def";
+import { ArticleInfo } from "../firebase/database/articles/ArticleDatabase";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import { DATE_FORMATS } from "../util/DateUtil";
 

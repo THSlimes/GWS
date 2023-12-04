@@ -1,9 +1,9 @@
 import "./header-and-footer";
 import "./create-split-view";
 
-import { ArticleDatabase } from "../common/firebase/database/database-def";
+import ArticleDatabase from "../common/firebase/database/articles/ArticleDatabase";
 import SmartArticle from "../common/custom-elements/SmartArticle";
-import { FirestoreArticleDatabase } from "../common/firebase/database/FirestoreArticleDatabase";
+import { FirestoreArticleDatabase } from "../common/firebase/database/articles/FirestoreArticleDatabase";
 import RichText from "../common/ui/RichText";
 
 /** Creates the link to an article given its ID. */

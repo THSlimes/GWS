@@ -1,8 +1,8 @@
 import { User } from "@firebase/auth";
 import { Permission } from "./database/Permission";
 import { AUTH } from "./init-firebase";
-import { FirestoreUserDatabase } from "./database/FirestoreUserDatabase";
-import { UserDatabase } from "./database/database-def";
+import { FirestoreUserDatabase } from "./database/users/FirestoreUserDatabase";
+import UserDatabase from "./database/users/UserDatabase";
 
 /**
  * Redirects the user to the given URL in the case they are logged in.

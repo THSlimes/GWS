@@ -1,5 +1,5 @@
 import { HexColor } from "../../../html-element-factory/AssemblyLine";
-import { QueryOptions } from "../database-def";
+import QueryOptions from "../QueryOptions";
 
 export class EventInfo {
     public readonly id:string;
