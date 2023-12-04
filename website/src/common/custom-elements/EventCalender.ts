@@ -1,11 +1,11 @@
 import $ from "jquery";
 import ElementFactory from "../html-element-factory/ElementFactory";
-import { EventDatabase, EventInfo } from "../firebase/database/database-def";
-import { EventNote } from "./EventNote";
-import { dayEarlierThan, earliest, isBetweenDays, isSameDay, isWeekend, latest, timespansDaysOverlap, timespansOverlap } from "../util/DateUtil";
+import EventDatabase, { EventInfo } from "../firebase/database/events/EventDatabase";
+import { DetailLevel, EventNote } from "./EventNote";
+import { DATE_FORMATS, dayEarlierThan, earliest, firstDayBefore, getDayRange, isBetweenDays, isSameDay, isWeekend, justBefore, latest, timespansDaysOverlap, timespansOverlap } from "../util/DateUtil";
 import { daysOverlap } from "../util/DateUtil";
 import { spanInDays } from "../util/DateUtil";
-import CachingEventDatebase from "../firebase/database/CachingEventDatebase";
+import CachingEventDatebase from "../firebase/database/events/CachingEventDatebase";
 import { isAtScrollBottom, isAtScrollTop, whenInsertedIn } from "../util/ElementUtil";
 
 const DAY_ABBREVIATIONS = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
@@ -27,6 +27,11 @@ function computeNonOverlappingOffsets(events:EventInfo[]) {
 }
 
 type CalenderViewMode = "week" | "month" | "list";
+const VIEWMODE_LODS:Record<CalenderViewMode, DetailLevel> = {
+    week: "normal",
+    month: "low",
+    list: "normal"
+};
 
 type CalenderEvent = {};
 type DayCell = { element:HTMLDivElement, date:Date, events:CalenderEvent[] };
@@ -51,7 +56,7 @@ export default class EventCalender extends HTMLElement {
         });
     }
     public static expandNote(event:EventInfo|EventNote) {
-        const fsNote = event instanceof EventNote ? event.copy(true) : new EventNote(event, true);
+        const fsNote = event instanceof EventNote ? event.copy("full", true) : new EventNote(event, "full", true);
         $(this.FULLSCREEN_EVENT_CONTAINER).empty().append(fsNote);
         this.FULLSCREEN_EVENT_CONTAINER.removeAttribute("hidden");
         document.body.classList.add("no-scroll");
@@ -91,18 +96,21 @@ export default class EventCalender extends HTMLElement {
     private static readonly LOAD_MORE_TIMESPAN_DAYS = 15;
     private scrollEventListener?:(e:Event)=>void;
 
-    constructor(db:EventDatabase, date=new Date(), viewMode:CalenderViewMode="month") {
+    constructor(db:Exclude<EventDatabase,CachingEventDatebase>, date=new Date(), viewMode:CalenderViewMode="month") {
         super();
 
         this.db = db instanceof CachingEventDatebase ? db : new CachingEventDatebase(db);
+
+        this.classList.add("flex-rows", "main-axis-start");
         
         this._lookingAt = date;
         this._viewMode = viewMode;
         this.populate(this._lookingAt, this._viewMode);
     }
 
-    static createDayCellElement(cellDate:Date, viewDate:Date, viewMode:CalenderViewMode, options:DayCellCreationOptions={}):HTMLDivElement {
-        return ElementFactory.div()
+    private static createDayCell(cellDate:Date, viewDate:Date, viewMode:CalenderViewMode, options:DayCellCreationOptions={}):DayCell {
+        return {
+            element: ElementFactory.div()
             .class(
                 "day-cell",
                 ...(options.markedTypes ?? []).map(mt => DC_TYPE_DETECTORS[mt](cellDate,viewDate) ? mt : null)
@@ -113,12 +121,47 @@ export default class EventCalender extends HTMLElement {
             .children(
                 ElementFactory.p(
                     viewMode === "list" ?
-                        cellDate.toLocaleDateString(navigator.languages, {weekday:"long", day:"numeric", month:"long"}) :
+                        DATE_FORMATS.DAY.LONG(cellDate) :
                         cellDate.getDate().toString()
                 )
                 .class("day-number")
             )
-            .make();
+            .make(),
+            date: cellDate,
+            events: []
+        }
+    }
+
+    private static indexToGridArea(i:number):[number,number,number,number] {
+        const [x,y] = [i % 7 + 1, Math.floor(i / 7) + 2];
+        return [y, x, y+1, x+1];
+    }
+    private static createDayCells(viewDate:Date, viewMode:CalenderViewMode):DayCell[] {
+        let firstDate = new Date(viewDate);
+        if (viewMode === "month") firstDate.setDate(1); // first day of month
+        if (viewMode === "month" || viewMode === "week") firstDate = firstDayBefore(firstDate, "Monday");
+        
+        const numDays = viewMode === "month" ? 42 : viewMode === "week" ? 7 : EventCalender.LIST_VIEW_INITIAL_TIMESPAN_DAYS;
+        return getDayRange(firstDate,numDays).map((d, i) => EventCalender.createDayCell(d, viewDate, viewMode, {
+                gridArea: viewMode === "month" ? this.indexToGridArea(i) : viewMode === "week" ? [2, i+1, 8, i+2] : undefined,
+                markedTypes: viewMode === "month" ? ["today", "weekend", "different-month"] : ["today", "weekend"]
+            })
+        );
+    }
+    private extendDayCells(dayCells:DayCell[], from:Date, to:Date, checkCount:"before"|"after"):Promise<[DayCell[],number]> {
+        const extensionCells:DayCell[] = getDayRange(from, to).map((d,i) => {
+            return EventCalender.createDayCell(d, new Date(), "list", { markedTypes: ["today","weekend"] })
+        });
+        dayCells.unshift(...extensionCells);
+
+        return new Promise((resolve,reject) => {
+            Promise.all([this.db.getRange(from,to), this.db.count({range: checkCount === "before" ? {to} : {from}})])
+            .then(([events, numLeft]) => {
+                this.insertEventNotes(events, extensionCells, "list");
+                resolve([extensionCells, numLeft]);
+            })
+            .catch(reject);
+        });
     }
 
     private populate(date:Date, viewMode:CalenderViewMode) {
@@ -129,9 +172,9 @@ export default class EventCalender extends HTMLElement {
         $(this.dayCellContainer).empty(); // clear grid
         if (this.scrollEventListener) this.dayCellContainer.removeEventListener("scroll", this.scrollEventListener);
 
-        const newDays:DayCell[] = [];
-        let firstDate:Date;
-        let lastDate:Date;
+        const newDays:DayCell[] = EventCalender.createDayCells(date,viewMode);
+        let firstDate = newDays[0].date;
+        let lastDate = newDays.at(-1)!.date;
 
         this.setAttribute("display", viewMode);
 
@@ -172,27 +215,6 @@ export default class EventCalender extends HTMLElement {
                     this.dayCellContainer.appendChild(ElementFactory.p(v).class("day-name").style({"grid-area": `1 / ${i+1} / 2 / ${i+2}`}).make());
                 });
 
-                // find previous Monday
-                while (date.getDay() !== 1) date.setDate(date.getDate() - 1);
-                firstDate = new Date(date);
-                firstDate.setHours(0,0,0,0);
-
-                // insert day-cells
-                for (let i = 0; i < 7; i ++) {
-                    newDays.push({
-                        element: EventCalender.createDayCellElement(date, dateCopy, viewMode, {
-                            gridArea: [2, i+1, 8, i+2],
-                            markedTypes: ["today", "weekend"]
-                        }),
-                        date: new Date(date),
-                        events: []
-                    });
-                    
-                    date.setDate(date.getDate() + 1);
-                }
-
-                lastDate = new Date(date);
-                lastDate.setHours(0,0,0,0-1);
                 this.dayCellContainer.append(...newDays.map(d=>d.element)); // append new day-cells
                 break;
             case "month":
@@ -215,85 +237,85 @@ export default class EventCalender extends HTMLElement {
                         .make()
                 );
 
-                // add day names
-                DAY_ABBREVIATIONS.forEach((v,i) => {
+                DAY_ABBREVIATIONS.forEach((v,i) => { // add day names
                     this.dayCellContainer.appendChild(ElementFactory.p(v).class("day-name").style({"grid-area": `1 / ${i+1} / 2 / ${i+2}`}).make());
                 });
 
-                // find first day to display
-                date.setHours(0,0,0,0); // set time to midnight
-                date.setDate(1); // get first day of month
-                while (date.getDay() !== 1) date.setDate(date.getDate()-1); // get first Monday before
-                firstDate = new Date(date);
-                firstDate.setHours(0,0,0,0);
-
-                // insert day-cells
-                for (let i = 0; i < 42; i ++) { // 6 weeks are displayed
-                    const x = i % 7 + 1;
-                    const y = Math.floor(i / 7) + 2;
-                    
-                    newDays.push({
-                        element: EventCalender.createDayCellElement(date, dateCopy, viewMode, {
-                            gridArea: [y, x, y+1, x+1],
-                            markedTypes: ["today", "weekend", "different-month"]
-                        }),
-                        date: new Date(date),
-                        events: []
-                    });
-                    date.setDate(date.getDate()+1); // increment date
-                }
-
-                lastDate = new Date(date);
-                lastDate.setHours(0,0,0,-1);
                 this.dayCellContainer.append(...newDays.map(d=>d.element)); // append new day-cells
                 break;
             case "list":
                 this.controls.prepend(
                     ElementFactory.p("Aanstaande activiteiten").make()
                 );
-                firstDate = new Date(date);
-                firstDate.setHours(0,0,0,0);
 
-                // load one month initially
-                for (let i = 0; i <= EventCalender.LIST_VIEW_INITIAL_TIMESPAN_DAYS; i ++) {
-                    newDays.push({
-                        element: EventCalender.createDayCellElement(date, dateCopy, viewMode, { markedTypes: ["today","weekend"] }),
-                        date: new Date(date),
-                        events: []
-                    });
-                    date.setDate(date.getDate() + 1);
-                }
-
-                lastDate = new Date(date);
-                lastDate.setHours(0,0,0,-1);
+                // adding load before/after triggers
+                const loadBefore = ElementFactory.div(undefined, "center-content", "load-more", "load-before").make();
+                this.dayCellContainer.prepend(loadBefore);
 
                 this.dayCellContainer.append(...newDays.map(d=>d.element)); // append new day-cells
 
-                // adding load before/after triggers
-                const loadBefore = ElementFactory.p("").class("center-content", "load-more", "load-before").make();
-                this.dayCellContainer.prepend(loadBefore);
-                const loadAfter = this.dayCellContainer.appendChild(ElementFactory.p("").class("center-content", "load-more", "load-after").make());
+                const loadAfter = this.dayCellContainer.appendChild(ElementFactory.div(undefined, "center-content", "load-more", "load-after").make());
 
                 whenInsertedIn(this.dayCellContainer, document.body)
                 .then(() => {
-                    console.log("inserted");
+                    this.dayCellContainer.scrollBy(0, 2);
                     
-                    this.dayCellContainer.scroll(1000, loadBefore.clientHeight);
                     let prevScrollTop = this.dayCellContainer.scrollTop;
-                    this.dayCellContainer.addEventListener("scroll", () => {
+
+                    let [loadingBefore, loadingAfter] = [false, false];
+                    this.scrollEventListener = () => {
                         const scrollDelta = prevScrollTop - this.dayCellContainer.scrollTop;
                         prevScrollTop = this.dayCellContainer.scrollTop;
                         
                         if (scrollDelta > 0 && isAtScrollTop(this.dayCellContainer, EventCalender.LOAD_MORE_SCROLL_TOLERANCE)) {
-                            console.log("load before");
-                            
+                            if (!loadingBefore) {
+                                console.log("loading events before");
+
+                                loadingBefore = true;
+                                const prevFirstDate = new Date(firstDate);
+                                firstDate.setDate(firstDate.getDate() - EventCalender.LOAD_MORE_TIMESPAN_DAYS);
+                                this.extendDayCells(newDays, firstDate, prevFirstDate, "before")
+                                .then(([extensionCells, numLeft]) => {
+                                    this.dayCellContainer.prepend(...extensionCells.filter(ec => ec.events.length !== 0).map(ec => ec.element));
+                                    this.dayCellContainer.prepend(loadBefore);
+                                    const scrollY = extensionCells.map(dc => dc.element).filter(e => this.dayCellContainer.contains(e)).reduce((prev,curr) => prev + curr.clientHeight, 0);
+                                    this.dayCellContainer.scrollTo(0, scrollY - 2);
+                                    
+                                    if (numLeft === 0) {
+                                        loadBefore.innerText = `Geen activiteiten voor ${DATE_FORMATS.DAY.LONG(newDays.find(ec => ec.events.length !== 0)!.date)}`;
+                                        loadBefore.classList.add("no-more");
+                                    }
+                                    else loadingBefore = false;
+                                })
+                                .catch(console.warn);
+                            }
                         }
                         else if (scrollDelta < 0 && isAtScrollBottom(this.dayCellContainer, EventCalender.LOAD_MORE_SCROLL_TOLERANCE)) {
-                            console.log("load after");
+                            if (!loadingAfter) {
+                                console.log("loading events after");
+                                
+                                loadingAfter = true;
+                                const prevLastDate = new Date(lastDate);
+                                lastDate.setDate(lastDate.getDate() + EventCalender.LOAD_MORE_TIMESPAN_DAYS);
+                                this.extendDayCells(newDays, prevLastDate, lastDate, "after")
+                                .then(([extensionCells, numLeft]) => {
+                                    this.dayCellContainer.append(...extensionCells.filter(ec => ec.events.length !== 0).map(ec => ec.element));
+                                    this.dayCellContainer.append(loadAfter);
+                                    const scrollY = extensionCells.map(dc => dc.element).filter(e => this.dayCellContainer.contains(e)).reduce((prev,curr) => prev + curr.clientHeight, 0);
+                                    
+                                    if (numLeft === 0) {
+                                        loadAfter.innerText = `Geen activiteiten na ${DATE_FORMATS.DAY.LONG(newDays.findLast(ec => ec.events.length !== 0)!.date)}`;
+                                        loadAfter.classList.add("no-more");
+                                    }
+                                    else loadingAfter = false;
+                                })
+                                .catch(console.warn);
+                            }
                             
                         }
 
-                    });
+                    }
+                    this.dayCellContainer.addEventListener("scroll", this.scrollEventListener);
                 });
                 break;
         }
@@ -318,7 +340,7 @@ export default class EventCalender extends HTMLElement {
                         for (let w = 1; daysLeft >= 1 && cellInd < dayCells.length; w ++) {
                             dayCells[cellInd].events.push(e);
                             dayCells[cellInd].element.style.zIndex = (dayCells.length - cellInd + 1).toString();
-                            const note = dayCells[cellInd].element.appendChild(new EventNote(e));
+                            const note = dayCells[cellInd].element.appendChild(new EventNote(e, VIEWMODE_LODS[viewMode]));
                             note.classList.add("click-action");
                             note.style.setProperty("--length", daysLeft.toString());
                             note.style.setProperty("--offset", offsets[e.id].toString());
@@ -356,6 +378,16 @@ export default class EventCalender extends HTMLElement {
                 dayCells.forEach(dc => {
                     if (dc.events.length === 0) dc.element.parentElement?.removeChild(dc.element);
                 });
+
+                const loadersHeight = this.dayCellContainer.scrollHeight - dayCells.reduce((prev,curr) => prev + curr.element.scrollHeight, 0);
+                Array.from(this.dayCellContainer.getElementsByClassName("load-more")).forEach(loader => {
+                    if (loader instanceof HTMLElement) {
+                        // console.log(loader, loadersHeight + 200 + "px");
+                        // loader.style.height = loadersHeight + 200 + "px";
+                    }
+                });
+                console.log(loadersHeight);
+                
 
                 break;
         }

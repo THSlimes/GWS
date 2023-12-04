@@ -141,6 +141,8 @@ div#split-view {
 
 /* UTILITY CLASSES */
 
+*[hidden] { display: none !important; }
+
 .light-weight { font-weight: 300; }
 .normal-weight { font-weight: 400; }
 .bold-weight { font-weight: 700; }

@@ -22,3 +22,11 @@ export function isAtScrollTop(elem:Element, tolerance=1) {
 export function isAtScrollBottom(elem:Element, tolerance=1) {
     return elem.scrollHeight - elem.scrollTop - elem.clientHeight <= tolerance;
 }
+
+/**
+ * Type to be implemented by custom element types which have distinct sections.
+ * @param S union type of section names
+ */
+export type HasSections<S extends string> = {
+    readonly [k in S]: HTMLElement;
+};

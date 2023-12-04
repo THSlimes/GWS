@@ -25,12 +25,21 @@ const SPLIT_VIEW = ElementFactory.div("split-view")
                         ElementFactory.a("https://www.bol.com/nl/").openInNewTab(true)
                             .class("center-content")
                             .children(ElementFactory.img("./images/logos/bol_com.png", "Bol.com")),
+                        ElementFactory.a("https://debiebnijmegen.nl/").openInNewTab(true)
+                            .class("center-content")
+                            .children(ElementFactory.img("./images/logos/de_bieb.webp", "De Bieb")),
                         ElementFactory.a("https://www.dressmeclothing.nl/").openInNewTab(true)
                             .class("center-content")
                             .children(ElementFactory.img("./images/logos/dressme.png", "Dress-me kleding")),
                         ElementFactory.a("https://www.knaek.nl/studentenkorting/nijmegen").openInNewTab(true)
                             .class("center-content")
-                            .children(ElementFactory.img("./images/logos/Knaek-logo.png", "Knaek studentenkorting"))
+                            .children(ElementFactory.img("./images/logos/Knaek-logo.png", "Knaek studentenkorting")),
+                        ElementFactory.a("https://kbanijmegen.nl/").openInNewTab(true)
+                            .class("center-content")
+                            .children(ElementFactory.img("./images/logos/kba.webp", "KBA Nijmegen")),
+                        ElementFactory.a("https://www.researchned.nl/").openInNewTab(true)
+                            .class("center-content")
+                            .children(ElementFactory.img("./images/logos/researchned.webp", "ResearchNed"))
                     )
             )
     )

@@ -1,6 +1,7 @@
 import RichText from "../ui/RichText";
 import { ArticleInfo } from "../firebase/database/database-def";
 import ElementFactory from "../html-element-factory/ElementFactory";
+import { DATE_FORMATS } from "../util/DateUtil";
 
 /**
  * A SmartArticle is a custom type of article. It provides a consistent way
@@ -55,10 +56,10 @@ export default class SmartArticle extends HTMLElement {
         }
         else {
             this.appendChild(
-                ElementFactory.p(`Geplaatst op ${createdAt.toLocaleDateString(navigator.languages, {dateStyle:"medium"})}`)
+                ElementFactory.p(`Geplaatst op ${DATE_FORMATS.DAY.MEDIUM(createdAt)}`)
                     .class("created-at", "italic")
                     .children(
-                        ElementFactory.span(` (${createdAt.toLocaleTimeString(navigator.languages, {timeStyle:"short"})})`)
+                        ElementFactory.span(` (${DATE_FORMATS.TIME.SHORT(createdAt)})`)
                             .class("subtitle")
                     )
                     .make()

@@ -1,14 +1,11 @@
 @import url("./event-note.css");
 
 event-calender {
-    display: grid;
-    grid-template-rows: 4em auto;
-
     padding:.5em;
 
     box-sizing: border-box;
     width: 100%;
-    aspect-ratio: 2 / 1;
+    max-height: 100vh;
 
     > .controls {
         padding: 0px 2em 0px 2em;
@@ -30,8 +27,8 @@ event-calender {
         grid-template-rows: max-content repeat(6, 1fr);
         grid-template-columns: repeat(7, 1fr);
 
-        padding:2px;
-        height: 100%;
+        padding: 4px 2px 4px 2px;
+        flex-grow: 1;
 
         background-color: var(--tertiary);
 
@@ -72,6 +69,7 @@ event-calender {
             > .day-number {
                 margin: 0px;
                 user-select: none;
+                text-transform: capitalize;
             }
 
             > event-note {
@@ -91,10 +89,11 @@ event-calender {
 
         > .load-more {
             margin:0px;
-            min-height: 2px;
+            height:2px;
             
             text-align: center;
             color: var(--primary);
+            &.no-more { height: unset; }
         }
     }
 
@@ -103,7 +102,7 @@ event-calender {
             display: flex;
             flex-direction: column;
 
-            max-height: 70vh;
+            max-height: 100%;
             overflow-y: scroll;
 
             > .day-cell {

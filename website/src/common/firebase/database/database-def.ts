@@ -1,4 +1,3 @@
-import { HexColor } from "../../html-element-factory/AssemblyLine";
 import { Permission } from "./Permission";
 
 export type QueryOptions = {
@@ -43,27 +42,6 @@ export abstract class ArticleDatabase {
     /** Retrieves the previous posted article. */
     abstract getPrevious(article:ArticleInfo, options?:Omit<ArticleFilterOptions,"limit"|"before"|"after"|"sortByCreatedAt">):Promise<ArticleInfo|undefined>;
 
-}
-
-export type EventInfo = { id:string, name:string, description:string, starts_at:Date, ends_at:Date, category:string, color?:HexColor };
-export type EventFilterOptions = QueryOptions & {
-    range?: {
-        from:Date,
-        to:Date
-    }
-    category?:string
-};
-
-export abstract class EventDatabase {
-    abstract get(limit:number, options?:Omit<EventFilterOptions,"limit">):Promise<EventInfo[]>;
-
-    abstract count(options?:EventFilterOptions):Promise<number>;
-
-    abstract getRange(from:Date, to:Date, options?:Omit<EventFilterOptions,"range">):Promise<EventInfo[]>;
-
-    abstract getById(id:string):Promise<EventInfo|undefined>;
-
-    abstract getByCategory(category:string, options?:Omit<EventFilterOptions,"category">):Promise<EventInfo[]>;
 }
 
 export type UserInfo = { id:string, joined_at:Date, member_until:Date, first_name:string, family_name:string, permissions:Permission[] };

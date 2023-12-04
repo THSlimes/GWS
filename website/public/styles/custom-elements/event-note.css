@@ -27,7 +27,9 @@ event-note {
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    > .timespan { margin: 0px; }
+    > .timespan {
+        margin: 0px;
+    }
     > .description {
         max-height: 50vh;
         overflow-y: scroll;

@@ -1,22 +1,62 @@
 import ElementFactory from "../html-element-factory/ElementFactory";
-import { EventInfo } from "../firebase/database/database-def";
+import { EventInfo } from "../firebase/database/events/EventDatabase";
 import { getMostContrasting, getStringColor } from "../util/ColorUtil";
 import RichText from "../ui/RichText";
-import { areFullDays, isSameDay, spanInDays } from "../util/DateUtil";
+import { DATE_FORMATS, areFullDays, isSameDay, spanInDays } from "../util/DateUtil";
 import { showWarning } from "../ui/info-messages";
+import { HasSections } from "../util/ElementUtil";
 
-export class EventNote extends HTMLElement {
+/** Amount of detail present in an EventNote element. */
+export type DetailLevel = "full" | "high" | "normal" | "low";
+type EventNoteSection = "name" | "timespan" | "description" | "registerButton";
+const VISIBILITY_AT_LOD:Record<DetailLevel, Record<EventNoteSection, boolean>> = {
+    full: {
+        name: true,
+        timespan: true,
+        description: true,
+        registerButton: true
+    },
+    high: {
+        name: true,
+        timespan: true,
+        description: true,
+        registerButton: true
+    },
+    normal: {
+        name: true,
+        timespan: true,
+        description: false,
+        registerButton: false
+    },
+    low: {
+        name: true,
+        timespan: false,
+        description: false,
+        registerButton: false
+    }
+};
+
+export class EventNote extends HTMLElement implements HasSections<EventNoteSection> {
 
     private readonly event:EventInfo;
-
+    private _lod:DetailLevel;
+    public set lod(newLod:DetailLevel) {
+        this._lod = newLod;
+        this.setAttribute("detail", newLod);
+        const lod = VISIBILITY_AT_LOD[newLod];
+        for (const k in lod) {
+            const sectionName = k as EventNoteSection;
+            this[sectionName].hidden = !lod[sectionName];
+        }
+    }
     private readonly expanded:boolean
 
-    private readonly nameElement: HTMLHeadingElement;
-    private readonly timespanElement: HTMLParagraphElement;
-    private readonly descriptionElement?: HTMLDivElement;
-    private readonly registerButton?: HTMLButtonElement;
+    readonly name: HTMLHeadingElement;
+    readonly timespan: HTMLParagraphElement;
+    readonly description: HTMLDivElement;
+    readonly registerButton: HTMLButtonElement;
 
-    constructor(event: EventInfo, expanded=false) {
+    constructor(event: EventInfo, lod:DetailLevel="normal", expanded=false) {
         super();
 
         this.event = event;
@@ -30,34 +70,37 @@ export class EventNote extends HTMLElement {
         this.style.color = getMostContrasting(bgColor, "#111111", "#ffffff");
 
         // event name
-        this.nameElement = this.appendChild(ElementFactory.heading(expanded ? 1 : 5).html(RichText.parseLine(event.name)).class("name", "rich-text").make());
+        this.name = this.appendChild(ElementFactory.heading(expanded ? 1 : 5).html(RichText.parseLine(event.name)).class("name", "rich-text").make());
 
         // event start/end time
         let timespanText = isSameDay(event.starts_at, event.ends_at) ?
-            `${event.starts_at.toLocaleTimeString(navigator.languages, {timeStyle:"short"})} - ${event.ends_at.toLocaleTimeString(navigator.languages, {timeStyle:"short"})}` :
+            `${DATE_FORMATS.TIME.SHORT(event.starts_at)} - ${DATE_FORMATS.TIME.SHORT(event.ends_at)}` :
             areFullDays(event.starts_at, event.ends_at) ?
-                `${event.starts_at.toLocaleString(navigator.language, {day:"numeric", month:"short"})} t/m ${event.ends_at.toLocaleDateString(navigator.language, {day:"numeric", month:"short"})}` :
-                `${event.starts_at.toLocaleString(navigator.language, {day:"numeric", month:"short"})} (${event.starts_at.toLocaleTimeString(navigator.language, {timeStyle:"short"})}) t/m ${event.ends_at.toLocaleDateString(navigator.language, {day:"numeric", month:"short"})} (${event.ends_at.toLocaleTimeString(navigator.language, {timeStyle:"short"})})`;
-        this.timespanElement = this.appendChild(ElementFactory.p(timespanText).class("timespan", "subtitle", "italic").make());
+                `${DATE_FORMATS.DAY.SHORT_NO_YEAR(event.starts_at)} t/m ${DATE_FORMATS.DAY.SHORT_NO_YEAR(event.ends_at)}` :
+                `${DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(event.starts_at)} t/m ${DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(event.ends_at)}`;
+        this.timespan = this.appendChild(ElementFactory.p(timespanText).class("timespan", "subtitle", "italic").make());
 
-        if (expanded) {
-            this.descriptionElement = this.appendChild(RichText.parse(event.description));
-            this.descriptionElement.classList.add("description");
+        // description
+        this.description = this.appendChild(RichText.parse(event.description));
+        this.description.classList.add("description");
 
-            this.registerButton = this.appendChild(
-                ElementFactory.button(() => showWarning("Not implemented yet."))
-                    .class("register-button", "center-content", "main-axis-space-between")
-                    .children(
-                        ElementFactory.h2("Inschrijven"),
-                        ElementFactory.h2("person_add").class("icon")
-                    )
-                    .make()
-            );
-        }
+        // registration button
+        this.registerButton = this.appendChild(
+            ElementFactory.button(() => showWarning("Not implemented yet."))
+                .class("register-button", "center-content", "main-axis-space-between")
+                .children(
+                    ElementFactory.h2("Inschrijven"),
+                    ElementFactory.h2("person_add").class("icon")
+                )
+                .make()
+        );
+        
+        this._lod = lod;
+        this.lod = lod;
     }
 
-    public copy(expanded?:boolean) {
-        return new EventNote(this.event, expanded ?? this.expanded);
+    public copy(lod:DetailLevel=this._lod, expanded:boolean=this.expanded) {
+        return new EventNote(this.event, lod, expanded);
     }
 
 }
