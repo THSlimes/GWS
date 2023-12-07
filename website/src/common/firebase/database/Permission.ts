@@ -4,4 +4,12 @@ export enum Permission {
     VIEW_ADMIN_PANEL = "VIEW_ADMIN_PANEL"
 }
 
-export type PermissionGuarded = { required_permissions: Permission[] };
+export type PermissionGuarded = {
+    needed_to_get?:Permission[],
+    needed_to_list?:Permission[],
+    needed_to_read?:Permission[],
+    needed_to_create?:Permission[],
+    needed_to_update?:Permission[],
+    needed_to_delete?:Permission[],
+    needed_to_write?:Permission[]
+};

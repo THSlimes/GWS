@@ -20,6 +20,8 @@ export default FIREBASE_APP;
 export const DB = getFirestore(FIREBASE_APP); // initialize Firebase Firestore
 export const AUTH = getAuth(FIREBASE_APP);
 AUTH.onAuthStateChanged(user => {
+    console.log(user);
+    
     user === null ? localStorage.removeItem("loggedIn") : localStorage.setItem("loggedIn", "true");
 });
 export const STORAGE = getStorage(FIREBASE_APP);

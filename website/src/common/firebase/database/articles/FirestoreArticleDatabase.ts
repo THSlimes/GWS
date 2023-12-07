@@ -20,12 +20,12 @@ export class FirestoreArticleDatabase extends ArticleDatabase {
         toFirestore(article: ArticleInfo): DBArticle {
             return {
                 ...article,
-                created_at: Timestamp.fromDate(article.created_at),
-                required_permissions: []
+                created_at: Timestamp.fromDate(article.created_at)
             };
         },
         fromFirestore(snapshot: QueryDocumentSnapshot<DBArticle, ArticleInfo>): ArticleInfo {
             const data = snapshot.data();
+            
             return new ArticleInfo(
                 snapshot.id,
                 data.heading,
@@ -91,7 +91,14 @@ export class FirestoreArticleDatabase extends ArticleDatabase {
         return new Promise(async (resolve, reject) => {
             const q = query(FirestoreArticleDatabase.COLLECTION, ...constraints); // create query
             try {
-                if (doCount) resolve((await getCountFromServer(q)).data().count); // get count
+                if (doCount) {
+                    getCountFromServer(q)
+                    .then(res => resolve(res.data().count))
+                    .catch(e => {
+                        console.log(e);
+                        reject(e);
+                    })
+                }
                 else { // get documents
                     const snapshot = await getDocs(q);
                     const out: ArticleInfo[] = [];
@@ -99,7 +106,11 @@ export class FirestoreArticleDatabase extends ArticleDatabase {
                     resolve(out);
                 }
             }
-            catch (e) { reject(e); }
+            catch (e) {
+                console.log(e);
+                
+                reject(e);
+            }
         });
 
     }

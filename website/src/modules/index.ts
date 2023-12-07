@@ -161,18 +161,20 @@ window.addEventListener("DOMContentLoaded", async () => {
     
     /** Inserts the articles in a page into the webpage. */
     async function insertPage(pageNum:number) {
-        const info = await getPage(pageNum);
-        
-        $(RECENT_MESSAGES_ELEM).children("article").remove();
-        RECENT_MESSAGES_ELEM.prepend(...info.articles.map(a => SmartArticle.fromInfo(a, true)));
-
-        // updating buttons and page indicator
-        FIRST_PAGE_BUTTON.disabled = currPage === 0;
-        PREV_PAGE_BUTTON.disabled = currPage === 0;
-        NEXT_PAGE_BUTTON.disabled = currPage === NUM_PAGES-1;
-        LAST_PAGE_BUTTON.disabled = currPage === NUM_PAGES-1;
-
-        PAGE_INDICATOR.innerText = `Pagina ${pageNum+1} / ${NUM_PAGES}`;
+        getPage(pageNum)
+        .then(info => {
+            $(RECENT_MESSAGES_ELEM).children("article").remove();
+            RECENT_MESSAGES_ELEM.prepend(...info.articles.map(a => SmartArticle.fromInfo(a, true)));
+    
+            // updating buttons and page indicator
+            FIRST_PAGE_BUTTON.disabled = currPage === 0;
+            PREV_PAGE_BUTTON.disabled = currPage === 0;
+            NEXT_PAGE_BUTTON.disabled = currPage === NUM_PAGES-1;
+            LAST_PAGE_BUTTON.disabled = currPage === NUM_PAGES-1;
+    
+            PAGE_INDICATOR.innerText = `Pagina ${pageNum+1} / ${NUM_PAGES}`;
+        })
+        .catch(console.warn);
     }
 
     let currPage = 0;
