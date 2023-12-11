@@ -6,8 +6,9 @@ import "./create-split-view";
 import { UserCredential, browserLocalPersistence, browserSessionPersistence, signInWithEmailAndPassword } from "@firebase/auth";
 import { AUTH } from "../common/firebase/init-firebase";
 import { showError, showWarning } from "../common/ui/info-messages";
-import getErrorMessage from "../common/firebase/error-messages";
-import { redirectIfLoggedIn } from "../common/firebase/auth-based-redirect";
+import getErrorMessage from "../common/firebase/authentication/error-messages";
+import { redirectIfLoggedIn } from "../common/firebase/authentication/auth-based-redirect";
+import { isLocalUrl } from "../common/util/UrlUtil";
 
 redirectIfLoggedIn("/", true); // can't log in when already logged in
 
@@ -45,11 +46,13 @@ window.addEventListener("DOMContentLoaded", () => {
                 AUTH.updateCurrentUser(userCred.user)
                 .then(() => {
                     localStorage.setItem("loggedIn", "true");
-                    location.href = '/';
+                    const returnUrl = new URLSearchParams(window.location.search).get("return-to");
+                    if (returnUrl !== null && isLocalUrl(returnUrl)) location.replace(returnUrl);
+                    else location.href = '/';
                 }) // redirect to homepage
                 .catch(() => showError("Er ging iets mis, probeer het later opnieuw."));
             })
-            .catch(err => showError(getErrorMessage(err.code)))
+            .catch(err => showError(getErrorMessage(err)))
             .finally(() => {
                 setTimeout(() => LOGIN_BUTTON.disabled = false, 1000);
             });

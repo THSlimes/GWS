@@ -5,6 +5,8 @@ import ArticleDatabase from "../common/firebase/database/articles/ArticleDatabas
 import SmartArticle from "../common/custom-elements/SmartArticle";
 import { FirestoreArticleDatabase } from "../common/firebase/database/articles/FirestoreArticleDatabase";
 import RichText from "../common/ui/RichText";
+import { runOnErrorCode } from "../common/firebase/authentication/error-messages";
+import { createLinkBackURL } from "../common/util/UrlUtil";
 
 /** Creates the link to an article given its ID. */
 export function articleLink(id: string) { return `/article.html?id=${id}`; }
@@ -43,5 +45,5 @@ else window.addEventListener("DOMContentLoaded", () => {
         }
         else window.location.replace('/'); // no such article found, go to homepage
     })
-    .catch(console.log); // TODO: insert error-message instead
+    .catch(runOnErrorCode("permission-denied", () => location.replace(createLinkBackURL("/login.html", location.href))));
 });

@@ -1,4 +1,4 @@
-import { QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, documentId, getCountFromServer, getDocs, limit, orderBy, query, where } from "@firebase/firestore";
+import { FirestoreError, QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, documentId, getCountFromServer, getDocs, limit, orderBy, query, where } from "@firebase/firestore";
 import ArticleDatabase, { ArticleFilterOptions, ArticleInfo } from "./ArticleDatabase";
 import { clamp } from "../../../util/NumberUtil";
 import { PermissionGuarded } from "../Permission";
@@ -90,27 +90,18 @@ export class FirestoreArticleDatabase extends ArticleDatabase {
 
         return new Promise(async (resolve, reject) => {
             const q = query(FirestoreArticleDatabase.COLLECTION, ...constraints); // create query
-            try {
-                if (doCount) {
-                    getCountFromServer(q)
-                    .then(res => resolve(res.data().count))
-                    .catch(e => {
-                        console.log(e);
-                        reject(e);
-                    })
-                }
-                else { // get documents
-                    const snapshot = await getDocs(q);
-                    const out: ArticleInfo[] = [];
-                    snapshot.forEach(doc => out.push(doc.data()));
-                    resolve(out);
-                }
+            if (doCount) {
+                getCountFromServer(q)
+                .then(res => resolve(res.data().count))
+                .catch(reject);
             }
-            catch (e) {
-                console.log(e);
-                
-                reject(e);
-            }
+            else getDocs(q)
+            .then(snapshot => {
+                const out: ArticleInfo[] = [];
+                snapshot.forEach(doc => out.push(doc.data()));
+                resolve(out);
+            })
+            .catch(reject);
         });
 
     }
