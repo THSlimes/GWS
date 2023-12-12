@@ -1,6 +1,8 @@
 import { HexColor } from "../../../html-element-factory/AssemblyLine";
 import QueryOptions from "../QueryOptions";
 
+type TimeSpan = [Date, Date];
+type OpenTimespan = [Date|undefined, Date|undefined];
 export class EventInfo {
     public readonly id:string;
     public readonly name:string;
@@ -9,15 +11,29 @@ export class EventInfo {
     public readonly ends_at:Date;
     public readonly category:string;
     public readonly color?:HexColor;
+    public readonly can_register_from?:Date;
+    public readonly can_register_until?:Date
 
-    constructor(id:string, name:string, description:string, starts_at:Date, ends_at:Date, category:string, color?:HexColor) {
+    constructor(id:string, name:string, description:string, timespan:TimeSpan, registrationPeriod:OpenTimespan, category="", color?:HexColor) {
         this.id = id;
         this.name = name;
         this.description = description;
-        this.starts_at = starts_at;
-        this.ends_at = ends_at;
+        [this.starts_at, this.ends_at] = timespan;
+        [this.can_register_from, this.can_register_until] = registrationPeriod;
         this.category = category;
         this.color = color;
+    }
+
+    public isNow(d=new Date()):boolean {
+        return this.starts_at <= d && d <= this.ends_at;
+    }
+
+    public openForRegistration(d=new Date()):boolean {
+        if (this.starts_at <= d) return false; // can only register before event
+        else if (this.can_register_from && this.can_register_until) return this.can_register_from <= d && d <= this.can_register_until;
+        else if (this.can_register_from) return this.can_register_from <= d;
+        else if (this.can_register_until) return d <= this.can_register_until;
+        else return true;
     }
 
     public satisfies(options:EventFilterOptions):boolean {

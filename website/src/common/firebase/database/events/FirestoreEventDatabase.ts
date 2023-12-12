@@ -10,6 +10,8 @@ type DBEvent = {
     description:string,
     starts_at:Timestamp,
     ends_at:Timestamp,
+    can_register_from?:Timestamp,
+    can_register_until?:Timestamp,
     category:string,
     color?:HexColor
 };
@@ -24,13 +26,23 @@ export default class FirestoreEventDatebase extends EventDatabase {
         toFirestore(event: EventInfo): DBEvent {
             return {
                 ...event,
-                starts_at:Timestamp.fromDate(event.starts_at),
-                ends_at:Timestamp.fromDate(event.ends_at),
+                starts_at: Timestamp.fromDate(event.starts_at),
+                ends_at: Timestamp.fromDate(event.ends_at),
+                can_register_from: event.can_register_from ? Timestamp.fromDate(event.can_register_from) : undefined,
+                can_register_until: event.can_register_until ? Timestamp.fromDate(event.can_register_until) : undefined,
             };
         },
         fromFirestore(snapshot: QueryDocumentSnapshot<DBEvent, EventInfo>):EventInfo {
             const data = snapshot.data();
-            return new EventInfo(snapshot.id, data.name, data.description, data.starts_at.toDate(), data.ends_at.toDate(), data.category, data.color);
+            return new EventInfo(
+                snapshot.id,
+                data.name,
+                data.description,
+                [data.starts_at.toDate(), data.ends_at.toDate()],
+                [data.can_register_from?.toDate(), data.can_register_until?.toDate()],
+                data.category,
+                data.color
+            );
         }
     });
 

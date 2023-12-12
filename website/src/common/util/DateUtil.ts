@@ -34,7 +34,7 @@ export function isBetweenDays(date: Date, start: Date, end: Date) {
     date = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     start = new Date(start.getFullYear(), start.getMonth(), start.getDate());
     end = new Date(end.getFullYear(), end.getMonth(), end.getDate());
-    return date.getTime() >= start.getTime() && date.getTime() <= end.getTime();
+    return date >= start && date <= end;
 }
 
 /**
@@ -72,7 +72,7 @@ function dayLaterOrSame(a:Date, b:Date) {
 }
 
 export function timespansOverlap(aFrom:Date, aTo:Date, bFrom:Date, bTo:Date) {
-    return bTo.getTime() >= aFrom.getTime() && bFrom.getTime() <= aTo.getTime();
+    return bTo >= aFrom && bFrom <= aTo;
 }
 
 export function timespansDaysOverlap(aFrom:Date, aTo:Date, bFrom:Date, bTo:Date) {
@@ -85,18 +85,18 @@ export function daysOverlap(a: EventInfo, b: EventInfo) {
 
 export function earliest(d1:Date, ...dRest:Date[]) {
     let earliest = d1;
-    dRest.forEach(d => earliest = d.getTime() < earliest.getTime() ? d : earliest);
+    dRest.forEach(d => earliest = d < earliest ? d : earliest);
     return earliest;
 }
 
 export function latest(d1:Date, ...dRest:Date[]) {
     let earliest = d1;
-    dRest.forEach(d => earliest = d.getTime() > earliest.getTime() ? d : earliest);
+    dRest.forEach(d => earliest = d > earliest ? d : earliest);
     return earliest;
 }
 
 export function spanInDays(from: Date, to: Date) {
-    if (from.getTime() > to.getTime()) [from, to] = [to, from];
+    if (from > to) [from, to] = [to, from];
 
     const d = new Date(from);
     let out = 1;
@@ -134,7 +134,7 @@ export function getDayRange(start:Date, end:Date|number):Date[] {
     }
     else end = new Date(end); // copy value
 
-    if (start.getTime() > end.getTime()) return [];
+    if (start > end) return [];
 
     const out:Date[] = [];
     do {

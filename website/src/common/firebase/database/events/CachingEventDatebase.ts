@@ -32,7 +32,7 @@ export default class CachingEventDatebase implements EventDatabase {
         const toCopy = to ? new Date(to) : new Date(8640000000000000);
 
         return new Promise((resolve,reject) => {
-            if (this.retrievedRange.from.getTime() <= fromCopy.getTime() && toCopy.getTime() <= this.retrievedRange.to.getTime()) {
+            if (this.retrievedRange.from <= fromCopy && toCopy <= this.retrievedRange.to) {
                 resolve(Object.values(this.events).filter(e => e.satisfies({range:{from:fromCopy, to:toCopy}, ...options })));
             }
             else { // have to retrieve some events
