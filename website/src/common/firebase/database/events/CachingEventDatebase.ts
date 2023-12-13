@@ -1,5 +1,5 @@
 import { earliest, latest } from "../../../util/DateUtil";
-import EventDatabase, { EventFilterOptions, EventInfo } from "./EventDatabase";
+import EventDatabase, { EventFilterOptions, EventInfo, EventRegistration } from "./EventDatabase";
 
 /**
  * A CachingEventDatabase is a type of EventDatabase which
@@ -15,8 +15,10 @@ export default class CachingEventDatebase implements EventDatabase {
     }
 
     private readonly countCache:Record<string,number> = {};
-    count(options: EventFilterOptions = {}): Promise<number> {
+    count(options: EventFilterOptions = {}, invalidateCache=false): Promise<number> {
         const optionsJSON = JSON.stringify(options);
+        if (invalidateCache) delete this.countCache[optionsJSON];
+
         return new Promise(async (resolve, reject) => {
             if (optionsJSON in this.countCache) resolve(this.countCache[optionsJSON]);
             else this.relay.count(options)
@@ -50,7 +52,9 @@ export default class CachingEventDatebase implements EventDatabase {
     }
 
     private readonly idCache:Record<string, EventInfo|undefined> = {}
-    getById(id: string): Promise<EventInfo | undefined> {
+    getById(id: string, invalidateCache=false): Promise<EventInfo | undefined> {
+        if (invalidateCache) delete this.idCache[id];
+
         return new Promise((resolve, reject) => {
             if (id in this.idCache) resolve(this.idCache[id]);
             else this.relay.getById(id)
@@ -60,7 +64,9 @@ export default class CachingEventDatebase implements EventDatabase {
     }
 
     private readonly categoryCache:Record<string, EventInfo[]> = {}
-    getByCategory(category: string, options?: Omit<EventFilterOptions, "category"> | undefined): Promise<EventInfo[]> {
+    getByCategory(category: string, options?: Omit<EventFilterOptions, "category"> | undefined, invalidateCache=false): Promise<EventInfo[]> {
+        if (invalidateCache) delete this.categoryCache[category];
+
         return new Promise((resolve, reject) => {
             if (category in this.categoryCache) {
                 resolve(this.categoryCache[category].filter(e => e.satisfies({category, ...options})));
@@ -72,6 +78,31 @@ export default class CachingEventDatebase implements EventDatabase {
                 })
                 .catch(reject)
         });
+    }
+
+    private readonly registrationsCache:Record<string,EventRegistration[]> = {};
+    private readonly registrationCountCache:Record<string,number> = {};
+    getRegistrations(id: string, doCount:false): Promise<EventRegistration[]>;
+    getRegistrations(id: string, doCount:true): Promise<number>;
+    getRegistrations(id: string, doCount:boolean, invalidateCache=false): Promise<EventRegistration[]> | Promise<number> {
+        if (doCount) {
+            if (invalidateCache) delete this.registrationCountCache[id]; // remove value from cache
+            return new Promise<number>((resolve,reject) => {
+                if (id in this.registrationCountCache) resolve(this.registrationCountCache[id]);
+                else this.relay.getRegistrations(id, true)
+                    .then(res => resolve(this.registrationCountCache[id] = res))
+                    .catch(reject);
+            });
+        }
+        else {
+            if (invalidateCache) delete this.registrationsCache[id];
+            return new Promise<EventRegistration[]>((resolve,reject) => {
+                if (id in this.registrationsCache) resolve(this.registrationsCache[id]); // remove value from cache
+                else this.relay.getRegistrations(id, false)
+                    .then(res => resolve(this.registrationsCache[id] = res))
+                    .catch(reject);
+            });
+        }
     }
 
 }

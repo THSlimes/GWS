@@ -1,5 +1,5 @@
-import { QueryCompositeFilterConstraint, QueryConstraint, QueryDocumentSnapshot, QueryFilterConstraint, QueryNonFilterConstraint, Timestamp, and, collection, documentId, getCountFromServer, getDocs, limit, or, orderBy, query, where } from "@firebase/firestore";
-import EventDatabase, { EventFilterOptions, EventInfo } from "./EventDatabase";
+import { FirestoreDataConverter, QueryCompositeFilterConstraint, QueryConstraint, QueryDocumentSnapshot, QueryFilterConstraint, QueryNonFilterConstraint, Timestamp, and, collection, collectionGroup, documentId, getCountFromServer, getDocs, limit, or, orderBy, query, where } from "@firebase/firestore";
+import EventDatabase, { EventFilterOptions, EventInfo, EventRegistration } from "./EventDatabase";
 import { DB } from "../../init-firebase";
 import { clamp } from "../../../util/NumberUtil";
 import { HexColor } from "../../../html-element-factory/AssemblyLine";
@@ -16,13 +16,17 @@ type DBEvent = {
     color?:HexColor
 };
 
+type DBEventRegistration = {
+    registered_at:Timestamp,
+    display_name:string
+};
+
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 /** Any event longer than (in ms) this may be queried incorrectly. */
 const MAX_EVENT_DURATION = 7 * MS_PER_DAY;
 
-export default class FirestoreEventDatebase extends EventDatabase {
-
-    private static readonly COLLECTION = collection(DB, "events").withConverter({
+function createConverter(db:EventDatabase):FirestoreDataConverter<EventInfo,DBEvent> {
+    return {
         toFirestore(event: EventInfo): DBEvent {
             return {
                 ...event,
@@ -34,31 +38,50 @@ export default class FirestoreEventDatebase extends EventDatabase {
         },
         fromFirestore(snapshot: QueryDocumentSnapshot<DBEvent, EventInfo>):EventInfo {
             const data = snapshot.data();
+            
             return new EventInfo(
+                db,
                 snapshot.id,
                 data.name,
                 data.description,
+                data.category,
+                data.color,
                 [data.starts_at.toDate(), data.ends_at.toDate()],
                 [data.can_register_from?.toDate(), data.can_register_until?.toDate()],
-                data.category,
-                data.color
             );
         }
-    });
+    };
+}
+
+export default class FirestoreEventDatebase extends EventDatabase {
+
+    private readonly collection = collection(DB, "events").withConverter(createConverter(this));
+    private readonly registrationsConverter:FirestoreDataConverter<EventRegistration,DBEventRegistration> = {
+        toFirestore(registration:EventRegistration) {
+            return {
+                registered_at: Timestamp.fromDate(registration.registered_at),
+                display_name: registration.display_name
+            }
+        },
+        fromFirestore(snapshot:QueryDocumentSnapshot<DBEventRegistration, EventRegistration>) {
+            const data = snapshot.data();
+            return new EventRegistration(data.registered_at.toDate(), data.display_name);
+        },
+    }
 
     count(options?:EventFilterOptions): Promise<number> {
-        return FirestoreEventDatebase.getEvents(options??{}, true);
+        return this.getEvents(options??{}, true);
     }
 
     getRange(from?: Date, to?: Date, options?: Omit<EventFilterOptions, "range">): Promise<EventInfo[]> {
         from ??= new Date(-8640000000000000);
         to ??= new Date(8640000000000000);
-        return FirestoreEventDatebase.getEvents({range: {from, to}, ...options});
+        return this.getEvents({range: {from, to}, ...options});
     }
 
     getById(id: string): Promise<EventInfo | undefined> {
         return new Promise((resolve, reject) => {
-            FirestoreEventDatebase.getEvents({id})
+            this.getEvents({id})
             .then(e => {
                 if (e.length === 0) resolve(undefined); // not found
                 else resolve(e[0]); // found
@@ -68,12 +91,32 @@ export default class FirestoreEventDatebase extends EventDatabase {
     }
     
     getByCategory(category: string, options?: Omit<EventFilterOptions, "category"> | undefined): Promise<EventInfo[]> {
-        return FirestoreEventDatebase.getEvents({category, ...options});
+        return this.getEvents({category, ...options});
     }
 
-    private static getEvents(options: EventFilterOptions, doCount?: false): Promise<EventInfo[]>;
-    private static getEvents(options: EventFilterOptions, doCount?: true): Promise<number>;
-    private static getEvents(options: EventFilterOptions, doCount = false): Promise<EventInfo[] | number> {
+    getRegistrations(id: string, doCount:false):Promise<EventRegistration[]>;
+    getRegistrations(id: string, doCount:true):Promise<number>;
+    getRegistrations(id: string, doCount:boolean):Promise<EventRegistration[]> | Promise<number> {
+        const regCollection = collection(DB, `events/${id}/registrations`).withConverter(this.registrationsConverter);
+        if (doCount) return new Promise<number>((resolve,reject) => {
+            getCountFromServer(regCollection)
+            .then(res => resolve(res.data().count))
+            .catch(reject);
+        });
+        else return new Promise<EventRegistration[]>((resolve,reject) => {
+            getDocs(regCollection)
+            .then(res => {
+                const out:EventRegistration[] = [];
+                res.forEach(doc => out.push(doc.data()));
+                resolve(out);
+            })
+            .catch(reject);
+        });
+    }
+
+    private getEvents(options: EventFilterOptions, doCount?: false): Promise<EventInfo[]>;
+    private getEvents(options: EventFilterOptions, doCount?: true): Promise<number>;
+    private getEvents(options: EventFilterOptions, doCount = false): Promise<EventInfo[] | number> {
         const baseConstraints:QueryConstraint[] = [];
 
         // generic
@@ -97,7 +140,7 @@ export default class FirestoreEventDatebase extends EventDatabase {
         else rangeConstraints.push([]);
 
         return new Promise(async (resolve, reject) => {
-            const queries = rangeConstraints.map(rc => query(FirestoreEventDatebase.COLLECTION, ...rc, ...baseConstraints));
+            const queries = rangeConstraints.map(rc => query(this.collection, ...rc, ...baseConstraints));
 
             try {
                 if (doCount && queries.length === 1) resolve((await getCountFromServer(queries[0])).data().count); // get simple count
@@ -105,10 +148,7 @@ export default class FirestoreEventDatebase extends EventDatabase {
                     const snapshots = await Promise.all(queries.map(q => getDocs(q)));
                     let out:Record<string, EventInfo> = {};
                     snapshots.forEach(sn => {
-                        sn.forEach(doc => {
-                            const data = doc.data();
-                            out[data.id] = data;
-                        });
+                        sn.forEach(doc => out[doc.id] = doc.data());
                     });
 
                     resolve(doCount ? Object.keys(out).length : Object.values(out));
