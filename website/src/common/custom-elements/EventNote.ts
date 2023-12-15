@@ -3,8 +3,9 @@ import { EventInfo } from "../firebase/database/events/EventDatabase";
 import { getMostContrasting, getStringColor } from "../util/ColorUtil";
 import RichText from "../ui/RichText";
 import { DATE_FORMATS, areFullDays, isSameDay, spanInDays } from "../util/DateUtil";
-import { showWarning } from "../ui/info-messages";
+import { showError, showMessage, showWarning } from "../ui/info-messages";
 import { HasSections } from "../util/ElementUtil";
+import getErrorMessage from "../firebase/authentication/error-messages";
 
 /** Amount of detail present in an EventNote element. */
 export type DetailLevel = "full" | "high" | "normal" | "low";
@@ -92,6 +93,27 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
                     ElementFactory.h2("Inschrijven"),
                     ElementFactory.h2("person_add").class("icon")
                 )
+                .onMake(self => {
+                    self.disabled = true;
+                    this.event.isRegistered()
+                    .then(isReg => {
+                        self.children[0].textContent = isReg ? "Uitschrijven" : "Inschrijven";
+                        self.children[1].textContent = isReg ? "person_remove" : "person_add";
+                        self.disabled = false;
+                    })
+                    .catch(err => showError(getErrorMessage(err)));
+                })
+                .on("click", (ev,self) => {
+                    self.disabled = true;
+                    this.event.toggleRegistered()
+                    .then(isReg => {
+                        showMessage(isReg ? "Succesvol ingeschreven" : "Succesvol uitgeschreven")
+                        self.children[0].textContent = isReg ? "Uitschrijven" : "Inschrijven";
+                        self.children[1].textContent = isReg ? "person_remove" : "person_add";
+                    })
+                    .catch(e => showError(getErrorMessage(e)))
+                    .finally(() => self.disabled = false);
+                })
                 .make()
         );
         

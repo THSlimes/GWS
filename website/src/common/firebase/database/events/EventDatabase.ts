@@ -1,5 +1,6 @@
 import { HexColor } from "../../../html-element-factory/AssemblyLine";
 import { Opt } from "../../../util/UtilTypes";
+import { AUTH } from "../../init-firebase";
 import QueryOptions from "../QueryOptions";
 
 type TimeSpan = [Date, Date];
@@ -7,16 +8,19 @@ type OpenTimespan = [Date|undefined, Date|undefined];
 
 export class EventRegistration {
 
+    public readonly uid:string;
     public readonly registered_at:Date;
     public readonly display_name:string;
 
-    constructor(registered_at:Date, display_name:string) {
+    constructor(uid:string, registered_at:Date, display_name:string) {
+        this.uid = uid;
         this.registered_at = registered_at;
         this.display_name = display_name;
     }
 
 }
 
+/** An EventInfo object contains all relevant information of an event.  */
 export class EventInfo {
     private sourceDB:EventDatabase;
 
@@ -101,6 +105,36 @@ export class EventInfo {
         else return true;
     }
 
+    /** Registers the current user for this event. */
+    public register():Promise<EventRegistration> {
+        return this.sourceDB.registerFor(this.id);
+    }
+
+    /** De-registers the current user from this event. */
+    public deregister():Promise<void> {
+        return this.sourceDB.deregisterFor(this.id);
+    }
+
+    public toggleRegistered():Promise<boolean> {
+        return new Promise((resolve,reject) => {
+            this.isRegistered()
+            .then(isReg => {
+                if (isReg) this.deregister()
+                    .then(() => resolve(false))
+                    .catch(reject);
+                else this.register()
+                    .then(() => resolve(true))
+                    .catch(reject);
+            })
+            .catch(reject);
+        });
+    }
+
+    /** Checks whether the current user is registered for this event. */
+    public isRegistered():Promise<boolean> {
+        return this.sourceDB.isRegisteredFor(this.id);
+    }
+
     /** Whether this event matches the given filter. */
     public satisfies(options:EventFilterOptions):boolean {
         if (options.id && this.id !== options.id) return false;
@@ -122,6 +156,7 @@ export type EventFilterOptions = QueryOptions & {
 };
 
 export default abstract class EventDatabase {
+
     abstract count(options?: Omit<EventFilterOptions, "range">): Promise<number>;
 
     abstract getRange(from?: Date, to?: Date, options?: Omit<EventFilterOptions, "range">): Promise<EventInfo[]>;
@@ -133,4 +168,9 @@ export default abstract class EventDatabase {
     abstract getRegistrations(id:string, doCount:false):Promise<EventRegistration[]>;
     abstract getRegistrations(id:string, doCount:true):Promise<number>;
     abstract getRegistrations(id:string, doCount:boolean):Promise<EventRegistration[]> | Promise<number>;
+
+    abstract registerFor(id:string):Promise<EventRegistration>;
+    abstract deregisterFor(id:string):Promise<void>;
+    abstract isRegisteredFor(id:string):Promise<boolean>;
+
 }

@@ -1,4 +1,3 @@
-import { FirestoreError } from "@firebase/firestore";
 import { FirebaseError } from "firebase/app";
 
 const DEFAULT_ERROR_MESSAGE = "Er ging iets mis, probeer het later opnieuw.";

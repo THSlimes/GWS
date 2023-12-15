@@ -105,4 +105,16 @@ export default class CachingEventDatebase implements EventDatabase {
         }
     }
 
+    registerFor(id: string): Promise<EventRegistration> {
+        return this.relay.registerFor(id);
+    }
+    
+    deregisterFor(id: string): Promise<void> {
+        return this.relay.deregisterFor(id);
+    }
+    
+    isRegisteredFor(id: string): Promise<boolean> {
+        return this.relay.isRegisteredFor(id);
+    }
+
 }
