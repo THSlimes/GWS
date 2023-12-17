@@ -1,6 +1,6 @@
 import { User } from "@firebase/auth";
 import { Permission } from "../database/Permission";
-import { AUTH } from "../init-firebase";
+import { AUTH, onAuth } from "../init-firebase";
 import { FirestoreUserDatabase } from "../database/users/FirestoreUserDatabase";
 import UserDatabase from "../database/users/UserDatabase";
 
@@ -11,10 +11,9 @@ import UserDatabase from "../database/users/UserDatabase";
  */
 export function redirectIfLoggedIn(url="/", useCachedValue=false) {
     if (AUTH.currentUser !== null || (useCachedValue && localStorage.getItem("loggedIn") === "true")) location.href = url; // redirect now
-    else AUTH.authStateReady()
-        .then(() => {
-            if (AUTH.currentUser !== null) location.replace(url);
-        });
+    else onAuth(user => {
+        if (user !== null) location.replace(url);
+    });
 }
 
 /**
@@ -24,10 +23,9 @@ export function redirectIfLoggedIn(url="/", useCachedValue=false) {
  */
 export function redirectIfLoggedOut(url="/", useCachedValue=false) {
     if (AUTH.currentUser === null && (useCachedValue && !localStorage.getItem("loggedIn"))) location.href = url; // redirect now
-    else AUTH.authStateReady()
-        .then(() => {
-            if (AUTH.currentUser !== null) location.replace(url);
-        });
+    else onAuth(user => {
+        if (user === null) location.replace(url);
+    });
 }
 
 const USER_DB:UserDatabase = new FirestoreUserDatabase();
@@ -46,11 +44,12 @@ function hasPermissions(user:User|null, ...permissions:Permission[]):Promise<boo
  * @param permissions permissions to check for
  */
 export function redirectIfMissingPermission(url="/", ...permissions:Permission[]) {
-    if (permissions.length > 0) AUTH.authStateReady()
-    .then(() => {
-        hasPermissions(AUTH.currentUser, ...permissions)
-        .then(res => {
-            if (!res) location.replace(url);
+    if (permissions.length > 0) onAuth(user => {
+        onAuth(user => {
+            hasPermissions(user, ...permissions)
+            .then(res => {
+                if (!res) location.replace(url);
+            });
         });
     });
     else console.warn("did not check permissions, because none were provided.");

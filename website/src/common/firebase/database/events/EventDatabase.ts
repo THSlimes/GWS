@@ -22,7 +22,7 @@ export class EventRegistration {
 
 /** An EventInfo object contains all relevant information of an event.  */
 export class EventInfo {
-    private sourceDB:EventDatabase;
+    protected sourceDB:EventDatabase;
 
     public readonly id:string;
     public readonly name:string;
@@ -32,28 +32,6 @@ export class EventInfo {
 
     public readonly starts_at:Date;
     public readonly ends_at:Date;
-    
-    public readonly can_register_from?:Date;
-    public readonly can_register_until?:Date;
-    public readonly capacity?:number;
-
-    private registrations?:EventRegistration[];
-    public getRegistrations(useCache=true):Promise<EventRegistration[]> {
-        if (!useCache) this.registrations = undefined; // clear cached value
-
-        return new Promise((resolve,reject) => {
-            if (this.registrations === undefined) {
-                // retrieve from DB
-                this.sourceDB.getRegistrations(this.id, false)
-                .then(res => {
-                    this.registrations = res;
-                    resolve(this.registrations);
-                })
-                .catch(reject);
-            }
-            else resolve(this.registrations);
-        });
-    }
 
     constructor(
         sourceDB:EventDatabase,
@@ -62,9 +40,7 @@ export class EventInfo {
         description:string,
         category="",
         color:Opt<HexColor>=undefined,
-        timespan:TimeSpan,
-        registrationPeriod:OpenTimespan,
-        capacity:Opt<number>=undefined
+        timespan:TimeSpan
     ) {
         this.sourceDB = sourceDB;
         
@@ -75,64 +51,11 @@ export class EventInfo {
         this.color = color;
 
         [this.starts_at, this.ends_at] = timespan;
-
-        [this.can_register_from, this.can_register_until] = registrationPeriod;
-        this.capacity = capacity;
     }
 
     /** Whether this event is currently ongoing. */
     public isNow(d=new Date()):boolean {
         return this.starts_at <= d && d <= this.ends_at;
-    }
-
-    /** Whether at least one person can register for this event. */
-    public hasSpaceLeft(useCache=false):Promise<boolean> {
-        return new Promise((resolve,reject) => {
-            const capacity = this.capacity;
-            if (capacity === undefined || capacity === Infinity) resolve(true);
-            else this.getRegistrations(useCache)
-                .then(res => resolve(res.length < capacity))
-                .catch(reject);
-        });
-    }
-
-    /** Whether this events registration period is ongoing. */
-    public openForRegistration(d=new Date()):boolean {
-        if (this.starts_at <= d) return false; // can only register before event
-        else if (this.can_register_from && this.can_register_until) return this.can_register_from <= d && d <= this.can_register_until;
-        else if (this.can_register_from) return this.can_register_from <= d;
-        else if (this.can_register_until) return d <= this.can_register_until;
-        else return true;
-    }
-
-    /** Registers the current user for this event. */
-    public register():Promise<EventRegistration> {
-        return this.sourceDB.registerFor(this.id);
-    }
-
-    /** De-registers the current user from this event. */
-    public deregister():Promise<void> {
-        return this.sourceDB.deregisterFor(this.id);
-    }
-
-    public toggleRegistered():Promise<boolean> {
-        return new Promise((resolve,reject) => {
-            this.isRegistered()
-            .then(isReg => {
-                if (isReg) this.deregister()
-                    .then(() => resolve(false))
-                    .catch(reject);
-                else this.register()
-                    .then(() => resolve(true))
-                    .catch(reject);
-            })
-            .catch(reject);
-        });
-    }
-
-    /** Checks whether the current user is registered for this event. */
-    public isRegistered():Promise<boolean> {
-        return this.sourceDB.isRegisteredFor(this.id);
     }
 
     /** Whether this event matches the given filter. */
@@ -150,11 +73,98 @@ export class EventInfo {
     }
 }
 
+/** RegisterableEventInfo is a type of EventInfo for which a user is able to register. */
+export class RegisterableEventInfo extends EventInfo {
+
+    public readonly registrations:Record<string,string>;
+    public readonly capacity?:number;
+    public readonly can_register_from?:Date;
+    public readonly can_register_until?:Date;
+
+    constructor(
+        sourceDB:EventDatabase,
+        id:string,
+        name:string,
+        description:string,
+        category="",
+        color:Opt<HexColor>=undefined,
+        timespan:TimeSpan,
+
+        registrations:Record<string,string>,
+        capacity?:number,
+        registration_period?:OpenTimespan
+    ) {
+        super(sourceDB,id,name,description,category,color,timespan);
+
+        this.registrations = registrations;
+        this.capacity = capacity;
+        [this.can_register_from,this.can_register_until] = registration_period ?? [];
+    }
+
+    /** Whether at least one person can register for this event. */
+    public hasSpaceLeft(useCache=false):boolean {
+        return this.capacity === undefined || Object.keys(this.registrations).length < this.capacity;
+    }
+
+    /** Whether this events registration period is ongoing. */
+    public openForRegistration(d=new Date()):boolean {
+        if (this.starts_at <= d) return false; // can only register before event
+        else if (this.can_register_from && this.can_register_until) return this.can_register_from <= d && d <= this.can_register_until;
+        else if (this.can_register_from) return this.can_register_from <= d;
+        else if (this.can_register_until) return d <= this.can_register_until;
+        else return true;
+    }
+
+    /** Checks whether the current user is registered for this event. */
+    public isRegistered(userId:string):boolean {
+        return userId in this.registrations;
+    }
+
+    /** Registers the current user for this event. */
+    public register():Promise<void> {
+        return new Promise((resolve,reject) => {
+            this.sourceDB.registerFor(this.id)
+            .then(newRegistrations => {
+                for (const uid in newRegistrations) this.registrations[uid] = newRegistrations[uid];
+                resolve();
+            })
+            .catch(reject);
+        });
+    }
+
+    /** De-registers the current user from this event. */
+    public deregister():Promise<void> {
+        return new Promise((resolve,reject) => {
+            this.sourceDB.deregisterFor(this.id)
+            .then(newRegistrations => {
+                for (const uid in this.registrations) delete this.registrations[uid];
+                for (const uid in newRegistrations) this.registrations[uid] = newRegistrations[uid];
+                resolve();
+            })
+            .catch(reject);
+        });
+    }
+
+    public toggleRegistered(userId:string):Promise<boolean> {
+        return new Promise((resolve,reject) => {
+            if (this.isRegistered(userId)) this.deregister()
+                .then(() => resolve(false))
+                .catch(reject);
+            else this.register()
+                .then(() => resolve(true))
+                .catch(reject);
+        });
+    }
+
+}
+
+/** EventFilterOptions specify conditions which are supposed to be met by an event. */
 export type EventFilterOptions = QueryOptions & {
     range?: { from: Date; to: Date; } | { from?: Date; to: Date; } | { from: Date; to?: Date; };
     category?: string;
 };
 
+/** An EventDatabase provides a way to interface with a collection of event data. */
 export default abstract class EventDatabase {
 
     abstract count(options?: Omit<EventFilterOptions, "range">): Promise<number>;
@@ -165,12 +175,7 @@ export default abstract class EventDatabase {
 
     abstract getByCategory(category: string, options?: Omit<EventFilterOptions, "category">): Promise<EventInfo[]>;
 
-    abstract getRegistrations(id:string, doCount:false):Promise<EventRegistration[]>;
-    abstract getRegistrations(id:string, doCount:true):Promise<number>;
-    abstract getRegistrations(id:string, doCount:boolean):Promise<EventRegistration[]> | Promise<number>;
-
-    abstract registerFor(id:string):Promise<EventRegistration>;
-    abstract deregisterFor(id:string):Promise<void>;
-    abstract isRegisteredFor(id:string):Promise<boolean>;
+    abstract registerFor(eventId:string):Promise<Record<string,string>>;
+    abstract deregisterFor(eventId:string):Promise<Record<string,string>>;
 
 }

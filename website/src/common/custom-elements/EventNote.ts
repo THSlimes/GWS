@@ -1,40 +1,21 @@
 import ElementFactory from "../html-element-factory/ElementFactory";
-import { EventInfo } from "../firebase/database/events/EventDatabase";
+import { EventInfo, RegisterableEventInfo } from "../firebase/database/events/EventDatabase";
 import { getMostContrasting, getStringColor } from "../util/ColorUtil";
 import RichText from "../ui/RichText";
 import { DATE_FORMATS, areFullDays, isSameDay, spanInDays } from "../util/DateUtil";
 import { showError, showMessage, showWarning } from "../ui/info-messages";
 import { HasSections } from "../util/ElementUtil";
 import getErrorMessage from "../firebase/authentication/error-messages";
+import { AUTH, onAuth } from "../firebase/init-firebase";
 
 /** Amount of detail present in an EventNote element. */
 export type DetailLevel = "full" | "high" | "normal" | "low";
 type EventNoteSection = "name" | "timespan" | "description" | "registerButton";
 const VISIBILITY_AT_LOD:Record<DetailLevel, Record<EventNoteSection, boolean>> = {
-    full: {
-        name: true,
-        timespan: true,
-        description: true,
-        registerButton: true
-    },
-    high: {
-        name: true,
-        timespan: true,
-        description: true,
-        registerButton: true
-    },
-    normal: {
-        name: true,
-        timespan: true,
-        description: false,
-        registerButton: false
-    },
-    low: {
-        name: true,
-        timespan: false,
-        description: false,
-        registerButton: false
-    }
+    full: { name: true, timespan: true, description: true, registerButton: true },
+    high: { name: true, timespan: true, description: true, registerButton: true },
+    normal: { name: true, timespan: true, description: false, registerButton: false },
+    low: { name: true, timespan: false, description: false, registerButton: false }
 };
 
 export class EventNote extends HTMLElement implements HasSections<EventNoteSection> {
@@ -47,15 +28,16 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
         const lod = VISIBILITY_AT_LOD[newLod];
         for (const k in lod) {
             const sectionName = k as EventNoteSection;
-            this[sectionName].hidden = !lod[sectionName];
+            const elem = this[sectionName];
+            if (elem) elem.hidden = !lod[sectionName];
         }
     }
-    private readonly expanded:boolean
+    private readonly expanded:boolean;
 
     readonly name: HTMLHeadingElement;
     readonly timespan: HTMLParagraphElement;
     readonly description: HTMLDivElement;
-    readonly registerButton: HTMLButtonElement;
+    readonly registerButton: HTMLElement|null;
 
     constructor(event: EventInfo, lod:DetailLevel="normal", expanded=false) {
         super();
@@ -86,36 +68,57 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
         this.description.classList.add("description");
 
         // registration button
-        this.registerButton = this.appendChild(
-            ElementFactory.button(() => showWarning("Not implemented yet."))
-                .class("register-button", "center-content", "main-axis-space-between")
-                .children(
-                    ElementFactory.h2("Inschrijven"),
-                    ElementFactory.h2("person_add").class("icon")
-                )
-                .onMake(self => {
-                    self.disabled = true;
-                    this.event.isRegistered()
-                    .then(isReg => {
-                        self.children[0].textContent = isReg ? "Uitschrijven" : "Inschrijven";
-                        self.children[1].textContent = isReg ? "person_remove" : "person_add";
-                        self.disabled = false;
+        if (this.event instanceof RegisterableEventInfo) {
+            const regEvent = this.event as RegisterableEventInfo;
+
+            this.registerButton = this.appendChild(
+                ElementFactory.button(() => showWarning("Not implemented yet."))
+                    .class("register-button", "center-content", "main-axis-space-between")
+                    .children(
+                        ElementFactory.h2("Inschrijven"),
+                        ElementFactory.h2("person_add").class("icon")
+                    )
+                    .onMake(self => {
+                        self.disabled = true;
+                        
+                        onAuth(user => {
+                            if (user === null) showError("Je bent niet ingelogd.")
+                            else {
+                                if (regEvent.isRegistered(user.uid)) {
+                                    self.children[0].textContent = "Uitschrijven";
+                                    self.children[1].textContent = "person_remove";
+                                    self.disabled = false;
+                                }
+                                else if (!regEvent.hasSpaceLeft()) {
+                                    self.children[0].textContent = "Activiteit zit vol.";
+                                    self.children[1].textContent = "person_off";
+                                }
+                                else {
+                                    self.children[0].textContent = "Inschrijven";
+                                    self.children[1].textContent = "person_add";
+                                    self.disabled = false;
+                                }
+                            }
+                        });
                     })
-                    .catch(err => showError(getErrorMessage(err)));
-                })
-                .on("click", (ev,self) => {
-                    self.disabled = true;
-                    this.event.toggleRegistered()
-                    .then(isReg => {
-                        showMessage(isReg ? "Succesvol ingeschreven" : "Succesvol uitgeschreven")
-                        self.children[0].textContent = isReg ? "Uitschrijven" : "Inschrijven";
-                        self.children[1].textContent = isReg ? "person_remove" : "person_add";
+                    .on("click", (ev,self) => {
+                        self.disabled = true;
+                        onAuth(user => {
+                            if (user === null) showError("Je bent niet ingelogd.");
+                            else regEvent.toggleRegistered(user.uid)
+                                .then(isReg => {
+                                    showMessage(isReg ? "Succesvol ingeschreven." : "Succesvol uitgeschreven.");
+                                    self.children[0].textContent = isReg ? "Uitschrijven" : "Inschrijven";
+                                    self.children[1].textContent = isReg ? "person_remove" : "person_add";
+                                    self.disabled = !isReg && !regEvent.hasSpaceLeft();
+                                })
+                                .catch(err => showError(getErrorMessage(err)));
+                        });
                     })
-                    .catch(e => showError(getErrorMessage(e)))
-                    .finally(() => self.disabled = false);
-                })
-                .make()
-        );
+                    .make()
+            );
+        }
+        else this.registerButton = null;
         
         this._lod = lod;
         this.lod = lod;

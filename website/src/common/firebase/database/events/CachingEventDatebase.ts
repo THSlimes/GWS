@@ -80,41 +80,12 @@ export default class CachingEventDatebase implements EventDatabase {
         });
     }
 
-    private readonly registrationsCache:Record<string,EventRegistration[]> = {};
-    private readonly registrationCountCache:Record<string,number> = {};
-    getRegistrations(id: string, doCount:false): Promise<EventRegistration[]>;
-    getRegistrations(id: string, doCount:true): Promise<number>;
-    getRegistrations(id: string, doCount:boolean, invalidateCache=false): Promise<EventRegistration[]> | Promise<number> {
-        if (doCount) {
-            if (invalidateCache) delete this.registrationCountCache[id]; // remove value from cache
-            return new Promise<number>((resolve,reject) => {
-                if (id in this.registrationCountCache) resolve(this.registrationCountCache[id]);
-                else this.relay.getRegistrations(id, true)
-                    .then(res => resolve(this.registrationCountCache[id] = res))
-                    .catch(reject);
-            });
-        }
-        else {
-            if (invalidateCache) delete this.registrationsCache[id];
-            return new Promise<EventRegistration[]>((resolve,reject) => {
-                if (id in this.registrationsCache) resolve(this.registrationsCache[id]); // remove value from cache
-                else this.relay.getRegistrations(id, false)
-                    .then(res => resolve(this.registrationsCache[id] = res))
-                    .catch(reject);
-            });
-        }
+    registerFor(eventId: string): Promise<Record<string, string>> {
+        return this.relay.registerFor(eventId);
     }
 
-    registerFor(id: string): Promise<EventRegistration> {
-        return this.relay.registerFor(id);
-    }
-    
-    deregisterFor(id: string): Promise<void> {
-        return this.relay.deregisterFor(id);
-    }
-    
-    isRegisteredFor(id: string): Promise<boolean> {
-        return this.relay.isRegisteredFor(id);
+    deregisterFor(eventId: string): Promise<Record<string, string>> {
+        return this.deregisterFor(eventId);
     }
 
 }

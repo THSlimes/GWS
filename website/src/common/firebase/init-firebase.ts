@@ -1,4 +1,4 @@
-import { getAuth } from "@firebase/auth";
+import { User, getAuth } from "@firebase/auth";
 import { getFirestore } from "@firebase/firestore";
 import { getStorage } from "@firebase/storage";
 import { FirebaseOptions, initializeApp } from "firebase/app";
@@ -18,8 +18,15 @@ const FIREBASE_APP = initializeApp(FIREBASE_CONFIG);
 export default FIREBASE_APP;
 
 export const DB = getFirestore(FIREBASE_APP); // initialize Firebase Firestore
+
 export const AUTH = getAuth(FIREBASE_APP);
 AUTH.onAuthStateChanged(user => {
     user === null ? localStorage.removeItem("loggedIn") : localStorage.setItem("loggedIn", "true");
 });
+export function onAuth(callback:(user:User|null, isLoggedIn:boolean) =>void) {
+    AUTH.authStateReady()
+    .then(() => callback(AUTH.currentUser, AUTH.currentUser !== null))
+    .catch(console.error);
+}
+
 export const STORAGE = getStorage(FIREBASE_APP);

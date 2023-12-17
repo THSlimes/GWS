@@ -1,46 +1,55 @@
-import { FirestoreDataConverter, QueryCompositeFilterConstraint, QueryConstraint, QueryDocumentSnapshot, QueryFilterConstraint, QueryNonFilterConstraint, Timestamp, and, collection, collectionGroup, deleteDoc, doc, documentId, getCountFromServer, getDoc, getDocs, limit, or, orderBy, query, setDoc, where } from "@firebase/firestore";
-import EventDatabase, { EventFilterOptions, EventInfo, EventRegistration } from "./EventDatabase";
-import { AUTH, DB } from "../../init-firebase";
+import { FirestoreDataConverter, QueryCompositeFilterConstraint, QueryConstraint, QueryDocumentSnapshot, QueryFilterConstraint, QueryNonFilterConstraint, Timestamp, and, collection, collectionGroup, deleteDoc, doc, documentId, getCountFromServer, getDoc, getDocs, limit, or, orderBy, query, setDoc, updateDoc, where } from "@firebase/firestore";
+import EventDatabase, { EventFilterOptions, EventRegistration, RegisterableEventInfo, EventInfo } from "./EventDatabase";
+import { AUTH, DB, onAuth } from "../../init-firebase";
 import { clamp } from "../../../util/NumberUtil";
 import { HexColor } from "../../../html-element-factory/AssemblyLine";
 import { FirebaseError } from "firebase/app";
 
 /** An event as it is stored in the database. */
-type DBEvent = {
+type NonRegisterableDBEvent = {
     name:string,
     description:string,
     starts_at:Timestamp,
     ends_at:Timestamp,
-    can_register_from?:Timestamp,
-    can_register_until?:Timestamp,
     category:string,
     color?:HexColor
 };
 
-type DBEventRegistration = {
-    registered_at:Timestamp,
-    display_name:string
+type RegisterableDBEvent = NonRegisterableDBEvent & {
+    capacity?:number,
+    can_register_from?:Timestamp,
+    can_register_until?:Timestamp,
+    registrations:Record<string,string>
 };
+
+type DBEvent = NonRegisterableDBEvent | RegisterableDBEvent;
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 /** Any event longer than (in ms) this may be queried incorrectly. */
 const MAX_EVENT_DURATION = 7 * MS_PER_DAY;
 
-function createConverter(db:EventDatabase):FirestoreDataConverter<EventInfo,DBEvent> {
+function createConverter(db:EventDatabase):FirestoreDataConverter<EventInfo|RegisterableEventInfo,DBEvent> {
     return {
-        toFirestore(event: EventInfo): DBEvent {
-            return {
-                ...event,
-                starts_at: Timestamp.fromDate(event.starts_at),
-                ends_at: Timestamp.fromDate(event.ends_at),
-                can_register_from: event.can_register_from ? Timestamp.fromDate(event.can_register_from) : undefined,
-                can_register_until: event.can_register_until ? Timestamp.fromDate(event.can_register_until) : undefined,
-            };
+        toFirestore(event:EventInfo): DBEvent {
+            if (event instanceof RegisterableEventInfo) {
+                return {
+                    ...event,
+                    starts_at: Timestamp.fromDate(event.starts_at),
+                    ends_at: Timestamp.fromDate(event.ends_at),
+                    can_register_from: event.can_register_from ? Timestamp.fromDate(event.can_register_from) : undefined,
+                    can_register_until: event.can_register_until ? Timestamp.fromDate(event.can_register_until) : undefined,
+                }
+            }
+            else return {
+                    ...event,
+                    starts_at: Timestamp.fromDate(event.starts_at),
+                    ends_at: Timestamp.fromDate(event.ends_at)
+                }
         },
         fromFirestore(snapshot: QueryDocumentSnapshot<DBEvent, EventInfo>):EventInfo {
             const data = snapshot.data();
-            
-            return new EventInfo(
+
+            if ("registrations" in data) return new RegisterableEventInfo(
                 db,
                 snapshot.id,
                 data.name,
@@ -48,27 +57,31 @@ function createConverter(db:EventDatabase):FirestoreDataConverter<EventInfo,DBEv
                 data.category,
                 data.color,
                 [data.starts_at.toDate(), data.ends_at.toDate()],
-                [data.can_register_from?.toDate(), data.can_register_until?.toDate()],
+                data.registrations,
+                data.capacity,
+                [data.can_register_from?.toDate(), data.can_register_until?.toDate()]
+            );
+            else return new EventInfo(
+                db,
+                snapshot.id,
+                data.name,
+                data.description,
+                data.category,
+                data.color,
+                [data.starts_at.toDate(), data.ends_at.toDate()]
             );
         }
     };
 }
 
+/**
+ * A FirestoreEventDatabase provides an interface to interact with event data in a
+ * remote FireStore database.
+*/
 export default class FirestoreEventDatebase extends EventDatabase {
 
-    private readonly collection = collection(DB, "events").withConverter(createConverter(this));
-    private readonly registrationsConverter:FirestoreDataConverter<EventRegistration,DBEventRegistration> = {
-        toFirestore(registration:EventRegistration) {
-            return {
-                registered_at: Timestamp.fromDate(registration.registered_at),
-                display_name: registration.display_name
-            }
-        },
-        fromFirestore(snapshot:QueryDocumentSnapshot<DBEventRegistration, EventRegistration>) {
-            const data = snapshot.data();
-            return new EventRegistration(snapshot.id, data.registered_at.toDate(), data.display_name);
-        },
-    }
+    private readonly converter = createConverter(this);
+    private readonly collection = collection(DB, "events").withConverter(this.converter);
 
     count(options?:EventFilterOptions): Promise<number> {
         return this.getEvents(options??{}, true);
@@ -95,67 +108,49 @@ export default class FirestoreEventDatebase extends EventDatabase {
         return this.getEvents({category, ...options});
     }
 
-    getRegistrations(id: string, doCount:false):Promise<EventRegistration[]>;
-    getRegistrations(id: string, doCount:true):Promise<number>;
-    getRegistrations(id: string, doCount:boolean):Promise<EventRegistration[]> | Promise<number> {
-        const regCollection = collection(DB, `events/${id}/registrations`).withConverter(this.registrationsConverter);
-        if (doCount) return new Promise<number>((resolve,reject) => {
-            getCountFromServer(regCollection)
-            .then(res => resolve(res.data().count))
-            .catch(reject);
-        });
-        else return new Promise<EventRegistration[]>((resolve,reject) => {
-            getDocs(regCollection)
-            .then(res => {
-                const out:EventRegistration[] = [];
-                res.forEach(doc => out.push(doc.data()));
-                resolve(out);
-            })
-            .catch(reject);
+    registerFor(eventId: string): Promise<Record<string,string>> {
+        return new Promise((resolve,reject) => {
+            onAuth(user => {
+                if (user === null) reject(new FirebaseError("unauthenticated", "Je bent niet ingelogd."));
+                else this.getById(eventId)
+                    .then(event => {
+                        if (!event) reject(new FirebaseError("not-found", `No event with id ${eventId}`));
+                        else if (!(event instanceof RegisterableEventInfo)) {
+                            reject(new FirebaseError("precondition-failed", "Het is niet mogelijk om je voor deze activiteit in te schrijven."));
+                        }
+                        else {
+                            const newRegistrations = { ...event.registrations };
+                            newRegistrations[user.uid] = "Geitje";
+                            updateDoc(doc(DB, `events/${eventId}`).withConverter(this.converter), { registrations: newRegistrations })
+                            .then(() => resolve(newRegistrations))
+                            .catch(reject);
+                        }
+                    })
+                    .catch(reject);
+            });
         });
     }
 
-    registerFor(id: string): Promise<EventRegistration> {
+    deregisterFor(eventId: string): Promise<Record<string,string>> {
         return new Promise((resolve,reject) => {
-            AUTH.authStateReady()
-            .then(() => {
-                if (AUTH.currentUser === null) reject(new FirebaseError("unauthenticated","Not logged in."));
-                else {
-                    const reg = new EventRegistration(AUTH.currentUser.uid, new Date(), AUTH.currentUser.displayName ?? "Geitje");
-                    setDoc(doc(DB, `events/${id}/registrations/${AUTH.currentUser.uid}`), this.registrationsConverter.toFirestore(reg))
-                    .then(() => resolve(reg))
+            onAuth(user => {
+                if (user === null) reject(new FirebaseError("unauthenticated", "Not logged in."));
+                else this.getById(eventId)
+                    .then(event => {
+                        if (!event) reject(new FirebaseError("not-found", `No event with id ${eventId}`));
+                        else if (!(event instanceof RegisterableEventInfo)) {
+                            reject(new FirebaseError("precondition-failed", "Het is niet mogelijk om je voor deze activiteit in te schrijven."));
+                        }
+                        else {
+                            const newRegistrations = { ...event.registrations };
+                            delete newRegistrations[user.uid];
+                            updateDoc(doc(DB, `events/${eventId}`).withConverter(this.converter), { registrations: newRegistrations })
+                            .then(() => resolve(newRegistrations))
+                            .catch(reject);
+                        }
+                    })
                     .catch(reject);
-                }
-            })
-            .catch(reject);
-        });
-    }
-
-    isRegisteredFor(id: string): Promise<boolean> {
-        return new Promise((resolve,reject) => {
-            AUTH.authStateReady()
-            .then(() => {
-                if (AUTH.currentUser === null) resolve(false);
-                else getDoc(doc(DB, `events/${id}/registrations/${AUTH.currentUser.uid}`))
-                    .then(snapshot => resolve(snapshot.exists()))
-                    .catch(reject);
-            })
-            .catch(reject);
-        });
-    }
-
-    deregisterFor(id: string): Promise<void> {
-        return new Promise((resolve,reject) => {
-            AUTH.authStateReady()
-            .then(() => {
-                if (AUTH.currentUser === null) reject(new FirebaseError("unauthenticated","Not logged in."));
-                else {
-                    deleteDoc(doc(DB, `events/${id}/registrations/${AUTH.currentUser.uid}`))
-                    .then(resolve)
-                    .catch(reject);
-                }
-            })
-            .catch(reject);
+            });
         });
     }
 

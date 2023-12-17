@@ -28,5 +28,5 @@ export function isAtScrollBottom(elem:Element, tolerance=1) {
  * @param S union type of section names
  */
 export type HasSections<S extends string> = {
-    readonly [k in S]: HTMLElement;
+    readonly [k in S]: HTMLElement|null;
 };

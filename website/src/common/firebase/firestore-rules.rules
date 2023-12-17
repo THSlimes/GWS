@@ -1,0 +1,52 @@
+rules_version = '2';
+
+service cloud.firestore {
+    match /databases/{database}/documents {
+
+        // Tests whether the authenticated user has the given permissions
+        function hasPermissions(requiredPerms) {
+            return requiredPerms.size() == 0 // no permissions required
+                || (request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAll(requiredPerms));
+        }
+
+        match /articles/{id} {
+            allow get : if request.method == "get" // requires get and read permissions
+                && (!("needed_to_get" in resource.data) || hasPermissions(resource.data.needed_to_get))
+                && (!("needed_to_read" in resource.data) || hasPermissions(resource.data.needed_to_read));
+            allow list : if request.method == "list" // required list and read permissions
+                && (!("needed_to_list" in resource.data) || hasPermissions(resource.data.needed_to_list))
+                && (!("needed_to_read" in resource.data) || hasPermissions(resource.data.needed_to_read));
+            allow create : if request.method == "create" // required create and write permissions
+                && (!("needed_to_create" in resource.data) || hasPermissions(resource.data.needed_to_create))
+                && (!("needed_to_write" in resource.data) || hasPermissions(resource.data.needed_to_write));
+            allow update : if request.method == "update" // required update and write permissions
+                && (!("needed_to_update" in resource.data) || hasPermissions(resource.data.needed_to_update))
+                && (!("needed_to_write" in resource.data) || hasPermissions(resource.data.needed_to_write));
+            allow delete : if request.method == "delete" // requires delete and write permissions
+                && (!("needed_to_delete" in resource.data) || hasPermissions(resource.data.needed_to_delete))
+                && (!("needed_to_write" in resource.data) || hasPermissions(resource.data.needed_to_write));
+        }
+
+        match /events/{id} {
+            allow get, list; // anyone can see events
+
+            allow update : if hasPermissions(["UPDATE_EVENTS"]); // has edit permissions
+            // event registration
+            allow update : if request.auth != null // is logged in
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["registrations"]) // only edited registrations
+                && request.resource.data.registrations.diff(resource.data.registrations).affectedKeys().hasOnly([request.auth.uid]) // only affected own uid
+                && request.resource.data.registrations.diff(resource.data.registrations).addedKeys().hasOnly([request.auth.uid]) // only added own uid
+                && hasPermissions(["REGISTER_FOR_EVENTS"]); // is allowed to register
+            // event de-registration
+            allow update : if request.auth != null // is logged in
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["registrations"]) // only edited registrations
+                && request.resource.data.registrations.diff(resource.data.registrations).affectedKeys().hasOnly([request.auth.uid]) // only affected own uid
+                && request.resource.data.registrations.diff(resource.data.registrations).removedKeys().hasOnly([request.auth.uid]) // only added own uid
+                && hasPermissions(["DEREGISTER_FOR_EVENTS"]); // is allowed to register
+        }
+
+        match /users/{userId} {
+            allow read : if request.auth.uid == userId; // only allow reading own info
+        }
+    }
+}
