@@ -102,8 +102,8 @@ export class RegisterableEventInfo extends EventInfo {
     }
 
     /** Whether at least one person can register for this event. */
-    public hasSpaceLeft(useCache=false):boolean {
-        return this.capacity === undefined || Object.keys(this.registrations).length < this.capacity;
+    public isFull(useCache=false):boolean {
+        return this.capacity !== undefined && Object.keys(this.registrations).length >= this.capacity;
     }
 
     /** Whether this events registration period is ongoing. */

@@ -7,6 +7,7 @@ import { showError, showMessage, showWarning } from "../ui/info-messages";
 import { HasSections } from "../util/ElementUtil";
 import getErrorMessage from "../firebase/authentication/error-messages";
 import { AUTH, onAuth } from "../firebase/init-firebase";
+import { createLinkBackURL } from "../util/UrlUtil";
 
 /** Amount of detail present in an EventNote element. */
 export type DetailLevel = "full" | "high" | "normal" | "low";
@@ -17,6 +18,22 @@ const VISIBILITY_AT_LOD:Record<DetailLevel, Record<EventNoteSection, boolean>> =
     normal: { name: true, timespan: true, description: false, registerButton: false },
     low: { name: true, timespan: false, description: false, registerButton: false }
 };
+
+/** Gives a [text,icon,disabled] button state based on the events state. */
+function getRegisterButtonState(isReg:boolean, e:RegisterableEventInfo):[string,string,boolean] {
+    const now = new Date();
+    if (e.ends_at <= now) return ["Activiteit is al voorbij", "event_busy", true];
+    else if (e.starts_at <= now) return ["Activiteit is al gestart", "event_upcoming", true];
+    else if (e.can_register_from && now < e.can_register_from) {
+        return [`Inschrijving start op ${DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(e.can_register_from)}`, "event", true];
+    }
+    else if (e.can_register_until && e.can_register_until < now) {
+        return ["Inschrijving is gesloten", "event_busy", true];
+    }
+    else if (isReg) return ["Uitschrijven", "free_cancellation", false];
+    else if (e.isFull()) return ["Activiteit zit vol", "event_busy", true];
+    else return ["Inschrijven", "calendar_add_on", false];
+}
 
 export class EventNote extends HTMLElement implements HasSections<EventNoteSection> {
 
@@ -75,42 +92,31 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
                 ElementFactory.button(() => showWarning("Not implemented yet."))
                     .class("register-button", "center-content", "main-axis-space-between")
                     .children(
-                        ElementFactory.h2("Inschrijven"),
-                        ElementFactory.h2("person_add").class("icon")
+                        ElementFactory.h2("person_add").class("icon"),
+                        ElementFactory.h2("Inschrijven")
                     )
                     .onMake(self => {
                         self.disabled = true;
-                        
                         onAuth(user => {
-                            if (user === null) showError("Je bent niet ingelogd.")
-                            else {
-                                if (regEvent.isRegistered(user.uid)) {
-                                    self.children[0].textContent = "Uitschrijven";
-                                    self.children[1].textContent = "person_remove";
-                                    self.disabled = false;
-                                }
-                                else if (!regEvent.hasSpaceLeft()) {
-                                    self.children[0].textContent = "Activiteit zit vol.";
-                                    self.children[1].textContent = "person_off";
-                                }
-                                else {
-                                    self.children[0].textContent = "Inschrijven";
-                                    self.children[1].textContent = "person_add";
-                                    self.disabled = false;
-                                }
-                            }
+                            [
+                                self.children[1].textContent,
+                                self.children[0].textContent,
+                                self.disabled
+                            ] = user === null ? ["Log in om je in te schrijven", "login", false] :
+                                                getRegisterButtonState(regEvent.isRegistered(user.uid), regEvent);
                         });
                     })
                     .on("click", (ev,self) => {
                         self.disabled = true;
                         onAuth(user => {
-                            if (user === null) showError("Je bent niet ingelogd.");
+                            if (user === null) createLinkBackURL("./login.html");
                             else regEvent.toggleRegistered(user.uid)
                                 .then(isReg => {
-                                    showMessage(isReg ? "Succesvol ingeschreven." : "Succesvol uitgeschreven.");
-                                    self.children[0].textContent = isReg ? "Uitschrijven" : "Inschrijven";
-                                    self.children[1].textContent = isReg ? "person_remove" : "person_add";
-                                    self.disabled = !isReg && !regEvent.hasSpaceLeft();
+                                    [
+                                        self.children[1].textContent,
+                                        self.children[0].textContent,
+                                        self.disabled
+                                    ] = getRegisterButtonState(isReg, regEvent);
                                 })
                                 .catch(err => showError(getErrorMessage(err)));
                         });

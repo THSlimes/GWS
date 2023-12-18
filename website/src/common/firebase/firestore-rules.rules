@@ -9,6 +9,10 @@ service cloud.firestore {
                 || (request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAll(requiredPerms));
         }
 
+        function isBefore(t1, t2) {
+            return t1.toMillis() < t2.toMillis();
+        }
+
         match /articles/{id} {
             allow get : if request.method == "get" // requires get and read permissions
                 && (!("needed_to_get" in resource.data) || hasPermissions(resource.data.needed_to_get))
@@ -31,17 +35,22 @@ service cloud.firestore {
             allow get, list; // anyone can see events
 
             allow update : if hasPermissions(["UPDATE_EVENTS"]); // has edit permissions
+
             // event registration
             allow update : if request.auth != null // is logged in
                 && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["registrations"]) // only edited registrations
                 && request.resource.data.registrations.diff(resource.data.registrations).affectedKeys().hasOnly([request.auth.uid]) // only affected own uid
-                && request.resource.data.registrations.diff(resource.data.registrations).addedKeys().hasOnly([request.auth.uid]) // only added own uid
+                && request.resource.data.registrations.diff(resource.data.registrations).addedKeys().hasAll([request.auth.uid]) // only added own uid
+                && (!("capacity" in resource.data) || request.resource.data.registrations.size() <= resource.data.capacity) // check capacity
+                && (!("can_register_from" in resource.data) || isBefore(resource.data.can_register_from, request.time)) // check registration start
+                && (!("can_register_until" in resource.data) || isBefore(request.time, resource.data.can_register_until)) // check registration end
                 && hasPermissions(["REGISTER_FOR_EVENTS"]); // is allowed to register
+
             // event de-registration
             allow update : if request.auth != null // is logged in
                 && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["registrations"]) // only edited registrations
                 && request.resource.data.registrations.diff(resource.data.registrations).affectedKeys().hasOnly([request.auth.uid]) // only affected own uid
-                && request.resource.data.registrations.diff(resource.data.registrations).removedKeys().hasOnly([request.auth.uid]) // only added own uid
+                && request.resource.data.registrations.diff(resource.data.registrations).removedKeys().hasAll([request.auth.uid]) // only added own uid
                 && hasPermissions(["DEREGISTER_FOR_EVENTS"]); // is allowed to register
         }
 

@@ -6,7 +6,7 @@ function linkToURL(link:string):URL {
     else return new URL(link);
 }
 
-export function createLinkBackURL(link:string|URL, linkBack:string|URL):URL {
+export function createLinkBackURL(link:string|URL, linkBack:string|URL=location.href):URL {
     link = typeof link === "string" ? linkToURL(link) : new URL(link);
     if (typeof linkBack === "string") linkBack = linkToURL(linkBack);
 
