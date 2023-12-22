@@ -180,12 +180,12 @@ export default class EventCalender extends HTMLElement {
 
         // add viewmode controls
         this.controls.append(
-            ElementFactory.select({"week":"Week", "month":"Maand", "list":"Lijst"})
-                .class("viewmode-controls")
-                .value(this._viewMode)
-                .onValueChanged(val => {
-                    this.viewMode = val as CalenderViewMode;
-                })
+            ElementFactory.div(undefined, "viewmode-controls")
+                .children(
+                    ElementFactory.input.button("calendar_view_week").class("icon").onClick(() => this.viewMode = "week"),
+                    ElementFactory.input.button("calendar_view_month").class("icon").onClick(() => this.viewMode = "month"),
+                    ElementFactory.input.button("calendar_view_day").class("icon").onClick(() => this.viewMode = "list"),
+                )
                 .make()
         );
 
