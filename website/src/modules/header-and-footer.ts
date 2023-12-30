@@ -139,30 +139,34 @@ function createHeader(config:NavbarConfig):HTMLElement {
                             ...createFolderContents(config)
                         ),
                     ElementFactory.div()
-                        .class("quick-actions", "center-content", "main-axis-space-between")
+                        .class("quick-actions", "center-content", "main-axis-space-between", "cross-axis-center")
                         .children(
                             ElementFactory.p("search")
-                                .id("search-button")
-                                .class("icon")
+                                .id("search-button",)
+                                .class("icon", "click-action")
                                 .on("click", () => showError("Not yet implemented.")),
-                            ElementFactory.a("/login.html", "login")
-                                .class("icon")
+                            ElementFactory.p("login")
+                                .class("icon", "click-action")
                                 .tooltip("Inloggen")
+                                .on("click", () => location.href = "/login.html")
                                 .onMake(self => { // hide login button when already logged in
                                     self.style.display = AUTH.currentUser !== null || localStorage.getItem("loggedIn") === "true" ? "none" : "";
                                     AUTH.onAuthStateChanged(user => self.style.display = user ? "none" : "");
                                 }),
-                            ElementFactory.a("/", "logout")
-                                .class("icon")
+                            ElementFactory.p("logout")
+                                .class("icon", "click-action")
                                 .tooltip("Uitloggen")
-                                .on("click", () => AUTH.signOut())
+                                .on("click", () => {
+                                    AUTH.signOut();
+                                    location.reload();
+                                })
                                 .onMake(self => { // hide account button when not logged in
                                     self.style.display = AUTH.currentUser === null && localStorage.getItem("loggedIn") !== "true" ? "none" : "";
                                     AUTH.onAuthStateChanged(user => self.style.display = user ? "" : "none");
                                 }),
                             ElementFactory.p("menu")
                                 .id("open-menu-button")
-                                .class("icon")
+                                .class("icon", "click-action")
                                 .style({"display": "none"})
                                 .on("click", () => {
                                     sidebar.hasAttribute("shown") ? closeSidebar() : openSidebar()

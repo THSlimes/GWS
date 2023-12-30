@@ -68,4 +68,7 @@
     #photo-carousel > h1[cover] {
         font-size: 2em;
     }
+
+    #page-word { display: none; }
+    #page-number { font-size: larger; }
 }

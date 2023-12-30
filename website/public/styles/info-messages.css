@@ -1,17 +1,19 @@
 #info-messages {
     z-index: 100;
     position: fixed;
-    top:0px;
-    left:0px;
+    top: 0px;
+    left: 0px;
     width: 100%;
     
     pointer-events: none;
 
     > * {
-        padding: .5em 1em .5em 1em;
+        padding: var(--in-section-gap);
         max-width: 80%;
         border-radius: .25em;
         text-align: center;
+
+        box-shadow: var(--std-shadow);
 
         animation: fade-in 200ms ease-out 0ms 1;
 
@@ -22,7 +24,6 @@
             color: var(--text-light);
         }
 
-        /* & ~ * { translate: 0px 2em; } */
     }
 }
 
