@@ -4,6 +4,7 @@ import FolderElement from "../common/custom-elements/FolderElement";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
 import Responsive, { Viewport } from "../common/ui/Responsive";
 import { AUTH } from "../common/firebase/init-firebase";
+import { showError } from "../common/ui/info-messages";
 
 /** Creates the link to an article given its ID. */
 export function articleLink(id: string) { return `/article.html?id=${id}`; }
@@ -140,34 +141,31 @@ function createHeader(config:NavbarConfig):HTMLElement {
                     ElementFactory.div()
                         .class("quick-actions", "center-content", "main-axis-space-between")
                         .children(
-                            ElementFactory.input.button("search").id("search-button")
-                                .class("icon"),
-                            ElementFactory.input.button("login")
+                            ElementFactory.p("search")
+                                .id("search-button")
+                                .class("icon")
+                                .on("click", () => showError("Not yet implemented.")),
+                            ElementFactory.a("/login.html", "login")
                                 .class("icon")
                                 .tooltip("Inloggen")
-                                .onClick(() => location.href = "/login.html")
                                 .onMake(self => { // hide login button when already logged in
                                     self.style.display = AUTH.currentUser !== null || localStorage.getItem("loggedIn") === "true" ? "none" : "";
                                     AUTH.onAuthStateChanged(user => self.style.display = user ? "none" : "");
                                 }),
-                            ElementFactory.input.button("logout")
+                            ElementFactory.a("/", "logout")
                                 .class("icon")
                                 .tooltip("Uitloggen")
-                                .onClick(() => {
-                                    AUTH.signOut();
-                                    location.href = '/';
-                                })
+                                .on("click", () => AUTH.signOut())
                                 .onMake(self => { // hide account button when not logged in
                                     self.style.display = AUTH.currentUser === null && localStorage.getItem("loggedIn") !== "true" ? "none" : "";
                                     AUTH.onAuthStateChanged(user => self.style.display = user ? "" : "none");
                                 }),
-                            ElementFactory.input.button("menu").id("open-menu-button")
+                            ElementFactory.p("menu")
+                                .id("open-menu-button")
                                 .class("icon")
                                 .style({"display": "none"})
-                                .on("click", (e, self) => {
-                                    $(sidebarContainer).stop().fadeToggle(200);
-                                    sidebar.toggleAttribute("shown");
-                                    self.value = document.body.classList.toggle("no-scroll") ? "menu_open" : "menu";
+                                .on("click", () => {
+                                    sidebar.hasAttribute("shown") ? closeSidebar() : openSidebar()
                                 })
                         )
                 ),
@@ -176,17 +174,29 @@ function createHeader(config:NavbarConfig):HTMLElement {
                         ElementFactory.div("sidebar", "links")
                     )
                     .on("click", (e, self) => {
-                        if (e.target === self) {
-                            $(self).fadeOut(200);
-                            sidebar.removeAttribute("shown");
-                            (out.querySelector("#open-menu-button") as HTMLInputElement).value = "menu";
-                        }
+                        if (e.target === self) closeSidebar();
                     })
         )
         .make();
 
+    function openSidebar() {
+        $(sidebarContainer).stop().fadeIn(200);
+        sidebar.setAttribute("shown", "");
+        openMenuButton.innerText = "menu_open";
+        document.body.classList.add("no-scroll");
+    }
+
+    function closeSidebar() {
+        $(sidebarContainer).stop().fadeOut(200);
+        sidebar.removeAttribute("shown");
+        openMenuButton.innerText = "menu";
+        document.body.classList.remove("no-scroll");
+    }
+
     const sidebarContainer = out.querySelector("#sidebar-container")!;
     const sidebar = out.querySelector("#sidebar")!;
+
+    const openMenuButton = out.querySelector("#open-menu-button") as HTMLParagraphElement;
 
     const linksDiv = out.querySelector(".links")!;
     const sidebarDiv = out.querySelector("#sidebar")!;
@@ -220,30 +230,26 @@ function createHeader(config:NavbarConfig):HTMLElement {
 
 
 // FOOTER + COPYRIGHT NOTICE
-function createFooter():Node[] {
-    return [
-        ElementFactory.footer()
-            .class("page-footer", "center-content", "flex-rows")
-            .children(
-                ElementFactory.h4("Je vindt ons ook op ...").id("link-text"),
-                ElementFactory.div()
-                    .class("social-media-links", "flex-columns", "main-axis-space-between")
-                    .children(
-                        ElementFactory.a("https://www.instagram.com/svdengeitenwollensoc/")
-                            .children(ElementFactory.img("./images/logos/Instagram_Glyph_Gradient.png", "Instagram")),
-                        ElementFactory.a("https://nl.linkedin.com/in/s-v-den-geitenwollen-soc-496145163")
-                            .id("linked-in-link")
-                            .children(ElementFactory.img("./images/logos/LI-In-Bug.png", "Linked-In")),
-                        ElementFactory.a("https://www.facebook.com/dengeitenwollensoc/")
-                            .children(ElementFactory.img("./images/logos/Facebook_Logo_Primary.png", "Facebook")),
-                    )
-            )
-            .make(),
-        
-        ElementFactory.h5(`© ${new Date().getFullYear()} Den Geitenwollen Soc.`)
-            .class("copyright-notice")
-            .make()
-    ];
+function createFooter():Node {
+    return ElementFactory.footer()
+        .class("page-footer", "flex-rows", "cross-axis-center")
+        .children(
+            ElementFactory.h4("Je vindt ons ook op ...").id("link-text"),
+            ElementFactory.div()
+                .class("social-media-links", "flex-columns", "main-axis-space-between")
+                .children(
+                    ElementFactory.a("https://www.instagram.com/svdengeitenwollensoc/")
+                        .children(ElementFactory.img("./images/logos/Instagram_Glyph_Gradient.png", "Instagram")),
+                    ElementFactory.a("https://nl.linkedin.com/in/s-v-den-geitenwollen-soc-496145163")
+                        .id("linked-in-link")
+                        .children(ElementFactory.img("./images/logos/LI-In-Bug.png", "Linked-In")),
+                    ElementFactory.a("https://www.facebook.com/dengeitenwollensoc/")
+                        .children(ElementFactory.img("./images/logos/Facebook_Logo_Primary.png", "Facebook")),
+                ),
+            ElementFactory.h5(`© ${new Date().getFullYear()} Den Geitenwollen Soc.`)
+                .class("copyright-notice")
+        )
+        .make();
 }
 
 
@@ -254,5 +260,5 @@ const FOOTER = createFooter();
 // insert both after page-load
 window.addEventListener("DOMContentLoaded", () => {
     document.body.prepend(HEADER);
-    document.body.append(...FOOTER);
+    document.body.appendChild(FOOTER);
 });

@@ -49,8 +49,8 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
 
     protected _attributes:Record<string,string> = {};
     /** Sets a single attribute of the new element. */
-    public attr(k:string, v:{toString():string}="") {
-        this._attributes[k] = v.toString();
+    public attr(k:string, v:{toString():string}|null="") {
+        if (v !== null) this._attributes[k] = v.toString();
         return this;
     }
     /** Sets multiple attributes of the new element. */

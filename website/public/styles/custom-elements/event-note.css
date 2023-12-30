@@ -2,21 +2,19 @@ event-note {
     display: block;
     position: relative;
     
-    margin-bottom: 2px;
-    padding: 2px 4px 2px 4px;
+    padding: calc(var(--in-section-gap) / 2);
 
     box-sizing: border-box;
     
-    border-radius: .25em;
+    border-radius: calc(var(--in-section-gap) / 2);
     
     &[expanded] {
-        padding: 1em 2em 1em 2em;
+        padding: var(--section-gap);
 
         > .timespan { font-size: large; }
     }
 
     > * {
-        margin: 1em 2em 1em 2em;
         color: inherit;
     }
 
@@ -36,9 +34,7 @@ event-note {
 
         text-align: justify;
     }
-    > .register-button {
-        padding: .5em 1em .5em 1em;
-    }
+    > .register-button {}
 }
 
 /* PHONE-VIEWPORT OVERRIDE */

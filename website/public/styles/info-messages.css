@@ -19,7 +19,7 @@
         &.warning { background-color: lightyellow; }
         &.error {
             background-color: var(--accent);
-            color: var(--primary);
+            color: var(--text-light);
         }
 
         /* & ~ * { translate: 0px 2em; } */

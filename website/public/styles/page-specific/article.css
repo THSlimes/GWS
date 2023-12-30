@@ -4,7 +4,6 @@
 
 #navigation-buttons {
     > * {
-        padding: .25em .5em .25em .5em;
         width: 50%;
 
         > .article-title { flex-grow: 1; }

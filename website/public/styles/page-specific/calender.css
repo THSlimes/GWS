@@ -1,6 +1,7 @@
 @import url("../shared.css");
 
 @import url("../custom-elements/event-calender.css");
+@import url("../custom-elements/icon-selector.css");
 
 .content {
     /* outline: .5px solid red;

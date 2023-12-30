@@ -1,18 +1,18 @@
 @import url("./event-note.css");
 
 event-calender {
-    padding:.5em;
+    row-gap: var(--in-section-gap);
 
     box-sizing: border-box;
     width: 100%;
     max-height: 100vh;
 
     > .controls {
-        padding: 0px 2em 0px 2em;
+        /* padding: 0px 2em 0px 2em; */
         box-sizing: border-box;
         width: 100%;
         > .timespan-controls {
-            gap:.5em;
+            column-gap: var(--in-section-gap);
             > .period-input { border: none; text-align: center; }
             > .nav-button {
                 height: min-content;
@@ -27,18 +27,20 @@ event-calender {
         grid-template-rows: max-content repeat(6, 1fr);
         grid-template-columns: repeat(7, 1fr);
 
-        padding: 4px 2px 4px 2px;
+        border: var(--std-border);
         flex-grow: 1;
 
-        background-color: var(--tertiary);
+        border-radius: var(--in-section-gap);
+
+        background-color: var(--secondary);
 
         overflow: hidden;
 
         > .day-name {
-            margin: .25em;
+            margin: var(--in-section-gap);
             justify-self: center;
             align-self: center;
-            color: var(--primary);
+            color: var(--text-light);
             user-select: none;
         }
         
@@ -48,11 +50,12 @@ event-calender {
             display: grid;
             grid-template-rows: max-content repeat(var(--max-overlap), 1fr);
 
-            --day-cell-padding: .25em;
+            --day-cell-padding: calc(.5 * var(--in-section-gap));
             padding: var(--day-cell-padding);
 
             background-color: var(--primary);
-            outline: 2px solid var(--shadow);
+            outline: var(--std-border);
+            outline-color: var(--shadow);
 
             overflow-x: visible;
 
@@ -60,7 +63,7 @@ event-calender {
                 background-color: lightyellow;
                 > .day-number { color: orangered; }
             }
-            &.different-month { filter: grayscale(.25) blur(.5px); }
+            &.different-month { filter: brightness(.95); }
             &.weekend {
                 background-color: mistyrose;
                 > .day-number { color: crimson; }
@@ -92,7 +95,7 @@ event-calender {
             height:2px;
             
             text-align: center;
-            color: var(--primary);
+            color: var(--text-dark);
             &.no-more { height: unset; }
         }
     }
@@ -108,7 +111,7 @@ event-calender {
             > .day-cell {
                 display: flex;
                 flex-direction: column;
-                row-gap: .5em;
+                row-gap: var(--in-section-gap);
             }
         }
     }

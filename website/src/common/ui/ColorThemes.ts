@@ -7,17 +7,17 @@ export default abstract class ColorThemes {
 
     private static readonly THEMES:Record<ColorTheme, Record<string, string>> = {
         [ColorTheme.LIGHT]: {
-            "--primary": "white",
-            "--secondary": "black",
-            "--tertiary": "#111111",
+            "--lightest": "white",
+            "--darkest": "black",
+            "--dark": "#111111",
             "--text": "rgb(35, 52, 82)",
             "--accent": "#d65050",
             "--shadow": "rgba(0, 0 , 0, .125)"
         },
         [ColorTheme.DARK]: {
-            "--primary": "#111111",
-            "--secondary": "white",
-            "--tertiary": "#eeeeee",
+            "--lightest": "#111111",
+            "--darkest": "white",
+            "--dark": "#eeeeee",
             "--text": "rgb(220, 203, 173)",
             "--accent": "#d65050",
             "--shadow": "rgba(255, 255 , 255, .125)",

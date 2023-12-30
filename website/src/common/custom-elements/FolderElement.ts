@@ -51,7 +51,7 @@ export default class FolderElement extends HTMLElement {
             .make();
         this.topper = super.appendChild(
             ElementFactory.div()
-                .class("topper", "flex-columns", "main-axis-space-between", "cross-axis-center")
+                .class("topper", "flex-columns", "cross-axis-center")
                 .children(this.heading, this.arrow)
                 .make()
         );

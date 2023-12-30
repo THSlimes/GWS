@@ -3,14 +3,14 @@
 /* PAGE HEADER */
 
 header.page-header {
+
     width: 100%;
 
-    & * { color: var(--primary); }
+    & * { color: var(--text-light); }
 
     & .links {
-        padding: 0px 2em 0px 2em;
-        gap: 1em 2em;
-        flex-grow:2;
+        column-gap: var(--section-gap);
+        flex-grow: 1;
         flex-wrap: wrap;
 
         & * { font-weight: 500; }
@@ -22,7 +22,7 @@ header.page-header {
             }
 
             > .contents {
-                padding: .5em 1em .5em 1em;
+                padding: var(--in-section-gap) var(--section-gap) var(--in-section-gap) var(--section-gap);
                 > * { margin: .25em 0px .25em 0px; height:17.6px; }
             }
         }
@@ -34,23 +34,18 @@ header.page-header {
     }
     
     #header-container {
-        padding: 1em 2em 1em 2em;
+        padding: var(--in-section-gap) calc(1em + var(--sides-gap)) var(--in-section-gap) var(--sides-gap);
+        column-gap: var(--section-gap);
         
         box-sizing: border-box;
-        width: 100%;
-        height: min-content;
+        width: 100vw;
+        height: 4em;
     
         background-color: var(--secondary);
         
-        & > .desc * { margin:0px; }
+        & > .desc * { margin: 0px; }
 
-        > .quick-actions {
-            gap: 0px .5em;
-            > * {
-                background: none;
-                border: none;
-            }
-        }
+        > .quick-actions { column-gap: var(--in-section-gap); }
     }
 
     > #sidebar-container {
@@ -64,8 +59,9 @@ header.page-header {
         backdrop-filter: blur(4px);
         
         > #sidebar {
-            padding: 1em 1em 1em 2em;
-            width: 50%;
+            padding: var(--in-section-gap) var(--section-gap) var(--in-section-gap) var(--section-gap);
+            width: 75%;
+            max-width: 30em;
             height: 100%;
 
             background-color: var(--secondary);
@@ -78,8 +74,8 @@ header.page-header {
             
             > * {
                 display: block;
-                margin-bottom: 1em;
-                font-size: 1.25rem;
+                margin-bottom: var(--in-section-gap);
+                font-size: 125%;
             }
 
             & folder-element {
@@ -92,8 +88,8 @@ header.page-header {
                     &[open] { display: block; }
                     > * {
                         display: block;
-                        margin-bottom: .5em;
-                        font-size: 1rem;
+                        margin-bottom: 0px;
+                        /* font-size: 1rem; */
                         height: unset;
                     }
                 }
@@ -105,11 +101,14 @@ header.page-header {
 /* FOOTER */
 
 footer {
-    padding: .25em 1em 2em 1em;
-    margin-top: 2em;
+    padding-top: var(--in-section-gap);
+    row-gap: var(--in-section-gap);
 
-    background-color: var(--tertiary);
-    & * { color: var(--primary) !important; }
+    background-color: var(--secondary);
+    & * {
+        margin: 0px;
+        color: var(--text-light) !important;
+    }
 
     > .social-media-links {
         gap:1em;
@@ -125,14 +124,14 @@ footer {
 }
 
 .copyright-notice {
-    padding:1em;
+    padding: var(--in-section-gap);
     margin:0px;
 
     box-sizing: border-box;
     width:100%;
 
-    background-color: var(--secondary);
-    color: var(--primary);
+    background-color: var(--tertiary);
+    color: var(--text-light);
     text-align: center;
 }
 
@@ -145,11 +144,10 @@ footer {
     header.page-header {
         position: fixed;
         z-index: 99;
-        top:0px;
-        left:0px;
+        top: 0px;
+        left: 0px;
         
         > #header-container {
-            padding: 1em;
             > .desc * { white-space: nowrap; }
             > .links { display:none; }
     
@@ -162,6 +160,11 @@ footer {
 /* PHONE-VIEWPORT OVERRIDE */
 
 @media (max-aspect-ratio: 3 / 5) {
+
+    header.page-header > #header-container {
+        padding: var(--in-section-gap) var(--section-gap) var(--in-section-gap) var(--section-gap);
+    }
+
     footer {
         padding: 1em 1em .5em 1em;
 

@@ -1,0 +1,50 @@
+Vereniging:
+    - Algemeen (algemene info over GWS)
+    - Verenigingsblad 't Blaatje (info over 't Blaatje en 'm lezen)
+    - Lidmaatschap (info over lidmaatschap)
+    - Huidig bestuur:
+        - Voorzitter (voorzitter voorstellen)
+        - Secretaris (secretaris voorstellen)
+        - Penningmeester (penningmeester voorstellen)
+        - Commissaris interne betrekkingen (CIB voorstellen)
+        - Commissaris algemene zaken (CAZ voorstellen)
+
+Agenda (Kalender met activeiten)
+
+Onderwijs:
+    - Aankomende studenten (info voor nieuwe studenten)
+    - Sociologie (info over studie)
+    - Studieadviseur (info over studieadviseurs)
+    - Medezeggenschap (info over medezeggenschap bij sociologie)
+    - Boekenverkoop (lijst met benodigde boeken)
+
+Carrière:
+    - Bedrijfsprofielen (info voor bedrijven)
+    - Alumni aan het woord: (vragen over na de studie)
+       - Acht vragen aan Anna Reith
+       - Acht vragen aan Sanne van der Drift
+       - Tien vragen aan Sander Sloot
+       - Elf vragen aan Hakim Bouali
+       - Twaalf vragen aan Joris Blaauw
+       - Tien vragen aan Roza Meuleman
+       - Twaalf vragen aan Camiel Margry
+       - Elf vragen aan Gideon van der Hulst
+    - Vacatures (vacatures)
+
+Samenwerkingen:
+    - Wat bieden wij? (info voor nieuwe sponsors)
+    - Onze sponsoren (info over huidige sponsoren)
+    - GWS-sticker (info over GWS-sticker, link naar huidige dealtjes
+
+Leden:
+    - Bestuurswerving
+    - Declaratieformulier
+    - Documenten
+    - Huidige dealtjes
+    - Foto's
+    - Ideeënbox
+    - Inschrijvingen activiteiten
+    - Samenvattingen
+    - Vertrouwenscontactpersonen
+
+Inschrijven (inschrijven voor GWS)

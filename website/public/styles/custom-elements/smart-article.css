@@ -1,23 +1,18 @@
 /* ARTICLE DEFAULT STYLE */
 
 article {
-    padding: 0px 1em 0px 1em;
+
     & img { max-width: 100%; }
 
-    & .heading {
-        margin: 0px 0px .5em 0px;
-    }
-    &:not([is-preview]) .heading { font-size: 2.5em; }
+    & .heading {}
+    &:not([is-preview]) .heading { font-size: 250%; }
     > .body > p {
-        margin: .25em 0px .25em 0px;
-        line-height: 1.6em;
+        line-height: 1.6em; /* better readability */
         text-align: justify;
     }
 
     &[is-preview] {
-        > .body {
-            overflow: hidden;
-        }
+        > .body { overflow: hidden; }
     
         & .read-more {
             margin: 0px;
@@ -34,11 +29,11 @@ article {
 /* TABLET-VIEWPORT OVERRIDE */
 
 @media (max-aspect-ratio: 3 / 4) {
-    article:not([is=preview]) .heading { font-size: 2em; }
+    article:not([is=preview]) .heading { font-size: 200%; }
 }
 
 /* PHONE-VIEWPORT OVERRIDE */
 
 @media (max-aspect-ratio: 3 / 5) {
-    article:not([is=preview]) .heading { font-size: 1.25em; }
+    article:not([is=preview]) .heading { font-size: 125%; }
 }

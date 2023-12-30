@@ -7,6 +7,7 @@ import { daysOverlap } from "../util/DateUtil";
 import { spanInDays } from "../util/DateUtil";
 import CachingEventDatebase from "../firebase/database/events/CachingEventDatebase";
 import { isAtScrollBottom, isAtScrollTop, whenInsertedIn } from "../util/ElementUtil";
+import IconSelector from "./IconSelector";
 
 const DAY_ABBREVIATIONS = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
 
@@ -179,15 +180,13 @@ export default class EventCalender extends HTMLElement {
         this.setAttribute("display", viewMode);
 
         // add viewmode controls
-        this.controls.append(
-            ElementFactory.div(undefined, "viewmode-controls")
-                .children(
-                    ElementFactory.input.button("calendar_view_week").class("icon").onClick(() => this.viewMode = "week"),
-                    ElementFactory.input.button("calendar_view_month").class("icon").onClick(() => this.viewMode = "month"),
-                    ElementFactory.input.button("calendar_view_day").class("icon").onClick(() => this.viewMode = "list"),
-                )
-                .make()
+        const vmSelector = new IconSelector(
+            ["week", "calendar_view_week", viewMode === "week"],
+            ["month", "calendar_view_month", viewMode === "month"],
+            ["list", "calendar_view_day", viewMode === "list"]
         );
+        vmSelector.addEventListener("change", () => this.viewMode = vmSelector.value);
+        this.controls.appendChild(vmSelector);
 
         switch (viewMode) {
             case "week":

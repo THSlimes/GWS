@@ -14,7 +14,7 @@
     font-family: "icon";
     font-weight: normal;
     font-style: normal;
-    font-size: 24px;
+    font-size: 2em;
     line-height: 1;
     letter-spacing: normal;
     text-transform: none;
@@ -35,23 +35,35 @@ span.icon { font-size: inherit; }
 /* THEME */
 
 :root {
-    --primary: white;
-    --secondary: black;
+    --primary: #F5F5F5;
+    --secondary: #0A0A0A;
     --tertiary: #111111;
+    --accent: rgb(214, 80, 80);
 
-    --text: rgb(35, 52, 82);
-    --accent: #d65050;
-    --shadow: rgba(0, 0 , 0, .125);
+    --text-light: #FFFFFF;
+    --text-dark: #000000;
 
+    --shadow: rgba(0, 0, 0, .125);
+
+    --std-shadow: 2px 2px 2px 0px var(--shadow);
+    --std-border: 1px solid var(--tertiary);
     --std-font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+
+    --section-gap: 1rem;
+    --in-section-gap: .5rem;
+    --sides-gap: 4rem;
 }
 
 body {
     padding:0px;
     margin:0px;
 
+    row-gap: var(--section-gap);
+
     background-color: var(--primary);
     font-family: var(--std-font);
+
+    overflow-x: hidden;
 
     /* Scrollbar */
     scrollbar-color: var(--shadow) transparent;
@@ -71,12 +83,12 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
     font-family: var(--std-font);
-    color: var(--tertiary);
+    color: var(--text-dark);
 }
 
 p, input, label {
     font-family: var(--std-font);
-    color: var(--text);
+    color: var(--text-dark);
 }
 
 .subtitle { font-size: 80% }
@@ -91,36 +103,40 @@ div#split-view {
         "c c c c c c c c c c c s"
         "c c c c c c c c c c c s";
     /* grid-auto-rows: min-content; */
-    gap:1em;
+    gap: var(--section-gap);
 
-    margin-top: 1em;
-    padding: 2em 8vw 2em 8vw;
+    padding: var(--section-gap) var(--sides-gap) var(--section-gap) var(--sides-gap);
 
     box-sizing: border-box;
     width: 100%;
     height: min-content;
 
-    > * > .section-name { text-align: center; }
+    > * > .section-name {
+        text-align: center;
+        text-decoration: underline;
+    }
 
     > .content {
         grid-area: c;
         row-gap: 1em;
+
+        > .section-name { text-align: left; }
     }
 
     > #news-letters {
         grid-area: n;
-        padding: 1em;
+        padding: var(--in-section-gap);
     }
 
     > #sponsors {
         grid-area: s;
-        padding: 1em;
+        padding: var(--in-section-gap);
 
         > .logos {
             width: 100%;
+            gap: var(--section-gap);
 
             > * {
-                margin-bottom: 4em;
                 > img { max-width:15vw; }
             }
         }
@@ -150,9 +166,9 @@ div#split-view {
 .italic { font-style: italic; }
 
 .boxed {
-    border: 2px solid var(--shadow);
-    border-radius: .25em;
-    box-shadow: .125em .125em .5em 0px var(--shadow);
+    border: var(--std-border);
+    border-radius: var(--in-section-gap);
+    box-shadow: var(--std-shadow);
 }
 
 .flex-rows {
@@ -192,22 +208,20 @@ div#split-view {
 .no-scroll { overflow: hidden; }
 
 /* standard indication of being click-able */
-button, input[type="button"], .click-action {
-    border-radius: .25em;
-    --hover-scale-factor: 1.05;
+button, input[type="button"] {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 
-    user-select: none;
-    & * { user-select: none; }
-    
-    &:disabled {
-        filter: grayscale(.65);
-        opacity: .75;
-    }
-    &:not(:disabled) {
-        transform-origin: center;
-        &:hover { scale: var(--hover-scale-factor); }
-        &:active { scale: 1; }
-    }
+    padding: var(--in-section-gap);
+    gap: var(--in-section-gap);
+
+    background-color: var(--secondary);
+    &, & * { color: var(--text-light); }
+
+    border: 1px solid var(--tertiary);
+    border-radius: var(--in-section-gap);
+    box-shadow: var(--std-shadow);
 }
 
 /* standard indication of being a link */
@@ -223,6 +237,9 @@ a[href], .link:not(:disabled) {
 
 @media (max-aspect-ratio: 3 / 4) {
     /* body { box-shadow: inset 0px 0px 0px 2px blue !important; } */
+
+    :root { --sides-gap: 2em; }
+
     div#split-view {
         grid-template-areas:
             "c c c c c"
@@ -247,6 +264,9 @@ a[href], .link:not(:disabled) {
 
 @media (max-aspect-ratio: 3 / 5) {
     /* body { box-shadow: inset 0px 0px 0px 2px red !important; } */
+
+    :root { --sides-gap: 1em; }
+
     div#split-view {
         grid-template-areas: "c" "n" "s" !important;
         padding-top: 1em;

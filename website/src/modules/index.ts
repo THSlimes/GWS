@@ -94,7 +94,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     const PREV_PAGE_BUTTON = document.getElementById("previous-page") as HTMLInputElement;
     const NEXT_PAGE_BUTTON = document.getElementById("next-page") as HTMLInputElement;
     const LAST_PAGE_BUTTON = document.getElementById("last-page") as HTMLInputElement;
-    const PAGE_INDICATOR = document.getElementById("page-indicator") as HTMLParagraphElement;
+    const PAGE_NUMBER = document.getElementById("page-number") as HTMLSpanElement;
 
     // adding button interactivity
     FIRST_PAGE_BUTTON.addEventListener("click", () => insertPage(currPage = 0));
@@ -172,7 +172,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             NEXT_PAGE_BUTTON.disabled = currPage === NUM_PAGES-1;
             LAST_PAGE_BUTTON.disabled = currPage === NUM_PAGES-1;
     
-            PAGE_INDICATOR.innerText = `Pagina ${pageNum+1} / ${NUM_PAGES}`;
+            PAGE_NUMBER.innerText = `${pageNum+1} / ${NUM_PAGES}`;
         })
         .catch(console.warn);
     }

@@ -13,7 +13,7 @@
     <script type="module" src="./scripts/index.js"></script>
     
 </head>
-<body>
+<body class="flex-rows">
 
     <div id="carousel-placeholder"></div>
 
@@ -24,7 +24,10 @@
             <input type="button" id="next-page" value="navigate_next" class="icon">
             <input type="button" id="last-page" value="last_page" class="icon">
 
-            <p id="page-indicator">Pagina 1 / ?</p>
+            <p id="page-indicator">
+                <span id="page-word">Pagina</span>
+                <span id="page-number">1 / ?</span>
+            </p>
         </div>
     </div>
 

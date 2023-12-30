@@ -3,13 +3,17 @@
 folder-element {
     > .topper {
         position: relative;
-        padding-right: 1.5em;
+        column-gap: calc(var(--in-section-gap) / 2);
 
-        > .heading { transition: color 200ms ease-in; }
+        > .heading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: color 200ms ease-in;
+        }
         > .arrow {
-            position: absolute;
-            right: 0px;
-            font-size: inherit;
+            aspect-ratio: 1 / 1;
+            font-size: 125%;
             transition: rotate 200ms ease-in;
         }
     }
@@ -22,7 +26,7 @@ folder-element {
         grid-auto-flow: column;
         grid-template-rows: repeat(15, min-content);
         grid-auto-columns: max-content;
-        column-gap: 1em;
+        column-gap: var(--in-section-gap);
 
         background-color: var(--secondary);
     }
