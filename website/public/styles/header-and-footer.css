@@ -9,7 +9,7 @@ header.page-header {
     & * { color: var(--text-light); }
 
     & .links {
-        column-gap: var(--section-gap);
+        column-gap: var(--min-section-gap);
         flex-grow: 1;
         flex-wrap: wrap;
 
@@ -22,7 +22,7 @@ header.page-header {
             }
 
             > .contents {
-                padding: var(--in-section-gap) var(--section-gap) var(--in-section-gap) var(--section-gap);
+                padding: var(--in-section-gap) var(--min-section-gap) var(--in-section-gap) var(--min-section-gap);
                 > * { margin: .25em 0px .25em 0px; height:17.6px; }
             }
         }
@@ -35,7 +35,7 @@ header.page-header {
     
     #header-container {
         padding: var(--in-section-gap) calc(1em + var(--sides-gap)) var(--in-section-gap) var(--sides-gap);
-        column-gap: var(--section-gap);
+        column-gap: var(--section-gap-x);
         
         box-sizing: border-box;
         width: 100vw;
@@ -59,7 +59,7 @@ header.page-header {
         backdrop-filter: blur(4px);
         
         > #sidebar {
-            padding: var(--in-section-gap) var(--section-gap) var(--in-section-gap) var(--section-gap);
+            padding: var(--in-section-gap) var(--section-gap-x) var(--in-section-gap) var(--section-gap-x);
             width: 75%;
             max-width: 30em;
             height: 100%;
@@ -162,7 +162,7 @@ footer {
 @media (max-aspect-ratio: 3 / 5) {
 
     header.page-header > #header-container {
-        padding: var(--in-section-gap) var(--section-gap) var(--in-section-gap) var(--section-gap);
+        padding: var(--in-section-gap) var(--section-gap-x) var(--in-section-gap) var(--section-gap-x);
     }
 
     footer {

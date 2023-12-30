@@ -9,7 +9,7 @@ event-note {
     border-radius: calc(var(--in-section-gap) / 2);
     
     &[expanded] {
-        padding: var(--section-gap);
+        padding: var(--section-gap-y) var(--section-gap-x) var(--section-gap-y) var(--section-gap-x);
 
         > .timespan { font-size: large; }
     }
