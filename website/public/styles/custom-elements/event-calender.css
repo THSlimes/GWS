@@ -11,6 +11,7 @@ event-calender {
         /* padding: 0px 2em 0px 2em; */
         box-sizing: border-box;
         width: 100%;
+        gap: var(--in-section-gap);
         > .timespan-controls {
             column-gap: var(--in-section-gap);
             > .period-input { border: none; text-align: center; }
@@ -48,11 +49,14 @@ event-calender {
         > .day-cell {
             position: relative;
 
+            box-sizing: border-box;
+
             display: grid;
             grid-template-rows: max-content repeat(var(--max-overlap), 1fr);
+            row-gap: calc(var(--in-section-gap) / 2);
 
             --day-cell-padding: calc(.5 * var(--in-section-gap));
-            padding: var(--day-cell-padding);
+            padding: var(--day-cell-padding);;
 
             background-color: var(--primary);
             outline: var(--std-border);
@@ -77,13 +81,14 @@ event-calender {
             }
 
             > event-note {
-                box-sizing: border-box;
-
                 grid-row: calc(var(--offset) + 2) / span 1;
-                width: 100%;
+                width: calc(100% * var(--length) + (2 * var(--length) - 2) * var(--day-cell-padding));
                 min-width: 0px;
 
                 &.starts-in-earlier-week {
+                    padding-left: 1em;
+                    width: calc(100% * var(--length) + (2 * var(--length) - 2) * var(--day-cell-padding) + 1em);
+                    translate: -1em 0px;
                 }
             }
         }

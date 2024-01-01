@@ -14,7 +14,7 @@
     font-family: "icon";
     font-weight: normal;
     font-style: normal;
-    font-size: 2em;
+    font-size: 200%;
     line-height: 1;
     letter-spacing: normal;
     text-transform: none;
@@ -296,6 +296,10 @@ a[href], .link:not(:disabled) {
         --sides-gap: 1rem;
         --section-gap-x: 1rem;
         --section-gap-y: 2rem;
+    }
+
+    .icon {
+        font-size: 150%;
     }
 
     div#split-view {
