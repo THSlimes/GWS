@@ -14,9 +14,9 @@ icon-selector {
         margin: 0px;
         height: 100%;
         aspect-ratio: 1 / 1;
+        border-radius: var(--in-section-gap);
 
         &[selected] {
-            border-radius: var(--in-section-gap);
             background-color: var(--accent);
         }
     }

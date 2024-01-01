@@ -1,4 +1,5 @@
 import { HexColor } from "../../../html-element-factory/AssemblyLine";
+import { timespansDaysOverlap, timespansOverlap } from "../../../util/DateUtil";
 import { Opt } from "../../../util/UtilTypes";
 import { AUTH } from "../../init-firebase";
 import QueryOptions from "../QueryOptions";
@@ -56,6 +57,14 @@ export class EventInfo {
     /** Whether this event is currently ongoing. */
     public isNow(d=new Date()):boolean {
         return this.starts_at <= d && d <= this.ends_at;
+    }
+
+    public overlapsWith(other:EventInfo) {
+        return timespansOverlap(this.starts_at, this.ends_at, other.starts_at, other.ends_at);
+    }
+
+    public daysOverlapsWith(other:EventInfo) {
+        return timespansDaysOverlap(this.starts_at, this.ends_at, other.starts_at, other.ends_at);
     }
 
     /** Whether this event matches the given filter. */

@@ -227,21 +227,21 @@ button, input[type="button"] {
     box-shadow: var(--std-shadow);
 
     transition: filter 50ms ease-in;
-    &:hover { filter: brightness(400%); }
+    &:hover { filter: brightness(300%); }
     &:active {
         transition: filter 25ms ease-in;
-        filter: brightness(600%);
+        filter: brightness(450%);
     }
 }
 
-.click-action {
-    background-color: var(--secondary);
+.click-action:not([selected]) {
+    background-color: inherit;
 
     transition: filter 100ms ease-in;
-    &:hover { filter: brightness(400%); }
+    &:hover { filter: brightness(300%); }
     &:active {
         transition: filter 50ms ease-in;
-        filter: brightness(600%);
+        filter: brightness(450%);
     }
 }
 

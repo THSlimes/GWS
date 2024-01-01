@@ -32,7 +32,7 @@ export default class IconSelector<V extends string> extends HTMLElement {
         // initialize element
         this.classList.add("flex-columns", "cross-axis-center");
         this.optionElements = options.map(o => ElementFactory.p(o[1])
-            .class("icon", "option")
+            .class("icon", "option", "click-action")
             .attr("selected", this._value === o[0] ? "" : null)
             .on("click", () => this.value = o[0])
             .make()

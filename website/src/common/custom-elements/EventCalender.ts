@@ -27,6 +27,16 @@ function computeNonOverlappingOffsets(events:EventInfo[]) {
     return out;
 }
 
+function findMaxOverlap(date: Date, events: EventInfo[], offsets: Record<string, number>): number {
+    let group = events.filter(e => isBetweenDays(date, e.starts_at, e.ends_at)); // seed group
+
+    while (true) { // iterate
+        const nextGroup = events.filter(e => group.some(o => e.daysOverlapsWith(o)));
+        if (nextGroup.length === group.length) return Math.max(...group.map(e => offsets[e.id])); // done
+        group = nextGroup;
+    }
+}
+
 type CalenderViewMode = "week" | "month" | "list";
 const VIEWMODE_LODS:Record<CalenderViewMode, DetailLevel> = {
     week: "normal",
@@ -38,7 +48,7 @@ type CalenderEvent = {};
 type DayCell = { element:HTMLDivElement, date:Date, events:CalenderEvent[] };
 type DayCellTypes = "today" | "weekend" | "different-month";
 const DC_TYPE_DETECTORS:Record<DayCellTypes, (cellDate:Date, viewDate:Date) => boolean> = {
-    today: (cellDate, viewDate) => isSameDay(viewDate,cellDate),
+    today: (cellDate, viewDate) => isSameDay(new Date(), cellDate),
     weekend: cellDate => cellDate.getDay() === 0 || cellDate.getDay() === 6,
     "different-month": (cellDate, viewDate) => cellDate.getFullYear() !== viewDate.getFullYear() || cellDate.getMonth() !== viewDate.getMonth()
 };
@@ -221,7 +231,7 @@ export default class EventCalender extends HTMLElement {
                     ElementFactory.div(undefined, "timespan-controls", "center-content")
                         .children(
                             ElementFactory.input.button("navigate_before", () => {
-                                dateCopy.setMonth(dateCopy.getMonth() - 1);
+                                dateCopy.setMonth(dateCopy.getMonth() - 1, 1);
                                 this.populate(dateCopy, this._viewMode);
                             }).class("nav-button", "icon").make(),
                             ElementFactory.input.month(dateCopy.getFullYear(), dateCopy.getMonth())
@@ -229,7 +239,7 @@ export default class EventCalender extends HTMLElement {
                                 .onValueChanged(v => this.lookingAt = new Date(v))
                                 .make(),
                             ElementFactory.input.button("navigate_next", () => {
-                                dateCopy.setMonth(dateCopy.getMonth()+1);
+                                dateCopy.setMonth(dateCopy.getMonth()+1, 1);
                                 this.populate(dateCopy, this._viewMode);
                             }).class("nav-button", "icon").make()
                         )
@@ -268,8 +278,6 @@ export default class EventCalender extends HTMLElement {
                         
                         if (scrollDelta > 0 && isAtScrollTop(this.dayCellContainer, EventCalender.LOAD_MORE_SCROLL_TOLERANCE)) {
                             if (!loadingBefore) {
-                                console.log("loading events before");
-
                                 loadingBefore = true;
                                 const prevFirstDate = new Date(firstDate);
                                 firstDate.setDate(firstDate.getDate() - EventCalender.LOAD_MORE_TIMESPAN_DAYS);
@@ -290,9 +298,7 @@ export default class EventCalender extends HTMLElement {
                             }
                         }
                         else if (scrollDelta < 0 && isAtScrollBottom(this.dayCellContainer, EventCalender.LOAD_MORE_SCROLL_TOLERANCE)) {
-                            if (!loadingAfter) {
-                                console.log("loading events after");
-                                
+                            if (!loadingAfter) {                                
                                 loadingAfter = true;
                                 const prevLastDate = new Date(lastDate);
                                 lastDate.setDate(lastDate.getDate() + EventCalender.LOAD_MORE_TIMESPAN_DAYS);
@@ -330,7 +336,7 @@ export default class EventCalender extends HTMLElement {
             case "week":
             case "month":
                 const offsets = computeNonOverlappingOffsets(events);
-                this.dayCellContainer.style.setProperty("--max-overlap", (Math.max(0, ...Object.values(offsets)) + 1).toString());
+                // this.dayCellContainer.style.setProperty("--max-overlap", (Math.max(0, ...Object.values(offsets)) + 1).toString());
     
                 events.forEach(e => {
                     let cellInd = dayCells.findIndex(dc => isBetweenDays(dc.date, e.starts_at, e.ends_at));
@@ -353,6 +359,10 @@ export default class EventCalender extends HTMLElement {
                             } while (daysLeft >= 1 && cellInd < dayCells.length && dayCells[cellInd].date.getDay() !== 1);
                         }
                     }
+                });
+
+                dayCells.forEach(dc => {
+                    dc.element.style.setProperty("--max-overlap", (findMaxOverlap(dc.date, events, offsets) + 1).toString());
                 });
                 break;
             case "list":
@@ -379,13 +389,6 @@ export default class EventCalender extends HTMLElement {
                 });
 
                 const loadersHeight = this.dayCellContainer.scrollHeight - dayCells.reduce((prev,curr) => prev + curr.element.scrollHeight, 0);
-                Array.from(this.dayCellContainer.getElementsByClassName("load-more")).forEach(loader => {
-                    if (loader instanceof HTMLElement) {
-                        // console.log(loader, loadersHeight + 200 + "px");
-                        // loader.style.height = loadersHeight + 200 + "px";
-                    }
-                });
-                console.log(loadersHeight);
                 
 
                 break;

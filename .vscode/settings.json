@@ -5,5 +5,6 @@
         "Jaarboekcommissie",
         "READ",
         "transform"
-    ]
+    ],
+    "workbench.iconTheme": "vs-seti"
 }
