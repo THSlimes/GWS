@@ -8,6 +8,7 @@ import { spanInDays } from "../util/DateUtil";
 import CachingEventDatebase from "../firebase/database/events/CachingEventDatebase";
 import { isAtScrollBottom, isAtScrollTop, whenInsertedIn } from "../util/ElementUtil";
 import IconSelector from "./IconSelector";
+import Responsive from "../ui/Responsive";
 
 const DAY_ABBREVIATIONS = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
 
@@ -37,15 +38,19 @@ function findMaxOverlap(date: Date, events: EventInfo[], offsets: Record<string,
     }
 }
 
-type CalenderViewMode = "week" | "month" | "list";
-const VIEWMODE_LODS:Record<CalenderViewMode, DetailLevel> = {
+function doTranspose(viewMode:calendarViewMode) {
+    return viewMode === "week" && Responsive.isAnyOf("mobile-portrait");
+}
+
+type calendarViewMode = "week" | "month" | "list";
+const VIEWMODE_LODS:Record<calendarViewMode, DetailLevel> = {
     week: "normal",
-    month: "low",
+    month: "normal",
     list: "normal"
 };
 
-type CalenderEvent = {};
-type DayCell = { element:HTMLDivElement, date:Date, events:CalenderEvent[] };
+type calendarEvent = {};
+type DayCell = { element:HTMLDivElement, date:Date, events:calendarEvent[] };
 type DayCellTypes = "today" | "weekend" | "different-month";
 const DC_TYPE_DETECTORS:Record<DayCellTypes, (cellDate:Date, viewDate:Date) => boolean> = {
     today: (cellDate, viewDate) => isSameDay(new Date(), cellDate),
@@ -57,7 +62,7 @@ type DayCellCreationOptions = {
     gridArea?:[number,number,number,number]
 }
 
-export default class EventCalender extends HTMLElement {
+export default class EventCalendar extends HTMLElement {
 
     private static FULLSCREEN_EVENT_CONTAINER = ElementFactory.div("fullscreen-event-container", "center-content").attr("hidden").make();
     static { // add container to body
@@ -82,8 +87,8 @@ export default class EventCalender extends HTMLElement {
     private readonly db:CachingEventDatebase;
 
     private static readonly LIST_VIEW_INITIAL_TIMESPAN_DAYS = 30;
-    private _viewMode:CalenderViewMode;
-    set viewMode(newViewMode:CalenderViewMode) {
+    private _viewMode:calendarViewMode;
+    set viewMode(newViewMode:calendarViewMode) {
         if (this._viewMode !== newViewMode) {
             this._viewMode = newViewMode;
             this.populate(this._lookingAt, this._viewMode);
@@ -107,7 +112,7 @@ export default class EventCalender extends HTMLElement {
     private static readonly LOAD_MORE_TIMESPAN_DAYS = 15;
     private scrollEventListener?:(e:Event)=>void;
 
-    constructor(db:Exclude<EventDatabase,CachingEventDatebase>, date=new Date(), viewMode:CalenderViewMode="month") {
+    constructor(db:Exclude<EventDatabase,CachingEventDatebase>, date=new Date(), viewMode:calendarViewMode="month") {
         super();
 
         this.db = db instanceof CachingEventDatebase ? db : new CachingEventDatebase(db);
@@ -119,7 +124,7 @@ export default class EventCalender extends HTMLElement {
         this.populate(this._lookingAt, this._viewMode);
     }
 
-    private static createDayCell(cellDate:Date, viewDate:Date, viewMode:CalenderViewMode, options:DayCellCreationOptions={}):DayCell {
+    private static createDayCell(cellDate:Date, viewDate:Date, viewMode:calendarViewMode, options:DayCellCreationOptions={}):DayCell {
         return {
             element: ElementFactory.div()
             .class(
@@ -147,21 +152,27 @@ export default class EventCalender extends HTMLElement {
         const [x,y] = [i % 7 + 1, Math.floor(i / 7) + 2];
         return [y, x, y+1, x+1];
     }
-    private static createDayCells(viewDate:Date, viewMode:CalenderViewMode):DayCell[] {
+    private static createDayCells(viewDate:Date, viewMode:calendarViewMode):DayCell[] {
         let firstDate = new Date(viewDate);
         if (viewMode === "month") firstDate.setDate(1); // first day of month
         if (viewMode === "month" || viewMode === "week") firstDate = firstDayBefore(firstDate, "Monday");
         
-        const numDays = viewMode === "month" ? 42 : viewMode === "week" ? 7 : EventCalender.LIST_VIEW_INITIAL_TIMESPAN_DAYS;
-        return getDayRange(firstDate,numDays).map((d, i) => EventCalender.createDayCell(d, viewDate, viewMode, {
-                gridArea: viewMode === "month" ? this.indexToGridArea(i) : viewMode === "week" ? [2, i+1, 8, i+2] : undefined,
+        const numDays = viewMode === "month" ? 42 : viewMode === "week" ? 7 : EventCalendar.LIST_VIEW_INITIAL_TIMESPAN_DAYS;
+        return getDayRange(firstDate,numDays).map((d, i) => EventCalendar.createDayCell(d, viewDate, viewMode, {
+                gridArea: viewMode === "month" ?
+                    this.indexToGridArea(i) :
+                    viewMode === "week" ?
+                        doTranspose(viewMode) ?
+                            [i+1, 2, i+2, 8] :
+                            [2, i+1, 8, i+2] :
+                        undefined,
                 markedTypes: viewMode === "month" ? ["today", "weekend", "different-month"] : ["today", "weekend"]
             })
         );
     }
     private extendDayCells(dayCells:DayCell[], from:Date, to:Date, checkCount:"before"|"after"):Promise<[DayCell[],number]> {
         const extensionCells:DayCell[] = getDayRange(from, to).map((d,i) => {
-            return EventCalender.createDayCell(d, new Date(), "list", { markedTypes: ["today","weekend"] })
+            return EventCalendar.createDayCell(d, new Date(), "list", { markedTypes: ["today","weekend"] })
         });
         dayCells.unshift(...extensionCells);
 
@@ -175,15 +186,17 @@ export default class EventCalender extends HTMLElement {
         });
     }
 
-    private populate(date:Date, viewMode:CalenderViewMode) {
+    private populate(date:Date, viewMode:calendarViewMode) {
         date = new Date(date); // use copy instead
         const dateCopy = new Date(date); // make copy for controls
 
         $(this.controls).empty(); // clear controls
         $(this.dayCellContainer).empty(); // clear grid
         if (this.scrollEventListener) this.dayCellContainer.removeEventListener("scroll", this.scrollEventListener);
+        if (doTranspose(viewMode)) this.dayCellContainer.setAttribute("transpose", "");
+        else this.dayCellContainer.removeAttribute("transpose");
 
-        const newDays:DayCell[] = EventCalender.createDayCells(date,viewMode);
+        const newDays:DayCell[] = EventCalendar.createDayCells(date,viewMode);
         let firstDate = newDays[0].date;
         let lastDate = newDays.at(-1)!.date;
 
@@ -195,6 +208,7 @@ export default class EventCalender extends HTMLElement {
             ["month", "calendar_view_month", viewMode === "month"],
             ["list", "calendar_view_day", viewMode === "list"]
         );
+        vmSelector.classList.add("viewmode-controls");
         vmSelector.addEventListener("change", () => this.viewMode = vmSelector.value);
         this.controls.appendChild(vmSelector);
 
@@ -221,7 +235,11 @@ export default class EventCalender extends HTMLElement {
 
                 // add day names
                 DAY_ABBREVIATIONS.forEach((v,i) => {
-                    this.dayCellContainer.appendChild(ElementFactory.p(v).class("day-name").style({"grid-area": `1 / ${i+1} / 2 / ${i+2}`}).make());
+                    this.dayCellContainer.appendChild(
+                        ElementFactory.p(v).class("day-name").style({
+                            "grid-area": doTranspose(viewMode) ? `${i + 1} / 1 / ${i + 2} / 2` : `1 / ${i+1} / 2 / ${i+2}`
+                        }
+                    ).make());
                 });
 
                 this.dayCellContainer.append(...newDays.map(d=>d.element)); // append new day-cells
@@ -254,7 +272,7 @@ export default class EventCalender extends HTMLElement {
                 break;
             case "list":
                 this.controls.prepend(
-                    ElementFactory.p("Aanstaande activiteiten").make()
+                    ElementFactory.h3("Aanstaande activiteiten").make()
                 );
 
                 // adding load before/after triggers
@@ -276,11 +294,11 @@ export default class EventCalender extends HTMLElement {
                         const scrollDelta = prevScrollTop - this.dayCellContainer.scrollTop;
                         prevScrollTop = this.dayCellContainer.scrollTop;
                         
-                        if (scrollDelta > 0 && isAtScrollTop(this.dayCellContainer, EventCalender.LOAD_MORE_SCROLL_TOLERANCE)) {
+                        if (scrollDelta > 0 && isAtScrollTop(this.dayCellContainer, EventCalendar.LOAD_MORE_SCROLL_TOLERANCE)) {
                             if (!loadingBefore) {
                                 loadingBefore = true;
                                 const prevFirstDate = new Date(firstDate);
-                                firstDate.setDate(firstDate.getDate() - EventCalender.LOAD_MORE_TIMESPAN_DAYS);
+                                firstDate.setDate(firstDate.getDate() - EventCalendar.LOAD_MORE_TIMESPAN_DAYS);
                                 this.extendDayCells(newDays, firstDate, prevFirstDate, "before")
                                 .then(([extensionCells, numLeft]) => {
                                     this.dayCellContainer.prepend(...extensionCells.filter(ec => ec.events.length !== 0).map(ec => ec.element));
@@ -297,11 +315,11 @@ export default class EventCalender extends HTMLElement {
                                 .catch(console.warn);
                             }
                         }
-                        else if (scrollDelta < 0 && isAtScrollBottom(this.dayCellContainer, EventCalender.LOAD_MORE_SCROLL_TOLERANCE)) {
-                            if (!loadingAfter) {                                
+                        else if (scrollDelta < 0 && isAtScrollBottom(this.dayCellContainer, EventCalendar.LOAD_MORE_SCROLL_TOLERANCE)) {
+                            if (!loadingAfter) {
                                 loadingAfter = true;
                                 const prevLastDate = new Date(lastDate);
-                                lastDate.setDate(lastDate.getDate() + EventCalender.LOAD_MORE_TIMESPAN_DAYS);
+                                lastDate.setDate(lastDate.getDate() + EventCalendar.LOAD_MORE_TIMESPAN_DAYS);
                                 this.extendDayCells(newDays, prevLastDate, lastDate, "after")
                                 .then(([extensionCells, numLeft]) => {
                                     this.dayCellContainer.append(...extensionCells.filter(ec => ec.events.length !== 0).map(ec => ec.element));
@@ -331,7 +349,7 @@ export default class EventCalender extends HTMLElement {
         .catch(console.error);
     }
 
-    private insertEventNotes(events:EventInfo[], dayCells:DayCell[], viewMode:CalenderViewMode) {
+    private insertEventNotes(events:EventInfo[], dayCells:DayCell[], viewMode:calendarViewMode) {
         switch (viewMode) {
             case "week":
             case "month":
@@ -351,7 +369,7 @@ export default class EventCalender extends HTMLElement {
                             note.style.setProperty("--offset", offsets[e.id].toString());
                             if (dayEarlierThan(e.starts_at, dayCells[cellInd].date)) note.classList.add("starts-in-earlier-week");
     
-                            note.addEventListener("click", () => EventCalender.expandNote(note) );
+                            note.addEventListener("click", () => EventCalendar.expandNote(note) );
                             
                             do { // find next Monday
                                 cellInd++;
@@ -373,10 +391,10 @@ export default class EventCalender extends HTMLElement {
                         let daysLeft = spanInDays(dayCells[cellInd].date, e.ends_at);
                         while (cellInd < dayCells.length && daysLeft >= 1) {
                             dayCells[cellInd].events.push(e);
-                            const note = dayCells[cellInd].element.appendChild(new EventNote(e));
+                            const note = dayCells[cellInd].element.appendChild(new EventNote(e, VIEWMODE_LODS[viewMode]));
                             note.classList.add("click-action");
                             note.style.setProperty("--length", '1');
-                            note.addEventListener("click", () => EventCalender.expandNote(note) );
+                            note.addEventListener("click", () => EventCalendar.expandNote(note) );
 
                             cellInd++;
                             daysLeft--;
@@ -397,4 +415,4 @@ export default class EventCalender extends HTMLElement {
 
 }
 
-customElements.define("event-calender", EventCalender);
+customElements.define("event-calendar", EventCalendar);

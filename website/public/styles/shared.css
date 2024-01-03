@@ -94,6 +94,11 @@ p, input, label {
     color: var(--text-dark);
 }
 
+input {
+    padding: var(--in-section-gap);
+    border-radius: var(--in-section-gap);
+}
+
 .subtitle { font-size: 80% }
 
 div#split-view {
@@ -216,7 +221,7 @@ button, input[type="button"] {
     justify-content: center;
     align-items: center;
 
-    padding: var(--in-section-gap);
+    padding: calc(var(--in-section-gap) / 2);
     gap: var(--in-section-gap);
 
     background-color: var(--secondary);
@@ -298,8 +303,8 @@ a[href], .link:not(:disabled) {
         --section-gap-y: 2rem;
     }
 
-    .icon {
-        font-size: 150%;
+    button, input[type="button"], .click-action {
+        &.icon, & .icon { padding: 0px; }
     }
 
     div#split-view {

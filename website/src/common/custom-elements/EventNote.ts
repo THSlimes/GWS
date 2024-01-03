@@ -14,7 +14,7 @@ export type DetailLevel = "full" | "high" | "normal" | "low";
 type EventNoteSection = "name" | "timespan" | "description" | "registerButton";
 const VISIBILITY_AT_LOD:Record<DetailLevel, Record<EventNoteSection, boolean>> = {
     full: { name: true, timespan: true, description: true, registerButton: true },
-    high: { name: true, timespan: true, description: true, registerButton: true },
+    high: { name: true, timespan: true, description: true, registerButton: false },
     normal: { name: true, timespan: true, description: false, registerButton: false },
     low: { name: true, timespan: false, description: false, registerButton: false }
 };
@@ -73,10 +73,12 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
         this.name = this.appendChild(ElementFactory.heading(expanded ? 1 : 5).html(RichText.parseLine(event.name)).class("name", "rich-text").make());
 
         // event start/end time
-        let timespanText = isSameDay(event.starts_at, event.ends_at) ?
-            `${DATE_FORMATS.TIME.SHORT(event.starts_at)} - ${DATE_FORMATS.TIME.SHORT(event.ends_at)}` :
-            areFullDays(event.starts_at, event.ends_at) ?
+        let timespanText = areFullDays(event.starts_at, event.ends_at) ?
+            isSameDay(event.starts_at, event.ends_at) ?
+                DATE_FORMATS.DAY.SHORT_NO_YEAR(event.starts_at) :
                 `${DATE_FORMATS.DAY.SHORT_NO_YEAR(event.starts_at)} t/m ${DATE_FORMATS.DAY.SHORT_NO_YEAR(event.ends_at)}` :
+            isSameDay(event.starts_at, event.ends_at) ?
+                `${DATE_FORMATS.TIME.SHORT(event.starts_at)} - ${DATE_FORMATS.TIME.SHORT(event.ends_at)}` :
                 `${DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(event.starts_at)} t/m ${DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(event.ends_at)}`;
         this.timespan = this.appendChild(ElementFactory.p(timespanText).class("timespan", "subtitle", "italic").make());
 

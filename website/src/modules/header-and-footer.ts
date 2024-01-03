@@ -43,7 +43,7 @@ const NAVBAR_CONFIG:NavbarConfig = {
         },
         "GWS-kamer": DEFAULT_LINK
     },
-    "Agenda": "/calender.html",
+    "Agenda": "/calendar.html",
     "Onderwijs": {
         "Aankomende studenten": DEFAULT_LINK,
         "Sociologie": DEFAULT_LINK,
