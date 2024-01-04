@@ -8,7 +8,6 @@
     & * { outline: .5px solid red; } */
 
     height: 100%;
-    overflow-x: hidden;
 
     > event-calendar {
         flex-grow: 1;

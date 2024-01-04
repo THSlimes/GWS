@@ -89,7 +89,7 @@ event-calendar {
 
             background-color: var(--primary);
             outline: var(--std-border);
-            outline-color: var(--shadow);
+            outline-color: var(--shadow-dark);
 
             /* overflow-x: hidden; */
 
@@ -159,7 +159,7 @@ event-calendar {
     width: 100%;
     height: 100%;
 
-    background-color: var(--shadow);
+    background-color: var(--shadow-dark);
     backdrop-filter: blur(.25em);
 
     &[hidden] { display: none; }

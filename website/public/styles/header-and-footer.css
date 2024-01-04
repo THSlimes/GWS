@@ -57,8 +57,9 @@ header.page-header {
 
                 height:100%;
 
-                background-color: var(--secondary);
                 border-radius: var(--in-section-gap);
+
+                --hover-bg-color: var(--shadow-light);
             }
         }
     }
