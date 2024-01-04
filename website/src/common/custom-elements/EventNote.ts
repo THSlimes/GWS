@@ -99,7 +99,8 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
                     )
                     .onMake(self => {
                         self.disabled = true;
-                        onAuth(user => {
+                        onAuth()
+                        .then(user => {
                             [
                                 self.children[1].textContent,
                                 self.children[0].textContent,
@@ -110,7 +111,8 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
                     })
                     .on("click", (ev,self) => {
                         self.disabled = true;
-                        onAuth(user => {
+                        onAuth()
+                        .then(user => {
                             if (user === null) createLinkBackURL("./login.html");
                             else regEvent.toggleRegistered(user.uid)
                                 .then(isReg => {

@@ -110,7 +110,8 @@ export default class FirestoreEventDatebase extends EventDatabase {
 
     registerFor(eventId: string): Promise<Record<string,string>> {
         return new Promise((resolve,reject) => {
-            onAuth(user => {
+            onAuth()
+            .then(user => {
                 if (user === null) reject(new FirebaseError("unauthenticated", "Je bent niet ingelogd."));
                 else this.getById(eventId)
                     .then(event => {
@@ -133,7 +134,8 @@ export default class FirestoreEventDatebase extends EventDatabase {
 
     deregisterFor(eventId: string): Promise<Record<string,string>> {
         return new Promise((resolve,reject) => {
-            onAuth(user => {
+            onAuth()
+            .then(user => {
                 if (user === null) reject(new FirebaseError("unauthenticated", "Not logged in."));
                 else this.getById(eventId)
                     .then(event => {

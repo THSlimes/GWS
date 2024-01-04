@@ -1,19 +1,16 @@
-import { User } from "@firebase/auth";
-import { Permission } from "../database/Permission";
 import { AUTH, onAuth } from "../init-firebase";
-import { FirestoreUserDatabase } from "../database/users/FirestoreUserDatabase";
-import UserDatabase from "../database/users/UserDatabase";
 
 /**
  * Redirects the user to the given URL in the case they are logged in.
  * @param url url to direct to
  * @param useCachedValue whether to use the cached login-state
  */
-export function redirectIfLoggedIn(url="/", useCachedValue=false) {
+export function redirectIfLoggedIn(url="/", useCachedValue=false):void {
     if (AUTH.currentUser !== null || (useCachedValue && localStorage.getItem("loggedIn") === "true")) location.href = url; // redirect now
-    else onAuth(user => {
-        if (user !== null) location.replace(url);
-    });
+    else onAuth()
+        .then(user => {
+            if (user !== null) location.replace(url);
+        });
 }
 
 /**
@@ -21,36 +18,11 @@ export function redirectIfLoggedIn(url="/", useCachedValue=false) {
  * @param url url to direct to
  * @param useCachedValue whether to use the cached login-state
  */
-export function redirectIfLoggedOut(url="/", useCachedValue=false) {
+export function redirectIfLoggedOut(url="/", useCachedValue=false):void {
     if (AUTH.currentUser === null && (useCachedValue && !localStorage.getItem("loggedIn"))) location.href = url; // redirect now
-    else onAuth(user => {
-        if (user === null) location.replace(url);
-    });
-}
-
-const USER_DB:UserDatabase = new FirestoreUserDatabase();
-function hasPermissions(user:User|null, ...permissions:Permission[]):Promise<boolean> {
-    return new Promise((resolve, reject) => {
-        if (user === null) resolve(false); // non-user does not have permissions
-        else USER_DB.getById(user.uid)
-        .then(userInfo => resolve(userInfo === undefined || permissions.every(p => userInfo.permissions.includes(p))))
-        .catch(() => resolve(false));
-    });
-}
-
-/**
- * Redirects the user to the given URL in case they do not have all of the given permissions.
- * @param url url to redirect to
- * @param permissions permissions to check for
- */
-export function redirectIfMissingPermission(url="/", ...permissions:Permission[]) {
-    if (permissions.length > 0) onAuth(user => {
-        onAuth(user => {
-            hasPermissions(user, ...permissions)
-            .then(res => {
-                if (!res) location.replace(url);
-            });
+    else onAuth()
+        .then(user => {
+            if (user === null) location.replace(url);
         });
-    });
-    else console.warn("did not check permissions, because none were provided.");
 }
+

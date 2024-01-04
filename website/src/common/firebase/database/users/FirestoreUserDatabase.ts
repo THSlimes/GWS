@@ -76,6 +76,8 @@ export class FirestoreUserDatabase extends UserDatabase {
                     const snapshot = await getDocs(q);
                     const out: UserInfo[] = [];
                     snapshot.forEach(doc => out.push(doc.data()));
+                    // save permissions into cache
+                    out.forEach(user => localStorage.setItem(`permissions-${user.id}`, JSON.stringify(user.permissions)));
                     resolve(out);
                 }
             }

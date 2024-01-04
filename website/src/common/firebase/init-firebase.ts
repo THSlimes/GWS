@@ -23,10 +23,25 @@ export const AUTH = getAuth(FIREBASE_APP);
 AUTH.onAuthStateChanged(user => {
     user === null ? localStorage.removeItem("loggedIn") : localStorage.setItem("loggedIn", "true");
 });
-export function onAuth(callback:(user:User|null, isLoggedIn:boolean) =>void) {
-    AUTH.authStateReady()
-    .then(() => callback(AUTH.currentUser, AUTH.currentUser !== null))
-    .catch(console.error);
+
+export function onAuth():Promise<User|null> {
+    return new Promise((resolve,reject) => {
+        AUTH.authStateReady()
+        .then(() => resolve(AUTH.currentUser))
+        .catch(reject);
+    });
+}
+
+/**
+ * Runs the callback function once the login status is known.
+ * @param callback callback function
+ * @param useCache whether to use the cached value instead
+ * @param callAgain whether to run the callback again with the real value, after using the cached value
+ */
+export function checkLoginState(callback:(isLoggedIn:boolean)=>void, useCache=false, callAgain=true) {
+    if (useCache) callback(localStorage.getItem("loggedIn") === "true"); // use cached value
+    if (!useCache || callAgain) onAuth()
+        .then(user => callback(user !== null));
 }
 
 export const STORAGE = getStorage(FIREBASE_APP);

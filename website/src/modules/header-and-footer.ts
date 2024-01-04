@@ -3,8 +3,10 @@ import $ from "jquery";
 import FolderElement from "../common/custom-elements/FolderElement";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
 import Responsive, { Viewport } from "../common/ui/Responsive";
-import { AUTH } from "../common/firebase/init-firebase";
+import { AUTH, onAuth, checkLoginState } from "../common/firebase/init-firebase";
 import { showError } from "../common/ui/info-messages";
+import { checkPermissions } from "../common/firebase/authentication/permission-based-redirect";
+import { Permission } from "../common/firebase/database/Permission";
 
 /** Creates the link to an article given its ID. */
 export function articleLink(id: string) { return `/article.html?id=${id}`; }
@@ -145,12 +147,18 @@ function createHeader(config:NavbarConfig):HTMLElement {
                                 .id("search-button",)
                                 .class("icon", "click-action")
                                 .on("click", () => showError("Not yet implemented.")),
+                            ElementFactory.p("admin_panel_settings")
+                                .class("icon", "click-action")
+                                .tooltip("Administratie-paneel")
+                                .onMake(self => {
+                                    checkPermissions(Permission.VIEW_ADMIN_PANEL, res => self.style.display = res ? "" : "none", true, true);
+                                }),
                             ElementFactory.p("login")
                                 .class("icon", "click-action")
                                 .tooltip("Inloggen")
                                 .on("click", () => location.href = "/login.html")
                                 .onMake(self => { // hide login button when already logged in
-                                    self.style.display = AUTH.currentUser !== null || localStorage.getItem("loggedIn") === "true" ? "none" : "";
+                                    checkLoginState(loggedIn => self.style.display = loggedIn ? "none" : "", true);
                                     AUTH.onAuthStateChanged(user => self.style.display = user ? "none" : "");
                                 }),
                             ElementFactory.p("logout")
@@ -161,7 +169,7 @@ function createHeader(config:NavbarConfig):HTMLElement {
                                     location.reload();
                                 })
                                 .onMake(self => { // hide account button when not logged in
-                                    self.style.display = AUTH.currentUser === null && localStorage.getItem("loggedIn") !== "true" ? "none" : "";
+                                    checkLoginState(loggedIn => self.style.display = loggedIn ? "" : "none", true);
                                     AUTH.onAuthStateChanged(user => self.style.display = user ? "" : "none");
                                 }),
                             ElementFactory.p("menu")
