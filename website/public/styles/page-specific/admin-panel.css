@@ -1,0 +1,28 @@
+@import url("../shared.css");
+
+.content {
+    display: grid;
+    grid-template-columns: 8em max-content;
+    grid-template-rows: 100vh;
+
+    padding: 0px var(--sides-gap);
+    column-gap: var(--section-gap-x);
+
+    > #section-selector {
+        grid-area: 1 / 1 / 2 / 2;
+
+        > .section-button {
+            padding: var(--in-section-gap) var(--min-section-gap);
+            column-gap: var(--in-section-gap);
+
+            border-radius: var(--in-section-gap);
+
+            > * { margin: 0px; }
+        }
+    }
+
+    > .section {
+        grid-area: 1 / 2 / 2 / 3;
+    }
+
+}

@@ -150,6 +150,7 @@ function createHeader(config:NavbarConfig):HTMLElement {
                             ElementFactory.p("admin_panel_settings")
                                 .class("icon", "click-action")
                                 .tooltip("Administratie-paneel")
+                                .on("click", () => location.href = "/admin-panel.html")
                                 .onMake(self => {
                                     checkPermissions(Permission.VIEW_ADMIN_PANEL, res => self.style.display = res ? "" : "none", true, true);
                                 }),
