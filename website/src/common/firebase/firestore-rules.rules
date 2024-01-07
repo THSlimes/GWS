@@ -55,7 +55,7 @@ service cloud.firestore {
         }
 
         match /users/{userId} {
-            allow read : if request.auth.uid == userId; // only allow reading own info
+            allow read : if request.auth.uid == userId || hasPermissions(["READ_OTHER_USER_INFO"]); // only allow reading own info
         }
     }
 }

@@ -1,6 +1,6 @@
 import { QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, documentId, getCountFromServer, getDocs, limit, query, where } from "@firebase/firestore";
 import { Permission } from "../Permission";
-import UserDatabase, { UserFilterOptions, UserInfo } from "./UserDatabase";
+import UserDatabase, { UserQueryFilter, UserInfo } from "./UserDatabase";
 import { DB } from "../../init-firebase";
 import { clamp } from "../../../util/NumberUtil";
 
@@ -36,11 +36,11 @@ export class FirestoreUserDatabase extends UserDatabase {
         }
     });
 
-    get(limit: number, options?: Omit<UserFilterOptions, "limit"> | undefined): Promise<UserInfo[]> {
-        return FirestoreUserDatabase.getUsers({limit, ...options});
+    get(options:UserQueryFilter = {}): Promise<UserInfo[]> {
+        return FirestoreUserDatabase.getUsers({...options});
     }
 
-    count(options?: UserFilterOptions | undefined): Promise<number> {
+    count(options?: UserQueryFilter | undefined): Promise<number> {
         return FirestoreUserDatabase.getUsers({...options}, true);
     }
     
@@ -52,9 +52,9 @@ export class FirestoreUserDatabase extends UserDatabase {
         });
     }
 
-    private static getUsers(options: UserFilterOptions, doCount?: false): Promise<UserInfo[]>;
-    private static getUsers(options: UserFilterOptions, doCount?: true): Promise<number>;
-    private static getUsers(options:UserFilterOptions, doCount=false):Promise<UserInfo[]|number> {
+    private static getUsers(options: UserQueryFilter, doCount?: false): Promise<UserInfo[]>;
+    private static getUsers(options: UserQueryFilter, doCount?: true): Promise<number>;
+    private static getUsers(options:UserQueryFilter, doCount=false):Promise<UserInfo[]|number> {
         const constraints:QueryConstraint[] = [];
 
         // general

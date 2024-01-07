@@ -127,18 +127,19 @@ window.addEventListener("DOMContentLoaded", async () => {
         return new Promise(async (resolve, reject) => {
             if (pages[pageNum].retrieved) resolve(pages[pageNum]); // already retrieved
             else if (pageNum === 0) { // get most recent articles
-                pages[pageNum].articles = await DB.get(PAGE_SIZE, { forHomepage:true, sortByCreatedAt:"descending" });
+                pages[pageNum].articles = await DB.get({ limit: PAGE_SIZE, forHomepage:true, sortByCreatedAt:"descending" });
                 pages[pageNum].retrieved = true;
                 resolve(pages[pageNum]);
             }
             else if (pageNum === NUM_PAGES-1) { // get least recent articles
-                pages[pageNum].articles = await DB.get(pages[pageNum].size, { forHomepage:true, sortByCreatedAt:"ascending" });
+                pages[pageNum].articles = await DB.get({ limit: pages[pageNum].size, forHomepage:true, sortByCreatedAt:"ascending" });
                 pages[pageNum].articles.sort((a,b) => b.created_at.getTime() - a.created_at.getTime()); // sort manually
                 pages[pageNum].retrieved = true;
                 resolve(pages[pageNum]);
             }
             else if (pages[pageNum-1].retrieved) { // get pages from before previous page
-                pages[pageNum].articles = await DB.get(pages[pageNum].size, {
+                pages[pageNum].articles = await DB.get({
+                    limit: pages[pageNum].size,
                     forHomepage: true,
                     sortByCreatedAt:"descending",
                     before: getPeriod(pages[pageNum-1].articles)[1]
@@ -147,7 +148,8 @@ window.addEventListener("DOMContentLoaded", async () => {
                 resolve(pages[pageNum]);
             }
             else if (pages[pageNum+1].retrieved) { // get pages from after next page
-                pages[pageNum].articles = await DB.get(pages[pageNum].size, {
+                pages[pageNum].articles = await DB.get({
+                    limit: pages[pageNum].size,
                     forHomepage: true,
                     sortByCreatedAt:"descending",
                     before: getPeriod(pages[pageNum+1].articles)[0]

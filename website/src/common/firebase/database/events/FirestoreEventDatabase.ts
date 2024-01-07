@@ -1,5 +1,5 @@
 import { FirestoreDataConverter, QueryCompositeFilterConstraint, QueryConstraint, QueryDocumentSnapshot, QueryFilterConstraint, QueryNonFilterConstraint, Timestamp, and, collection, collectionGroup, deleteDoc, doc, documentId, getCountFromServer, getDoc, getDocs, limit, or, orderBy, query, setDoc, updateDoc, where } from "@firebase/firestore";
-import EventDatabase, { EventFilterOptions, EventRegistration, RegisterableEventInfo, EventInfo } from "./EventDatabase";
+import EventDatabase, { EventQueryFilter, EventRegistration, RegisterableEventInfo, EventInfo } from "./EventDatabase";
 import { AUTH, DB, onAuth } from "../../init-firebase";
 import { clamp } from "../../../util/NumberUtil";
 import { HexColor } from "../../../html-element-factory/AssemblyLine";
@@ -83,11 +83,15 @@ export default class FirestoreEventDatebase extends EventDatabase {
     private readonly converter = createConverter(this);
     private readonly collection = collection(DB, "events").withConverter(this.converter);
 
-    count(options?:EventFilterOptions): Promise<number> {
-        return this.getEvents(options??{}, true);
+    get(options:EventQueryFilter = {}) {
+        return this.getEvents(options);
     }
 
-    getRange(from?: Date, to?: Date, options?: Omit<EventFilterOptions, "range">): Promise<EventInfo[]> {
+    count(options:EventQueryFilter = {}): Promise<number> {
+        return this.getEvents(options, true);
+    }
+
+    getRange(from?: Date, to?: Date, options?: Omit<EventQueryFilter, "range">): Promise<EventInfo[]> {
         from ??= new Date(-8640000000000000);
         to ??= new Date(8640000000000000);
         return this.getEvents({range: {from, to}, ...options});
@@ -104,7 +108,7 @@ export default class FirestoreEventDatebase extends EventDatabase {
         });
     }
     
-    getByCategory(category: string, options?: Omit<EventFilterOptions, "category"> | undefined): Promise<EventInfo[]> {
+    getByCategory(category: string, options?: Omit<EventQueryFilter, "category"> | undefined): Promise<EventInfo[]> {
         return this.getEvents({category, ...options});
     }
 
@@ -156,9 +160,9 @@ export default class FirestoreEventDatebase extends EventDatabase {
         });
     }
 
-    private getEvents(options: EventFilterOptions, doCount?: false): Promise<EventInfo[]>;
-    private getEvents(options: EventFilterOptions, doCount?: true): Promise<number>;
-    private getEvents(options: EventFilterOptions, doCount = false): Promise<EventInfo[] | number> {
+    private getEvents(options: EventQueryFilter, doCount?: false): Promise<EventInfo[]>;
+    private getEvents(options: EventQueryFilter, doCount?: true): Promise<number>;
+    private getEvents(options: EventQueryFilter, doCount = false): Promise<EventInfo[] | number> {
         const baseConstraints:QueryConstraint[] = [];
 
         // generic

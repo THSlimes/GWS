@@ -37,3 +37,21 @@ export type PermissionGuarded = {
     needed_to_delete?:Permission[],
     needed_to_write?:Permission[]
 };
+
+const PERMISSION_TRANSLATIONS:Record<Permission,string> = {
+    [Permission.HAS_ACCOUNT]: "Account hebben",
+    [Permission.READ_MEMBER_ARTICLES]: "Berichten voor leden lezen",
+    [Permission.CREATE_ARTICLES]: "Berichten posten",
+    [Permission.UPDATE_ARTICLES]: "Berichten bewerken",
+    [Permission.CREATE_EVENT]: "Activiteiten toevoegen",
+    [Permission.UPDATE_EVENT]: "Activiteit-info bewerken",
+    [Permission.REGISTER_FOR_EVENTS]: "Inschrijven voor activiteiten",
+    [Permission.DEREGISTER_FOR_EVENTS]: "Uitschrijven van activiteiten ",
+    [Permission.READ_OTHER_USER_INFO]: "Account-info van anderen zien",
+    [Permission.UPDATE_OTHER_USER_INFO]: "Account-info van anderen bewerken",
+    [Permission.VIEW_ADMIN_PANEL]: "Administratie-paneel zien"
+};
+
+export function toHumanReadable(perm:Permission) {
+    return PERMISSION_TRANSLATIONS[perm];
+}

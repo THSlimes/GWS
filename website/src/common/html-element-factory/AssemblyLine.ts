@@ -68,8 +68,8 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
 
     private _tooltip?:string;
     /** Provides text to be displayed when hovering over the element (value for the ```title``` attribute) */
-    public tooltip(txt:string) {
-        this._tooltip = txt;
+    public tooltip(txt:string|null) {
+        if (txt) this._tooltip = txt;
         return this;
     }
 

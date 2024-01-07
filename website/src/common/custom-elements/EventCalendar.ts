@@ -204,9 +204,9 @@ export default class EventCalendar extends HTMLElement {
 
         // add viewmode controls
         const vmSelector = new IconSelector(
-            ["week", "calendar_view_week", viewMode === "week"],
-            ["month", "calendar_view_month", viewMode === "month"],
-            ["list", "calendar_view_day", viewMode === "list"]
+            ["week", "calendar_view_week", "Week", viewMode === "week"],
+            ["month", "calendar_view_month", "Maand", viewMode === "month"],
+            ["list", "calendar_view_day", "Lijst", viewMode === "list"]
         );
         vmSelector.classList.add("viewmode-controls");
         vmSelector.addEventListener("change", () => this.viewMode = vmSelector.value);

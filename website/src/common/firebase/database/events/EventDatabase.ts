@@ -1,8 +1,7 @@
 import { HexColor } from "../../../html-element-factory/AssemblyLine";
 import { timespansDaysOverlap, timespansOverlap } from "../../../util/DateUtil";
 import { Opt } from "../../../util/UtilTypes";
-import { AUTH } from "../../init-firebase";
-import QueryOptions from "../QueryOptions";
+import Database, { Info, QueryFilter } from "../Database";
 
 type TimeSpan = [Date, Date];
 type OpenTimespan = [Date|undefined, Date|undefined];
@@ -22,10 +21,9 @@ export class EventRegistration {
 }
 
 /** An EventInfo object contains all relevant information of an event.  */
-export class EventInfo {
+export class EventInfo extends Info {
     protected sourceDB:EventDatabase;
 
-    public readonly id:string;
     public readonly name:string;
     public readonly description:string;
     public readonly category:string;
@@ -43,9 +41,9 @@ export class EventInfo {
         color:Opt<HexColor>=undefined,
         timespan:TimeSpan
     ) {
+        super(id);
         this.sourceDB = sourceDB;
         
-        this.id = id;
         this.name = name;
         this.description = description;
         this.category = category;
@@ -68,10 +66,8 @@ export class EventInfo {
     }
 
     /** Whether this event matches the given filter. */
-    public satisfies(options:EventFilterOptions):boolean {
-        if (options.id && this.id !== options.id) return false;
-        if (options.notId && this.id === options.notId) return false;
-        if (options.limit === 0) return false;
+    public satisfies(options:EventQueryFilter):boolean {
+        if (!super.satisfies(options)) return false;
         if (options.range) {
             if (options.range.from && this.starts_at < options.range.from && this.ends_at < options.range.from) return false;
             if (options.range.to && this.starts_at > options.range.to && this.ends_at > options.range.to) return false;
@@ -168,21 +164,20 @@ export class RegisterableEventInfo extends EventInfo {
 }
 
 /** EventFilterOptions specify conditions which are supposed to be met by an event. */
-export type EventFilterOptions = QueryOptions & {
+export type EventQueryFilter = QueryFilter & {
     range?: { from: Date; to: Date; } | { from?: Date; to: Date; } | { from: Date; to?: Date; };
     category?: string;
 };
 
 /** An EventDatabase provides a way to interface with a collection of event data. */
-export default abstract class EventDatabase {
+export default abstract class EventDatabase extends Database<EventInfo> {
 
-    abstract count(options?: Omit<EventFilterOptions, "range">): Promise<number>;
+    abstract get(options?:EventQueryFilter): Promise<EventInfo[]>;
+    abstract count(options?:EventQueryFilter): Promise<number>;
 
-    abstract getRange(from?: Date, to?: Date, options?: Omit<EventFilterOptions, "range">): Promise<EventInfo[]>;
+    abstract getRange(from?: Date, to?: Date, options?: Omit<EventQueryFilter, "range">): Promise<EventInfo[]>;
 
-    abstract getById(id: string): Promise<EventInfo | undefined>;
-
-    abstract getByCategory(category: string, options?: Omit<EventFilterOptions, "category">): Promise<EventInfo[]>;
+    abstract getByCategory(category: string, options?: Omit<EventQueryFilter, "category">): Promise<EventInfo[]>;
 
     abstract registerFor(eventId:string):Promise<Record<string,string>>;
     abstract deregisterFor(eventId:string):Promise<Record<string,string>>;

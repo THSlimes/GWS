@@ -1,5 +1,5 @@
-import { FirestoreError, QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, documentId, getCountFromServer, getDocs, limit, orderBy, query, where } from "@firebase/firestore";
-import ArticleDatabase, { ArticleFilterOptions, ArticleInfo } from "./ArticleDatabase";
+import { QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, documentId, getCountFromServer, getDocs, limit, orderBy, query, where } from "@firebase/firestore";
+import ArticleDatabase, { ArticleQueryFilter, ArticleInfo } from "./ArticleDatabase";
 import { clamp } from "../../../util/NumberUtil";
 import { PermissionGuarded } from "../Permission";
 import { DB } from "../../init-firebase";
@@ -12,6 +12,7 @@ type DBArticle = PermissionGuarded & {
     category: string,
     show_on_homepage: boolean
 };
+
 /** Defines database interactions related to articles. */
 export class FirestoreArticleDatabase extends ArticleDatabase {
 
@@ -37,15 +38,15 @@ export class FirestoreArticleDatabase extends ArticleDatabase {
         }
     });
 
-    public get(limit = 5, options?: Omit<ArticleFilterOptions, "limit">) {
-        return FirestoreArticleDatabase.getArticles({ limit, sortByCreatedAt: "descending", ...options });
+    public get(options:ArticleQueryFilter = {}) {
+        return FirestoreArticleDatabase.getArticles({ sortByCreatedAt: "descending", ...options });
     }
 
-    public count(options?: ArticleFilterOptions) {
+    public count(options:ArticleQueryFilter = {}) {
         return FirestoreArticleDatabase.getArticles({ ...options }, true);
     }
 
-    public getById(id: string) {
+    public getById(id:string) {
         return new Promise<ArticleInfo | undefined>(async (resolve, reject) => {
             FirestoreArticleDatabase.getArticles({ id })
             .then(articles => resolve(articles.length > 0 ? articles[0] : undefined))
@@ -53,31 +54,31 @@ export class FirestoreArticleDatabase extends ArticleDatabase {
         });
     }
 
-    public getByCategory(category: string, options?: Omit<ArticleFilterOptions, "category">) {
+    public getByCategory(category: string, options?: Omit<ArticleQueryFilter, "category">) {
         return FirestoreArticleDatabase.getArticles({ category, ...options });
     }
 
-    public getNext(article: ArticleInfo, options?: Omit<ArticleFilterOptions, "limit"|"before"|"after"|"sortByCreatedAt"> | undefined): Promise<ArticleInfo|undefined> {
+    public getNext(article: ArticleInfo, options?: Omit<ArticleQueryFilter, "limit"|"before"|"after"|"sortByCreatedAt"> | undefined): Promise<ArticleInfo|undefined> {
         return new Promise((resolve, reject) => {
             FirestoreArticleDatabase.getArticles({ after: article.created_at, limit:1, sortByCreatedAt:"ascending", ...options })
             .then(articles => resolve(articles.length > 0 ? articles[0] : undefined));
         });
     }
 
-    public getPrevious(article: ArticleInfo, options?: Omit<ArticleFilterOptions, "limit"|"before"|"after"|"sortByCreatedAt"> | undefined): Promise<ArticleInfo|undefined> {
+    public getPrevious(article: ArticleInfo, options?: Omit<ArticleQueryFilter, "limit"|"before"|"after"|"sortByCreatedAt"> | undefined): Promise<ArticleInfo|undefined> {
         return new Promise((resolve, reject) => {
             FirestoreArticleDatabase.getArticles({ before: article.created_at, limit:1, sortByCreatedAt:"descending", ...options })
             .then(articles => resolve(articles.length > 0 ? articles[0] : undefined));
         });
     }
 
-    private static getArticles(options: ArticleFilterOptions, doCount?: false): Promise<ArticleInfo[]>;
-    private static getArticles(options: ArticleFilterOptions, doCount?: true): Promise<number>;
-    private static getArticles(options: ArticleFilterOptions, doCount = false): Promise<ArticleInfo[] | number> {
+    private static getArticles(options: ArticleQueryFilter, doCount?: false): Promise<ArticleInfo[]>;
+    private static getArticles(options: ArticleQueryFilter, doCount?: true): Promise<number>;
+    private static getArticles(options: ArticleQueryFilter, doCount = false): Promise<ArticleInfo[] | number> {
         const constraints: QueryConstraint[] = []; // convert options into constraints
 
         // general
-        if (options.limit) constraints.push(limit(clamp(options.limit, 0, 20)));
+        if (options.limit) constraints.push(limit(options.limit));
         if (options.id) constraints.push(where(documentId(), "==", options.id));
         if (options.notId) constraints.push(where(documentId(), "!=", options.notId));
 

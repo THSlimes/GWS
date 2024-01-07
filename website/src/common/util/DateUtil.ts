@@ -161,6 +161,7 @@ export function justAfter(d:Date) {
 export const DATE_FORMATS = {
     DAY: {
         SHORT_NO_YEAR: (d:Date,lang="nl-NL") => d.toLocaleDateString(lang, {day:"numeric", month:"short"}),
+        SHORT: (d:Date,lang="nl-NL") => d.toLocaleDateString(lang, {day:"numeric", month:"short", year:"numeric"}),
         MEDIUM: (d:Date,lang="nl-NL") => d.toLocaleDateString(lang, {dateStyle:"medium"}),
         LONG: (d:Date,lang="nl-NL") => d.toLocaleDateString(lang, {weekday:"long", day:"numeric", month:"long"})
     },
@@ -168,7 +169,8 @@ export const DATE_FORMATS = {
         SHORT: (d:Date,lang="nl-NL") => d.toLocaleTimeString(lang, { timeStyle:"short" })
     },
     DAY_AND_TIME: {
-        SHORT_NO_YEAR: (d:Date,lang="nl-NL") => `${DATE_FORMATS.DAY.SHORT_NO_YEAR(d,lang)} (${DATE_FORMATS.TIME.SHORT(d,lang)})`
+        SHORT_NO_YEAR: (d:Date,lang="nl-NL") => `${DATE_FORMATS.DAY.SHORT_NO_YEAR(d,lang)} (${DATE_FORMATS.TIME.SHORT(d,lang)})`,
+        SHORT: (d:Date,lang="nl-NL") => `${DATE_FORMATS.DAY.SHORT(d,lang)} (${DATE_FORMATS.TIME.SHORT(d,lang)})`
     },
     DURATION: {
         HOURS_AND_MINUTES: (start:Date, end:Date) => {

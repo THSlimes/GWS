@@ -20,27 +20,28 @@ export default class IconSelector<V extends string> extends HTMLElement {
         }
     }
 
-    constructor(...options:[V, string, boolean?][]) {
+    constructor(...options:[V, string, string?, boolean?][]) {
         super();
         if (options.map(o => o[0]).some((v,i,a) => a.indexOf(v) !== i)) {
             throw new Error(`duplicate value: ${options.map(o => o[0]).find((v,i,a) => a.indexOf(v) !== i)}`);
         }
 
         this.options = options.map(o => [o[0], o[1]]);
-        this._value = (options.find(o => o[2]) ?? options[0])[0];
+        this._value = (options.find(o => o[3]) ?? options[0])[0]; // select default
 
         // initialize element
         this.classList.add("flex-columns", "cross-axis-center");
         this.optionElements = options.map(o => ElementFactory.p(o[1])
             .class("icon", "option", "click-action")
             .attr("selected", this._value === o[0] ? "" : null)
+            .tooltip(o[2] ?? null)
             .on("click", () => this.value = o[0])
             .make()
         );
 
         this.optionElements.forEach((e,i) => {
             this.appendChild(e);
-            if (i !== this.optionElements.length-1) this.appendChild(
+            if (i !== this.optionElements.length-1) this.appendChild( // interlace with separators
                 ElementFactory.p('│').class("separator").make()
             );
         });

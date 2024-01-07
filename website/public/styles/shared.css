@@ -251,6 +251,7 @@ button, input[type="button"] {
         &:hover { background-color: var(--hover-bg-color); }
         &:active { scale: 105%; }
     }
+    &[selected] { outline: 2px solid var(--accent); }
 }
 
 /* standard indication of being a link */

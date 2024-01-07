@@ -1,21 +1,37 @@
 import { earliest, latest } from "../../../util/DateUtil";
-import EventDatabase, { EventFilterOptions, EventInfo, EventRegistration } from "./EventDatabase";
+import { QueryFilter } from "../Database";
+import EventDatabase, { EventQueryFilter, EventInfo, EventRegistration } from "./EventDatabase";
 
 /**
  * A CachingEventDatabase is a type of EventDatabase which
  * caches recent queries to allow for faster and more efficient
  * retrieval in the future.
  */
-export default class CachingEventDatebase implements EventDatabase {
+export default class CachingEventDatebase extends EventDatabase {
 
     private readonly relay:EventDatabase;
 
     constructor(db:EventDatabase) {
+        super();
+
         this.relay = db;
     }
 
+    private readonly getCache:Record<string,EventInfo[]> = {};
+    public get(options?:EventQueryFilter, invalidateCache=false): Promise<EventInfo[]> {
+        const optionsJSON = JSON.stringify(options);
+        if (invalidateCache) delete this.countCache[optionsJSON];
+
+        return new Promise(async (resolve, reject) => {
+            if (optionsJSON in this.countCache) resolve(this.getCache[optionsJSON]);
+            else this.relay.get(options)
+                .then(res => resolve(this.getCache[optionsJSON] = res))
+                .catch(reject);
+        });
+    }
+
     private readonly countCache:Record<string,number> = {};
-    count(options: EventFilterOptions = {}, invalidateCache=false): Promise<number> {
+    count(options:EventQueryFilter = {}, invalidateCache=false): Promise<number> {
         const optionsJSON = JSON.stringify(options);
         if (invalidateCache) delete this.countCache[optionsJSON];
 
@@ -29,7 +45,7 @@ export default class CachingEventDatebase implements EventDatabase {
 
     private readonly retrievedRange = { from:new Date(), to:new Date() };
     private readonly events:Record<string,EventInfo> = {};
-    getRange(from?: Date, to?: Date, options?: Omit<EventFilterOptions, "range"> | undefined): Promise<EventInfo[]> {
+    getRange(from?:Date, to?:Date, options?:Omit<EventQueryFilter, "range"> | undefined): Promise<EventInfo[]> {
         const fromCopy = from ? new Date(from) : new Date(-8640000000000000);
         const toCopy = to ? new Date(to) : new Date(8640000000000000);
 
@@ -64,7 +80,7 @@ export default class CachingEventDatebase implements EventDatabase {
     }
 
     private readonly categoryCache:Record<string, EventInfo[]> = {}
-    getByCategory(category: string, options?: Omit<EventFilterOptions, "category"> | undefined, invalidateCache=false): Promise<EventInfo[]> {
+    getByCategory(category: string, options?: Omit<EventQueryFilter, "category"> | undefined, invalidateCache=false): Promise<EventInfo[]> {
         if (invalidateCache) delete this.categoryCache[category];
 
         return new Promise((resolve, reject) => {
