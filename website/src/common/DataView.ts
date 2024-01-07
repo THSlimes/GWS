@@ -17,11 +17,23 @@ function copy<T extends Record<string, any>>(obj:T):T {
 
 /**
  * A DataView allows for easy editing of collections of data.
+ * @param T type of a data entry
  */
 export default abstract class DataView<T extends Record<string,any>> {
 
     private entries:T[]|null = null;
-    public dataRetrieved():boolean { return this.entries !== null; }
+    /** Promise used to retrieve data upon constructor call. */
+    private readonly dataPromise?:Promise<T[]>;
+    /** Promise which resolves when the data is ready to be used. */
+    public dataReady():Promise<void> {
+        return new Promise((resolve,reject) => {
+            if (this.entries === null) this.dataPromise!
+                .then(() => resolve())
+                .catch(reject);
+            else resolve();
+        });
+    }
+
     private _dataModified = false;
     protected get dataModified() { return this._dataModified; }
 
@@ -30,10 +42,18 @@ export default abstract class DataView<T extends Record<string,any>> {
         return this.entries.length;
     }
 
+    /**
+     * Creates a new DataView.
+     * @param data either the data itself, or a promise which resolves with the data
+     */
     constructor(data:T[]|Promise<T[]>) {
         if (Array.isArray(data)) this.entries = data;
-        else data.then(data => this.entries = data);
+        else {
+            this.dataPromise = data;
+            data.then(data => this.entries = data);
+        }
 
+        // wrap save function
         const oldSave = this.save;
         this.save = function() {
             if (this.dataModified) return oldSave();
@@ -47,6 +67,11 @@ export default abstract class DataView<T extends Record<string,any>> {
         else return this.entries[index];
     }
 
+    /**
+     * Retrieves a copy of the entry at the given index.
+     * @param index index of entry
+     * @returns entry at index 'index'
+     */
     public getCopy(index:number) {
         return copy(this.get(index));
     }
@@ -60,10 +85,23 @@ export default abstract class DataView<T extends Record<string,any>> {
         }
     }
 
+    /**
+     * Gets the value of an entry.
+     * @param index index of the entry
+     * @param key key of the value in the entry
+     * @returns the value associate with 'key' in the entry at index 'index'
+     */
     public getValue<K extends keyof T>(index:number, key:K):T[K] {
         return this.get(index)[key];
     }
     
+    /**
+     * Sets the value of an entry.
+     * @param index index of the entry
+     * @param key key of the value in the entry
+     * @param newVal new value to be associated with the key
+     * @returns whether the value was changed
+     */
     public setValue<K extends keyof T>(index:number, key:K, newVal:T[K]):boolean {
         const entry = this.get(index);
         if (valuesEqual(entry[key], newVal)) return false;
@@ -78,10 +116,19 @@ export default abstract class DataView<T extends Record<string,any>> {
 
 }
 
+/**
+ * A DatabaseDataView is a type of DataView which allows easy editing
+ * of (a subset of) values in a database.
+ * @param I type of data in the database
+ */
 export class DatabaseDataView<I extends Info> extends DataView<I> {
+
+    private readonly db:Database<I>;
 
     constructor(db:Database<I>, options:QueryFilter<I>={}) {
         super(db.get(options));
+
+        this.db = db;
     }
 
     save(): Promise<void> {
@@ -90,6 +137,7 @@ export class DatabaseDataView<I extends Info> extends DataView<I> {
     
 }
 
+/** A type of Error to be thrown when data is still being retrieved. */
 class DataPendingError extends Error {
 
     constructor() {
