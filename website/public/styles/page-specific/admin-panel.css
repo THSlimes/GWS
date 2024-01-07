@@ -36,9 +36,15 @@
 .list {
     width: 100%;
     row-gap: var(--in-section-gap);
+    
+    > .column-labels {
+        > * { text-decoration: underline; }
+    }
 
     > .entry {
         display: grid;
+
+        padding: var(--in-section-gap);
         column-gap: var(--in-section-gap);
 
         outline: var(--std-border);
@@ -46,6 +52,7 @@
 
         > * { margin: 0px; }
     }
+
 }
 
 #accounts-panel {
@@ -59,7 +66,7 @@
             gap: var(--in-section-gap);
 
             > .permission {
-                padding: calc(var(--in-section-gap) / 2);
+                padding: calc(var(--in-section-gap) / 2) var(--in-section-gap);
                 column-gap: var(--in-section-gap);
                 border-radius: var(--in-section-gap);
                 

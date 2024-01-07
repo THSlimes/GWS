@@ -5,14 +5,17 @@ function valuesEqual(a:any, b:any):boolean {
     else return a === b;
 }
 
-function copy<T extends Record<string, any>>(obj:T):T {
-    const out:any = {};
-    for (const k in obj) {
-        const v = obj[k] as any;
-        out[k] = v instanceof Date ? new Date(v) : v;
+function deepCopy<T>(arg:T):T {
+    if (typeof arg === "object") {
+        if (Array.isArray(arg)) return [...arg].map(deepCopy) as T; // is array
+        else if (arg instanceof Date) return new Date(arg) as T;
+        else { // some other object
+            const out:any = {};
+            for (const k in arg) out[k] = deepCopy(arg[k]);
+            return out;
+        }
     }
-    
-    return out as T;
+    else return arg; // copy primitive by value
 }
 
 /**
@@ -25,7 +28,7 @@ export default abstract class DataView<T extends Record<string,any>> {
     /** Promise used to retrieve data upon constructor call. */
     private readonly dataPromise?:Promise<T[]>;
     /** Promise which resolves when the data is ready to be used. */
-    public dataReady():Promise<void> {
+    public onDataReady():Promise<void> {
         return new Promise((resolve,reject) => {
             if (this.entries === null) this.dataPromise!
                 .then(() => resolve())
@@ -36,6 +39,8 @@ export default abstract class DataView<T extends Record<string,any>> {
 
     private _dataModified = false;
     protected get dataModified() { return this._dataModified; }
+    private _onDataModified:VoidFunction = () => {};
+    public set onDataModified(newHandler:VoidFunction) { this._onDataModified = newHandler; }
 
     private get length() {
         if (this.entries === null) throw new DataPendingError();
@@ -50,7 +55,13 @@ export default abstract class DataView<T extends Record<string,any>> {
         if (Array.isArray(data)) this.entries = data;
         else {
             this.dataPromise = data;
-            data.then(data => this.entries = data);
+            data
+            .then(data => {
+                this.entries = data;
+                console.log("GOT DATA!");
+                
+            })
+            .catch(console.error);
         }
 
         // wrap save function
@@ -73,7 +84,7 @@ export default abstract class DataView<T extends Record<string,any>> {
      * @returns entry at index 'index'
      */
     public getCopy(index:number) {
-        return copy(this.get(index));
+        return deepCopy(this.get(index));
     }
 
     /**
@@ -83,6 +94,16 @@ export default abstract class DataView<T extends Record<string,any>> {
         for (let i = 0; i < this.length; i ++) {
             yield this.getCopy(i);
         }
+    }
+
+    public map<U>(callbackfn:(value:T, index:number, array:T[]) => U):U[] {
+        const arr = [...this];
+        return arr.map(callbackfn);
+    }
+
+    public forEach(callbackfn:(value:T, index:number, array:T[]) => void) {
+        const arr = [...this];
+        return arr.forEach(callbackfn);
     }
 
     /**
@@ -108,6 +129,7 @@ export default abstract class DataView<T extends Record<string,any>> {
         else {
             entry[key] = newVal;
             this._dataModified = true;
+            if (this._onDataModified) this._onDataModified();
             return true;
         }
     }
@@ -124,11 +146,36 @@ export default abstract class DataView<T extends Record<string,any>> {
 export class DatabaseDataView<I extends Info> extends DataView<I> {
 
     private readonly db:Database<I>;
+    /** Whether the data is currently being delayed. */
+    private dataDelayed:boolean;
+    private readonly getDelayedData:VoidFunction;
 
-    constructor(db:Database<I>, options:QueryFilter<I>={}) {
-        super(db.get(options));
+    public override onDataReady(): Promise<void> {
+        if (this.dataDelayed) { // trigger data-requesting promise
+            this.getDelayedData();
+            this.dataDelayed = false;
+        }
+        
+        return super.onDataReady();
+    }
+
+    /**
+     * Creates a new DatabaseDataView.
+     * @param db database to query data from
+     * @param filter options used to request specific subset of data
+     * @param delayData whether to delay the data-requesting promise until the ```dataReady()``` method is called
+     */
+    constructor(db:Database<I>, filter:QueryFilter<I>={}, delayData=false) {
+        let getDelayedData:VoidFunction = () => { throw new Error("getDelayedData called before initialized"); };
+        super(new Promise((resolve,reject) => {
+            if (delayData) getDelayedData = () => db.get(filter).then(resolve).catch(reject); // requested after delay
+            else db.get(filter).then(resolve).catch(reject); // request now
+        }));
 
         this.db = db;
+        this.dataDelayed = delayData;
+        this.getDelayedData = getDelayedData;
+
     }
 
     save(): Promise<void> {

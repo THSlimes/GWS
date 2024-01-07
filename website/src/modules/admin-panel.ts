@@ -8,6 +8,7 @@ import getErrorMessage from "../common/firebase/authentication/error-messages";
 import { UserInfo } from "../common/firebase/database/users/UserDatabase";
 import { DATE_FORMATS } from "../common/util/DateUtil";
 import { getStringColor } from "../common/util/ColorUtil";
+import { DatabaseDataView } from "../common/DataView";
 
 // only permitted users can view page
 redirectIfMissingPermission("/", Permission.VIEW_ADMIN_PANEL, true, true);
@@ -24,14 +25,10 @@ const PANEL_CONFIG:Record<PanelId, { icon:string, label:string, default?:true, s
     "events-panel": {
         icon: "calendar_month",
         label: "Activiteiten",
-        default: undefined,
-        selectFunct: undefined
     },
     "messages-panel": {
         icon: "mail",
-        label: "Berichten",
-        default: undefined,
-        selectFunct: undefined
+        label: "Berichten"
     }
 };
 Object.freeze(PANEL_CONFIG);
@@ -116,18 +113,28 @@ function createUserEntry(userInfo:UserInfo):HTMLElement {
         .make();
 }
 
-const USER_DB = new FirestoreUserDatabase();
 let initializedAccountsPanel = false;
-let usersEdited = false;
+const usersDV = new DatabaseDataView(new FirestoreUserDatabase(), {}, true);
 function initAccountsPanel() {
     if (!initializedAccountsPanel) {
-        USER_DB.get() // get all users
-        .then(allUsers => {
-            const usersList = document.querySelector("#accounts-list > .list") as HTMLDivElement;
-            usersList.append(...allUsers.map(createUserEntry));
-        })
-        .catch(err => showError(getErrorMessage(err)));
-    
-        initializedAccountsPanel = true;
+        const usersList = document.querySelector("#accounts-list > .list") as HTMLDivElement;
+
+        usersDV.onDataReady()
+        .then(() => { // get data
+            usersList.append(...usersDV.map(createUserEntry));
+        });
     }
 }
+
+// let usersEdited = false;
+// function initAccountsPanel() {
+//     if (!initializedAccountsPanel) {
+//         USER_DB.get() // get all users
+//         .then(allUsers => {
+//             usersList.append(...allUsers.map(createUserEntry));
+//         })
+//         .catch(err => showError(getErrorMessage(err)));
+    
+//         initializedAccountsPanel = true;
+//     }
+// }
