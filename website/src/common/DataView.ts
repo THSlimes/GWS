@@ -37,9 +37,11 @@ export default abstract class DataView<T extends Record<string,any>> {
         });
     }
 
-    private _dataModified = false;
-    protected get dataModified() { return this._dataModified; }
+    private _modifiedIndices:Set<number> = new Set();
+    protected modifiedIndices() { return [...this._modifiedIndices]; }
+    protected get dataModified() { return this._modifiedIndices.size !== 0; }
     private _onDataModified:VoidFunction = () => {};
+    /** A handler to be called EACH TIME a data entry is modified. */
     public set onDataModified(newHandler:VoidFunction) { this._onDataModified = newHandler; }
 
     private get length() {
@@ -67,8 +69,10 @@ export default abstract class DataView<T extends Record<string,any>> {
         // wrap save function
         const oldSave = this.save;
         this.save = function() {
-            if (this.dataModified) return oldSave();
-            else return new Promise((resolve,reject) => resolve());
+            const out = this.dataModified ? oldSave() : new Promise<void>((resolve,reject) => resolve());
+            out.then(() => this._modifiedIndices.clear()); // clear set after successful save
+
+            return out;
         }
     }
 
@@ -128,12 +132,18 @@ export default abstract class DataView<T extends Record<string,any>> {
         if (valuesEqual(entry[key], newVal)) return false;
         else {
             entry[key] = newVal;
-            this._dataModified = true;
+            this._modifiedIndices.add(index);
             if (this._onDataModified) this._onDataModified();
             return true;
         }
     }
 
+    /**
+     * Attempts to save all modified entries. The returned promise resolving indicates a
+     * successful save, while rejecting means something went wrong.
+     *
+     * Only after a successful save will the data be marked as unmodified.
+     */
     abstract save():Promise<void>;
 
 }
