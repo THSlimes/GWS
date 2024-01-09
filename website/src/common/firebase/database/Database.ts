@@ -26,10 +26,34 @@ export type QueryFilter<I extends Info = Info> = {
 
 export default abstract class Database<I extends Info> {
 
+    /**
+     * Retrieves the record with the given ID 'id'.
+     * @param id ID of the record to be retrieved
+     * @returns Promise that resolves with the data record (or undefined if no
+     * record with the given ID exists)
+     */
     public abstract getById(id:string):Promise<I|undefined>;
 
+    /**
+     * Retrieves all records matching the given filter.
+     * @param options query filter
+     * @returns Promise that resolves with the requested records
+     */
     public abstract get(options?:QueryFilter<I>):Promise<I[]>;
-
+    
+    /**
+     * Counts how many records match the given filter.
+     * @param options query filter
+     * @returns Promise that resolves with the number of matching records
+     */
     public abstract count(options?:QueryFilter<I>):Promise<number>;
+
+    /**
+     * Writes the given records to the database. (if a record with a given ID
+     * already exists, it is updated, otherwise it is created)
+     * @param records data to write
+     * @returns Promise that resolves with the number of edited records
+     */
+    public abstract write(...records:I[]):Promise<number>;
 
 }

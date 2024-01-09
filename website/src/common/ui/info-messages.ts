@@ -18,11 +18,11 @@ window.addEventListener("DOMContentLoaded", () => {
     );
 });
 
-type MessageType = "info" | "warning" | "error";
+type MessageType = "info" | "success" | "warning" | "error";
 function createMessage(text:string, type:MessageType="info", lifetime=5000) {
     const out = ElementFactory.p()
         .html(RichText.parseLine(text))
-        .class(type)
+        .class("boxed", "message", type)
         .make();
     
     $(out).delay(lifetime).fadeOut(200, "swing", function() { this.remove(); });
@@ -33,6 +33,11 @@ function createMessage(text:string, type:MessageType="info", lifetime=5000) {
 export function showMessage(text:string, lifetime=5000) {
     if (MESSAGE_AREA.childElementCount + 1 > messageLimit()) MESSAGE_AREA.lastChild?.remove();
     MESSAGE_AREA.prepend(createMessage(text, "info", lifetime));
+}
+
+export function showSuccess(text:string, lifetime=5000) {
+    if (MESSAGE_AREA.childElementCount + 1 > messageLimit()) MESSAGE_AREA.lastChild?.remove();
+    MESSAGE_AREA.prepend(createMessage(text, "success", lifetime));
 }
 
 export function showWarning(text:string, lifetime=5000) {

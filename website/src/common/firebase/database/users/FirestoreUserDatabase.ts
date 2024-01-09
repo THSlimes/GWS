@@ -1,5 +1,5 @@
-import { QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, documentId, getCountFromServer, getDocs, limit, query, where } from "@firebase/firestore";
-import { Permission } from "../Permission";
+import { FirestoreDataConverter, QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, doc, documentId, getCountFromServer, getDocs, limit, query, where, writeBatch } from "@firebase/firestore";
+import Permission from "../Permission";
 import UserDatabase, { UserQueryFilter, UserInfo } from "./UserDatabase";
 import { DB } from "../../init-firebase";
 import { clamp } from "../../../util/NumberUtil";
@@ -13,28 +13,30 @@ type DBUser = {
     permissions:Permission[]
 };
 
+const USER_CONVERTER:FirestoreDataConverter<UserInfo, DBUser> = {
+    toFirestore(user:UserInfo):DBUser {
+        return {
+            ...user,
+            joined_at: Timestamp.fromDate(user.joined_at),
+            member_until: user.member_until ? Timestamp.fromDate(user.member_until) : undefined
+        }
+    },
+    fromFirestore(snapshot: QueryDocumentSnapshot<DBUser, UserInfo>):UserInfo {
+        const data = snapshot.data();
+        return new UserInfo(
+            snapshot.id,
+            data.joined_at.toDate(),
+            data.member_until?.toDate(),
+            data.first_name,
+            data.family_name,
+            data.permissions ?? []
+        );
+    }
+}
+
 export class FirestoreUserDatabase extends UserDatabase {
 
-    private static readonly COLLECTION = collection(DB, "users").withConverter({
-        toFirestore(user:UserInfo):DBUser {
-            return {
-                ...user,
-                joined_at: Timestamp.fromDate(user.joined_at),
-                member_until: user.member_until ? Timestamp.fromDate(user.member_until) : undefined
-            }
-        },
-        fromFirestore(snapshot: QueryDocumentSnapshot<DBUser, UserInfo>):UserInfo {
-            const data = snapshot.data();
-            return new UserInfo(
-                snapshot.id,
-                data.joined_at.toDate(),
-                data.member_until?.toDate(),
-                data.first_name,
-                data.family_name,
-                data.permissions ?? []
-            );
-        }
-    });
+    private static readonly COLLECTION = collection(DB, "users").withConverter(USER_CONVERTER);
 
     get(options:UserQueryFilter = {}): Promise<UserInfo[]> {
         return FirestoreUserDatabase.getUsers({...options});
@@ -48,6 +50,17 @@ export class FirestoreUserDatabase extends UserDatabase {
         return new Promise((resolve, reject) => {
             FirestoreUserDatabase.getUsers({limit:1, id})
             .then(users => resolve(users.length > 0 ? users[0] : undefined))
+            .catch(reject);
+        });
+    }
+
+    public write(...records: UserInfo[]): Promise<number> {
+        return new Promise((resolve,reject) => {
+            const batch = writeBatch(DB);
+            for (const rec of records) batch.set(doc(DB, "users", rec.id), USER_CONVERTER.toFirestore(rec));
+
+            batch.commit()
+            .then(() => resolve(records.length))
             .catch(reject);
         });
     }

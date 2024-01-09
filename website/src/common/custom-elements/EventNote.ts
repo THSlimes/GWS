@@ -3,7 +3,7 @@ import { EventInfo, RegisterableEventInfo } from "../firebase/database/events/Ev
 import { getMostContrasting, getStringColor } from "../util/ColorUtil";
 import RichText from "../ui/RichText";
 import { DATE_FORMATS, areFullDays, isSameDay, spanInDays } from "../util/DateUtil";
-import { showError, showMessage, showWarning } from "../ui/info-messages";
+import { showError, showMessage, showSuccess, showWarning } from "../ui/info-messages";
 import { HasSections } from "../util/ElementUtil";
 import getErrorMessage from "../firebase/authentication/error-messages";
 import { AUTH, onAuth } from "../firebase/init-firebase";
@@ -94,8 +94,8 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
                 ElementFactory.button(() => showWarning("Not implemented yet."))
                     .class("register-button", "center-content", "main-axis-space-between")
                     .children(
-                        ElementFactory.h2("person_add").class("icon"),
-                        ElementFactory.h2("Inschrijven")
+                        ElementFactory.h4("person_add").class("icon"),
+                        ElementFactory.h4("Inschrijven")
                     )
                     .onMake(self => {
                         self.disabled = true;

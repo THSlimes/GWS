@@ -6,7 +6,7 @@ import Responsive, { Viewport } from "../common/ui/Responsive";
 import { AUTH, onAuth, checkLoginState } from "../common/firebase/init-firebase";
 import { showError } from "../common/ui/info-messages";
 import { checkPermissions } from "../common/firebase/authentication/permission-based-redirect";
-import { Permission } from "../common/firebase/database/Permission";
+import Permission from "../common/firebase/database/Permission";
 
 /** Creates the link to an article given its ID. */
 export function articleLink(id: string) { return `/article.html?id=${id}`; }

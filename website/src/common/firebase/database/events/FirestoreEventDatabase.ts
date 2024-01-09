@@ -1,4 +1,4 @@
-import { FirestoreDataConverter, QueryCompositeFilterConstraint, QueryConstraint, QueryDocumentSnapshot, QueryFilterConstraint, QueryNonFilterConstraint, Timestamp, and, collection, collectionGroup, deleteDoc, doc, documentId, getCountFromServer, getDoc, getDocs, limit, or, orderBy, query, setDoc, updateDoc, where } from "@firebase/firestore";
+import { FirestoreDataConverter, QueryCompositeFilterConstraint, QueryConstraint, QueryDocumentSnapshot, QueryFilterConstraint, QueryNonFilterConstraint, Timestamp, and, collection, collectionGroup, deleteDoc, doc, documentId, getCountFromServer, getDoc, getDocs, limit, or, orderBy, query, setDoc, updateDoc, where, writeBatch } from "@firebase/firestore";
 import EventDatabase, { EventQueryFilter, EventRegistration, RegisterableEventInfo, EventInfo } from "./EventDatabase";
 import { AUTH, DB, onAuth } from "../../init-firebase";
 import { clamp } from "../../../util/NumberUtil";
@@ -28,24 +28,23 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 /** Any event longer than (in ms) this may be queried incorrectly. */
 const MAX_EVENT_DURATION = 7 * MS_PER_DAY;
 
+function toFirestore(event:EventInfo):DBEvent {
+    return event instanceof RegisterableEventInfo ? {
+        ...event,
+        starts_at: Timestamp.fromDate(event.starts_at),
+        ends_at: Timestamp.fromDate(event.ends_at),
+        can_register_from: event.can_register_from ? Timestamp.fromDate(event.can_register_from) : undefined,
+        can_register_until: event.can_register_until ? Timestamp.fromDate(event.can_register_until) : undefined,
+    } : {
+        ...event,
+        starts_at: Timestamp.fromDate(event.starts_at),
+        ends_at: Timestamp.fromDate(event.ends_at)
+    };
+}
+
 function createConverter(db:EventDatabase):FirestoreDataConverter<EventInfo|RegisterableEventInfo,DBEvent> {
     return {
-        toFirestore(event:EventInfo): DBEvent {
-            if (event instanceof RegisterableEventInfo) {
-                return {
-                    ...event,
-                    starts_at: Timestamp.fromDate(event.starts_at),
-                    ends_at: Timestamp.fromDate(event.ends_at),
-                    can_register_from: event.can_register_from ? Timestamp.fromDate(event.can_register_from) : undefined,
-                    can_register_until: event.can_register_until ? Timestamp.fromDate(event.can_register_until) : undefined,
-                }
-            }
-            else return {
-                    ...event,
-                    starts_at: Timestamp.fromDate(event.starts_at),
-                    ends_at: Timestamp.fromDate(event.ends_at)
-                }
-        },
+        toFirestore,
         fromFirestore(snapshot: QueryDocumentSnapshot<DBEvent, EventInfo>):EventInfo {
             const data = snapshot.data();
 
@@ -157,6 +156,17 @@ export default class FirestoreEventDatebase extends EventDatabase {
                     })
                     .catch(reject);
             });
+        });
+    }
+
+    public write(...records: EventInfo[]): Promise<number> {
+        return new Promise((resolve,reject) => {
+            const batch = writeBatch(DB);
+            for (const rec of records) batch.set(doc(DB, "events", rec.id), toFirestore(rec));
+
+            batch.commit()
+            .then(() => resolve(records.length))
+            .catch(reject);
         });
     }
 

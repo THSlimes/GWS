@@ -1,6 +1,5 @@
-import { QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, documentId, getCountFromServer, getDocs, limit, orderBy, query, where } from "@firebase/firestore";
+import { FirestoreDataConverter, QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, doc, documentId, getCountFromServer, getDocs, limit, orderBy, query, where, writeBatch } from "@firebase/firestore";
 import ArticleDatabase, { ArticleQueryFilter, ArticleInfo } from "./ArticleDatabase";
-import { clamp } from "../../../util/NumberUtil";
 import { PermissionGuarded } from "../Permission";
 import { DB } from "../../init-firebase";
 
@@ -13,11 +12,7 @@ type DBArticle = PermissionGuarded & {
     show_on_homepage: boolean
 };
 
-/** Defines database interactions related to articles. */
-export class FirestoreArticleDatabase extends ArticleDatabase {
-
-    /** Reference to the collection of articles. */
-    private static readonly COLLECTION = collection(DB, "articles").withConverter({
+const ARTICLE_CONVERTER:FirestoreDataConverter<ArticleInfo, DBArticle> = {
         toFirestore(article: ArticleInfo): DBArticle {
             return {
                 ...article,
@@ -36,7 +31,13 @@ export class FirestoreArticleDatabase extends ArticleDatabase {
                 data.show_on_homepage
             );
         }
-    });
+};
+
+/** Defines database interactions related to articles. */
+export class FirestoreArticleDatabase extends ArticleDatabase {
+
+    /** Reference to the collection of articles. */
+    private static readonly COLLECTION = collection(DB, "articles").withConverter(ARTICLE_CONVERTER);
 
     public get(options:ArticleQueryFilter = {}) {
         return FirestoreArticleDatabase.getArticles({ sortByCreatedAt: "descending", ...options });
@@ -70,6 +71,18 @@ export class FirestoreArticleDatabase extends ArticleDatabase {
             FirestoreArticleDatabase.getArticles({ before: article.created_at, limit:1, sortByCreatedAt:"descending", ...options })
             .then(articles => resolve(articles.length > 0 ? articles[0] : undefined));
         });
+    }
+
+    public write(...records: ArticleInfo[]): Promise<number> {
+        return new Promise((resolve,reject) => {
+            const batch = writeBatch(DB);
+            for (const rec of records) batch.set(doc(DB, "articles", rec.id), ARTICLE_CONVERTER.toFirestore(rec));
+
+            batch.commit()
+            .then(() => resolve(records.length))
+            .catch(reject);
+        });
+        
     }
 
     private static getArticles(options: ArticleQueryFilter, doCount?: false): Promise<ArticleInfo[]>;

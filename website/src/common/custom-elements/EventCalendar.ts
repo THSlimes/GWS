@@ -8,7 +8,7 @@ import { spanInDays } from "../util/DateUtil";
 import CachingEventDatebase from "../firebase/database/events/CachingEventDatebase";
 import { isAtScrollBottom, isAtScrollTop, whenInsertedIn } from "../util/ElementUtil";
 import IconSelector from "./IconSelector";
-import Responsive from "../ui/Responsive";
+import Responsive, { Viewport } from "../ui/Responsive";
 
 const DAY_ABBREVIATIONS = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
 
@@ -43,6 +43,11 @@ function doTranspose(viewMode:calendarViewMode) {
 }
 
 type calendarViewMode = "week" | "month" | "list";
+const DEFAULT_VIEWMODE:Record<Viewport, calendarViewMode> = {
+    desktop: "month",
+    "tablet-portrait": "month",
+    "mobile-portrait": "week"
+};
 const VIEWMODE_LODS:Record<calendarViewMode, DetailLevel> = {
     week: "normal",
     month: "normal",
@@ -112,7 +117,7 @@ export default class EventCalendar extends HTMLElement {
     private static readonly LOAD_MORE_TIMESPAN_DAYS = 15;
     private scrollEventListener?:(e:Event)=>void;
 
-    constructor(db:Exclude<EventDatabase,CachingEventDatebase>, date=new Date(), viewMode:calendarViewMode="month") {
+    constructor(db:Exclude<EventDatabase,CachingEventDatebase>, date=new Date(), viewMode:calendarViewMode=DEFAULT_VIEWMODE[Responsive.current]) {
         super();
 
         this.db = db instanceof CachingEventDatebase ? db : new CachingEventDatebase(db);

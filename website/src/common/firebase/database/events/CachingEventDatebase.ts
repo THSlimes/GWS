@@ -104,4 +104,8 @@ export default class CachingEventDatebase extends EventDatabase {
         return this.deregisterFor(eventId);
     }
 
+    public write(...records: EventInfo[]): Promise<number> {
+        return this.relay.write(...records);
+    }
+
 }

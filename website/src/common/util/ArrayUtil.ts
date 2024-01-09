@@ -17,3 +17,7 @@ export function difference<T>(a:T[], b:T[]) {
 export function symmetricDifference<T>(a:T[], b:T[]) {
     return [...difference(a, b), ...difference(b,a)];
 }
+
+export function sortAlphabetically<T extends string>(arr:T[]):T[] {
+    return arr.toSorted((a,b) => a.localeCompare(b));
+}

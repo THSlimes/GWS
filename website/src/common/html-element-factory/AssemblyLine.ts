@@ -14,6 +14,18 @@ type EventHandlers<S> = {
     [T in keyof HTMLElementEventMap]?: (event:HTMLElementEventMap[T], self:S) => void;
 }
 
+type Child = Node|AssemblyLine<any>|null;
+function toNodes(children:Child[]):Node[] {
+    const out:Node[] = [];
+    for (const c of children) {
+        if (c instanceof Node) out.push(c);
+        else if (c instanceof AssemblyLine) out.push(c.make());
+    }
+
+    return out;
+}
+type ChildGenerator<SelfType extends HTMLElement> = (self:SelfType) => Child|Child[];
+
 /**
  * An AssemblyLine is a type of object that makes the construction
  * of HTMLElement objects easier. All methods (except for ```make()```)
@@ -80,11 +92,10 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
         return this;
     }
 
-    private _children:Node[] = [];
+    private _children:(Child|ChildGenerator<HTMLElementTagNameMap[TN]>)[]= [];
     /** Provides child elements to be appended to the output element. */
-    public children(...nodes:(Node|null|AssemblyLine<any>)[]) {
-        nodes = nodes.filter(n => n !== null);
-        this._children.push(...nodes.map(n => n instanceof AssemblyLine ? n.make() : n));
+    public children(...children:(Child|ChildGenerator<HTMLElementTagNameMap[TN]>)[]) {
+        this._children.push(...children.filter(n => n !== null));
         return this;
     }
 
@@ -127,7 +138,17 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
         if (this._tooltip !== undefined) out.title = this._tooltip;
 
         // children
-        out.append(...this._children);
+        for (const c of this._children) {
+            if (c !== null) {
+                if (c instanceof Node) out.appendChild(c);
+                else if (c instanceof AssemblyLine) out.appendChild(c.make());
+                else {
+                    let res = c(out);
+                    if (!Array.isArray(res)) res = [res];
+                    out.append(...toNodes(res));
+                }
+            }
+        }
 
         // style
         for (const k in this._styleProps) out.style.setProperty(k, this._styleProps[k]);
@@ -213,16 +234,22 @@ export class SelectAssemblyLine extends AssemblyLine<"select"> {
         super("select");
     }
 
-    private _options:Record<string,string> = {};
+    private _options:Record<string,[string,boolean]> = {};
     /** Adds a single option to the select element. */
-    public option(value:string, displayText=value) {
-        this._options[value] = displayText;
+    public option(value:string, displayText=value, hidden=false) {
+        this._options[value] = [displayText, hidden];
         return this;
     }
     /** Adds multiple options at once to the select element. */
-    public options(values:string[]|Record<string,string>) {
-        if (Array.isArray(values)) values.forEach(v => this._options[v] = v);
-        else for (const v in values) this._options[v] = values[v];
+    public options(values:(string|[string,boolean])[]|Record<string,string|[string,boolean]>) {
+        if (Array.isArray(values)) values.forEach(v => {
+            if (Array.isArray(v)) this._options[v[0]] = v;
+            else this._options[v] = [v, false];
+        });
+        else for (const v in values) {
+            const display = values[v];
+            this._options[v] = Array.isArray(display) ? display : [display, false];
+        }
 
         return this;
     }
@@ -246,7 +273,8 @@ export class SelectAssemblyLine extends AssemblyLine<"select"> {
             const option = document.createElement("option");
             option.value = v;
             option.selected = v === this._value;
-            option.innerText = this._options[v];
+            option.innerText = this._options[v][0];
+            if (this._options[v][1]) option.hidden = true;
             out.options.add(option);
         }
 

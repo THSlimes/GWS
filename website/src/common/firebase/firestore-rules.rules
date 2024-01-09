@@ -55,7 +55,9 @@ service cloud.firestore {
         }
 
         match /users/{userId} {
-            allow read : if request.auth.uid == userId || hasPermissions(["READ_OTHER_USER_INFO"]); // only allow reading own info
+            allow get : if request.auth.uid == userId ? hasPermissions(["READ_OWN_USER_INFO"]) : hasPermissions(["READ_OTHER_USER_INFO"]);
+            allow list : if hasPermissions(["READ_OWN_USER_INFO", "READ_OTHER_USER_INFO"]);
+            allow update : if request.auth.uid == userId ? hasPermissions(["EDIT_OWN_USER_INFO"]) : hasPermissions(["EDIT_OTHER_USER_INFO"]);
         }
     }
 }

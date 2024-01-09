@@ -2,7 +2,7 @@
  * A Permission represents the ability for a user to perform
  * certain actions or to have access to protected data.
  */
-export enum Permission {
+enum Permission {
     HAS_ACCOUNT = "HAS_ACCOUNT",
     
     // article related
@@ -17,13 +17,18 @@ export enum Permission {
     DEREGISTER_FOR_EVENTS = "DEREGISTER_FOR_EVENTS", // whether the user is allowed to deregister for an event
 
     // user related
+    READ_OWN_USER_INFO = "READ_OWN_USER_INFO", // whether the user has access to their own info
+    EDIT_OWN_USER_INFO = "", // whether the user can edit their own info
     READ_OTHER_USER_INFO = "READ_OTHER_USER_INFO", // whether the user is allowed to see details of other users
-    UPDATE_OTHER_USER_INFO = "UPDATE_OTHER_USER_INFO", // whether the user can update the details of other users
+    EDIT_OTHER_USER_INFO = "EDIT_OTHER_USER_INFO", // whether the user can update the details of other users
 
     // admin related
     VIEW_ADMIN_PANEL = "VIEW_ADMIN_PANEL", // whether the user has access to the administration panel
 }
+export default Permission;
 
+export const ALL_PERMISSIONS = Object.values(Permission);
+Object.freeze(ALL_PERMISSIONS);
 /**
  * Represents database documents for which someone needs extra permission
  * to perform certain actions.
@@ -47,9 +52,11 @@ const PERMISSION_TRANSLATIONS:Record<Permission,string> = {
     [Permission.UPDATE_EVENT]: "Activiteit-info bewerken",
     [Permission.REGISTER_FOR_EVENTS]: "Inschrijven voor activiteiten",
     [Permission.DEREGISTER_FOR_EVENTS]: "Uitschrijven van activiteiten ",
+    [Permission.READ_OWN_USER_INFO]: "Account-info van henzelf lezen",
+    [Permission.EDIT_OWN_USER_INFO]: "Account-info van henzelf bewerken",
     [Permission.READ_OTHER_USER_INFO]: "Account-info van anderen zien",
-    [Permission.UPDATE_OTHER_USER_INFO]: "Account-info van anderen bewerken",
-    [Permission.VIEW_ADMIN_PANEL]: "Administratie-paneel zien"
+    [Permission.EDIT_OTHER_USER_INFO]: "Account-info van anderen bewerken",
+    [Permission.VIEW_ADMIN_PANEL]: "Administratie-paneel zien",
 };
 
 export function toHumanReadable(perm:Permission) {

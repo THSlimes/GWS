@@ -1,21 +1,9 @@
 import Database, { Info, QueryFilter } from "./firebase/database/Database";
+import { deepCopy } from "./util/ObjectUtil";
 
 function valuesEqual(a:any, b:any):boolean {
     if (a instanceof Date && b instanceof Date) return a.getTime() === b.getTime();
     else return a === b;
-}
-
-function deepCopy<T>(arg:T):T {
-    if (typeof arg === "object") {
-        if (Array.isArray(arg)) return [...arg].map(deepCopy) as T; // is array
-        else if (arg instanceof Date) return new Date(arg) as T;
-        else { // some other object
-            const out:any = {};
-            for (const k in arg) out[k] = deepCopy(arg[k]);
-            return out;
-        }
-    }
-    else return arg; // copy primitive by value
 }
 
 /**
@@ -38,7 +26,7 @@ export default abstract class DataView<T extends Record<string,any>> {
     }
 
     private _modifiedIndices:Set<number> = new Set();
-    protected modifiedIndices() { return [...this._modifiedIndices]; }
+    protected get modifiedIndices() { return [...this._modifiedIndices]; }
     protected get dataModified() { return this._modifiedIndices.size !== 0; }
     private _onDataModified:VoidFunction = () => {};
     /** A handler to be called EACH TIME a data entry is modified. */
@@ -58,18 +46,14 @@ export default abstract class DataView<T extends Record<string,any>> {
         else {
             this.dataPromise = data;
             data
-            .then(data => {
-                this.entries = data;
-                console.log("GOT DATA!");
-                
-            })
+            .then(data => this.entries = data)
             .catch(console.error);
         }
 
         // wrap save function
         const oldSave = this.save;
         this.save = function() {
-            const out = this.dataModified ? oldSave() : new Promise<void>((resolve,reject) => resolve());
+            const out = this.dataModified ? oldSave.bind(this)() : new Promise<void>((resolve,reject) => resolve());
             out.then(() => this._modifiedIndices.clear()); // clear set after successful save
 
             return out;
@@ -117,7 +101,7 @@ export default abstract class DataView<T extends Record<string,any>> {
      * @returns the value associate with 'key' in the entry at index 'index'
      */
     public getValue<K extends keyof T>(index:number, key:K):T[K] {
-        return this.get(index)[key];
+        return deepCopy(this.get(index)[key]);
     }
     
     /**
@@ -131,8 +115,9 @@ export default abstract class DataView<T extends Record<string,any>> {
         const entry = this.get(index);
         if (valuesEqual(entry[key], newVal)) return false;
         else {
-            entry[key] = newVal;
+            entry[key] = deepCopy(newVal);
             this._modifiedIndices.add(index);
+            
             if (this._onDataModified) this._onDataModified();
             return true;
         }
@@ -189,7 +174,13 @@ export class DatabaseDataView<I extends Info> extends DataView<I> {
     }
 
     save(): Promise<void> {
-        throw new Error("Method not implemented.");
+        return new Promise((resolve,reject) => {
+            console.log(...this.modifiedIndices.map(i => this.getCopy(i)));
+            
+            this.db.write(...this.modifiedIndices.map(i => this.getCopy(i)))
+            .then(() => resolve())
+            .catch(reject);
+        });
     }
     
 }

@@ -1,6 +1,5 @@
 export type Viewport = "desktop" | "tablet-portrait" | "mobile-portrait";
 
-
 /**
  * The ```Responsive``` helper-class makes it easier to use responsive web-design.
  */

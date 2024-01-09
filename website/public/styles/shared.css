@@ -217,7 +217,7 @@ div#split-view {
 .no-scroll { overflow: hidden; }
 
 /* standard indication of being click-able */
-button, input[type="button"] {
+button, input[type="button"], .button {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -233,11 +233,16 @@ button, input[type="button"] {
     border-radius: var(--in-section-gap);
     box-shadow: var(--std-shadow);
 
-    :not(:disabled) { cursor: pointer; }
+    &:not(:disabled) {
+        cursor: pointer;
+        transition: background-color 100ms ease-in, color 50ms ease-in;
 
-    transition: background-color 100ms ease-in, color 50ms ease-in;
-    &:hover { background-color: var(--hover-bg-color); }
-    &:active { scale: 105%; }
+        &:hover { background-color: var(--hover-bg-color); }
+        &:active { scale: 105%; }
+    }
+    &:disabled { filter: contrast(.5); }
+
+    > * { margin: 0px; }
 }
 
 .click-action {

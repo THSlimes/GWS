@@ -1,5 +1,5 @@
 import Database, { Info, QueryFilter } from "../Database";
-import { Permission } from "../Permission";
+import Permission from "../Permission";
 
 export class UserInfo extends Info {
     

@@ -17,10 +17,20 @@
 
         animation: fade-in 200ms ease-out 0ms 1;
 
-        &.info { background-color: whitesmoke; }
-        &.warning { background-color: lightyellow; }
+        &.info {
+            background-color: var(--primary);
+            color: var(--text-dark);
+        }
+        &.success {
+            background-color: aquamarine;
+            color: var(--text-dark);
+        }
+        &.warning {
+            background-color: lightyellow;
+            color: var(--text-dark);
+        }
         &.error {
-            background-color: var(--accent);
+            background-color: crimson;
             color: var(--text-light);
         }
 
