@@ -9,6 +9,7 @@ import { showError, showWarning } from "../common/ui/info-messages";
 import getErrorMessage from "../common/firebase/authentication/error-messages";
 import { redirectIfLoggedIn } from "../common/firebase/authentication/auth-based-redirect";
 import { isLocalUrl } from "../common/util/UrlUtil";
+import Cache from "../common/Cache";
 
 redirectIfLoggedIn("/", true); // can't log in when already logged in
 
@@ -45,7 +46,7 @@ window.addEventListener("DOMContentLoaded", () => {
             .then(userCred => {
                 AUTH.updateCurrentUser(userCred.user)
                 .then(() => {
-                    localStorage.setItem("loggedIn", "true");
+                    Cache.set("is-logged-in", true);
                     const returnUrl = new URLSearchParams(window.location.search).get("return-to");
                     if (returnUrl !== null && isLocalUrl(returnUrl)) location.replace(returnUrl);
                     else location.href = '/';

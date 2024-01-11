@@ -3,6 +3,7 @@ import Permission from "../database/Permission";
 import { onAuth } from "../init-firebase";
 import { FirestoreUserDatabase } from "../database/users/FirestoreUserDatabase";
 import UserDatabase from "../database/users/UserDatabase";
+import Cache from "../../Cache";
 
 const USER_DB: UserDatabase = new FirestoreUserDatabase();
 /**
@@ -12,12 +13,12 @@ const USER_DB: UserDatabase = new FirestoreUserDatabase();
  * @param useCache whether to use cached value if available
  * @returns promise that resolves with whether the user has the given permissions
  */
-function hasPermissions(user: User | null, permissions: Permission[], useCache = false): Promise<boolean> {
+function hasPermissions(user: User | null, permissions: Permission[], useCache = false):Promise<boolean> {
     return new Promise((resolve, reject) => {
         if (permissions.length === 0) resolve(true); // anyone has >= 0 permissions
         else if (user === null) resolve(false); // non-user does not have permissions
-        else if (useCache && localStorage.getItem(`permissions-${user.uid}`)) { // use cached value (if available)
-            const userPerms = JSON.parse(localStorage.getItem(`permissions-${user.uid}`)!) as Permission[];
+        else if (useCache && Cache.has(`permissions-${user.uid}`)) { // use cached value (if available)
+            const userPerms = Cache.get(`permissions-${user.uid}`) ?? [];
             resolve(permissions.every(p => userPerms.includes(p)));
         }
         else USER_DB.getById(user.uid) // use real value
@@ -32,7 +33,7 @@ function hasPermissions(user: User | null, permissions: Permission[], useCache =
  * @param callAgain whether to use the callback again with the real value, even after using the cached value already
  */
 
-export function checkPermissions(permissions: Permission | Permission[], callback: (hasPerms: boolean) => void, useCache = false, callAgain = true): void {
+export function checkPermissions(permissions: Permission | Permission[], callback: (hasPerms: boolean) => void, useCache = false, callAgain = true):void {
     if (!Array.isArray(permissions)) return checkPermissions([permissions], callback, useCache, callAgain);
     else onAuth()
         .then(user => {
@@ -48,7 +49,7 @@ export function checkPermissions(permissions: Permission | Permission[], callbac
  * @param [callAgain=true] whether to check with the actual value, even after using the cached one
  */
 
-export function redirectIfMissingPermission(url = "/", permissions: Permission | Permission[], useCache = false, callAgain = true): void {
+export function redirectIfMissingPermission(url = "/", permissions: Permission | Permission[], useCache = false, callAgain = true):void {
     checkPermissions(permissions, res => {
         if (!res) location.replace(url);
     }, useCache, callAgain);

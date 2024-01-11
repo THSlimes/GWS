@@ -20,6 +20,8 @@ type ErrorCode = keyof typeof ERROR_MESSAGES;
 
 /** Translates an error-code into a user-friendly error message. */
 export default function getErrorMessage(err?:any):string {
+    console.log(err);
+    
     if (!err || !(err instanceof FirebaseError)) return DEFAULT_ERROR_MESSAGE;
     return err.code in ERROR_MESSAGES ? ERROR_MESSAGES[err.code as ErrorCode] : DEFAULT_ERROR_MESSAGE
 }

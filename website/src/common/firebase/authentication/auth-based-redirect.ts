@@ -1,3 +1,4 @@
+import Cache from "../../Cache";
 import { AUTH, onAuth } from "../init-firebase";
 
 /**
@@ -6,7 +7,7 @@ import { AUTH, onAuth } from "../init-firebase";
  * @param useCachedValue whether to use the cached login-state
  */
 export function redirectIfLoggedIn(url="/", useCachedValue=false):void {
-    if (AUTH.currentUser !== null || (useCachedValue && localStorage.getItem("loggedIn") === "true")) location.href = url; // redirect now
+    if (AUTH.currentUser !== null || (useCachedValue && Cache.get("is-logged-in") === true)) location.href = url; // redirect now
     else onAuth()
         .then(user => {
             if (user !== null) location.replace(url);
@@ -19,7 +20,7 @@ export function redirectIfLoggedIn(url="/", useCachedValue=false):void {
  * @param useCachedValue whether to use the cached login-state
  */
 export function redirectIfLoggedOut(url="/", useCachedValue=false):void {
-    if (AUTH.currentUser === null && (useCachedValue && !localStorage.getItem("loggedIn"))) location.href = url; // redirect now
+    if (AUTH.currentUser === null && (useCachedValue && Cache.get("is-logged-in") !== true)) location.href = url; // redirect now
     else onAuth()
         .then(user => {
             if (user === null) location.replace(url);

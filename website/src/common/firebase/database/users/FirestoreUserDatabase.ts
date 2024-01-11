@@ -3,6 +3,7 @@ import Permission from "../Permission";
 import UserDatabase, { UserQueryFilter, UserInfo } from "./UserDatabase";
 import { DB } from "../../init-firebase";
 import { clamp } from "../../../util/NumberUtil";
+import Cache from "../../../Cache";
 
 /** A user as they're stored in the database. */
 type DBUser = {
@@ -90,7 +91,7 @@ export class FirestoreUserDatabase extends UserDatabase {
                     const out: UserInfo[] = [];
                     snapshot.forEach(doc => out.push(doc.data()));
                     // save permissions into cache
-                    out.forEach(user => localStorage.setItem(`permissions-${user.id}`, JSON.stringify(user.permissions)));
+                    out.forEach(user => Cache.set(`permissions-${user.id}`, user.permissions));
                     resolve(out);
                 }
             }

@@ -1,5 +1,5 @@
 import { FirestoreUserDatabase } from "../common/firebase/database/users/FirestoreUserDatabase";
-import { redirectIfMissingPermission } from "../common/firebase/authentication/permission-based-redirect";
+import { checkPermissions, redirectIfMissingPermission } from "../common/firebase/authentication/permission-based-redirect";
 import Permission, { ALL_PERMISSIONS, toHumanReadable } from "../common/firebase/database/Permission";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
 import "./header-and-footer";
@@ -11,6 +11,7 @@ import { getStringColor } from "../common/util/ColorUtil";
 import { DatabaseDataView } from "../common/DataView";
 import { mapToObject } from "../common/util/ObjectUtil";
 import { difference } from "../common/util/ArrayUtil";
+import { onAuth } from "../common/firebase/init-firebase";
 
 // only permitted users can view page
 redirectIfMissingPermission("/", Permission.VIEW_ADMIN_PANEL, true, true);
@@ -80,19 +81,23 @@ window.addEventListener("DOMContentLoaded", () => { // insert section selectors
 
 // Panel-specific functionality
 
-function createPermissionLabel(perm:Permission, onRemove:(label:HTMLDivElement)=>void):HTMLDivElement {
+function createPermissionLabel(perm:Permission, editable:boolean, onRemove:(label:HTMLDivElement)=>void):HTMLDivElement {
     return ElementFactory.div(undefined, "permission", "center-content")
         .children(
             ElementFactory.p(toHumanReadable(perm)),
-            label => ElementFactory.p("close")
-                .class("icon", "click-action")
-                .on("click", () => onRemove(label)),
+            label => editable ?
+                ElementFactory.p("close")
+                    .class("icon", "click-action")
+                    .on("click", () => onRemove(label)) :
+                null,
         )
         .style({"background-color": getStringColor(perm)})
         .make();
 }
 
-function createUserEntry(userInfo:UserInfo, index:number):HTMLElement {
+function createUserEntry(index:number, userInfo:UserInfo, canEdit:boolean, canEditPerms:boolean):HTMLElement {
+    canEditPerms &&= canEdit;
+
     const out = ElementFactory.div(undefined, "entry")
         .children(
             ElementFactory.h4("content_copy")
@@ -115,22 +120,22 @@ function createUserEntry(userInfo:UserInfo, index:number):HTMLElement {
             ElementFactory.div(undefined, "permissions")
                 .children(
                     ...userInfo.permissions.sort((a,b) => toHumanReadable(a).localeCompare(toHumanReadable(b)))
-                        .map(perm => createPermissionLabel(perm, label => {
+                        .map(perm => createPermissionLabel(perm, canEditPerms, label => {
                             userInfo.permissions.splice(userInfo.permissions.indexOf(perm), 1);
                             USERS_DV.setValue(index, "permissions", userInfo.permissions);
-                            out.replaceWith(createUserEntry(userInfo, index));
+                            out.replaceWith(createUserEntry(index, userInfo, canEdit, canEditPerms));
                         })),
-                    userInfo.permissions.length === ALL_PERMISSIONS.length ?
-                        null : // all permissions granted
+                    canEditPerms && userInfo.permissions.length < ALL_PERMISSIONS.length ?
                         ElementFactory.select(mapToObject(difference(ALL_PERMISSIONS, userInfo.permissions), p => toHumanReadable(p)))
-                        .option("null", "+", true).value("null")
-                        .class("new-permission", "button")
-                        .onValueChanged(v => {
-                            const perm = v as Permission;
-                            userInfo.permissions.push(perm);
-                            USERS_DV.setValue(index, "permissions", userInfo.permissions);
-                            out.replaceWith(createUserEntry(userInfo, index));
-                        })
+                            .option("null", "+", true).value("null")
+                            .class("new-permission", "button")
+                            .onValueChanged(v => {
+                                const perm = v as Permission;
+                                userInfo.permissions.push(perm);
+                                USERS_DV.setValue(index, "permissions", userInfo.permissions);
+                                out.replaceWith(createUserEntry(index, userInfo, canEdit, canEditPerms));
+                            }) :
+                        null // non-editable or all permissions granted
                 )
         )
         .make();
@@ -144,9 +149,17 @@ function initAccountsPanel() {
     if (!initializedAccountsPanel) {
         const usersList = document.querySelector("#accounts-list > .list") as HTMLDivElement;
 
-        USERS_DV.onDataReady()
-        .then(() => { // get data
-            usersList.append(...USERS_DV.map(createUserEntry));
+        Promise.all([
+            USERS_DV.onDataReady(),
+            onAuth(),
+            new Promise<boolean>((resolve,reject) => checkPermissions(Permission.EDIT_OWN_USER_INFO, resolve, false)),
+            new Promise<boolean>((resolve,reject) => checkPermissions(Permission.EDIT_OWN_PERMISSIONS, resolve, false)),
+            new Promise<boolean>((resolve,reject) => checkPermissions(Permission.EDIT_OTHER_USER_INFO, resolve, false)),
+            new Promise<boolean>((resolve,reject) => checkPermissions(Permission.EDIT_OTHER_USER_PERMISSIONS, resolve, false))
+        ])
+        .then(([_, user, canEditSelf, canEditOwnPerms, canEditOthers, canEditOthersPerms]) => { // get data
+            usersList.append(...USERS_DV.map((u,i) =>
+                createUserEntry(i, u, u.id === user!.uid ? canEditSelf : canEditOthers, u.id === user!.uid ? canEditOwnPerms : canEditOthersPerms)));
         });
 
         const usersSaveButton = document.getElementById("users-save-button") as HTMLButtonElement;

@@ -7,6 +7,7 @@ import { AUTH, onAuth, checkLoginState } from "../common/firebase/init-firebase"
 import { showError } from "../common/ui/info-messages";
 import { checkPermissions } from "../common/firebase/authentication/permission-based-redirect";
 import Permission from "../common/firebase/database/Permission";
+import Cache from "../common/Cache";
 
 /** Creates the link to an article given its ID. */
 export function articleLink(id: string) { return `/article.html?id=${id}`; }
@@ -167,6 +168,7 @@ function createHeader(config:NavbarConfig):HTMLElement {
                                 .tooltip("Uitloggen")
                                 .on("click", () => {
                                     AUTH.signOut();
+                                    Cache.remove("is-logged-in");
                                     location.reload();
                                 })
                                 .onMake(self => { // hide account button when not logged in

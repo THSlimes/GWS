@@ -2,6 +2,7 @@ import { User, getAuth } from "@firebase/auth";
 import { getFirestore } from "@firebase/firestore";
 import { getStorage } from "@firebase/storage";
 import { FirebaseOptions, initializeApp } from "firebase/app";
+import Cache from "../Cache";
 
 // initialize firebase connection
 const FIREBASE_CONFIG:FirebaseOptions = {
@@ -21,7 +22,11 @@ export const DB = getFirestore(FIREBASE_APP); // initialize Firebase Firestore
 
 export const AUTH = getAuth(FIREBASE_APP);
 AUTH.onAuthStateChanged(user => {
-    user === null ? localStorage.removeItem("loggedIn") : localStorage.setItem("loggedIn", "true");
+    if (user === null) Cache.remove("is-logged-in");
+    else {
+        Cache.set("is-logged-in", true);
+        Cache.set("own-id", user.uid);
+    }
 });
 
 export function onAuth():Promise<User|null> {
@@ -39,7 +44,7 @@ export function onAuth():Promise<User|null> {
  * @param callAgain whether to run the callback again with the real value, after using the cached value
  */
 export function checkLoginState(callback:(isLoggedIn:boolean)=>void, useCache=false, callAgain=true) {
-    if (useCache) callback(localStorage.getItem("loggedIn") === "true"); // use cached value
+    if (useCache) callback(Cache.get("is-logged-in") === true); // use cached value
     if (!useCache || callAgain) onAuth()
         .then(user => callback(user !== null));
 }
