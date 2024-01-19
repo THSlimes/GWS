@@ -3,7 +3,7 @@
 .content {
     display: grid;
     grid-template-columns: max-content 1fr;
-    grid-template-rows: 100vh;
+    grid-template-rows: min-content;
 
     padding: 0px var(--sides-gap);
     column-gap: var(--section-gap-x);
@@ -61,42 +61,50 @@
 
         > .list > .entry {
             grid-template-columns: 4em 12em 10em 12em 1fr;
+            align-items: center;
 
             > * { border-radius: var(--in-section-gap); }
 
-            > .permissions {
-                display: flex;
-                flex-wrap: wrap;
-
-                gap: var(--in-section-gap);
-
-                > .permission {
-                    padding: calc(var(--in-section-gap) / 2) var(--in-section-gap);
-                    column-gap: var(--in-section-gap);
-                    border-radius: var(--in-section-gap);
-                    
-                    > * {
-                        margin: 0px;
-                        font-size: small;
-                        font-weight: 600;
-                        color: var(--text-dark);
-                        border-radius: var(--in-section-gap);
-                    }
-                        
-                }
-
-                > .new-permission {
-                    width: 2em;
-                    text-align: center;
-                    appearance: none;
-
-                    > option {
-                        text-align: center;
-                        background-color: var(--primary);
-                        color: var(--text-dark);
-                    }
-                }
-            }
         }
     }
+}
+
+.permissions {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: var(--in-section-gap);
+
+    > .permission {
+        padding: calc(var(--in-section-gap) / 2) var(--in-section-gap);
+        column-gap: var(--in-section-gap);
+        height: min-content;
+        border-radius: var(--in-section-gap);
+        
+        > * {
+            margin: 0px;
+            font-size: small;
+            font-weight: 600;
+            color: var(--text-dark);
+            border-radius: var(--in-section-gap);
+        }
+            
+    }
+
+    > .new-permission {
+        width: 2em;
+        height: min-content;
+        text-align: center;
+        appearance: none;
+
+        > option {
+            text-align: center;
+            background-color: var(--primary);
+            color: var(--text-dark);
+        }
+    }
+}
+
+.id {
+    height: 100%;
 }

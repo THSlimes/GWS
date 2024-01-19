@@ -38,7 +38,12 @@ const INPUT_TYPE_TRANSLATORS:InputTypeTranslators = {
         return `${args[0].toString().padStart(4,'0')}-${(args[1]+1).toString().padStart(2,'0')}-${args[2].toString().padStart(2,'0')}`;
     },
     "datetime-local": (...args) => {
-        if (args[0] instanceof Date) return args[0].toISOString();
+        if (args[0] instanceof Date) {
+            const d = args[0];
+            d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+            const iso = d.toISOString();            
+            return iso.includes('.') ? iso.substring(0, iso.indexOf('.')) : iso;
+        }
         else return new Date(args[0], args[1]!, args[2]!, args[3]!, args[4]!).toISOString();
     },
     email: email => email,
@@ -127,13 +132,13 @@ export class InputAssemblyLine<T extends keyof HTMLInputElementTypeMap> extends 
         }
         out.prevValue = out.value;
 
-        window.addEventListener("change", e => {
+        window.addEventListener("input", e => {
             if (e.target === out) out.prevValue = out.value;
         });
 
         if (this._onValueChanged) { // calling callback after value changed
             const valueCallback = this._onValueChanged;
-            out.addEventListener("change", () => valueCallback(out.value, out.prevValue));
+            out.addEventListener("input", () => valueCallback(out.value, out.prevValue));
         }
 
         if (this._name !== undefined) out.name = this._name;

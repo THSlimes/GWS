@@ -58,8 +58,8 @@ service cloud.firestore {
             allow get : if request.auth.uid == userId ? hasPermissions(["READ_OWN_USER_INFO"]) : hasPermissions(["READ_OTHER_USER_INFO"]);
             allow list : if hasPermissions(["READ_OWN_USER_INFO", "READ_OTHER_USER_INFO"]);
             allow update : if request.auth.uid == userId ?
-                (hasPermissions(["EDIT_OWN_USER_INFO"]) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny("permissions") || hasPermissions(["EDIT_OWN_PERMISSIONS"]))) :
-                (hasPermissions(["EDIT_OTHER_USER_INFO"]) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny("permissions") || hasPermissions(["EDIT_OTHER_USER_PERMISSIONS"])));
+                (hasPermissions(["EDIT_OWN_USER_INFO"]) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(["permissions"]) || hasPermissions(["EDIT_OWN_PERMISSIONS"]))) :
+                (hasPermissions(["EDIT_OTHER_USER_INFO"]) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(["permissions"]) || hasPermissions(["EDIT_OTHER_USER_PERMISSIONS"])));
         }
     }
 }

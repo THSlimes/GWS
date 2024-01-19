@@ -10,9 +10,9 @@ function valuesEqual(a:any, b:any):boolean {
  * A DataView allows for easy editing of collections of data.
  * @param T type of a data entry
  */
-export default abstract class DataView<T extends Record<string,any>> {
+abstract class DataView<T extends Record<string,any>> {
 
-    private entries:T[]|null = null;
+    private entries:DataView.Entry<T>[]|null = null;
     /** Promise used to retrieve data upon constructor call. */
     private readonly dataPromise?:Promise<T[]>;
     /** Promise which resolves when the data is ready to be used. */
@@ -25,12 +25,14 @@ export default abstract class DataView<T extends Record<string,any>> {
         });
     }
 
-    private _modifiedIndices:Set<number> = new Set();
-    protected get modifiedIndices() { return [...this._modifiedIndices]; }
-    protected get dataModified() { return this._modifiedIndices.size !== 0; }
-    private _onDataModified:VoidFunction = () => {};
+    protected get modifiedEntries() { return this.filter(e => e.isModified); }
+    protected get dataModified() { return this.some(e => e.isModified); }
+    private _onDataModified:VoidFunction[] = [];
     /** A handler to be called EACH TIME a data entry is modified. */
-    public set onDataModified(newHandler:VoidFunction) { this._onDataModified = newHandler; }
+    public set onDataModified(newHandler:VoidFunction) { this._onDataModified.push(newHandler); }
+
+    private _onSave:VoidFunction[] = [];
+    public set onSave(newHandler:VoidFunction) { this._onSave.push(newHandler); }
 
     private get length() {
         if (this.entries === null) throw new DataPendingError();
@@ -42,11 +44,11 @@ export default abstract class DataView<T extends Record<string,any>> {
      * @param data either the data itself, or a promise which resolves with the data
      */
     constructor(data:T[]|Promise<T[]>) {
-        if (Array.isArray(data)) this.entries = data;
+        if (Array.isArray(data)) this.entries = data.map((v,i) => new DataView.Entry(this, i, v, () => this._onDataModified.forEach(h => h())));
         else {
             this.dataPromise = data;
             data
-            .then(data => this.entries = data)
+            .then(data => this.entries = data.map((v,i) => new DataView.Entry(this, i, v, () => this._onDataModified.forEach(h => h()))))
             .catch(console.error);
         }
 
@@ -54,25 +56,16 @@ export default abstract class DataView<T extends Record<string,any>> {
         const oldSave = this.save;
         this.save = function() {
             const out = this.dataModified ? oldSave.bind(this)() : new Promise<void>((resolve,reject) => resolve());
-            out.then(() => this._modifiedIndices.clear()); // clear set after successful save
+            out.then(() => this._onSave.forEach(h => h())); // call onSave handlers
 
             return out;
         }
     }
 
-    private get(index:number):T {
+    public get(index:number):DataView.Entry<T> {
         if (this.entries === null) throw new DataPendingError();
         else if (index < 0 || index >= this.length) throw new RangeError(`index ${index} is out of range for length ${this.length}`);
         else return this.entries[index];
-    }
-
-    /**
-     * Retrieves a copy of the entry at the given index.
-     * @param index index of entry
-     * @returns entry at index 'index'
-     */
-    public getCopy(index:number) {
-        return deepCopy(this.get(index));
     }
 
     /**
@@ -80,47 +73,28 @@ export default abstract class DataView<T extends Record<string,any>> {
      */
     *[Symbol.iterator]() {
         for (let i = 0; i < this.length; i ++) {
-            yield this.getCopy(i);
+            yield this.get(i);
         }
     }
 
-    public map<U>(callbackfn:(value:T, index:number, array:T[]) => U):U[] {
+    public map<U>(callbackfn:(value:DataView.Entry<T>, index:number, array:DataView.Entry<T>[]) => U):U[] {
         const arr = [...this];
         return arr.map(callbackfn);
     }
 
-    public forEach(callbackfn:(value:T, index:number, array:T[]) => void) {
+    public filter(callbackfn:(value:DataView.Entry<T>, index:number, array:DataView.Entry<T>[]) => boolean):DataView.Entry<T>[] {
         const arr = [...this];
-        return arr.forEach(callbackfn);
+        return arr.filter(callbackfn);
     }
 
-    /**
-     * Gets the value of an entry.
-     * @param index index of the entry
-     * @param key key of the value in the entry
-     * @returns the value associate with 'key' in the entry at index 'index'
-     */
-    public getValue<K extends keyof T>(index:number, key:K):T[K] {
-        return deepCopy(this.get(index)[key]);
+    public some(callbackfn:(value:DataView.Entry<T>, index:number, array:DataView.Entry<T>[]) => boolean):boolean {
+        const arr = [...this];
+        return arr.some(callbackfn);
     }
-    
-    /**
-     * Sets the value of an entry.
-     * @param index index of the entry
-     * @param key key of the value in the entry
-     * @param newVal new value to be associated with the key
-     * @returns whether the value was changed
-     */
-    public setValue<K extends keyof T>(index:number, key:K, newVal:T[K]):boolean {
-        const entry = this.get(index);
-        if (valuesEqual(entry[key], newVal)) return false;
-        else {
-            entry[key] = deepCopy(newVal);
-            this._modifiedIndices.add(index);
-            
-            if (this._onDataModified) this._onDataModified();
-            return true;
-        }
+
+    public forEach(callbackfn:(value:DataView.Entry<T>, index:number, array:DataView.Entry<T>[]) => void) {
+        const arr = [...this];
+        return arr.forEach(callbackfn);
     }
 
     /**
@@ -174,16 +148,57 @@ export class DatabaseDataView<I extends Info> extends DataView<I> {
     }
 
     save(): Promise<void> {
+        const modifiedEntries = this.modifiedEntries;
         return new Promise((resolve,reject) => {
-            console.log(...this.modifiedIndices.map(i => this.getCopy(i)));
-            
-            this.db.write(...this.modifiedIndices.map(i => this.getCopy(i)))
+            this.db.write(...modifiedEntries.map(e => e.copy()))
             .then(() => resolve())
             .catch(reject);
         });
     }
     
 }
+
+namespace DataView {
+    
+    export class Entry<T extends Record<string,any>> {
+    
+        private readonly _index:number;
+        public get index() { return this._index; }
+        private readonly data:T;
+        public copy() { return deepCopy(this.data); }
+    
+        private modifiedKeys:Set<keyof T> = new Set();
+        public get isModified() { return this.modifiedKeys.size !== 0; }
+        private readonly onModified:VoidFunction;
+
+        protected save() { this.modifiedKeys.clear(); }
+    
+        constructor(source:DataView<T>, index:number, data:T, onModified=()=>{}) {
+            source.onSave = () => this.save;
+
+            this._index = index;
+            this.data = data;
+            this.onModified = onModified;
+        }
+    
+        public get<K extends keyof T>(key:K) {
+            return deepCopy(this.data[key]);
+        }
+    
+        public set<K extends keyof T>(key:K, newValue:T[K]):boolean {
+            if (!valuesEqual(this.data[key], newValue)) {
+                this.data[key] = deepCopy(newValue);
+                this.modifiedKeys.add(key);
+                this.onModified();
+    
+                return true;
+            }
+            else return false;
+        }
+    }
+
+}
+export default DataView;
 
 /** A type of Error to be thrown when data is still being retrieved. */
 class DataPendingError extends Error {

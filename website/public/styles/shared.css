@@ -97,7 +97,13 @@ p, input, label {
 
 input {
     padding: var(--in-section-gap);
+
+    box-sizing: border-box;
+    height: min-content;
+
+    border: var(--std-border);
     border-radius: var(--in-section-gap);
+
 }
 
 .subtitle { font-size: 80% }

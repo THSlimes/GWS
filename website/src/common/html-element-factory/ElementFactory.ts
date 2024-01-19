@@ -89,7 +89,11 @@ export default abstract class ElementFactory {
             }
             return out;
         },
-        dateTimeLocal() { return new DateInputAssemblyLine("datetime-local"); },
+        dateTimeLocal(val?:Date) {
+            const out = new DateInputAssemblyLine("datetime-local");
+            if (val) out.value(val);
+            return out;
+        },
         email() { return new TextInputAssemblyLine("email"); },
         file() { return new TextInputAssemblyLine("file"); },
         image() { return new InputAssemblyLine("image"); },
@@ -108,7 +112,11 @@ export default abstract class ElementFactory {
         search() { return new TextInputAssemblyLine("search"); },
         submit() { return new ButtonLikeInputAssemblyLine("submit"); },
         tel() { return new TextInputAssemblyLine("tel"); },
-        text() { return new TextInputAssemblyLine("text"); },
+        text(val?:string) {
+            const out = new TextInputAssemblyLine("text");
+            if (val) out.value(val);
+            return out;
+        },
         time() { return new RangedInputAssemblyLine("time"); },
         url() { return new TextInputAssemblyLine("url"); },
         week(year?:number, week?:number) {
