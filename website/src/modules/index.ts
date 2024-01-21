@@ -14,6 +14,7 @@ import { STORAGE } from "../common/firebase/init-firebase";
 import { getDownloadURL, listAll, ref } from "@firebase/storage";
 import ElementCarousel from "../common/custom-elements/ElementCarousel";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
+import Placeholder from "../common/custom-elements/Placeholder";
 
 // INSERTING CAROUSEL IMAGES
 
@@ -60,7 +61,7 @@ CAROUSEL.append(
 CAROUSEL.id = "photo-carousel";
 
 window.addEventListener("DOMContentLoaded", () => { // inserting after page load
-    document.getElementById("carousel-placeholder")!.replaceWith(CAROUSEL);
+    Placeholder.replaceWith("photo-carousel", CAROUSEL);
 });
 
 // RETRIEVING ARTICLES

@@ -120,7 +120,7 @@
 
 #events-panel {
 
-    > event-calendar {
+    > event-calendar, > #event-calendar {
         min-height: 80vh;
     }
 

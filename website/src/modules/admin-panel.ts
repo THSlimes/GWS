@@ -11,7 +11,7 @@ import { initEventsPanel } from "../common/admin-panels/events-panel";
 redirectIfMissingPermission("/", [Permission.VIEW_ADMIN_PANEL, Permission.READ_OTHER_USER_INFO], true, true);
 
 /** Union type of the IDs of all panels. */
-type PanelId = "accounts-panel" | "messages-panel" | "events-panel";
+type PanelId = "accounts-panel" | "messages-panel" | "events-panel" | "links-panel";
 
 const PANEL_CONFIG:Record<PanelId, { icon:string, label:string, default?:true, selectCallback?:VoidFunction }> = {
     "accounts-panel": {
@@ -27,6 +27,10 @@ const PANEL_CONFIG:Record<PanelId, { icon:string, label:string, default?:true, s
     "messages-panel": {
         icon: "mail",
         label: "Berichten"
+    },
+    "links-panel": {
+        icon: "account_tree",
+        label: "Koppelingen"
     }
 };
 Object.freeze(PANEL_CONFIG);
