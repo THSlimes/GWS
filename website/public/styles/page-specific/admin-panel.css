@@ -1,9 +1,11 @@
 @import url("../shared.css");
 
+@import url("../custom-elements/event-calendar.css");
+
 .content {
     display: grid;
     grid-template-columns: max-content 1fr;
-    grid-template-rows: min-content;
+    grid-template-rows: minmax(100vh, min-content);
 
     padding: 0px var(--sides-gap);
     column-gap: var(--section-gap-x);
@@ -47,7 +49,9 @@
         padding: var(--in-section-gap);
         column-gap: var(--in-section-gap);
 
-        outline: var(--std-border);
+        box-sizing: border-box;
+
+        border: var(--std-border);
         border-radius: var(--in-section-gap);
 
         > * { margin: 0px; }
@@ -59,12 +63,17 @@
     > #accounts-list {
         row-gap: var(--in-section-gap);
 
-        > .list > .entry {
-            grid-template-columns: 4em 12em 10em 12em 1fr;
-            align-items: center;
+        > .list {
+            max-height: 100vh;
+            overflow-y: scroll;
 
-            > * { border-radius: var(--in-section-gap); }
-
+            > .entry {
+                grid-template-columns: 4em 12em 10em 12em 1fr;
+                align-items: center;
+    
+                > * { border-radius: var(--in-section-gap); }
+    
+            }
         }
     }
 }
@@ -107,4 +116,12 @@
 
 .id {
     height: 100%;
+}
+
+#events-panel {
+
+    > event-calendar {
+        min-height: 80vh;
+    }
+
 }

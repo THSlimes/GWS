@@ -1,4 +1,5 @@
 @import url("./event-note.css");
+@import url("./icon-selector.css");
 
 event-calendar {
     row-gap: var(--in-section-gap);

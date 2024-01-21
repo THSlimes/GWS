@@ -117,7 +117,7 @@ export default class EventCalendar extends HTMLElement {
     private static readonly LOAD_MORE_TIMESPAN_DAYS = 15;
     private scrollEventListener?:(e:Event)=>void;
 
-    constructor(db:Exclude<EventDatabase,CachingEventDatebase>, date=new Date(), viewMode:calendarViewMode=DEFAULT_VIEWMODE[Responsive.current]) {
+    constructor(db:EventDatabase, date=new Date(), viewMode:calendarViewMode=DEFAULT_VIEWMODE[Responsive.current]) {
         super();
 
         this.db = db instanceof CachingEventDatebase ? db : new CachingEventDatebase(db);

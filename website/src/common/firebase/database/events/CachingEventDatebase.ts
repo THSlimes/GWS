@@ -1,3 +1,4 @@
+import { count } from "../../../util/ArrayUtil";
 import { earliest, latest } from "../../../util/DateUtil";
 import { QueryFilter } from "../Database";
 import EventDatabase, { EventQueryFilter, EventInfo, EventRegistration } from "./EventDatabase";
@@ -44,19 +45,19 @@ export default class CachingEventDatebase extends EventDatabase {
     }
 
     private readonly retrievedRange = { from:new Date(), to:new Date() };
-    private readonly events:Record<string,EventInfo> = {};
+    private readonly rangeCache:Record<string,EventInfo> = {};
     getRange(from?:Date, to?:Date, options?:Omit<EventQueryFilter, "range"> | undefined): Promise<EventInfo[]> {
         const fromCopy = from ? new Date(from) : new Date(-8640000000000000);
         const toCopy = to ? new Date(to) : new Date(8640000000000000);
 
         return new Promise((resolve,reject) => {
             if (this.retrievedRange.from <= fromCopy && toCopy <= this.retrievedRange.to) {
-                resolve(Object.values(this.events).filter(e => e.satisfies({range:{from:fromCopy, to:toCopy}, ...options })));
+                resolve(Object.values(this.rangeCache).filter(e => e.satisfies({range:{from:fromCopy, to:toCopy}, ...options })));
             }
             else { // have to retrieve some events
                 this.relay.getRange(from, to)
                 .then(newEvents => {
-                    newEvents.forEach(e => this.events[e.id] = e); // save for later
+                    newEvents.forEach(e => this.rangeCache[e.id] = e); // save for later
                     // update range
                     this.retrievedRange.from = earliest(this.retrievedRange.from, fromCopy);
                     this.retrievedRange.to = latest(this.retrievedRange.to, toCopy);
@@ -104,8 +105,34 @@ export default class CachingEventDatebase extends EventDatabase {
         return this.deregisterFor(eventId);
     }
 
-    public write(...records: EventInfo[]): Promise<number> {
-        return this.relay.write(...records);
+    public write(...events: EventInfo[]): Promise<number> {
+        const out = this.relay.write(...events);
+
+        out.then(() => { // add to caches on success
+            for (const optionsJSON in this.getCache) { // add to getCache
+                const options = JSON.parse(optionsJSON) as EventQueryFilter;
+                this.getCache[optionsJSON].push(...events.filter(e => e.satisfies(options)));
+            }
+
+            for (const optionsJSON in this.countCache) { // add to countCache
+                const options = JSON.parse(optionsJSON) as EventQueryFilter;
+                this.countCache[optionsJSON] += count(events, e => e.satisfies(options));
+            }
+
+            for (const e of events) { // update rangeCache
+                if (e.satisfies({range: this.retrievedRange})) this.rangeCache[e.id] = e;
+            }
+
+            for (const e of events) { // update idCache
+                this.idCache[e.id] = e;
+            }
+
+            for (const cat in this.categoryCache) { // update categoryCache
+                this.categoryCache[cat].push(...events.filter(e => e.category === cat));
+            }
+        });
+
+        return out;
     }
 
 }
