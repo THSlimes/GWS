@@ -22,15 +22,15 @@
             color: var(--text-dark);
         }
         &.success {
-            background-color: aquamarine;
+            background-color: var(--indicate-good);
             color: var(--text-dark);
         }
         &.warning {
-            background-color: lightyellow;
+            background-color: var(--indicate-neutral);
             color: var(--text-dark);
         }
         &.error {
-            background-color: crimson;
+            background-color: var(--indicate-bad);
             color: var(--text-light);
         }
 

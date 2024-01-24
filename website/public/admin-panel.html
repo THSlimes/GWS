@@ -42,7 +42,60 @@
             <div id="events-panel" class="panel" hidden>
                 <h1>Activiteiten</h1>
                 <place-holder id="event-calendar"></place-holder>
-                <h2>Nieuwe activiteit toevoegen</h2>
+
+                <div id="add-event">
+                    <h2>Nieuwe activiteit toevoegen</h2>
+                    <div id="new-event-details" class="flex-rows">
+                        <div class="general">
+
+                            <textarea type="text" name="new-event-name" id="new-event-name" placeholder="Naam" no-resize></textarea>
+                            
+                            <textarea name="description" id="new-event-description" cols="30" rows="10" placeholder="Omschrijving" no-resize></textarea>
+    
+                            <datalist id="standard-event-categories">
+                                <option value="Excursies"></option>
+                                <option value="Feestjes"></option>
+                                <option value="Studeren"></option>
+                                <option value="Uitjes"></option>
+                            </datalist>
+                            <input type="text" name="new-event-category" id="new-event-category" placeholder="Categorie" list="standard-event-categories">
+                            
+                            <div class="color-input center-content">
+                                <switch-input dependants="new-event-color"></switch-input>
+                                <input type="color" name="new-event-color" id="new-event-color">
+                            </div>
+
+                        </div>
+
+                        <div class="timespan">
+
+                            <label for="new-event-starts-at">Begintijd</label>
+                            <input type="datetime-local" name="new-event-starts-at" id="new-event-starts-at">
+                            
+                            <label for="new-event-ends-at">Eindtijd</label>
+                            <input type="datetime-local" name="new-event-ends-at" id="new-event-ends-at">
+
+                        </div>
+
+                        <div class="registration-details">
+                            <switch-input dependants="new-event-capacity,new-event-can-register-from,new-event-can-register-until"></switch-input>
+
+                            <input type="number" name="new-event-capacity" id="new-event-capacity" placeholder="Maximaal aantal inschrijvingen">
+
+                            <label for="new-event-can-register-from">Inschrijving kan vanaf</label>
+                            <input type="datetime-local" name="new-event-can-register-from" id="new-event-can-register-from">
+                            
+                            <label for="new-event-can-register-until">Tot</label>
+                            <input type="datetime-local" name="new-event-can-register-until" id="new-event-can-register-until">
+
+                        </div>
+
+                        <button id="add-event-button" disabled>
+                            <h4>Toevoegen</h4>
+                            <h4 class="icon">calendar_add_on</h4>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div id="messages-panel" class="panel" hidden>

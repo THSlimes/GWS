@@ -1,6 +1,7 @@
 @import url("../shared.css");
 
 @import url("../custom-elements/event-calendar.css");
+@import url("../custom-elements/switch.css");
 
 .content {
     display: grid;
@@ -122,6 +123,12 @@
 
     > event-calendar, > #event-calendar {
         min-height: 80vh;
+    }
+
+    > #add-event {
+        > #new-event-details {
+            > textarea { resize: none; }
+        }
     }
 
 }

@@ -22,7 +22,8 @@ const PANEL_CONFIG:Record<PanelId, { icon:string, label:string, default?:true, s
     "events-panel": {
         icon: "calendar_month",
         label: "Activiteiten",
-        selectCallback: initEventsPanel
+        selectCallback: initEventsPanel,
+        default: true
     },
     "messages-panel": {
         icon: "mail",

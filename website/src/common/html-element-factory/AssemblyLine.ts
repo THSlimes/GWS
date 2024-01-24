@@ -14,7 +14,7 @@ type EventHandlers<S> = {
     [T in keyof HTMLElementEventMap]?: (event:HTMLElementEventMap[T], self:S) => void;
 }
 
-type Child = Node|AssemblyLine<any>|null;
+type Child = Node|AssemblyLine<any>|null|false;
 function toNodes(children:Child[]):Node[] {
     const out:Node[] = [];
     for (const c of children) {
@@ -52,7 +52,7 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
 
     protected _classes = new Set<string>();
     /** Adds classes to the new element */
-    public class(...classes:(string|null)[]) {
+    public class(...classes:(string|null|false)[]) {
         for (const c of classes) {
             if (typeof c === "string") this._classes.add(c);
         }
@@ -139,7 +139,7 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
 
         // children
         for (const c of this._children) {
-            if (c !== null) {
+            if (c) {
                 if (c instanceof Node) out.appendChild(c);
                 else if (c instanceof AssemblyLine) out.appendChild(c.make());
                 else {

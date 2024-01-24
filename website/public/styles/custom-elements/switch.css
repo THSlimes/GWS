@@ -1,0 +1,45 @@
+switch-input {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 2px;
+
+    box-sizing: border-box;
+    width: 4em;
+    height: 2em;
+
+    background-color: var(--indicate-bad);
+
+    border: var(--std-border);
+    border-radius: var(--in-section-gap);
+    box-shadow: var(--std-shadow);
+
+    &[on] {
+        flex-direction: row-reverse;
+        background-color: var(--indicate-good);
+    }
+
+    > .knob {
+
+        box-sizing: border-box;
+        height: 100%;
+        aspect-ratio: 1 / 1;
+
+        background-color: var(--text-light);
+
+        border: var(--std-border);
+        border-radius: var(--in-section-gap);
+        box-shadow: var(--std-shadow);
+
+    }
+
+    > .indicator {
+        flex-grow: 1;
+        font-size: 1.5em;
+        text-align: center;
+        color: var(--text-light);
+        box-shadow: var(--std-shadow);
+    }
+}
