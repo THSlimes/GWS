@@ -158,6 +158,31 @@ export function justAfter(d:Date) {
     return d;
 }
 
+export function fromInputs(date:HTMLInputElement|string, time:HTMLInputElement|string) {
+    if (date instanceof HTMLInputElement) {
+        if (date.type !== "date") throw new Error(`parameter 'date' is not a date input (is "${date.type}" instead)`);
+        date = date.value;
+    }
+    if (time instanceof HTMLInputElement) {
+        if (time.type !== "time") throw new Error(`parameter 'time' is not a time input (is "${time.type}" instead)`);
+        time = time.value;
+    }
+
+    let [year, month, day] = date.split('-').map(s => Number.parseInt(s)).filter(n => !isNaN(n));
+    year ||= 1970;
+    month ||= 1;
+    month --; // convert to index
+    day ||= 1;
+    
+    let [hours, minutes, seconds, millis] = time.split(':').map(s => Number.parseInt(s)).filter(n => !isNaN(n));
+    hours ||= 0;
+    minutes ||= 0;
+    seconds ||= 0;
+    millis ||= 0;
+
+    return new Date(year, month, day, hours, minutes, seconds, millis);
+}
+
 export const DATE_FORMATS = {
     DAY: {
         SHORT_NO_YEAR: (d:Date,lang="nl-NL") => d.toLocaleDateString(lang, {day:"numeric", month:"short"}),

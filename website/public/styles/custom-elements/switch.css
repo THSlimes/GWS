@@ -28,6 +28,7 @@ switch-input {
         aspect-ratio: 1 / 1;
 
         background-color: var(--text-light);
+        --hover-bg-color: color-mix(in srgb, var(--text-light), black 12.5%);
 
         border: var(--std-border);
         border-radius: var(--in-section-gap);
@@ -40,6 +41,6 @@ switch-input {
         font-size: 1.5em;
         text-align: center;
         color: var(--text-light);
-        box-shadow: var(--std-shadow);
+        text-shadow: var(--std-shadow);
     }
 }

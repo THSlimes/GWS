@@ -13,6 +13,9 @@ export default class Switch extends HTMLElement {
                 if (newVal !== this.inverted) dep.removeAttribute("disabled");
                 else dep.setAttribute("disabled","");
             }
+
+            this.dispatchEvent(new InputEvent("input", { bubbles: true }));
+            this.dispatchEvent(new Event("change", { bubbles: true }));
         }
     }
 
@@ -32,7 +35,7 @@ export default class Switch extends HTMLElement {
 
         this.inverted = inverted || this.hasAttribute("inverted");
 
-        this.appendChild(ElementFactory.div(undefined, "knob").make());
+        this.appendChild(ElementFactory.div(undefined, "knob", "click-action").make());
         this.indicator = this.appendChild(ElementFactory.h4().class("icon", "indicator").make());
         
         dependants ??= this.getAttribute("dependants") ?? undefined;

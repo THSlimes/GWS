@@ -127,8 +127,32 @@
 
     > #add-event {
         > #new-event-details {
-            > textarea { resize: none; }
+
+            & p { margin: 0px; text-align: center; }
+
+            * .general {
+                display: grid;
+                grid-template-columns: repeat(7, 1fr);
+                grid-template-rows: repeat(6, 1fr);
+                gap: var(--in-section-gap);
+
+                > * { width: 100%; height: 100%; }
+
+                > #new-event-name { grid-area: 1 / 1 / 4 / 2; }
+                > #new-event-category { grid-area: 4 / 1 / 5 / 2; }
+                > .color-input {
+                    grid-area: 5 / 1 / 7 / 2;
+                }
+
+                > #new-event-description { grid-area: 1 / 2 / 7 / 8; }
+            }
         }
     }
 
+}
+
+.feedback {
+    &.valid > * { color: var(--indicate-good); }
+    &.warning > * { color: var(--indicate-neutral); }
+    &.invalid > * { color: var(--indicate-bad); }
 }

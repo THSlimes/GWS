@@ -45,52 +45,98 @@
 
                 <div id="add-event">
                     <h2>Nieuwe activiteit toevoegen</h2>
-                    <div id="new-event-details" class="flex-rows">
-                        <div class="general">
-
-                            <textarea type="text" name="new-event-name" id="new-event-name" placeholder="Naam" no-resize></textarea>
-                            
-                            <textarea name="description" id="new-event-description" cols="30" rows="10" placeholder="Omschrijving" no-resize></textarea>
+                    <div id="new-event-details" class="flex-rows section-gap">
+                        <div>
+                            <h3>Algemene info</h3>
+                            <div class="general">
     
-                            <datalist id="standard-event-categories">
-                                <option value="Excursies"></option>
-                                <option value="Feestjes"></option>
-                                <option value="Studeren"></option>
-                                <option value="Uitjes"></option>
-                            </datalist>
-                            <input type="text" name="new-event-category" id="new-event-category" placeholder="Categorie" list="standard-event-categories">
-                            
-                            <div class="color-input center-content">
-                                <switch-input dependants="new-event-color"></switch-input>
-                                <input type="color" name="new-event-color" id="new-event-color">
+                                <textarea type="text" name="new-event-name" id="new-event-name" placeholder="Naam" no-resize></textarea>
+                                
+                                <textarea name="description" id="new-event-description" cols="30" rows="10" placeholder="Omschrijving" no-resize></textarea>
+        
+                                <datalist id="standard-event-categories">
+                                    <option value="Excursies"></option>
+                                    <option value="Feestjes"></option>
+                                    <option value="Studeren"></option>
+                                    <option value="Uitjes"></option>
+                                </datalist>
+                                <input type="text" name="new-event-category" id="new-event-category" placeholder="Categorie" list="standard-event-categories">
+                                
+                                <div class="color-input flex-rows center-content in-section-gap">
+                                    <p>Zelf kleur instellen?</p>
+                                    <div class="flex-columns main-axis-space-evenly cross-axis-center in-section-gap">
+                                        <switch-input id="new-event-use-color" dependants="new-event-color"></switch-input>
+                                        <input type="color" name="new-event-color" id="new-event-color" value="#FFFFFF">
+                                    </div>
+                                </div>
+    
                             </div>
 
+                            <div id="new-event-general-feedback" class="feedback flex-columns cross-axis-center in-section-gap">
+                                <h4 class="icon"></h4>
+                                <h4 class="reason"></h4>
+                            </div>
                         </div>
 
-                        <div class="timespan">
+                        <div>
+                            <h3>Tijdsduur</h3>
+                            <div class="timespan flex-columns main-axis-space-evenly cross-axis-center">
+                                <div class="flex-columns cross-axis-center in-section-gap">
+                                    <p>Hele dag(en)?</p>
+                                    <switch-input id="new-event-whole-days" inverted dependants="new-event-start-time,new-event-end-time"></switch-input>
+                                </div>
+    
+                                <div>
+                                    <label for="new-event-start-date">Deze activiteit begint op</label>
+                                    <input type="date" name="new-event-start-date" id="new-event-start-date">
+        
+                                    <label for="new-event-start-time">om</label>
+                                    <input type="time" name="new-event-start-time" id="new-event-start-time">
+                                    
+                                    <label for="new-event-end-date">en eindigt op</label>
+                                    <input type="date" name="new-event-end-date" id="new-event-end-date">
+        
+                                    <label for="new-event-end-time">om</label>
+                                    <input type="time" name="new-event-end-time" id="new-event-end-time">
+                                </div>
+                            </div>
+                                
+                            <div id="new-event-timespan-feedback" class="feedback flex-columns cross-axis-center in-section-gap">
+                                <h4 class="icon"></h4>
+                                <h4 class="reason"></h4>
+                            </div>
+                        </div>
 
-                            <label for="new-event-starts-at">Begintijd</label>
-                            <input type="datetime-local" name="new-event-starts-at" id="new-event-starts-at">
+                        <div>
+                            <h3>Over inschrijven</h3>
+                            <div class="registration-details flex-columns main-axis-space-evenly cross-axis-center">
+                                <div class="flex-columns cross-axis-center in-section-gap">
+                                    <p>Kunnen leden zich inschrijven?</p>
+                                    <switch-input id="new-event-registerable" dependants="new-event-registration-start-date, new-event-registration-start-time, new-event-registration-end-date, new-event-registration-end-time"></switch-input>
+                                </div>
+    
+                                <div>
+                                    <label for="new-event-registration-start-date">Inschrijven kan vanaf</label>
+                                    <input type="date" name="new-event-registration-start-date" id="new-event-registration-start-date">
+        
+                                    <label for="new-event-registration-start-time">om</label>
+                                    <input type="time" name="new-event-registration-start-time" id="new-event-registration-start-time">
+                                    
+                                    <label for="new-event-registration-end-date">en sluit op</label>
+                                    <input type="date" name="new-event-registration-end-date" id="new-event-registration-end-date">
+        
+                                    <label for="new-event-registration-end-time">om</label>
+                                    <input type="time" name="new-event-registration-end-time" id="new-event-registration-end-time">
+                                </div>
+                            </div>
                             
-                            <label for="new-event-ends-at">Eindtijd</label>
-                            <input type="datetime-local" name="new-event-ends-at" id="new-event-ends-at">
-
+                            <div id="new-event-registration-feedback" class="feedback flex-columns cross-axis-center in-section-gap">
+                                <h4 class="icon"></h4>
+                                <h4 class="reason"></h4>
+                            </div>
                         </div>
 
-                        <div class="registration-details">
-                            <switch-input dependants="new-event-capacity,new-event-can-register-from,new-event-can-register-until"></switch-input>
-
-                            <input type="number" name="new-event-capacity" id="new-event-capacity" placeholder="Maximaal aantal inschrijvingen">
-
-                            <label for="new-event-can-register-from">Inschrijving kan vanaf</label>
-                            <input type="datetime-local" name="new-event-can-register-from" id="new-event-can-register-from">
-                            
-                            <label for="new-event-can-register-until">Tot</label>
-                            <input type="datetime-local" name="new-event-can-register-until" id="new-event-can-register-until">
-
-                        </div>
-
-                        <button id="add-event-button" disabled>
+                        <button id="add-new-event-button" disabled>
                             <h4>Toevoegen</h4>
                             <h4 class="icon">calendar_add_on</h4>
                         </button>

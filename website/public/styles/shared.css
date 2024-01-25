@@ -47,7 +47,7 @@ span.icon { font-size: inherit; }
     --shadow-dark: rgba(0, 0, 0, .125);
 
     --indicate-good: aquamarine;
-    --indicate-neutral: lightyellow;
+    --indicate-neutral: orange;
     --indicate-bad: crimson;
 
     --std-shadow: 2px 2px 2px 0px var(--shadow-dark);
@@ -57,6 +57,7 @@ span.icon { font-size: inherit; }
     --section-gap-x: 4rem; /* spacing to the left and right between different sections */
     --section-gap-y: 1rem; /* spacing to the top and bottom between different sections */
     --min-section-gap: min(var(--section-gap-x), var(--section-gap-y));
+    --max-section-gap: max(var(--section-gap-x), var(--section-gap-y));
 
     --in-section-gap: .5rem;
     --sides-gap: 4rem;
@@ -109,6 +110,12 @@ input, textarea {
     border-radius: var(--in-section-gap);
 
     font-family: var(--std-font);
+
+    &[type="color"] {
+        height: 100%;
+        background-color: var(--secondary);
+    }
+    &:disabled { filter: contrast(.75); }
 }
 
 .subtitle { font-size: 80% }
@@ -225,6 +232,11 @@ div#split-view {
 .cross-axis-end { align-items: flex-end; }
 .cross-axis-center { align-items: center; }
 
+.section-gap-x { column-gap: var(--section-gap-x); }
+.section-gap-y { column-gap: var(--section-gap-y); }
+.section-gap { gap: var(--section-gap-y) var(--section-gap-x); }
+.in-section-gap { gap: var(--in-section-gap); }
+
 .no-scroll { overflow: hidden; }
 [no-resize] { resize: none; }
 
@@ -245,24 +257,23 @@ button, input[type="button"], .button {
     border-radius: var(--in-section-gap);
     box-shadow: var(--std-shadow);
 
-    &:not(:disabled) {
+    &:not(:disabled):not([selected]) {
         cursor: pointer;
         transition: background-color 100ms ease-in, color 50ms ease-in;
 
-        &:hover { background-color: var(--hover-bg-color); }
+        &:hover { background-color: var(--hover-bg-color) !important; }
         &:active { scale: 105%; }
     }
-    &:disabled { filter: contrast(.5); }
+    &:disabled { filter: contrast(.75); }
 
     > * { margin: 0px; }
 }
 
 .click-action {
-    cursor: pointer;
     --hover-bg-color: var(--shadow-dark);
 
     &:not([selected]) {
-        background-color: inherit;
+        cursor: pointer;
 
         transition: background-color 100ms ease-in, color 50ms ease-in;
         &:hover { background-color: var(--hover-bg-color); }
