@@ -4,7 +4,7 @@ import "../custom-elements/Switch";
 import Switch from "../custom-elements/Switch";
 import CachingEventDatebase from "../firebase/database/events/CachingEventDatebase";
 import FirestoreEventDatebase from "../firebase/database/events/FirestoreEventDatabase";
-import { fromInputs } from "../util/DateUtil";
+import DateUtil from "../util/DateUtil";
 
 enum ValidityStatus {
     VALID = "valid",
@@ -53,8 +53,8 @@ let END_DATE_INPUT:HTMLInputElement;
 let END_TIME_INPUT:HTMLInputElement;
 let TIMESPAN_FEEDBACK:HTMLDivElement;
 
-const getStartDate = () => fromInputs(START_DATE_INPUT, WHOLE_DAYS_SWITCH.value ? "00:00:00:000" : START_TIME_INPUT);
-const getEndDate = () => fromInputs(END_DATE_INPUT, WHOLE_DAYS_SWITCH.value ? "23:59:59:999" : END_TIME_INPUT);
+const getStartDate = () => DateUtil.Timestamps.fromInputs(START_DATE_INPUT, WHOLE_DAYS_SWITCH.value ? "00:00:00:000" : START_TIME_INPUT);
+const getEndDate = () => DateUtil.Timestamps.fromInputs(END_DATE_INPUT, WHOLE_DAYS_SWITCH.value ? "23:59:59:999" : END_TIME_INPUT);
 
 function checkTimespan():Validity {
     if (!START_DATE_INPUT.value) return { status: ValidityStatus.INVALID, reason: "Begindatum is leeg." };
@@ -75,8 +75,8 @@ let REGISTRATION_END_DATE_INPUT:HTMLInputElement;
 let REGISTRATION_END_TIME_INPUT:HTMLInputElement;
 let REGISTRATION_FEEDBACK:HTMLDivElement;
 
-const getRegistrationStartDate = () => fromInputs(REGISTRATION_START_DATE_INPUT, REGISTRATION_START_TIME_INPUT);
-const getRegistrationEndDate = () => fromInputs(REGISTRATION_END_DATE_INPUT, REGISTRATION_END_TIME_INPUT);
+const getRegistrationStartDate = () => DateUtil.Timestamps.fromInputs(REGISTRATION_START_DATE_INPUT, REGISTRATION_START_TIME_INPUT);
+const getRegistrationEndDate = () => DateUtil.Timestamps.fromInputs(REGISTRATION_END_DATE_INPUT, REGISTRATION_END_TIME_INPUT);
 
 function checkRegistrationDetails():Validity {
     if (REGISTERABLE_SWITCH.value) {

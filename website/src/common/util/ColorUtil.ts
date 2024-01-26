@@ -1,39 +1,8 @@
-type HexColor = `#${string}`;
-type RGBColor = [number, number, number];
+export type HexColor = `#${string}`;
+export type RGBColor = [number, number, number];
 type Color = HexColor | RGBColor;
 
-function hexToRGB(hex:HexColor):RGBColor {
-    const color = Number.parseInt(hex.substring(1), 16);
-    return [(color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF];
-}
-
-function rgbToHex([r,g,b]:RGBColor) {
-    return `#${r.toString(16)}${g.toString(16)}${b.toString(16)}`;
-}
-
-const DEFAULT_COLOR:HexColor = "#aaaaaa";
-const STRING_COLORS:HexColor[] = [
-    "#ff8700", // orange
-    "#580aff", // purple
-    "#ff0000", // red
-    "#deff0a", // yellow
-    "#a1ff0a", // lime
-    "#0aefff", // light blue
-    "#147df5", // blue
-    "#ffd300", // gold
-    "#be0aff", // magenta
-    "#0aff99", // mint
-];
-export function getStringColor(cat: string):HexColor {
-    if (!cat) return DEFAULT_COLOR;
-    cat = cat.toLowerCase();
-
-    let ind = 0;
-    for (let i = 0; i < cat.length; i++) ind = ((ind << 5) - ind) + cat.charCodeAt(i);
-    
-    return STRING_COLORS[Math.abs(ind) % STRING_COLORS.length];
-}
-
+/** Functions to compute different kinds of distance */
 const DISTANCE_METRICS = {
     euclidean(a:number[], b:number[]) {
         const len = Math.max(a.length, b.length);
@@ -49,21 +18,90 @@ const DISTANCE_METRICS = {
     }
 };
 
-function getContrast(a:RGBColor, b:RGBColor, metric:(keyof typeof DISTANCE_METRICS)="euclidean") {
-    return DISTANCE_METRICS[metric](a,b);
-}
+/**
+ * The ColorUtil helper-class provides standard functions to manipulate and process colors.
+ */
+export default abstract class ColorUtil {
 
-export function getMostContrasting(color:HexColor, ...others:HexColor[]):HexColor {
-    const colorRGB = hexToRGB(color);
+    private static DEFAULT_COLOR:HexColor = "#aaaaaa";
+    private static STRING_COLORS:HexColor[] = [
+        "#ff8700", // orange
+        "#580aff", // purple
+        "#ff0000", // red
+        "#deff0a", // yellow
+        "#a1ff0a", // lime
+        "#0aefff", // light blue
+        "#147df5", // blue
+        "#ffd300", // gold
+        "#be0aff", // magenta
+        "#0aff99", // mint
+    ];
 
-    let bestInd = -1;
-    let bestContrast = -Infinity;
+    private static isRGB(c:Color):c is RGBColor {
+        return Array.isArray(c) && c.length === 3 && c.every(p => 0 <= p && p <= 255);
+    }
 
-    others.forEach((c,i) => {
-        const contrast = getContrast(colorRGB, hexToRGB(c), "euclidean");
+    private static isHex(c:Color): c is HexColor {
+        return typeof c === "string" && c.startsWith('#');
+    }
 
-        if (contrast > bestContrast) [bestInd, bestContrast] = [i, contrast];
-    });
+    /** Converts a color from hex format to RGB format. */
+    public static toRGB(c:Color):RGBColor {
+        if (this.isHex(c)) {
+            const color = Number.parseInt(c.substring(1), 16);
+            return [(color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF];
+        }
+        else return c; // already RGB
+    }
+    
+    /** Converts a color from RGB format to hex format. */
+    public static toHex(c:Color):HexColor {
+        if (this.isRGB(c)) {
+            const [r,g,b] = c;
+            return `#${r.toString(16)}${g.toString(16)}${b.toString(16)}`;
+        }
+        else return c; // already hex
+    }
 
-    return others[bestInd];
+    /**
+     * Computes the (non-normalized) contrast between two colors.
+     * @param a first color
+     * @param b second color
+     * @param metric distance metric to use
+     * @returns non-normalized contrast between ```a``` and ```b```
+     */
+    public static getContrast(a:Color, b:Color, metric:(keyof typeof DISTANCE_METRICS)="euclidean") {
+        [a, b] = [this.toRGB(a), this.toRGB(b)];
+        return DISTANCE_METRICS[metric](a,b);
+    }
+    
+    /**
+     * Gives the color which is the most contrasting.
+     * @param color color to compare to
+     * @param options colors to pick from
+     * @returns most contrasting color from ```options```
+     */
+    public static getMostContrasting(color:Color, ...options:Color[]):HexColor {
+        let bestInd = -1;
+        let bestContrast = -Infinity;
+    
+        options.forEach((c,i) => {
+            const contrast = this.getContrast(color, c, "euclidean");
+    
+            if (contrast > bestContrast) [bestInd, bestContrast] = [i, contrast];
+        });
+    
+        return this.toHex(options[bestInd]);
+    }
+
+    public static getStringColor(cat: string):HexColor {
+        if (!cat) return this.DEFAULT_COLOR;
+        cat = cat.toLowerCase();
+    
+        let ind = 0;
+        for (let i = 0; i < cat.length; i++) ind = ((ind << 5) - ind) + cat.charCodeAt(i);
+        
+        return this.STRING_COLORS[Math.abs(ind) % this.STRING_COLORS.length];
+    }
+
 }

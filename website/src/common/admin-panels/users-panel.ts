@@ -7,10 +7,10 @@ import { UserInfo } from "../firebase/database/users/UserDatabase";
 import { onAuth } from "../firebase/init-firebase";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import { showError, showMessage, showSuccess } from "../ui/info-messages";
-import { difference } from "../util/ArrayUtil";
-import { getStringColor } from "../util/ColorUtil";
-import { DATE_FORMATS } from "../util/DateUtil";
-import { mapToObject } from "../util/ObjectUtil";
+import ArrayUtil from "../util/ArrayUtil";
+import ColorUtil from "../util/ColorUtil";
+import DateUtil from "../util/DateUtil";
+import ObjectUtil from "../util/ObjectUtil";
 
 function createPermissionLabel(perm:Permission, editable:boolean, onRemove:(label:HTMLDivElement)=>void):HTMLDivElement {
     return ElementFactory.div(undefined, "permission", "center-content")
@@ -22,7 +22,7 @@ function createPermissionLabel(perm:Permission, editable:boolean, onRemove:(labe
                     .on("click", () => onRemove(label)) :
                 null,
         )
-        .style({"background-color": getStringColor(perm)})
+        .style({"background-color": ColorUtil.getStringColor(perm)})
         .make();
 }
 
@@ -42,7 +42,7 @@ function createUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, ca
                     .onValueChanged(val => userEntry.set("family_name", val)),
             )
             .make(),
-        ElementFactory.h4(DATE_FORMATS.DAY_AND_TIME.SHORT(userEntry.get("joined_at")))
+        ElementFactory.h4(DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT(userEntry.get("joined_at")))
             .class("joined-at", "center-content")
             .make(),
         ElementFactory.input.dateTimeLocal(userEntry.get("member_until"))
@@ -53,10 +53,10 @@ function createUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, ca
         ElementFactory.h4(`${userEntry.get("first_name")} ${userEntry.get("family_name")}`)
             .class("name", "center-content")
             .make(),
-        ElementFactory.h4(DATE_FORMATS.DAY_AND_TIME.SHORT(userEntry.get("joined_at")))
+        ElementFactory.h4(DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT(userEntry.get("joined_at")))
             .class("joined-at", "center-content")
             .make(),
-        ElementFactory.h4(userEntry.get("member_until") ? DATE_FORMATS.DAY_AND_TIME.SHORT(userEntry.get("member_until")!) : "Geen lid")
+        ElementFactory.h4(userEntry.get("member_until") ? DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT(userEntry.get("member_until")!) : "Geen lid")
             .class("member-until", "center-content")
             .make()
         
@@ -87,7 +87,7 @@ function createUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, ca
                         out.replaceWith(createUserEntry(userEntry, canEdit, canEditPerms));
                     })),
                 canEditPerms && userEntry.get("permissions").length < ALL_PERMISSIONS.length ?
-                    ElementFactory.select(mapToObject(difference(ALL_PERMISSIONS, userEntry.get("permissions")), p => toHumanReadable(p)))
+                    ElementFactory.select(ObjectUtil.mapToObject(ArrayUtil.difference(ALL_PERMISSIONS, userEntry.get("permissions")), p => toHumanReadable(p)))
                         .option("null", "+", true).value("null")
                         .class("new-permission", "button")
                         .onValueChanged(v => {

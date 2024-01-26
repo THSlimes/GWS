@@ -1,13 +1,13 @@
 import ElementFactory from "../html-element-factory/ElementFactory";
 import { EventInfo, RegisterableEventInfo } from "../firebase/database/events/EventDatabase";
-import { getMostContrasting, getStringColor } from "../util/ColorUtil";
 import RichText from "../ui/RichText";
-import { DATE_FORMATS, areFullDays, isSameDay, spanInDays } from "../util/DateUtil";
 import { showError, showMessage, showSuccess, showWarning } from "../ui/info-messages";
 import { HasSections } from "../util/ElementUtil";
 import getErrorMessage from "../firebase/authentication/error-messages";
 import { AUTH, onAuth } from "../firebase/init-firebase";
 import { createLinkBackURL } from "../util/UrlUtil";
+import ColorUtil from "../util/ColorUtil";
+import DateUtil from "../util/DateUtil";
 
 /** Amount of detail present in an EventNote element. */
 export type DetailLevel = "full" | "high" | "normal" | "low";
@@ -25,7 +25,7 @@ function getRegisterButtonState(isReg:boolean, e:RegisterableEventInfo):[string,
     if (e.ends_at <= now) return ["Activiteit is al voorbij", "event_busy", true];
     else if (e.starts_at <= now) return ["Activiteit is al gestart", "event_upcoming", true];
     else if (e.can_register_from && now < e.can_register_from) {
-        return [`Inschrijving start op ${DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(e.can_register_from)}`, "event", true];
+        return [`Inschrijving start op ${DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(e.can_register_from)}`, "event", true];
     }
     else if (e.can_register_until && e.can_register_until < now) {
         return ["Inschrijving is gesloten", "event_busy", true];
@@ -65,21 +65,21 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
         this.expanded = expanded;
         if (expanded) this.setAttribute("expanded", "");
 
-        const bgColor = event.color ?? getStringColor(event.category);
+        const bgColor = event.color ?? ColorUtil.getStringColor(event.category);
         this.style.backgroundColor = bgColor;
-        this.style.color = getMostContrasting(bgColor, "#111111", "#ffffff");
+        this.style.color = ColorUtil.getMostContrasting(bgColor, "#111111", "#ffffff");
 
         // event name
         this.name = this.appendChild(ElementFactory.heading(expanded ? 1 : 5).html(RichText.parseLine(event.name)).class("name", "rich-text").make());
 
         // event start/end time
-        let timespanText = areFullDays(event.starts_at, event.ends_at) ?
-            isSameDay(event.starts_at, event.ends_at) ?
-                DATE_FORMATS.DAY.SHORT_NO_YEAR(event.starts_at) :
-                `${DATE_FORMATS.DAY.SHORT_NO_YEAR(event.starts_at)} t/m ${DATE_FORMATS.DAY.SHORT_NO_YEAR(event.ends_at)}` :
-            isSameDay(event.starts_at, event.ends_at) ?
-                `${DATE_FORMATS.TIME.SHORT(event.starts_at)} - ${DATE_FORMATS.TIME.SHORT(event.ends_at)}` :
-                `${DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(event.starts_at)} t/m ${DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(event.ends_at)}`;
+        let timespanText = DateUtil.Timespans.areFullDays([event.starts_at, event.ends_at]) ?
+            DateUtil.Days.isSame(event.starts_at, event.ends_at) ?
+                DateUtil.DATE_FORMATS.DAY.SHORT_NO_YEAR(event.starts_at) :
+                `${DateUtil.DATE_FORMATS.DAY.SHORT_NO_YEAR(event.starts_at)} t/m ${DateUtil.DATE_FORMATS.DAY.SHORT_NO_YEAR(event.ends_at)}` :
+            DateUtil.Days.isSame(event.starts_at, event.ends_at) ?
+                `${DateUtil.DATE_FORMATS.TIME.SHORT(event.starts_at)} - ${DateUtil.DATE_FORMATS.TIME.SHORT(event.ends_at)}` :
+                `${DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(event.starts_at)} t/m ${DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(event.ends_at)}`;
         this.timespan = this.appendChild(ElementFactory.p(timespanText).class("timespan", "subtitle", "italic").make());
 
         // description

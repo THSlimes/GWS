@@ -1,7 +1,6 @@
 import { FirestoreDataConverter, QueryCompositeFilterConstraint, QueryConstraint, QueryDocumentSnapshot, QueryFilterConstraint, QueryNonFilterConstraint, Timestamp, and, collection, collectionGroup, deleteDoc, doc, documentId, getCountFromServer, getDoc, getDocs, limit, or, orderBy, query, setDoc, updateDoc, where, writeBatch } from "@firebase/firestore";
 import EventDatabase, { EventQueryFilter, EventRegistration, RegisterableEventInfo, EventInfo } from "./EventDatabase";
 import { AUTH, DB, onAuth } from "../../init-firebase";
-import { clamp } from "../../../util/NumberUtil";
 import { HexColor } from "../../../html-element-factory/AssemblyLine";
 import { FirebaseError } from "firebase/app";
 
@@ -177,7 +176,7 @@ export default class FirestoreEventDatebase extends EventDatabase {
 
         // generic
         if (options.id !== undefined) baseConstraints.push(where(documentId(), "==", options.id));
-        if (options.limit !== undefined) baseConstraints.push(limit(clamp(options.limit, 0, 100)));
+        if (options.limit !== undefined) baseConstraints.push(limit(options.limit));
         if (options.notId !== undefined) baseConstraints.push(where(documentId(), "!=", options.notId));
 
         // specific

@@ -2,7 +2,6 @@ import { FirestoreDataConverter, QueryConstraint, QueryDocumentSnapshot, Timesta
 import Permission from "../Permission";
 import UserDatabase, { UserQueryFilter, UserInfo } from "./UserDatabase";
 import { DB } from "../../init-firebase";
-import { clamp } from "../../../util/NumberUtil";
 import Cache from "../../../Cache";
 
 /** A user as they're stored in the database. */
@@ -72,7 +71,7 @@ export class FirestoreUserDatabase extends UserDatabase {
         const constraints:QueryConstraint[] = [];
 
         // general
-        if (options.limit) constraints.push(limit(clamp(options.limit, 0, 20)));
+        if (options.limit) constraints.push(limit(options.limit));
         if (options.id) constraints.push(where(documentId(), "==", options.id));
         if (options.notId) constraints.push(where(documentId(), "!=", options.notId));
 

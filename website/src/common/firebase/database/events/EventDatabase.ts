@@ -1,5 +1,5 @@
 import { HexColor } from "../../../html-element-factory/AssemblyLine";
-import { timespansDaysOverlap, timespansOverlap } from "../../../util/DateUtil";
+import DateUtil from "../../../util/DateUtil";
 import { Opt } from "../../../util/UtilTypes";
 import Database, { Info, QueryFilter } from "../Database";
 
@@ -58,11 +58,11 @@ export class EventInfo extends Info {
     }
 
     public overlapsWith(other:EventInfo) {
-        return timespansOverlap(this.starts_at, this.ends_at, other.starts_at, other.ends_at);
+        return DateUtil.Timespans.overlap([this.starts_at, this.ends_at], [other.starts_at, other.ends_at]);
     }
 
     public daysOverlapsWith(other:EventInfo) {
-        return timespansDaysOverlap(this.starts_at, this.ends_at, other.starts_at, other.ends_at);
+        return DateUtil.Timespans.daysOverlap([this.starts_at, this.ends_at], [other.starts_at, other.ends_at]);
     }
 
     /** Whether this event matches the given filter. */

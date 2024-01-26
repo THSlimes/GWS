@@ -2,13 +2,11 @@ import $ from "jquery";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import EventDatabase, { EventInfo } from "../firebase/database/events/EventDatabase";
 import { DetailLevel, EventNote } from "./EventNote";
-import { DATE_FORMATS, dayEarlierThan, earliest, firstDayBefore, getDayRange, isBetweenDays, isSameDay, isWeekend, justBefore, latest, timespansDaysOverlap, timespansOverlap } from "../util/DateUtil";
-import { daysOverlap } from "../util/DateUtil";
-import { spanInDays } from "../util/DateUtil";
 import CachingEventDatebase from "../firebase/database/events/CachingEventDatebase";
-import { isAtScrollBottom, isAtScrollTop, whenInsertedIn } from "../util/ElementUtil";
 import IconSelector from "./IconSelector";
 import Responsive, { Viewport } from "../ui/Responsive";
+import DateUtil from "../util/DateUtil";
+import ElementUtil from "../util/ElementUtil";
 
 const DAY_ABBREVIATIONS = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
 
@@ -22,14 +20,14 @@ function computeNonOverlappingOffsets(events:EventInfo[]) {
     const out:Record<string, number> = {};
     events.forEach(e => {
         out[e.id] = 0;
-        while (events.some(other => e !== other && daysOverlap(e, other) && out[e.id] === out[other.id])) out[e.id]++;
+        while (events.some(other => e !== other && e.daysOverlapsWith(other) && out[e.id] === out[other.id])) out[e.id]++;
     }); // initialize
     
     return out;
 }
 
 function findMaxOverlap(date: Date, events: EventInfo[], offsets: Record<string, number>): number {
-    let group = events.filter(e => isBetweenDays(date, e.starts_at, e.ends_at)); // seed group
+    let group = events.filter(e => DateUtil.Days.isBetween(date, e.starts_at, e.ends_at)); // seed group
 
     while (true) { // iterate
         const nextGroup = events.filter(e => group.some(o => e.daysOverlapsWith(o)));
@@ -58,7 +56,7 @@ type calendarEvent = {};
 type DayCell = { element:HTMLDivElement, date:Date, events:calendarEvent[] };
 type DayCellTypes = "today" | "weekend" | "different-month";
 const DC_TYPE_DETECTORS:Record<DayCellTypes, (cellDate:Date, viewDate:Date) => boolean> = {
-    today: (cellDate, viewDate) => isSameDay(new Date(), cellDate),
+    today: (cellDate, viewDate) => DateUtil.Days.isSame(new Date(), cellDate),
     weekend: cellDate => cellDate.getDay() === 0 || cellDate.getDay() === 6,
     "different-month": (cellDate, viewDate) => cellDate.getFullYear() !== viewDate.getFullYear() || cellDate.getMonth() !== viewDate.getMonth()
 };
@@ -142,7 +140,7 @@ export default class EventCalendar extends HTMLElement {
             .children(
                 ElementFactory.p(
                     viewMode === "list" ?
-                        DATE_FORMATS.DAY.LONG(cellDate) :
+                        DateUtil.DATE_FORMATS.DAY.LONG(cellDate) :
                         cellDate.getDate().toString()
                 )
                 .class("day-number")
@@ -160,10 +158,10 @@ export default class EventCalendar extends HTMLElement {
     private static createDayCells(viewDate:Date, viewMode:calendarViewMode):DayCell[] {
         let firstDate = new Date(viewDate);
         if (viewMode === "month") firstDate.setDate(1); // first day of month
-        if (viewMode === "month" || viewMode === "week") firstDate = firstDayBefore(firstDate, "Monday");
+        if (viewMode === "month" || viewMode === "week") firstDate = DateUtil.Days.firstBefore(firstDate, "Monday");
         
         const numDays = viewMode === "month" ? 42 : viewMode === "week" ? 7 : EventCalendar.LIST_VIEW_INITIAL_TIMESPAN_DAYS;
-        return getDayRange(firstDate,numDays).map((d, i) => EventCalendar.createDayCell(d, viewDate, viewMode, {
+        return DateUtil.Days.getRange(firstDate,numDays).map((d, i) => EventCalendar.createDayCell(d, viewDate, viewMode, {
                 gridArea: viewMode === "month" ?
                     this.indexToGridArea(i) :
                     viewMode === "week" ?
@@ -176,7 +174,7 @@ export default class EventCalendar extends HTMLElement {
         );
     }
     private extendDayCells(dayCells:DayCell[], from:Date, to:Date, checkCount:"before"|"after"):Promise<[DayCell[],number]> {
-        const extensionCells:DayCell[] = getDayRange(from, to).map((d,i) => {
+        const extensionCells:DayCell[] = DateUtil.Days.getRange(from, to).map((d,i) => {
             return EventCalendar.createDayCell(d, new Date(), "list", { markedTypes: ["today","weekend"] })
         });
         dayCells.unshift(...extensionCells);
@@ -288,7 +286,7 @@ export default class EventCalendar extends HTMLElement {
 
                 const loadAfter = this.dayCellContainer.appendChild(ElementFactory.div(undefined, "center-content", "load-more", "load-after").make());
 
-                whenInsertedIn(this.dayCellContainer, document.body)
+                ElementUtil.whenInsertedIn(this.dayCellContainer, document.body)
                 .then(() => {
                     this.dayCellContainer.scrollBy(0, 2);
                     
@@ -299,7 +297,7 @@ export default class EventCalendar extends HTMLElement {
                         const scrollDelta = prevScrollTop - this.dayCellContainer.scrollTop;
                         prevScrollTop = this.dayCellContainer.scrollTop;
                         
-                        if (scrollDelta > 0 && isAtScrollTop(this.dayCellContainer, EventCalendar.LOAD_MORE_SCROLL_TOLERANCE)) {
+                        if (scrollDelta > 0 && ElementUtil.isAtScrollTop(this.dayCellContainer, EventCalendar.LOAD_MORE_SCROLL_TOLERANCE)) {
                             if (!loadingBefore) {
                                 loadingBefore = true;
                                 const prevFirstDate = new Date(firstDate);
@@ -312,7 +310,7 @@ export default class EventCalendar extends HTMLElement {
                                     this.dayCellContainer.scrollTo(0, scrollY - 2);
                                     
                                     if (numLeft === 0) {
-                                        loadBefore.innerText = `Geen activiteiten voor ${DATE_FORMATS.DAY.LONG(newDays.find(ec => ec.events.length !== 0)!.date)}`;
+                                        loadBefore.innerText = `Geen activiteiten voor ${DateUtil.DATE_FORMATS.DAY.LONG(newDays.find(ec => ec.events.length !== 0)!.date)}`;
                                         loadBefore.classList.add("no-more");
                                     }
                                     else loadingBefore = false;
@@ -320,7 +318,7 @@ export default class EventCalendar extends HTMLElement {
                                 .catch(console.warn);
                             }
                         }
-                        else if (scrollDelta < 0 && isAtScrollBottom(this.dayCellContainer, EventCalendar.LOAD_MORE_SCROLL_TOLERANCE)) {
+                        else if (scrollDelta < 0 && ElementUtil.isAtScrollBottom(this.dayCellContainer, EventCalendar.LOAD_MORE_SCROLL_TOLERANCE)) {
                             if (!loadingAfter) {
                                 loadingAfter = true;
                                 const prevLastDate = new Date(lastDate);
@@ -332,7 +330,7 @@ export default class EventCalendar extends HTMLElement {
                                     const scrollY = extensionCells.map(dc => dc.element).filter(e => this.dayCellContainer.contains(e)).reduce((prev,curr) => prev + curr.clientHeight, 0);
                                     
                                     if (numLeft === 0) {
-                                        loadAfter.innerText = `Geen activiteiten na ${DATE_FORMATS.DAY.LONG(newDays.findLast(ec => ec.events.length !== 0)!.date)}`;
+                                        loadAfter.innerText = `Geen activiteiten na ${DateUtil.DATE_FORMATS.DAY.LONG(newDays.findLast(ec => ec.events.length !== 0)!.date)}`;
                                         loadAfter.classList.add("no-more");
                                     }
                                     else loadingAfter = false;
@@ -362,9 +360,9 @@ export default class EventCalendar extends HTMLElement {
                 // this.dayCellContainer.style.setProperty("--max-overlap", (Math.max(0, ...Object.values(offsets)) + 1).toString());
     
                 events.forEach(e => {
-                    let cellInd = dayCells.findIndex(dc => isBetweenDays(dc.date, e.starts_at, e.ends_at));
+                    let cellInd = dayCells.findIndex(dc => DateUtil.Days.isBetween(dc.date, e.starts_at, e.ends_at));
                     if (cellInd !== -1) {
-                        let daysLeft = spanInDays(dayCells[cellInd].date, e.ends_at);
+                        let daysLeft = DateUtil.Days.spanInDays(dayCells[cellInd].date, e.ends_at);
                         for (let w = 1; daysLeft >= 1 && cellInd < dayCells.length; w ++) {
                             dayCells[cellInd].events.push(e);
                             dayCells[cellInd].element.style.zIndex = (dayCells.length - cellInd + 1).toString();
@@ -372,7 +370,7 @@ export default class EventCalendar extends HTMLElement {
                             note.classList.add("click-action");
                             note.style.setProperty("--length", daysLeft.toString());
                             note.style.setProperty("--offset", offsets[e.id].toString());
-                            if (dayEarlierThan(e.starts_at, dayCells[cellInd].date)) note.classList.add("starts-in-earlier-week");
+                            if (DateUtil.Days.earlierThan(e.starts_at, dayCells[cellInd].date)) note.classList.add("starts-in-earlier-week");
     
                             note.addEventListener("click", () => EventCalendar.expandNote(note) );
                             
@@ -390,10 +388,10 @@ export default class EventCalendar extends HTMLElement {
                 break;
             case "list":
                 events.forEach(e => {
-                    let cellInd = dayCells.findIndex(dc => isBetweenDays(dc.date, e.starts_at, e.ends_at));
+                    let cellInd = dayCells.findIndex(dc => DateUtil.Days.isBetween(dc.date, e.starts_at, e.ends_at));
                     
                     if (cellInd !== -1) {
-                        let daysLeft = spanInDays(dayCells[cellInd].date, e.ends_at);
+                        let daysLeft = DateUtil.Days.spanInDays(dayCells[cellInd].date, e.ends_at);
                         while (cellInd < dayCells.length && daysLeft >= 1) {
                             dayCells[cellInd].events.push(e);
                             const note = dayCells[cellInd].element.appendChild(new EventNote(e, VIEWMODE_LODS[viewMode]));

@@ -1,5 +1,5 @@
-import { count } from "../../../util/ArrayUtil";
-import { earliest, latest } from "../../../util/DateUtil";
+import ArrayUtil from "../../../util/ArrayUtil";
+import DateUtil from "../../../util/DateUtil";
 import { QueryFilter } from "../Database";
 import EventDatabase, { EventQueryFilter, EventInfo, EventRegistration } from "./EventDatabase";
 
@@ -59,8 +59,8 @@ export default class CachingEventDatebase extends EventDatabase {
                 .then(newEvents => {
                     newEvents.forEach(e => this.rangeCache[e.id] = e); // save for later
                     // update range
-                    this.retrievedRange.from = earliest(this.retrievedRange.from, fromCopy);
-                    this.retrievedRange.to = latest(this.retrievedRange.to, toCopy);
+                    this.retrievedRange.from = DateUtil.Timestamps.earliest(this.retrievedRange.from, fromCopy);
+                    this.retrievedRange.to = DateUtil.Timestamps.latest(this.retrievedRange.to, toCopy);
                     resolve(newEvents);
                 })
                 .catch(reject);
@@ -116,7 +116,7 @@ export default class CachingEventDatebase extends EventDatabase {
 
             for (const optionsJSON in this.countCache) { // add to countCache
                 const options = JSON.parse(optionsJSON) as EventQueryFilter;
-                this.countCache[optionsJSON] += count(events, e => e.satisfies(options));
+                this.countCache[optionsJSON] += ArrayUtil.count(events, e => e.satisfies(options));
             }
 
             for (const e of events) { // update rangeCache

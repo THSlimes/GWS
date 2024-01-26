@@ -1,4 +1,4 @@
-import { clamp } from "../util/NumberUtil";
+import NumberUtil from "../util/NumberUtil";
 import AssemblyLine, { AnchorElementAssemblyLine, SelectAssemblyLine } from "./AssemblyLine";
 import { ButtonLikeInputAssemblyLine, CheckableInputAssemblyLine, DateInputAssemblyLine, InputAssemblyLine, NumberInputAssemblyLine, RangedInputAssemblyLine, TextInputAssemblyLine } from "./InputAssemblyLine";
 
@@ -20,7 +20,7 @@ export default abstract class ElementFactory {
 
     /** A heading with the given size. */
     public static heading(size:number, text?:string) {
-        size = clamp(Math.floor(size), 1, 6);
+        size = NumberUtil.clamp(Math.floor(size), 1, 6);
         return this[`h${size as 1|2|3|4|5|6}`]();
     }
 

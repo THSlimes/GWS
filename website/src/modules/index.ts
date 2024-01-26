@@ -8,13 +8,13 @@ import "../common/custom-elements/ElementCarousel";
 
 import SmartArticle from "../common/custom-elements/SmartArticle";
 import ArticleDatabase, { ArticleInfo } from "../common/firebase/database/articles/ArticleDatabase";
-import { clamp } from "../common/util/NumberUtil";
 import { FirestoreArticleDatabase } from "../common/firebase/database/articles/FirestoreArticleDatabase";
 import { STORAGE } from "../common/firebase/init-firebase";
 import { getDownloadURL, listAll, ref } from "@firebase/storage";
 import ElementCarousel from "../common/custom-elements/ElementCarousel";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
 import Placeholder from "../common/custom-elements/Placeholder";
+import NumberUtil from "../common/util/NumberUtil";
 
 // INSERTING CAROUSEL IMAGES
 
@@ -123,7 +123,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     /** Retrieves a page by its index. */
     function getPage(pageNum:number):Promise<PageInfo> {
-        pageNum = clamp(Math.floor(pageNum), 0, NUM_PAGES-1); // ensure valid index
+        pageNum = NumberUtil.clamp(Math.floor(pageNum), 0, NUM_PAGES-1); // ensure valid index
 
         return new Promise(async (resolve, reject) => {
             if (pages[pageNum].retrieved) resolve(pages[pageNum]); // already retrieved

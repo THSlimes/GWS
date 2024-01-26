@@ -1,5 +1,5 @@
 import Database, { Info, QueryFilter } from "./firebase/database/Database";
-import { deepCopy } from "./util/ObjectUtil";
+import ObjectUtil from "./util/ObjectUtil";
 
 function valuesEqual(a:any, b:any):boolean {
     if (a instanceof Date && b instanceof Date) return a.getTime() === b.getTime();
@@ -165,7 +165,7 @@ namespace DataView {
         private readonly _index:number;
         public get index() { return this._index; }
         private readonly data:T;
-        public copy() { return deepCopy(this.data); }
+        public copy() { return ObjectUtil.deepCopy(this.data); }
     
         private modifiedKeys:Set<keyof T> = new Set();
         public get isModified() { return this.modifiedKeys.size !== 0; }
@@ -182,12 +182,12 @@ namespace DataView {
         }
     
         public get<K extends keyof T>(key:K) {
-            return deepCopy(this.data[key]);
+            return ObjectUtil.deepCopy(this.data[key]);
         }
     
         public set<K extends keyof T>(key:K, newValue:T[K]):boolean {
             if (!valuesEqual(this.data[key], newValue)) {
-                this.data[key] = deepCopy(newValue);
+                this.data[key] = ObjectUtil.deepCopy(newValue);
                 this.modifiedKeys.add(key);
                 this.onModified();
     
