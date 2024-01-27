@@ -175,6 +175,7 @@ export default abstract class EventDatabase extends Database<EventInfo> {
 
     abstract get(options?:EventQueryFilter): Promise<EventInfo[]>;
     abstract count(options?:EventQueryFilter): Promise<number>;
+    abstract delete(...records: EventInfo[]): Promise<number>;
 
     abstract getRange(from?: Date, to?: Date, options?: Omit<EventQueryFilter, "range">): Promise<EventInfo[]>;
 

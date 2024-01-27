@@ -177,6 +177,17 @@ export default class FirestoreEventDatebase extends EventDatabase {
         });
     }
 
+    public delete(...records: EventInfo[]): Promise<number> {
+        return new Promise((resolve, reject) => {
+            const batch = writeBatch(DB);
+            for (const rec of records) batch.delete(doc(DB, "events", rec.id));
+
+            batch.commit()
+            .then(() => resolve(records.length))
+            .catch(reject);
+        });
+    }
+
     private getEvents(options: EventQueryFilter, doCount?: false): Promise<EventInfo[]>;
     private getEvents(options: EventQueryFilter, doCount?: true): Promise<number>;
     private getEvents(options: EventQueryFilter, doCount = false): Promise<EventInfo[] | number> {

@@ -48,5 +48,6 @@ export default abstract class UserDatabase extends Database<UserInfo> {
 
     abstract get(options?:UserQueryFilter): Promise<UserInfo[]>;
     abstract count(options?:UserQueryFilter): Promise<number>;
+    abstract delete(...records: UserInfo[]): Promise<number>;
 
 }

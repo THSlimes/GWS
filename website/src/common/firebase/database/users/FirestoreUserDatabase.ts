@@ -65,6 +65,17 @@ export class FirestoreUserDatabase extends UserDatabase {
         });
     }
 
+    public delete(...records:UserInfo[]): Promise<number> {
+        return new Promise((resolve, reject) => {
+            const batch = writeBatch(DB);
+            for (const rec of records) batch.delete(doc(DB, "users", rec.id));
+
+            batch.commit()
+            .then(() => resolve(records.length))
+            .catch(reject);
+        });
+    }
+
     private static getUsers(options: UserQueryFilter, doCount?: false): Promise<UserInfo[]>;
     private static getUsers(options: UserQueryFilter, doCount?: true): Promise<number>;
     private static getUsers(options:UserQueryFilter, doCount=false):Promise<UserInfo[]|number> {

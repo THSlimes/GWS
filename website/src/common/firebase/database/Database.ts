@@ -56,4 +56,11 @@ export default abstract class Database<I extends Info> {
      */
     public abstract write(...records:I[]):Promise<number>;
 
+    /**
+     * Deletes records from the datebase.
+     * @param ids IDs of records to be deleted
+     * @returns Promise that resolves with the number of deleted records
+     */
+    public abstract delete(...records:I[]):Promise<number>;
+
 }

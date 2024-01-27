@@ -1,6 +1,5 @@
 import ArrayUtil from "../../../util/ArrayUtil";
 import DateUtil from "../../../util/DateUtil";
-import { QueryFilter } from "../Database";
 import EventDatabase, { EventQueryFilter, EventInfo, EventRegistration } from "./EventDatabase";
 
 /**
@@ -133,6 +132,27 @@ export default class CachingEventDatebase extends EventDatabase {
         });
 
         return out;
+    }
+
+    public delete(...records:EventInfo[]): Promise<number> {
+        const out = this.relay.delete(...records);
+        const ids = records.map(e => e.id);
+
+        out.then(() => { // add to caches on success
+            for (const opt in this.getCache) this.getCache[opt] = this.getCache[opt].filter(e => !ids.includes(e.id));
+            for (const optionsJSON in this.countCache) {
+                const options = JSON.parse(optionsJSON) as EventQueryFilter;
+                this.countCache[optionsJSON] -= ArrayUtil.count(records, rec => rec.satisfies(options));
+            }
+            for (const rec of records) {
+                delete this.rangeCache[rec.id];
+                delete this.idCache[rec.id];
+            }
+            for (const cat in this.categoryCache) this.categoryCache[cat] = this.categoryCache[cat].filter(e => !ids.includes(e.id));
+        });
+
+        return out;
+        
     }
 
 }

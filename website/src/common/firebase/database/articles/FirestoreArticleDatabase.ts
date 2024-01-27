@@ -85,6 +85,17 @@ export class FirestoreArticleDatabase extends ArticleDatabase {
         
     }
 
+    public delete(...records:ArticleInfo[]): Promise<number> {
+        return new Promise((resolve, reject) => {
+            const batch = writeBatch(DB);
+            for (const rec of records) batch.delete(doc(DB, "articles", rec.id));
+
+            batch.commit()
+            .then(() => resolve(records.length))
+            .catch(reject);
+        });
+    }
+
     private static getArticles(options: ArticleQueryFilter, doCount?: false): Promise<ArticleInfo[]>;
     private static getArticles(options: ArticleQueryFilter, doCount?: true): Promise<number>;
     private static getArticles(options: ArticleQueryFilter, doCount = false): Promise<ArticleInfo[] | number> {
