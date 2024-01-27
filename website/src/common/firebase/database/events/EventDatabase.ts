@@ -1,5 +1,6 @@
 import { HexColor } from "../../../html-element-factory/AssemblyLine";
 import DateUtil from "../../../util/DateUtil";
+import StringUtil from "../../../util/StringUtil";
 import { Opt } from "../../../util/UtilTypes";
 import Database, { Info, QueryFilter } from "../Database";
 
@@ -34,7 +35,7 @@ export class EventInfo extends Info {
 
     constructor(
         sourceDB:EventDatabase,
-        id:string,
+        id = StringUtil.generateID(),
         name:string,
         description:string,
         category="",
@@ -88,7 +89,7 @@ export class RegisterableEventInfo extends EventInfo {
 
     constructor(
         sourceDB:EventDatabase,
-        id:string,
+        id = StringUtil.generateID(),
         name:string,
         description:string,
         category="",

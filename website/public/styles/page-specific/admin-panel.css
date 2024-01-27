@@ -146,6 +146,11 @@
 
                 > #new-event-description { grid-area: 1 / 2 / 7 / 8; }
             }
+
+            & .registration-details {
+                width: 100%;
+                flex-wrap: wrap;
+            }
         }
     }
 

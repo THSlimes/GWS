@@ -4,7 +4,7 @@ import RichText from "../ui/RichText";
 import { showError, showMessage, showSuccess, showWarning } from "../ui/info-messages";
 import { HasSections } from "../util/ElementUtil";
 import getErrorMessage from "../firebase/authentication/error-messages";
-import { AUTH, onAuth } from "../firebase/init-firebase";
+import { onAuth } from "../firebase/init-firebase";
 import { createLinkBackURL } from "../util/UrlUtil";
 import ColorUtil from "../util/ColorUtil";
 import DateUtil from "../util/DateUtil";

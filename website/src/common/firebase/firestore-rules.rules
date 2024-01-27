@@ -52,6 +52,8 @@ service cloud.firestore {
                 && request.resource.data.registrations.diff(resource.data.registrations).affectedKeys().hasOnly([request.auth.uid]) // only affected own uid
                 && request.resource.data.registrations.diff(resource.data.registrations).removedKeys().hasAll([request.auth.uid]) // only added own uid
                 && hasPermissions(["DEREGISTER_FOR_EVENTS"]); // is allowed to register
+
+            allow create : if hasPermissions(["CREATE_EVENTS"]);
         }
 
         match /users/{userId} {

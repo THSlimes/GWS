@@ -97,6 +97,7 @@ export default class EventCalendar extends HTMLElement {
             this.populate(this._lookingAt, this._viewMode);
         }
     }
+    public redraw() { this.populate(this._lookingAt, this._viewMode); }
 
     private controls:HTMLDivElement = this.appendChild(ElementFactory.div().class("controls", "center-content", "main-axis-space-between").make());
 
@@ -107,7 +108,7 @@ export default class EventCalendar extends HTMLElement {
             this.populate(this._lookingAt, this._viewMode);
         }
     }
-    public toToday() { this.lookingAt = new Date(); }
+    public jumpToToday() { this.lookingAt = new Date(); }
 
     private dayCellContainer:HTMLDivElement = this.appendChild(ElementFactory.div(undefined, "day-cell-container").make());
 

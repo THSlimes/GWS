@@ -9,7 +9,7 @@ enum Permission {
     UPDATE_ARTICLES = "UPDATE_ARTICLES", // whether the user can update preexisting articles
 
     // event related
-    CREATE_EVENTS = "CREATE_EVENT", // whether the user can create a new event
+    CREATE_EVENTS = "CREATE_EVENTS", // whether the user can create a new event
     UPDATE_EVENTS = "UPDATE_EVENTS", // whether the user can update the details of a preexisting event
     REGISTER_FOR_EVENTS = "REGISTER_FOR_EVENTS", // whether the user is allowed to register for an event
     DEREGISTER_FOR_EVENTS = "DEREGISTER_FOR_EVENTS", // whether the user is allowed to deregister for an event

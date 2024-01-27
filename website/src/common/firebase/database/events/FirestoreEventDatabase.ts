@@ -29,13 +29,21 @@ const MAX_EVENT_DURATION = 7 * MS_PER_DAY;
 
 function toFirestore(event:EventInfo):DBEvent {
     return event instanceof RegisterableEventInfo ? {
-        ...event,
+        name: event.name,
+        description: event.description,
+        category: event.category,
+        ...(event.color && { color: event.color }),
+        registrations: event.registrations,
+        capacity: event.capacity,
         starts_at: Timestamp.fromDate(event.starts_at),
         ends_at: Timestamp.fromDate(event.ends_at),
         can_register_from: event.can_register_from ? Timestamp.fromDate(event.can_register_from) : undefined,
         can_register_until: event.can_register_until ? Timestamp.fromDate(event.can_register_until) : undefined,
     } : {
-        ...event,
+        name: event.name,
+        description: event.description,
+        category: event.category,
+        ...(event.color && { color: event.color }),
         starts_at: Timestamp.fromDate(event.starts_at),
         ends_at: Timestamp.fromDate(event.ends_at)
     };

@@ -2,9 +2,14 @@ import EventCalendar from "../custom-elements/EventCalendar";
 import Placeholder from "../custom-elements/Placeholder";
 import "../custom-elements/Switch";
 import Switch from "../custom-elements/Switch";
+import getErrorMessage from "../firebase/authentication/error-messages";
 import CachingEventDatebase from "../firebase/database/events/CachingEventDatebase";
+import { EventInfo, RegisterableEventInfo } from "../firebase/database/events/EventDatabase";
 import FirestoreEventDatebase from "../firebase/database/events/FirestoreEventDatabase";
+import { HexColor } from "../html-element-factory/AssemblyLine";
+import { showError, showSuccess } from "../ui/info-messages";
 import DateUtil from "../util/DateUtil";
+import NumberUtil from "../util/NumberUtil";
 
 enum ValidityStatus {
     VALID = "valid",
@@ -73,6 +78,9 @@ let REGISTRATION_START_DATE_INPUT:HTMLInputElement;
 let REGISTRATION_START_TIME_INPUT:HTMLInputElement;
 let REGISTRATION_END_DATE_INPUT:HTMLInputElement;
 let REGISTRATION_END_TIME_INPUT:HTMLInputElement;
+
+let CAPACITY_INPUT:HTMLInputElement;
+
 let REGISTRATION_FEEDBACK:HTMLDivElement;
 
 const getRegistrationStartDate = () => DateUtil.Timestamps.fromInputs(REGISTRATION_START_DATE_INPUT, REGISTRATION_START_TIME_INPUT);
@@ -85,6 +93,10 @@ function checkRegistrationDetails():Validity {
         else if (!REGISTRATION_END_DATE_INPUT.value) return { status: ValidityStatus.INVALID, reason: "Einddatum is leeg." };
         else if (!REGISTRATION_END_TIME_INPUT.value) return { status: ValidityStatus.INVALID, reason: "Eindtijd is leeg." };
         else if (getRegistrationEndDate() < getRegistrationStartDate()) return { status: ValidityStatus.INVALID, reason: "Eindmoment is voor startmoment." };
+        else if (CAPACITY_INPUT.value === "") return { status: ValidityStatus.INVALID, reason: "Aantal inschrijfplekken is leeg" };
+        else if (CAPACITY_INPUT.valueAsNumber % 1 !== 0) return { status: ValidityStatus.INVALID, reason: "Geen heel aantal inschrijfplekken." };
+        else if (CAPACITY_INPUT.valueAsNumber < 0) return { status: ValidityStatus.INVALID, reason: "Minder dan 0 inschrijfplekken." };
+        else if (CAPACITY_INPUT.valueAsNumber === 0) return { status: ValidityStatus.WARNING, reason: "Nul inschrijfplekken" };
     }
 
     return { status: ValidityStatus.VALID };
@@ -95,9 +107,37 @@ function checkRegistrationDetails():Validity {
 let ADD_NEW_EVENT_BUTTON:HTMLButtonElement;
 
 function detailsValid():boolean {
-    return checkGeneralDetails().status === ValidityStatus.VALID
-        && checkTimespan().status === ValidityStatus.VALID
-        && checkRegistrationDetails().status === ValidityStatus.VALID;
+    return checkGeneralDetails().status !== ValidityStatus.INVALID
+        && checkTimespan().status !== ValidityStatus.INVALID
+        && checkRegistrationDetails().status !== ValidityStatus.INVALID;
+}
+
+
+
+function getNewEvent():EventInfo {
+    if (!detailsValid()) throw new Error("event details are not valid");
+    else if (REGISTERABLE_SWITCH.value) {
+        return new RegisterableEventInfo(
+            DB,
+            undefined,
+            NAME_INPUT.value,
+            DESCRIPTION_INPUT.value,
+            CATEGORY_INPUT.value,
+            USE_COLOR_SWITCH.value ? COLOR_INPUT.value as HexColor : undefined,
+            [getStartDate(), getEndDate()],
+            {},
+            CAPACITY_INPUT.valueAsNumber
+        );
+    }
+    else return new EventInfo(
+        DB,
+        undefined,
+        NAME_INPUT.value,
+        DESCRIPTION_INPUT.value,
+        CATEGORY_INPUT.value,
+        USE_COLOR_SWITCH.value ? COLOR_INPUT.value as HexColor : undefined,
+        [getStartDate(), getEndDate()]
+    );
 }
 
 
@@ -124,6 +164,7 @@ window.addEventListener("DOMContentLoaded", () => { // getting elements from pag
     REGISTRATION_START_TIME_INPUT = document.getElementById("new-event-registration-start-time") as HTMLInputElement;
     REGISTRATION_END_DATE_INPUT = document.getElementById("new-event-registration-end-date") as HTMLInputElement;
     REGISTRATION_END_TIME_INPUT = document.getElementById("new-event-registration-end-time") as HTMLInputElement;
+    CAPACITY_INPUT = document.getElementById("new-event-capacity") as HTMLInputElement;
     REGISTRATION_FEEDBACK = document.getElementById("new-event-registration-feedback") as HTMLDivElement;
 
     ADD_NEW_EVENT_BUTTON = document.getElementById("add-new-event-button") as HTMLButtonElement;
@@ -134,7 +175,7 @@ const DB = new CachingEventDatebase(new FirestoreEventDatebase());
 let initializedEventsPanel = false;
 export function initEventsPanel() {
     if (!initializedEventsPanel) {
-        const calendar = Placeholder.replaceWith("event-calendar", new EventCalendar(DB, new Date(), "month"));
+        const eventCalendar = Placeholder.replaceWith("event-calendar", new EventCalendar(DB, new Date(), "month"));
 
         EVENT_DETAILS_FORM.addEventListener("input", () => {
             GENERAL_FEEDBACK.classList.remove(...Object.values(ValidityStatus));
@@ -149,6 +190,7 @@ export function initEventsPanel() {
             TIMESPAN_FEEDBACK.lastElementChild!.textContent = timespanValidity.reason ?? "";
             TIMESPAN_FEEDBACK.classList.add(timespanValidity.status);
 
+            CAPACITY_INPUT.valueAsNumber = NumberUtil.clamp(Math.round(CAPACITY_INPUT.valueAsNumber), 0);
             REGISTRATION_FEEDBACK.classList.remove(...Object.values(ValidityStatus));
             const registrationValidity = checkRegistrationDetails();
             REGISTRATION_FEEDBACK.firstElementChild!.textContent = VALIDITY_ICONS[registrationValidity.status];
@@ -159,6 +201,18 @@ export function initEventsPanel() {
             
         });
         EVENT_DETAILS_FORM.dispatchEvent(new InputEvent("input"));
+
+        ADD_NEW_EVENT_BUTTON.addEventListener("click", () => {
+            const newEvent = getNewEvent();
+            console.log(newEvent);
+            
+            DB.write(newEvent)
+            .then(() => {
+                eventCalendar.redraw();
+                showSuccess("Nieuwe activiteit toegevoegd!");
+            })
+            .catch(err => showError(getErrorMessage(err)));
+        });
 
         initializedEventsPanel = true;
     }
