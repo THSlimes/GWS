@@ -1,6 +1,7 @@
 import EventCalendar from "../custom-elements/EventCalendar";
 import Placeholder from "../custom-elements/Placeholder";
 import "../custom-elements/Switch";
+import "../custom-elements/FolderElement";
 import Switch from "../custom-elements/Switch";
 import getErrorMessage from "../firebase/authentication/error-messages";
 import CachingEventDatebase from "../firebase/database/events/CachingEventDatebase";

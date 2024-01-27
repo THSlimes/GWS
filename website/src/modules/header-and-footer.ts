@@ -114,7 +114,7 @@ function createFolderContents(config:NavbarConfig, nestingLvl=0):(FolderElement|
         const v = config[heading];
         if (typeof v === "string") out.push(createLink(heading, v));
         else {
-            const folder = new FolderElement(heading, nestingLvl === 0 ? "down" : "right", 200);
+            const folder = new FolderElement(heading, nestingLvl === 0 ? "down" : "right", "absolute", 200);
             folder.append(...createFolderContents(v, nestingLvl+1));
             out.push(folder);
         }

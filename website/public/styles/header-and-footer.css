@@ -23,6 +23,7 @@ header.page-header {
 
             > .contents {
                 padding: var(--in-section-gap) var(--min-section-gap);
+                background-color: var(--secondary);
                 > * { margin: .25em 0px .25em 0px; height:17.6px; }
             }
         }

@@ -1,6 +1,8 @@
 /* FOLDER-ELEMENT DEFAULT STYLE */
 
 folder-element {
+    max-width: 100%;
+
     > .topper {
         position: relative;
         column-gap: calc(var(--in-section-gap) / 2);
@@ -19,7 +21,6 @@ folder-element {
     }
 
     > .contents {
-        position: absolute;
         z-index: 99;
 
         display: grid;
@@ -28,6 +29,12 @@ folder-element {
         grid-auto-columns: max-content;
         column-gap: var(--in-section-gap);
 
-        background-color: var(--secondary);
+        &.absolute { position: absolute; }
+        &.static {
+            position: static;
+            box-sizing: border-box;
+            max-width: 100%;
+            overflow: hidden;
+        }
     }
 }
