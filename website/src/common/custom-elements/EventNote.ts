@@ -176,6 +176,19 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
                                 }, 5000);
                             }
                         }),
+                    ElementFactory.p("share")
+                        .id("share-button")
+                        .class("icon", "click-action")
+                        .tooltip("Delen")
+                        .on("click", () => {
+                            const url = `${location.origin}/calendar.html#looking-at=${this.event.id}`;
+                            if (navigator.canShare({ url, title: `GWS Activiteit - ${this.event.name}` })) {
+                                navigator.share({ url, title: `GWS Activiteit - ${this.event.name}` });
+                            }
+                            else navigator.clipboard.writeText(url)
+                                .then(() => showSuccess("Link gekopieerd!"))
+                                .catch(() => showError("Kan link niet kopiëren, probeer het later opnieuw."));
+                        }),
                     this.expanded && ElementFactory.p("close")
                         .id("close-button")
                         .class("icon", "click-action")
