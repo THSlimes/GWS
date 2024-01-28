@@ -73,7 +73,7 @@ export class FirestoreArticleDatabase extends ArticleDatabase {
         });
     }
 
-    public write(...records: ArticleInfo[]): Promise<number> {
+    public doWrite(...records: ArticleInfo[]): Promise<number> {
         return new Promise((resolve,reject) => {
             const batch = writeBatch(DB);
             for (const rec of records) batch.set(doc(DB, "articles", rec.id), ARTICLE_CONVERTER.toFirestore(rec));
@@ -85,7 +85,7 @@ export class FirestoreArticleDatabase extends ArticleDatabase {
         
     }
 
-    public delete(...records:ArticleInfo[]): Promise<number> {
+    public doDelete(...records:ArticleInfo[]): Promise<number> {
         return new Promise((resolve, reject) => {
             const batch = writeBatch(DB);
             for (const rec of records) batch.delete(doc(DB, "articles", rec.id));

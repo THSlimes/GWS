@@ -48,19 +48,51 @@ export default abstract class Database<I extends Info> {
      */
     public abstract count(options?:QueryFilter<I>):Promise<number>;
 
+    /** Method to be implemented by subclass. */
+    protected abstract doWrite(...records:I[]):Promise<number>
+    private readonly writeHandlers:((...newRecords:I[])=>void)[] = [];
+    public set onWrite(newHandler:(...newRecords:I[])=>void) {
+        this.writeHandlers.push(newHandler);
+    }
+
     /**
      * Writes the given records to the database. (if a record with a given ID
      * already exists, it is updated, otherwise it is created)
      * @param records data to write
      * @returns Promise that resolves with the number of edited records
      */
-    public abstract write(...records:I[]):Promise<number>;
+    public write(...records:I[]):Promise<number> {
+        return new Promise((resolve,reject) => {
+            this.doWrite(...records)
+            .then(count => {
+                resolve(count);
+                this.writeHandlers.forEach(h => h(...records));
+            })
+            .catch(reject);
+        });
+    }
+    
+    /** Method to be implemented by subclass. */
+    protected abstract doDelete(...records:I[]):Promise<number>
+    private readonly deleteHandlers:((...newRecords:I[])=>void)[] = [];
+    public set onDelete(newHandler:(...newRecords:I[])=>void) {
+        this.deleteHandlers.push(newHandler);
+    }
 
     /**
      * Deletes records from the datebase.
      * @param ids IDs of records to be deleted
      * @returns Promise that resolves with the number of deleted records
      */
-    public abstract delete(...records:I[]):Promise<number>;
+    public delete(...records:I[]):Promise<number> {
+        return new Promise((resolve,reject) => {
+            this.doDelete(...records)
+            .then(count => {
+                resolve(count);
+                this.deleteHandlers.forEach(h => h(...records));
+            })
+            .catch(reject);
+        });
+    }
 
 }

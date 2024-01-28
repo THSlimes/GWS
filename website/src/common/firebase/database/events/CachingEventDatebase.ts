@@ -15,10 +15,13 @@ export default class CachingEventDatebase extends EventDatabase {
         super();
 
         this.relay = db;
+        this.relay.onWrite = (...newRecords) => this.addToCaches(...newRecords);
+        this.relay.onDelete = (...newRecords) => this.removeFromCaches(...newRecords);
     }
 
     private readonly getCache:Record<string,EventInfo[]> = {};
     public get(options?:EventQueryFilter, invalidateCache=false): Promise<EventInfo[]> {
+
         const optionsJSON = JSON.stringify(options);
         if (invalidateCache) delete this.countCache[optionsJSON];
 
@@ -46,6 +49,7 @@ export default class CachingEventDatebase extends EventDatabase {
     private readonly retrievedRange = { from:new Date(), to:new Date() };
     private readonly rangeCache:Record<string,EventInfo> = {};
     getRange(from?:Date, to?:Date, options?:Omit<EventQueryFilter, "range"> | undefined): Promise<EventInfo[]> {
+        
         const fromCopy = from ? new Date(from) : new Date(-8640000000000000);
         const toCopy = to ? new Date(to) : new Date(8640000000000000);
 
@@ -104,55 +108,60 @@ export default class CachingEventDatebase extends EventDatabase {
         return this.deregisterFor(eventId);
     }
 
-    public write(...events: EventInfo[]): Promise<number> {
-        const out = this.relay.write(...events);
-
-        out.then(() => { // add to caches on success
-            for (const optionsJSON in this.getCache) { // add to getCache
-                const options = JSON.parse(optionsJSON) as EventQueryFilter;
-                this.getCache[optionsJSON].push(...events.filter(e => e.satisfies(options)));
-            }
-
-            for (const optionsJSON in this.countCache) { // add to countCache
-                const options = JSON.parse(optionsJSON) as EventQueryFilter;
-                this.countCache[optionsJSON] += ArrayUtil.count(events, e => e.satisfies(options));
-            }
-
-            for (const e of events) { // update rangeCache
-                if (e.satisfies({range: this.retrievedRange})) this.rangeCache[e.id] = e;
-            }
-
-            for (const e of events) { // update idCache
-                this.idCache[e.id] = e;
-            }
-
-            for (const cat in this.categoryCache) { // update categoryCache
-                this.categoryCache[cat].push(...events.filter(e => e.category === cat));
-            }
-        });
-
-        return out;
+    public override set onWrite(newHandler:(...newRecords:EventInfo[])=>void) {
+        this.relay.onWrite = newHandler;
     }
 
-    public delete(...records:EventInfo[]): Promise<number> {
-        const out = this.relay.delete(...records);
+    public addToCaches(...events: EventInfo[]):void {
+        for (const optionsJSON in this.getCache) { // add to getCache
+            const options = JSON.parse(optionsJSON) as EventQueryFilter;
+            this.getCache[optionsJSON].push(...events.filter(e => e.satisfies(options)));
+        }
+
+        for (const optionsJSON in this.countCache) { // add to countCache
+            const options = JSON.parse(optionsJSON) as EventQueryFilter;
+            this.countCache[optionsJSON] += ArrayUtil.count(events, e => e.satisfies(options));
+        }
+
+        for (const e of events) { // update rangeCache
+            if (e.satisfies({range: this.retrievedRange})) this.rangeCache[e.id] = e;
+        }
+
+        for (const e of events) { // update idCache
+            this.idCache[e.id] = e;
+        }
+
+        for (const cat in this.categoryCache) { // update categoryCache
+            this.categoryCache[cat].push(...events.filter(e => e.category === cat));
+        }
+    }
+
+    doWrite(...records:EventInfo[]): Promise<number> {
+        return this.relay.write(...records);
+    }
+
+    public override set onDelete(newHandler:(...newRecords:EventInfo[])=>void) {
+        this.relay.onDelete = newHandler;
+    }
+
+    public removeFromCaches(...records:EventInfo[]):void {
         const ids = records.map(e => e.id);
 
-        out.then(() => { // add to caches on success
-            for (const opt in this.getCache) this.getCache[opt] = this.getCache[opt].filter(e => !ids.includes(e.id));
-            for (const optionsJSON in this.countCache) {
-                const options = JSON.parse(optionsJSON) as EventQueryFilter;
-                this.countCache[optionsJSON] -= ArrayUtil.count(records, rec => rec.satisfies(options));
-            }
-            for (const rec of records) {
-                delete this.rangeCache[rec.id];
-                delete this.idCache[rec.id];
-            }
-            for (const cat in this.categoryCache) this.categoryCache[cat] = this.categoryCache[cat].filter(e => !ids.includes(e.id));
-        });
+        // remove from caches
+        for (const opt in this.getCache) this.getCache[opt] = this.getCache[opt].filter(e => !ids.includes(e.id));
+        for (const optionsJSON in this.countCache) {
+            const options = JSON.parse(optionsJSON) as EventQueryFilter;
+            this.countCache[optionsJSON] -= ArrayUtil.count(records, rec => rec.satisfies(options));
+        }
+        for (const rec of records) {
+            delete this.rangeCache[rec.id];
+            delete this.idCache[rec.id];
+        }
+        for (const cat in this.categoryCache) this.categoryCache[cat] = this.categoryCache[cat].filter(e => !ids.includes(e.id));
+    }
 
-        return out;
-        
+    doDelete(...records:EventInfo[]):Promise<number> {
+        return this.relay.delete(...records);
     }
 
 }

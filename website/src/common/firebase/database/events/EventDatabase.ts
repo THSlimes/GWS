@@ -23,7 +23,9 @@ export class EventRegistration {
 
 /** An EventInfo object contains all relevant information of an event.  */
 export class EventInfo extends Info {
-    protected sourceDB:EventDatabase;
+    protected readonly _sourceDB:EventDatabase;
+    /** The Database from where the EventInfo was retrieved. */
+    public get sourceDB() { return this._sourceDB; }
 
     public readonly name:string;
     public readonly description:string;
@@ -43,7 +45,7 @@ export class EventInfo extends Info {
         timespan:TimeSpan
     ) {
         super(id);
-        this.sourceDB = sourceDB;
+        this._sourceDB = sourceDB;
         
         this.name = name;
         this.description = description;
@@ -129,7 +131,7 @@ export class RegisterableEventInfo extends EventInfo {
     /** Registers the current user for this event. */
     public register():Promise<void> {
         return new Promise((resolve,reject) => {
-            this.sourceDB.registerFor(this.id)
+            this._sourceDB.registerFor(this.id)
             .then(newRegistrations => {
                 for (const uid in newRegistrations) this.registrations[uid] = newRegistrations[uid];
                 resolve();
@@ -141,7 +143,7 @@ export class RegisterableEventInfo extends EventInfo {
     /** De-registers the current user from this event. */
     public deregister():Promise<void> {
         return new Promise((resolve,reject) => {
-            this.sourceDB.deregisterFor(this.id)
+            this._sourceDB.deregisterFor(this.id)
             .then(newRegistrations => {
                 for (const uid in this.registrations) delete this.registrations[uid];
                 for (const uid in newRegistrations) this.registrations[uid] = newRegistrations[uid];
@@ -175,7 +177,8 @@ export default abstract class EventDatabase extends Database<EventInfo> {
 
     abstract get(options?:EventQueryFilter): Promise<EventInfo[]>;
     abstract count(options?:EventQueryFilter): Promise<number>;
-    abstract delete(...records: EventInfo[]): Promise<number>;
+    abstract doWrite(...records: EventInfo[]): Promise<number>;
+    abstract doDelete(...records: EventInfo[]): Promise<number>;
 
     abstract getRange(from?: Date, to?: Date, options?: Omit<EventQueryFilter, "range">): Promise<EventInfo[]>;
 

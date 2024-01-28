@@ -2,11 +2,15 @@ event-note {
     display: block;
     position: relative;
     
-    padding: calc(var(--in-section-gap) / 2);
+    padding: var(--in-section-gap);
 
     box-sizing: border-box;
+
+    background-color: var(--background-color);
+    --hover-bg-color: color-mix(in srgb, var(--background-color), white 12.5%) !important;
+    color: var(--text-color);
     
-    border-radius: calc(var(--in-section-gap) / 2);
+    border-radius: var(--in-section-gap);
     
     &[expanded] {
         padding: var(--section-gap-y) var(--section-gap-x);
@@ -35,6 +39,16 @@ event-note {
         text-align: justify;
     }
     > .register-button {}
+    > .quick-actions {
+        position: absolute;
+        top: var(--in-section-gap);
+        right: var(--in-section-gap);
+        
+        & > * {
+            color: inherit;
+            border-radius: var(--in-section-gap);
+        }
+    }
 }
 
 /* PHONE-VIEWPORT OVERRIDE */

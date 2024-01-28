@@ -94,10 +94,10 @@ export default class EventCalendar extends HTMLElement {
     set viewMode(newViewMode:calendarViewMode) {
         if (this._viewMode !== newViewMode) {
             this._viewMode = newViewMode;
-            this.populate(this._lookingAt, this._viewMode);
+            this.redraw();
         }
     }
-    public redraw() { this.populate(this._lookingAt, this._viewMode); }
+    protected redraw() { this.populate(this._lookingAt, this._viewMode); }
 
     private controls:HTMLDivElement = this.appendChild(ElementFactory.div().class("controls", "center-content", "main-axis-space-between").make());
 
@@ -105,7 +105,7 @@ export default class EventCalendar extends HTMLElement {
     public set lookingAt(newDate:Date) {
         if (newDate.getTime() !== this._lookingAt.getTime()) {
             this._lookingAt = newDate;
-            this.populate(this._lookingAt, this._viewMode);
+            this.redraw();
         }
     }
     public jumpToToday() { this.lookingAt = new Date(); }
@@ -120,6 +120,9 @@ export default class EventCalendar extends HTMLElement {
         super();
 
         this.db = db instanceof CachingEventDatebase ? db : new CachingEventDatebase(db);
+        
+        this.db.onWrite = () => this.redraw();
+        this.db.onDelete = () => this.redraw();
 
         this.classList.add("flex-rows", "main-axis-start");
         

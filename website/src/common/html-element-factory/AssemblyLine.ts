@@ -138,7 +138,7 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
         if (this._tooltip !== undefined) out.title = this._tooltip;
 
         // children
-        for (const c of this._children) {
+        for (const c of this._children) {            
             if (c) {
                 if (c instanceof Node) out.appendChild(c);
                 else if (c instanceof AssemblyLine) out.appendChild(c.make());

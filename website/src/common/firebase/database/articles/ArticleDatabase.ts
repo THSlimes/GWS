@@ -46,7 +46,8 @@ export default abstract class ArticleDatabase extends Database<ArticleInfo> {
 
     abstract get(options?:ArticleQueryFilter): Promise<ArticleInfo[]>;
     abstract count(options?:ArticleQueryFilter): Promise<number>;
-    abstract delete(...records: ArticleInfo[]): Promise<number>;
+    abstract doWrite(...records: ArticleInfo[]): Promise<number>;
+    abstract doDelete(...records: ArticleInfo[]): Promise<number>;
 
     /** Gets articles with the given category. */
     abstract getByCategory(category: string, options?: Omit<ArticleQueryFilter, "category">): Promise<ArticleInfo[]>;

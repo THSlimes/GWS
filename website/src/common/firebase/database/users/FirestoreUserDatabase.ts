@@ -54,7 +54,7 @@ export class FirestoreUserDatabase extends UserDatabase {
         });
     }
 
-    public write(...records: UserInfo[]): Promise<number> {
+    public doWrite(...records: UserInfo[]): Promise<number> {
         return new Promise((resolve,reject) => {
             const batch = writeBatch(DB);
             for (const rec of records) batch.set(doc(DB, "users", rec.id), USER_CONVERTER.toFirestore(rec));
@@ -65,7 +65,7 @@ export class FirestoreUserDatabase extends UserDatabase {
         });
     }
 
-    public delete(...records:UserInfo[]): Promise<number> {
+    public doDelete(...records:UserInfo[]): Promise<number> {
         return new Promise((resolve, reject) => {
             const batch = writeBatch(DB);
             for (const rec of records) batch.delete(doc(DB, "users", rec.id));

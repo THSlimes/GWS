@@ -166,7 +166,7 @@ export default class FirestoreEventDatebase extends EventDatabase {
         });
     }
 
-    public write(...records: EventInfo[]): Promise<number> {
+    public doWrite(...records: EventInfo[]): Promise<number> {
         return new Promise((resolve,reject) => {
             const batch = writeBatch(DB);
             for (const rec of records) batch.set(doc(DB, "events", rec.id), toFirestore(rec));
@@ -177,7 +177,7 @@ export default class FirestoreEventDatebase extends EventDatabase {
         });
     }
 
-    public delete(...records: EventInfo[]): Promise<number> {
+    public doDelete(...records: EventInfo[]): Promise<number> {
         return new Promise((resolve, reject) => {
             const batch = writeBatch(DB);
             for (const rec of records) batch.delete(doc(DB, "events", rec.id));

@@ -164,7 +164,14 @@ div#split-view {
             gap: var(--section-gap-y) var(--section-gap-x);
 
             > * {
-                > img { max-width:15vw; }
+                > img {
+                    max-width:15vw;
+                    border-radius: var(--in-section-gap);
+                    &:hover {
+                        background-color: none !important;
+                        filter: brightness(87.5%);
+                    }
+                }
             }
         }
     }

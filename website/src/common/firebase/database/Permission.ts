@@ -11,6 +11,7 @@ enum Permission {
     // event related
     CREATE_EVENTS = "CREATE_EVENTS", // whether the user can create a new event
     UPDATE_EVENTS = "UPDATE_EVENTS", // whether the user can update the details of a preexisting event
+    DELETE_EVENTS = "DELETE_EVENTS", // whether the user can delete events
     REGISTER_FOR_EVENTS = "REGISTER_FOR_EVENTS", // whether the user is allowed to register for an event
     DEREGISTER_FOR_EVENTS = "DEREGISTER_FOR_EVENTS", // whether the user is allowed to deregister for an event
 
@@ -51,6 +52,7 @@ const PERMISSION_TRANSLATIONS:Record<Permission,string> = {
 
     [Permission.CREATE_EVENTS]: "Activiteiten toevoegen",
     [Permission.UPDATE_EVENTS]: "Activiteit-info bewerken",
+    [Permission.DELETE_EVENTS]: "Activiteiten verwijderen",
     [Permission.REGISTER_FOR_EVENTS]: "Inschrijven voor activiteiten",
     [Permission.DEREGISTER_FOR_EVENTS]: "Uitschrijven van activiteiten ",
 

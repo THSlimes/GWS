@@ -24,22 +24,40 @@ const SPLIT_VIEW = ElementFactory.div("split-view")
                     .children(
                         ElementFactory.a("https://www.bol.com/nl/").openInNewTab(true)
                             .class("center-content")
-                            .children(ElementFactory.img("./images/logos/bol_com.png", "Bol.com")),
+                            .children(
+                                ElementFactory.img("./images/logos/bol_com.png", "Bol.com")
+                                    .class("click-action")
+                            ),
                         ElementFactory.a("https://debiebnijmegen.nl/").openInNewTab(true)
                             .class("center-content")
-                            .children(ElementFactory.img("./images/logos/de_bieb.webp", "De Bieb")),
+                            .children(
+                                ElementFactory.img("./images/logos/de_bieb.webp", "De Bieb")
+                                    .class("click-action")
+                            ),
                         ElementFactory.a("https://www.dressmeclothing.nl/").openInNewTab(true)
                             .class("center-content")
-                            .children(ElementFactory.img("./images/logos/dressme.png", "Dress-me kleding")),
+                            .children(
+                                ElementFactory.img("./images/logos/dressme.png", "Dress-me kleding")
+                                    .class("click-action")
+                            ),
                         ElementFactory.a("https://www.knaek.nl/studentenkorting/nijmegen").openInNewTab(true)
                             .class("center-content")
-                            .children(ElementFactory.img("./images/logos/Knaek-logo.png", "Knaek studentenkorting")),
+                            .children(
+                                ElementFactory.img("./images/logos/Knaek-logo.png", "Knaek studentenkorting")
+                                    .class("click-action")
+                            ),
                         ElementFactory.a("https://kbanijmegen.nl/").openInNewTab(true)
                             .class("center-content")
-                            .children(ElementFactory.img("./images/logos/kba.webp", "KBA Nijmegen")),
+                            .children(
+                                ElementFactory.img("./images/logos/kba.webp", "KBA Nijmegen")
+                                    .class("click-action")
+                            ),
                         ElementFactory.a("https://www.researchned.nl/").openInNewTab(true)
                             .class("center-content")
-                            .children(ElementFactory.img("./images/logos/researchned.webp", "ResearchNed"))
+                            .children(
+                                ElementFactory.img("./images/logos/researchned.webp", "ResearchNed")
+                                    .class("click-action")
+                            )
                     )
             )
     )

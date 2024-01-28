@@ -54,6 +54,8 @@ service cloud.firestore {
                 && hasPermissions(["DEREGISTER_FOR_EVENTS"]); // is allowed to register
 
             allow create : if hasPermissions(["CREATE_EVENTS"]);
+
+            allow delete : if hasPermissions(["DELETE_EVENTS"]);
         }
 
         match /users/{userId} {

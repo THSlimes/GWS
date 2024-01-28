@@ -209,7 +209,6 @@ export function initEventsPanel() {
             
             DB.write(newEvent)
             .then(() => {
-                eventCalendar.redraw();
                 showSuccess("Nieuwe activiteit toegevoegd!");
             })
             .catch(err => showError(getErrorMessage(err)));
