@@ -8,8 +8,8 @@ import { AUTH } from "../common/firebase/init-firebase";
 import { showError, showWarning } from "../common/ui/info-messages";
 import getErrorMessage from "../common/firebase/authentication/error-messages";
 import { redirectIfLoggedIn } from "../common/firebase/authentication/auth-based-redirect";
-import { isLocalUrl } from "../common/util/UrlUtil";
 import Cache from "../common/Cache";
+import URLUtil from "../common/util/URLUtil";
 
 redirectIfLoggedIn("/", true); // can't log in when already logged in
 
@@ -48,7 +48,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 .then(() => {
                     Cache.set("is-logged-in", true);
                     const returnUrl = new URLSearchParams(window.location.search).get("return-to");
-                    if (returnUrl !== null && isLocalUrl(returnUrl)) location.replace(returnUrl);
+                    if (returnUrl !== null && URLUtil.isLocalUrl(returnUrl)) location.replace(returnUrl);
                     else location.href = '/';
                 }) // redirect to homepage
                 .catch(() => showError("Er ging iets mis, probeer het later opnieuw."));
@@ -61,3 +61,5 @@ window.addEventListener("DOMContentLoaded", () => {
     });
     
 });
+
+console.log(new URLSearchParams(window.location.search).get("return-to"));

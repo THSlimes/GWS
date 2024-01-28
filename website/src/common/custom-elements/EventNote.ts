@@ -5,12 +5,12 @@ import { showError, showSuccess, showWarning } from "../ui/info-messages";
 import { HasSections } from "../util/ElementUtil";
 import getErrorMessage from "../firebase/authentication/error-messages";
 import { onAuth } from "../firebase/init-firebase";
-import { createLinkBackURL } from "../util/UrlUtil";
 import ColorUtil from "../util/ColorUtil";
 import DateUtil from "../util/DateUtil";
 import { checkPermissions } from "../firebase/authentication/permission-based-redirect";
 import Permission from "../firebase/database/Permission";
 import EventCalendar from "./EventCalendar";
+import URLUtil from "../util/URLUtil";
 
 /** Amount of detail present in an EventNote element. */
 export type DetailLevel = "full" | "high" | "normal" | "low";
@@ -132,7 +132,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
                         self.disabled = true;
                         onAuth()
                         .then(user => {
-                            if (user === null) location.href = createLinkBackURL("./login.html").toString();
+                            if (user === null) location.href = URLUtil.createLinkBackURL("./login.html").toString();
                             else regEvent.toggleRegistered(user.uid)
                                 .then(isReg => {
                                     const buttonState = EventNote.getRegisterButtonState(true, isReg, regEvent);

@@ -117,9 +117,7 @@ export default class FolderElement extends HTMLElement {
     /**
      * Immediately opens the FolderElement.
      */
-    public open() {
-        console.log("open");
-        
+    public open() {        
         const headingBB = this.heading.getBoundingClientRect();
         switch (this._foldDir) {
             case "down":
@@ -145,8 +143,6 @@ export default class FolderElement extends HTMLElement {
      * Immediately closes the FolderElement.
      */
     public close() {
-        console.log("close");
-        
         $(this.contents).stop().slideUp(200);
         this.arrow.style.rotate = "0deg";
         this.removeAttribute("open");
