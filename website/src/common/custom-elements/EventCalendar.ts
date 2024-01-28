@@ -7,6 +7,9 @@ import IconSelector from "./IconSelector";
 import Responsive, { Viewport } from "../ui/Responsive";
 import DateUtil from "../util/DateUtil";
 import ElementUtil from "../util/ElementUtil";
+import URLUtil from "../util/URLUtil";
+import { showError } from "../ui/info-messages";
+import getErrorMessage from "../firebase/authentication/error-messages";
 
 const DAY_ABBREVIATIONS = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
 
@@ -74,15 +77,20 @@ export default class EventCalendar extends HTMLElement {
             if (e.target === this.FULLSCREEN_EVENT_CONTAINER) this.closeFullscreenNote();
         });
     }
+
     public static expandNote(event:EventInfo|EventNote) {
         const fsNote = event instanceof EventNote ? event.copy("full", true) : new EventNote(event, "full", true);
         $(this.FULLSCREEN_EVENT_CONTAINER).empty().append(fsNote);
         this.FULLSCREEN_EVENT_CONTAINER.removeAttribute("hidden");
         document.body.classList.add("no-scroll");
 
+        location.hash = `looking-at=${fsNote.event.id}`;
+
         return fsNote;
     }
+
     public static closeFullscreenNote() {
+        URLUtil.setHashProperty("looking-at", null);
         document.body.classList.remove("no-scroll");
         this.FULLSCREEN_EVENT_CONTAINER.setAttribute("hidden", "");
     }
@@ -129,6 +137,14 @@ export default class EventCalendar extends HTMLElement {
         this._lookingAt = date;
         this._viewMode = viewMode;
         this.populate(this._lookingAt, this._viewMode);
+
+        const hashObj = URLUtil.getHashProperties();
+        if ("looking-at" in hashObj) this.db.getById(hashObj["looking-at"])
+            .then(ev => {
+                if (ev) EventCalendar.expandNote(ev);
+                else console.warn(`no event with ID "${hashObj["looking-at"]}" found.`);
+            })
+            .catch(err => showError(getErrorMessage(err)));
     }
 
     private static createDayCell(cellDate:Date, viewDate:Date, viewMode:calendarViewMode, options:DayCellCreationOptions={}):DayCell {

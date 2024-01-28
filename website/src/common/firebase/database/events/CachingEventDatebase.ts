@@ -112,7 +112,7 @@ export default class CachingEventDatebase extends EventDatabase {
         this.relay.onWrite = newHandler;
     }
 
-    public addToCaches(...events: EventInfo[]):void {
+    private addToCaches(...events: EventInfo[]):void {
         for (const optionsJSON in this.getCache) { // add to getCache
             const options = JSON.parse(optionsJSON) as EventQueryFilter;
             this.getCache[optionsJSON].push(...events.filter(e => e.satisfies(options)));
@@ -144,7 +144,7 @@ export default class CachingEventDatebase extends EventDatabase {
         this.relay.onDelete = newHandler;
     }
 
-    public removeFromCaches(...records:EventInfo[]):void {
+    private removeFromCaches(...records:EventInfo[]):void {
         const ids = records.map(e => e.id);
 
         // remove from caches

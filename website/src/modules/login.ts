@@ -48,7 +48,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 .then(() => {
                     Cache.set("is-logged-in", true);
                     const returnUrl = new URLSearchParams(window.location.search).get("return-to");
-                    if (returnUrl !== null && URLUtil.isLocalUrl(returnUrl)) location.replace(returnUrl);
+                    if (returnUrl !== null && URLUtil.isLocal(returnUrl)) location.replace(returnUrl);
                     else location.href = '/';
                 }) // redirect to homepage
                 .catch(() => showError("Er ging iets mis, probeer het later opnieuw."));

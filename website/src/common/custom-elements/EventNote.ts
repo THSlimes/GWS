@@ -57,7 +57,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
             ["Inschrijving niet mogelijk", "event_busy", true];
     }
 
-    private readonly event:EventInfo;
+    public readonly event:EventInfo;
     private _lod:DetailLevel;
     public set lod(newLod:DetailLevel) {
         this._lod = newLod;
