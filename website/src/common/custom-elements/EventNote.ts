@@ -22,27 +22,39 @@ const VISIBILITY_AT_LOD:Record<DetailLevel, Record<EventNoteSection, boolean>> =
     low: { name: true, timespan: false, description: false, registerButton: false, quickActions: false }
 };
 
-/** Gives a [text,icon,disabled] button state based on the events state. */
-function getRegisterButtonState(isReg:boolean, e:RegisterableEventInfo):[string,string,boolean] {
-    const now = new Date();
-    if (e.ends_at <= now) return ["Activiteit is al voorbij", "event_busy", true];
-    else if (e.starts_at <= now) return ["Activiteit is al gestart", "event_upcoming", true];
-    else if (e.can_register_from && now < e.can_register_from) {
-        return [`Inschrijving start op ${DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(e.can_register_from)}`, "event", true];
-    }
-    else if (e.can_register_until && e.can_register_until < now) {
-        return ["Inschrijving is gesloten", "event_busy", true];
-    }
-    else if (isReg) return ["Uitschrijven", "free_cancellation", false];
-    else if (e.isFull()) return ["Activiteit zit vol", "event_busy", true];
-    else return ["Inschrijven", "calendar_add_on", false];
-}
-
 export class EventNote extends HTMLElement implements HasSections<EventNoteSection> {
 
-    private static CAN_DELETE_EVENTS = false;
+    private static CAN_DELETE = false;
+    private static CAN_EDIT = false;
+    private static CAN_REGISTER = false;
+    private static CAN_DEREGISTER = false;
+
     static {
-        checkPermissions(Permission.DELETE_EVENTS, canDelete => this.CAN_DELETE_EVENTS = canDelete, true, true);
+        checkPermissions(Permission.DELETE_EVENTS, canDelete => this.CAN_DELETE = canDelete, true, true);
+        checkPermissions(Permission.UPDATE_ARTICLES, canDelete => this.CAN_EDIT = canDelete, true, true);
+        checkPermissions(Permission.REGISTER_FOR_EVENTS, canDelete => this.CAN_REGISTER = canDelete, true, true);
+        checkPermissions(Permission.DEREGISTER_FOR_EVENTS, canDelete => this.CAN_DEREGISTER = canDelete, true, true);
+    }
+
+    /** Gives a [text,icon,disabled] button state based on the events state. */
+    private static getRegisterButtonState(isLoggedIn:boolean, isRegistered:boolean, e:RegisterableEventInfo):[string,string,boolean] {
+        const now = new Date();
+        if (e.ends_at <= now) return ["Activiteit is al voorbij", "event_busy", true]; // already ended
+        else if (e.starts_at <= now) return ["Activiteit is al gestart", "calendar_today", true]; // already started
+        else if (e.can_register_from && now < e.can_register_from) { // before registration period
+            return [`Inschrijving start op ${DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(e.can_register_from)}`, "calendar_clock", true];
+        }
+        else if (e.can_register_until && e.can_register_until < now) { // after registration period
+            return ["Inschrijving is gesloten", "event_upcoming", true];
+        }
+        else if (isRegistered) return EventNote.CAN_DEREGISTER ?
+            ["Uitschrijven", "free_cancellation", false] :
+            ["Ingeschreven", "event_available", true];
+        else if (e.isFull()) return ["Activiteit zit vol", "event_busy", true];
+        else if (!isLoggedIn) return ["Log in om je in te schrijven.", "login", false];
+        else return EventNote.CAN_REGISTER ?
+            ["Inschrijven", "calendar_add_on", false] :
+            ["Inschrijving niet mogelijk", "event_busy", true];
     }
 
     private readonly event:EventInfo;
@@ -100,7 +112,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
             const regEvent = this.event;
 
             this.registerButton = this.appendChild(
-                ElementFactory.button(() => showWarning("Not implemented yet."))
+                ElementFactory.button()
                     .class("register-button", "center-content", "main-axis-space-between")
                     .children(
                         ElementFactory.h4("person_add").class("icon"),
@@ -110,26 +122,24 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
                         self.disabled = true;
                         onAuth()
                         .then(user => {
-                            [
-                                self.children[1].textContent,
-                                self.children[0].textContent,
-                                self.disabled
-                            ] = user === null ? ["Log in om je in te schrijven", "login", false] :
-                                                getRegisterButtonState(regEvent.isRegistered(user.uid), regEvent);
+                            const buttonState = EventNote.getRegisterButtonState(user !== null, (user !== null) && regEvent.isRegistered(user.uid), regEvent);
+                            self.children[1].textContent = buttonState[0];
+                            self.children[0].textContent = buttonState[1];
+                            self.disabled = buttonState[2];
                         });
                     })
                     .on("click", (ev,self) => {
                         self.disabled = true;
                         onAuth()
                         .then(user => {
-                            if (user === null) createLinkBackURL("./login.html");
+                            if (user === null) location.href = createLinkBackURL("./login.html").toString();
                             else regEvent.toggleRegistered(user.uid)
                                 .then(isReg => {
-                                    [
-                                        self.children[1].textContent,
-                                        self.children[0].textContent,
-                                        self.disabled
-                                    ] = getRegisterButtonState(isReg, regEvent);
+                                    const buttonState = EventNote.getRegisterButtonState(true, isReg, regEvent);
+                                    self.children[1].textContent = buttonState[0];
+                                    self.children[0].textContent = buttonState[1];
+                                    self.disabled = buttonState[2];
+
                                 })
                                 .catch(err => showError(getErrorMessage(err)));
                         });
@@ -142,7 +152,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
         this.quickActions = this.appendChild(
             ElementFactory.div(undefined, "quick-actions")
                 .children(
-                    EventNote.CAN_DELETE_EVENTS && ElementFactory.p("delete")
+                    EventNote.CAN_DELETE && ElementFactory.p("delete")
                         .id("delete-button")
                         .class("icon", "click-action")
                         .tooltip("Activiteit verwijderen")

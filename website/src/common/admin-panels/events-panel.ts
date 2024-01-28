@@ -127,7 +127,8 @@ function getNewEvent():EventInfo {
             USE_COLOR_SWITCH.value ? COLOR_INPUT.value as HexColor : undefined,
             [getStartDate(), getEndDate()],
             {},
-            CAPACITY_INPUT.valueAsNumber
+            CAPACITY_INPUT.valueAsNumber,
+            [getRegistrationStartDate(), getRegistrationEndDate()]
         );
     }
     else return new EventInfo(
