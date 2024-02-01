@@ -254,12 +254,21 @@ function createFooter():Node {
                 .class("social-media-links", "flex-columns", "main-axis-space-between")
                 .children(
                     ElementFactory.a("https://www.instagram.com/svdengeitenwollensoc/")
-                        .children(ElementFactory.img("./images/logos/Instagram_Glyph_Gradient.png", "Instagram")),
+                        .children(
+                            ElementFactory.img("./images/logos/Instagram_Glyph_Gradient.png", "Instagram")
+                                .class("click-action")
+                        ),
                     ElementFactory.a("https://nl.linkedin.com/in/s-v-den-geitenwollen-soc-496145163")
                         .id("linked-in-link")
-                        .children(ElementFactory.img("./images/logos/LI-In-Bug.png", "Linked-In")),
+                        .children(
+                            ElementFactory.img("./images/logos/LI-In-Bug.png", "Linked-In")
+                                .class("click-action")
+                        ),
                     ElementFactory.a("https://www.facebook.com/dengeitenwollensoc/")
-                        .children(ElementFactory.img("./images/logos/Facebook_Logo_Primary.png", "Facebook")),
+                        .children(
+                            ElementFactory.img("./images/logos/Facebook_Logo_Primary.png", "Facebook")
+                                .class("click-action")
+                        ),
                 ),
             ElementFactory.h5(`© ${new Date().getFullYear()} Den Geitenwollen Soc.`)
                 .class("copyright-notice")

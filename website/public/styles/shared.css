@@ -165,12 +165,10 @@ div#split-view {
 
             > * {
                 > img {
+                    padding: var(--in-section-gap);
+                    box-sizing: border-box;
                     max-width:15vw;
                     border-radius: var(--in-section-gap);
-                    &:hover {
-                        background-color: none !important;
-                        filter: brightness(87.5%);
-                    }
                 }
             }
         }

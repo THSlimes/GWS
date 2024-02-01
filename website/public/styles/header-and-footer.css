@@ -128,12 +128,15 @@ footer {
     }
 
     > .social-media-links {
-        gap:1em;
-        min-width: 25%;
+        gap: var(--section-gap-x);
 
         & img {
+            padding: var(--in-section-gap);
             min-height: 21px; /* https://brand.linkedin.com/downloads */
             height: 4em;
+
+            border-radius: var(--in-section-gap);
+            --hover-bg-color: color-mix(in srgb, var(--secondary), white 12.5%);
         }
 
         #linked-in-link { margin-left: .5em; }

@@ -17,6 +17,11 @@ type Timespan = [Date,Date];
 
 export default abstract class DateUtil {
 
+    /** The earliest possible representable Date. */
+    public static get FIRST() { return new Date(-8640000000000000); }
+    /** The latest possible representable Date. */
+    public static get LAST() { return new Date(8640000000000000); }
+
     /** Methods related to days. */
     public static readonly Days = {
         /** Finds the first of a certain weekday before the given Date. */
