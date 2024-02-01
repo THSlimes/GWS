@@ -1,5 +1,5 @@
 import NumberUtil from "../util/NumberUtil";
-import AssemblyLine, { AnchorElementAssemblyLine, SelectAssemblyLine } from "./AssemblyLine";
+import AssemblyLine, { AnchorElementAssemblyLine, HexColor, SelectAssemblyLine } from "./AssemblyLine";
 import { ButtonLikeInputAssemblyLine, CheckableInputAssemblyLine, DateInputAssemblyLine, InputAssemblyLine, NumberInputAssemblyLine, RangedInputAssemblyLine, TextInputAssemblyLine } from "./InputAssemblyLine";
 
 /**
@@ -77,7 +77,11 @@ export default abstract class ElementFactory {
             return onClick ? out.onClick(onClick) : out;
         },
         checkbox() { return new CheckableInputAssemblyLine("checkbox"); },
-        color() { return new InputAssemblyLine("color"); },
+        color(value?:HexColor) {
+            const out = new InputAssemblyLine("color");
+            if (value) out.value(value);
+            return out;
+        },
         date(year?:number, month?:number, date?:number) {
             const out = new DateInputAssemblyLine("date");
             if (year !== undefined || month !== undefined || date !== undefined) {
@@ -131,6 +135,12 @@ export default abstract class ElementFactory {
     public static button(onClick?:(e:MouseEvent, self:HTMLButtonElement)=>void) {
         const out = new AssemblyLine("button");
         if (onClick) out.on("click", onClick);
+        return out;
+    }
+
+    public static textarea(text?:string) {
+        const out = AssemblyLine.specific("textarea", ["value", "placeholder", "minLength", "maxLength", "readOnly", "spellcheck"]);
+        if (text) out.value(text);
         return out;
     }
 

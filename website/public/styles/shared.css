@@ -237,6 +237,10 @@ div#split-view {
 .cross-axis-end { align-items: flex-end; }
 .cross-axis-center { align-items: center; }
 
+.text-left { text-align: left; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+
 .section-gap-x { column-gap: var(--section-gap-x); }
 .section-gap-y { column-gap: var(--section-gap-y); }
 .section-gap { gap: var(--section-gap-y) var(--section-gap-x); }
@@ -244,6 +248,21 @@ div#split-view {
 
 .no-scroll { overflow: hidden; }
 [no-resize] { resize: none; }
+.no-margin { margin: 0px; }
+
+.pulsate-in { animation: pulsate-in 1000ms ease-in-out 0ms infinite; }
+@keyframes pulsate-in {
+    0% { scale: 1; }
+    50% { scale: .9; }
+    100% { scale: 1; }
+}
+
+.pulsate-out { animation: pulsate-out 1000ms ease-in-out 0ms infinite; }
+@keyframes pulsate-out {
+    0% { scale: 1; }
+    50% { scale: 1.1; }
+    100% { scale: 1; }
+}
 
 /* standard indication of being click-able */
 button, input[type="button"], .button {

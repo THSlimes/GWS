@@ -73,7 +73,7 @@ export default class EventCalendar extends HTMLElement {
     private static FULLSCREEN_EVENT_CONTAINER = ElementFactory.div("fullscreen-event-container", "center-content").attr("hidden").make();
     static { // add container to body
         window.addEventListener("DOMContentLoaded", () => document.body.appendChild(this.FULLSCREEN_EVENT_CONTAINER));
-        this.FULLSCREEN_EVENT_CONTAINER.addEventListener("click", e => {
+        this.FULLSCREEN_EVENT_CONTAINER.addEventListener("mousedown", e => {
             if (e.target === this.FULLSCREEN_EVENT_CONTAINER) this.closeFullscreenNote();
         });
     }
@@ -85,8 +85,6 @@ export default class EventCalendar extends HTMLElement {
         document.body.classList.add("no-scroll");
 
         location.hash = `looking-at=${fsNote.event.id}`;
-
-        return fsNote;
     }
 
     public static closeFullscreenNote() {

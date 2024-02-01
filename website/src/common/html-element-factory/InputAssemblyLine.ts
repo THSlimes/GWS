@@ -1,10 +1,11 @@
+import DateUtil from "../util/DateUtil";
 import AssemblyLine, { HexColor } from "./AssemblyLine";
 
 /** Maps the 'type' field of an HTMLInputElement to the type of its 'value' field */
 type HTMLInputElementTypeMap = {
     "button": [string];
     "checkbox": [string];
-    "color": [number, number, number];
+    "color": [number, number, number] | [HexColor];
     "date": [number, number, number];
     "datetime-local": [number, number, number, number, number] | [Date];
     "email": [string];
@@ -33,15 +34,21 @@ type InputTypeTranslators = {
 const INPUT_TYPE_TRANSLATORS:InputTypeTranslators = {
     button: text => text,
     checkbox: value => value,
-    color: (r,g,b) => `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`,
+    color: (...args) => {
+        if (args.length === 1) return args[0];
+        else {
+            const [r,g,b] = args;
+            return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+        }
+    },
     date: (...args) => {
         return `${args[0].toString().padStart(4,'0')}-${(args[1]+1).toString().padStart(2,'0')}-${args[2].toString().padStart(2,'0')}`;
     },
     "datetime-local": (...args) => {
         if (args[0] instanceof Date) {
-            const d = args[0];
+            const d = DateUtil.Timestamps.copy(args[0]);
             d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-            const iso = d.toISOString();            
+            const iso = d.toISOString();
             return iso.includes('.') ? iso.substring(0, iso.indexOf('.')) : iso;
         }
         else return new Date(args[0], args[1]!, args[2]!, args[3]!, args[4]!).toISOString();

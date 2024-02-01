@@ -121,9 +121,9 @@ function getNewEvent():EventInfo {
         return new RegisterableEventInfo(
             DB,
             undefined,
-            NAME_INPUT.value,
-            DESCRIPTION_INPUT.value,
-            CATEGORY_INPUT.value,
+            NAME_INPUT.value.trim(),
+            DESCRIPTION_INPUT.value.trim(),
+            CATEGORY_INPUT.value.trim(),
             USE_COLOR_SWITCH.value ? COLOR_INPUT.value as HexColor : undefined,
             [getStartDate(), getEndDate()],
             {},

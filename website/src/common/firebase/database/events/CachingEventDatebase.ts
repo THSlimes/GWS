@@ -139,7 +139,7 @@ export default class CachingEventDatebase extends EventDatabase {
         this.relay.onDelete = newHandler;
     }
 
-    private removeFromCaches(...records:EventInfo[]):void {        
+    private removeFromCaches(...records:EventInfo[]):void {
         const ids = records.map(e => e.id);
 
         // remove from getCache

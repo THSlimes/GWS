@@ -256,6 +256,10 @@ export default abstract class DateUtil {
         /** Makes a copy of the given timestamp. */
         copy(d:Date):Date {
             return new Date(d);
+        },
+
+        isValid(d:Date):boolean {
+            return !isNaN(d.getTime());
         }
 
     };
