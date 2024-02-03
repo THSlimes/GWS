@@ -1,6 +1,9 @@
+import NumberUtil from "./NumberUtil";
+
 export type HexColor = `#${string}`;
 export type RGBColor = [number, number, number];
-type Color = HexColor | RGBColor;
+export type RGBString = `rgb(${number}, ${number}, ${number})`;
+export type Color = HexColor | RGBColor | RGBString;
 
 /** Functions to compute different kinds of distance */
 const DISTANCE_METRICS = {
@@ -37,12 +40,21 @@ export default abstract class ColorUtil {
         "#0aff99", // mint
     ];
 
+    private static isHex(c:Color): c is HexColor {
+        return typeof c === "string" && c.startsWith('#');
+    }
+
     private static isRGB(c:Color):c is RGBColor {
         return Array.isArray(c) && c.length === 3 && c.every(p => 0 <= p && p <= 255);
     }
 
-    private static isHex(c:Color): c is HexColor {
-        return typeof c === "string" && c.startsWith('#');
+    private static isRGBString(c:Color):c is RGBString {
+        return typeof c === "string"
+            && c.startsWith("rgb(")
+            && c.endsWith(')')
+            && c.substring(4, c.length-1) // remove leading and trailing characters
+                .split(", ") // split into parts
+                .every((p,i,arr) => arr.length === 3 && NumberUtil.isInt(p) && NumberUtil.isBetween(Number.parseInt(p), 0, 255)); // check parts
     }
 
     /** Converts a color from hex format to RGB format. */
@@ -51,6 +63,9 @@ export default abstract class ColorUtil {
             const color = Number.parseInt(c.substring(1), 16);
             return [(color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF];
         }
+        else if (this.isRGBString(c)) {
+            return c.substring(4, c.length-1).split(", ").map(p => Number.parseInt(p)) as RGBColor;
+        }
         else return c; // already RGB
     }
     
@@ -58,8 +73,9 @@ export default abstract class ColorUtil {
     public static toHex(c:Color):HexColor {
         if (this.isRGB(c)) {
             const [r,g,b] = c;
-            return `#${r.toString(16)}${g.toString(16)}${b.toString(16)}`;
+            return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
         }
+        else if (this.isRGBString(c)) return this.toHex(this.toRGB(c));
         else return c; // already hex
     }
 

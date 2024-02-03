@@ -4,6 +4,8 @@
         margin: var(--in-section-gap) 0px;
     }
 
+    & * { color: var(--text-dark); }
+
     & h1 {
         --type: "kop 1";
 

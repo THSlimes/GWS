@@ -1,6 +1,9 @@
 import AssemblyLine from "../html-element-factory/AssemblyLine";
 import ElementFactory from "../html-element-factory/ElementFactory";
+import ColorUtil, { Color } from "../util/ColorUtil";
 import { HasSections } from "../util/ElementUtil";
+import NumberUtil from "../util/NumberUtil";
+import FolderElement from "./FolderElement";
 
 /** [parent Node, "before child" index] */
 type InsertionPosition = [Node, number];
@@ -79,6 +82,9 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
         let italicToggle:HTMLElement;
         let underlinedToggle:HTMLElement;
         let strikethroughToggle:HTMLElement;
+        let fontSizeInput:HTMLInputElement
+        let colorSelector:FolderElement;
+        let colorInput:HTMLInputElement;
 
         this.toolbar = this.appendChild(
             ElementFactory.div(undefined, "toolbar", "flex-columns", "main-axis-space-evenly", "section-gap")
@@ -151,9 +157,36 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                         .tooltip("Tekstgrootte")
                                 )
                                 .children(
-                                    ElementFactory.input.number(12, 1, 144)
+                                    fontSizeInput = ElementFactory.input.number(12)
+                                        .onMake(fontSizeInput => {
+                                            let selectedElementCopy:HTMLElement|null;
+                                            function refocus() { // re-focusses on the previously focussed element
+                                                if (selectedElementCopy) {
+                                                    selectedElementCopy.focus();
+                                                    selectedElementCopy.classList.remove("fake-focussed");
+                                                }
+                                            }
+
+                                            fontSizeInput.addEventListener("mousedown", ev => {
+                                                selectedElementCopy = selectedElement;
+                                                selectedElementCopy?.classList.add("fake-focussed");
+                                            });
+                                            fontSizeInput.addEventListener("input", ev => {
+                                                fontSizeInput.valueAsNumber = NumberUtil.clamp(fontSizeInput.valueAsNumber, 1, 72);
+
+                                                if (selectedElementCopy) {
+                                                    selectedElementCopy.style.fontSize = fontSizeInput.valueAsNumber + "px";
+                                                    if (!(ev instanceof InputEvent)) refocus();
+                                                }
+                                            });
+                                            fontSizeInput.addEventListener("focusout", () => {
+                                                fontSizeInput.valueAsNumber = NumberUtil.clamp(fontSizeInput.valueAsNumber, 1, 72, true);
+                                                refocus();
+                                            });
+                                        })
+                                        .make()
                                 ),
-                            ElementFactory.folderElement()
+                            colorSelector = ElementFactory.folderElement()
                                 .foldDir("down")
                                 .hideArrow(true)
                                 .closingDelay(250)
@@ -163,9 +196,19 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                         .tooltip("Tekstkleur")
                                 )
                                 .children(
-                                    folder => ElementFactory.input.color("#000000")
-                                        .on("input", (ev, colorInput) => folder.heading.style.color = colorInput.value)
+                                    folder => colorInput = ElementFactory.input.color("#000000")
+                                        .on("mousedown", ev => {
+                                            // prevent focus change
+                                            ev.stopImmediatePropagation();
+                                            ev.preventDefault();
+                                        })
+                                        .on("input", (ev, colorInput) => {
+                                            folder.heading.style.color = colorInput.value;
+                                            if (selectedElement) selectedElement.style.color = colorInput.value;
+                                        })
+                                        .make()
                                 )
+                                .make()
                         ),
                     ElementFactory.div(undefined, "section-types", "flex-columns", "cross-axis-center", "in-section-gap")
                         .children(
@@ -245,7 +288,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                 .make()
         )
 
-        let selectedElement:Element|null = null
+        let selectedElement:HTMLElement|null = null
 
         this.body = this.appendChild(
             ElementFactory.div(undefined, "body", "rich-text")
@@ -255,13 +298,16 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                 .on("focusin", (ev) => {
                     const target = ev.target;
 
-                    if (target instanceof Element && target.classList.contains("element")) {
+                    if (target instanceof HTMLElement && target.classList.contains("element")) {
                         selectedElement = target;
                         
                         boldToggle.toggleAttribute("selected", target.classList.contains("bold"));
                         italicToggle.toggleAttribute("selected", target.classList.contains("italic"));
                         underlinedToggle.toggleAttribute("selected", target.classList.contains("underlined"));
                         strikethroughToggle.toggleAttribute("selected", target.classList.contains("strikethrough"));
+                        fontSizeInput.value = getComputedStyle(target).fontSize.slice(0, -2);
+                        colorInput.value = ColorUtil.toHex(getComputedStyle(target).color as Color);
+                        colorSelector.heading.style.color = colorInput.value;
                     }
                 })
                 .make()

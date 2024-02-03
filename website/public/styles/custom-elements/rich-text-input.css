@@ -78,6 +78,8 @@ rich-text-input {
             > .element {
                 margin: 0px;
                 flex-grow: 1;
+
+                &.fake-focussed { outline: var(--text-dark) auto 1px; }
         
                 &:empty::before {
                     color: var(--shadow-dark);

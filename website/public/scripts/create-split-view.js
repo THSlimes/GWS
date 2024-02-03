@@ -114,7 +114,7 @@ eval("\nObject.defineProperty(exports, \"__esModule\", ({ value: true }));\nclas
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
-eval("\nObject.defineProperty(exports, \"__esModule\", ({ value: true }));\nclass NumberUtil {\n    /** Limits 'n' between 'lower' and 'upper' */\n    static clamp(n, lower = -Infinity, upper = Infinity) {\n        return Math.max(lower, Math.min(upper, n));\n    }\n}\nexports[\"default\"] = NumberUtil;\n\n\n//# sourceURL=webpack://gws-website/./src/common/util/NumberUtil.ts?");
+eval("\nObject.defineProperty(exports, \"__esModule\", ({ value: true }));\nclass NumberUtil {\n    /** Limits 'n' between 'lower' and 'upper' */\n    static clamp(n, lower = -Infinity, upper = Infinity, resolveNaN = false) {\n        return resolveNaN && isNaN(n) ? lower : Math.max(lower, Math.min(upper, n));\n    }\n    static isBetween(n, lower = -Infinity, upper = Infinity, inclusive = true) {\n        return inclusive ?\n            lower <= n && n <= upper :\n            lower < n && n < upper;\n    }\n    /** Determines whether `asString` represents a number. */\n    static isNumber(asString) {\n        return !isNaN(Number.parseFloat(asString));\n    }\n    /** Determines whether `asString` represents an integer. */\n    static isInt(asString) {\n        return !isNaN(Number.parseInt(asString)) && (Number.parseInt(asString) === Number.parseFloat(asString));\n    }\n}\nexports[\"default\"] = NumberUtil;\n\n\n//# sourceURL=webpack://gws-website/./src/common/util/NumberUtil.ts?");
 
 /***/ }),
 
