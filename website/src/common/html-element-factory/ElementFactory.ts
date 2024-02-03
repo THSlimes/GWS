@@ -1,5 +1,6 @@
 import NumberUtil from "../util/NumberUtil";
 import AssemblyLine, { AnchorElementAssemblyLine, HexColor, SelectAssemblyLine } from "./AssemblyLine";
+import FolderElementAssemblyLine from "./FolderElementAssemblyLine";
 import { ButtonLikeInputAssemblyLine, CheckableInputAssemblyLine, DateInputAssemblyLine, InputAssemblyLine, NumberInputAssemblyLine, RangedInputAssemblyLine, TextInputAssemblyLine } from "./InputAssemblyLine";
 
 /**
@@ -108,7 +109,14 @@ export default abstract class ElementFactory {
             else if (month !== undefined) out.value(new Date().getFullYear(), month);
             return out;
         },
-        number() { return new NumberInputAssemblyLine("number"); },
+        number(value?:number, min?:number, max?:number, step?:number) {
+            const out = new NumberInputAssemblyLine("number");
+            if (typeof value === "number") out.value(value);
+            if (typeof min === "number") out.min(min);
+            if (typeof max === "number") out.max(max);
+            if (typeof step === "number") out.step(step);
+            return out;
+        },
         password() { return new TextInputAssemblyLine("password"); },
         radio() { return new CheckableInputAssemblyLine("radio"); },
         range() { return new NumberInputAssemblyLine("range"); },
@@ -153,5 +161,7 @@ export default abstract class ElementFactory {
 
     public static hr() { return new AssemblyLine("hr"); }
     public static br() { return new AssemblyLine("br"); }
+
+    public static folderElement() { return new FolderElementAssemblyLine(); }
 
 }

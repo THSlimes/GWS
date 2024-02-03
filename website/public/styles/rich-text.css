@@ -1,0 +1,34 @@
+.rich-text {
+    > * {
+        padding: var(--in-section-gap);
+        margin: var(--in-section-gap) 0px;
+    }
+
+    & h1 {
+        --type: "kop 1";
+
+        &.title {
+            --type: "titel";
+            font-size: 250%;
+        }
+    }
+
+    & h2 {
+        --type: "kop 2";
+    }
+
+    & h3 {
+        --type: "kop 3";
+    }
+
+    & p {
+        --type: "paragraaf";
+    }
+
+
+
+    .bold { font-weight: bolder; }
+    .italic { font-style: italic; }
+    .underlined { text-decoration: underline; }
+    .strikethrough { text-decoration: line-through; }
+}

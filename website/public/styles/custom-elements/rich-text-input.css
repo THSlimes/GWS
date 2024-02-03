@@ -1,0 +1,93 @@
+@import url("../rich-text.css");
+
+rich-text-input {
+    display: block;
+    position: relative;
+
+    padding: var(--in-section-gap);
+    width: 100%;
+    max-width: 50vw;
+    height: 100%;
+    max-height: 60vh;
+
+    background-color: var(--secondary);
+
+    /* &, & * { outline: 1px solid red; } */
+
+    > .toolbar {
+        padding: calc(var(--in-section-gap) / 4);
+
+        background-color: var(--primary);
+        border-radius: var(--in-section-gap);
+
+        flex-wrap: wrap;
+
+        & .click-action {
+            color: var(--text-dark);
+            border-radius: var(--in-section-gap);
+        }
+        & folder-element {
+            > .topper {
+                border-radius: var(--in-section-gap);
+                > * { margin: 0px; }
+            }
+
+            > .contents {
+            }
+
+            &.category {
+                > .topper {
+                    outline: var(--std-border);
+                    transition: border-bottom-left-radius 200ms linear;
+                }
+                &[open] > .topper { border-bottom-left-radius: 0px; }
+
+                > .contents {
+                    background-color: var(--primary);
+                    border: var(--std-border);
+                    border-radius: 0px 0px var(--in-section-gap) var(--in-section-gap);
+                }
+            }
+
+        }
+        & .color-heading { -webkit-text-stroke: .5px var(--text-dark); }
+
+        > * {
+            border-radius: var(--in-section-gap);
+        }
+    }
+
+    > .body {
+        padding: var(--in-section-gap);
+
+        box-sizing: border-box;
+        width: 100%;
+        flex-grow: 1;
+
+        background-color: var(--primary);
+        color: var(--text-dark);
+        
+        border-radius: var(--in-section-gap);
+
+        overflow-y: scroll;
+
+        > .element-container {
+            outline: 2px dashed var(--shadow-dark);
+            border-radius: var(--in-section-gap);
+
+            > .element {
+                margin: 0px;
+                flex-grow: 1;
+        
+                &:empty::before {
+                    color: var(--shadow-dark);
+                    font-style: italic;
+                    font-weight: bold;
+                    content: "Nieuwe " var(--type);
+                }
+
+            }
+        }
+    }
+
+}

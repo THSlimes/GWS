@@ -5,7 +5,6 @@ folder-element {
 
     > .topper {
         position: relative;
-        column-gap: calc(var(--in-section-gap) / 2);
 
         > .heading {
             display: flex;

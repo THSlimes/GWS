@@ -228,15 +228,15 @@ export class RangedInputAssemblyLine<RT extends RangedInputType> extends InputAs
 
     protected _min?: HTMLInputElementTypeMap[RT];
     /** Provides a minimum value for the input. */
-    public min(minValue: HTMLInputElementTypeMap[RT]) {
+    public min(...minValue: HTMLInputElementTypeMap[RT]) {
         this._min = minValue;
         return this;
     }
 
     protected _max?: HTMLInputElementTypeMap[RT];
     /** Provides a maximum value for the input. */
-    public max(minValue: HTMLInputElementTypeMap[RT]) {
-        this._min = minValue;
+    public max(...minValue: HTMLInputElementTypeMap[RT]) {
+        this._max = minValue;
         return this;
     }
 

@@ -23,9 +23,26 @@ export default class FolderElement extends HTMLElement {
     public closingDelay:number;
     private closingTimeout?:NodeJS.Timeout;
 
+
+
     private readonly topper:HTMLDivElement;
-    private readonly heading:HTMLHeadingElement;
+
+    private _heading:HTMLElement;
+    public set heading(newHeading:HTMLElement) {
+        const oldHeading = this._heading;
+        
+        if (newHeading !== oldHeading) {
+            oldHeading.replaceWith(newHeading);
+            this._heading = newHeading;
+        }
+    }
+    public get heading() { return this._heading; }
+
     private readonly arrow:HTMLHeadingElement;
+    public set arrowHidden(isHidden:boolean) {
+        isHidden ? this.arrow.setAttribute("hidden", "") : this.arrow.removeAttribute("hidden");
+    }
+
     
     private readonly contents:HTMLDivElement;
 
@@ -49,14 +66,14 @@ export default class FolderElement extends HTMLElement {
         // initializing element
         const originalContents = Array.from(this.children);
 
-        this.heading = ElementFactory.h5(heading ?? this.getAttribute("heading") ?? "").class("heading").make();
+        this._heading = ElementFactory.h5(heading ?? this.getAttribute("heading") ?? "").class("heading").make();
         this.arrow = ElementFactory.h5("chevron_right")
             .class("arrow", "light-weight", "icon")
             .make();
         this.topper = super.appendChild(
             ElementFactory.div()
                 .class("topper", "flex-columns", "cross-axis-center")
-                .children(this.heading, this.arrow)
+                .children(this._heading, this.arrow)
                 .make()
         );
 
@@ -117,8 +134,8 @@ export default class FolderElement extends HTMLElement {
     /**
      * Immediately opens the FolderElement.
      */
-    public open() {        
-        const headingBB = this.heading.getBoundingClientRect();
+    public open() {
+        const headingBB = this._heading.getBoundingClientRect();
         switch (this._foldDir) {
             case "down":
                 this.contents.style.left = "0px";

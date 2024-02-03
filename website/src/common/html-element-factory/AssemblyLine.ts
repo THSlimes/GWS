@@ -6,8 +6,8 @@ export type HexColor = `#${string}`;
  *
  * @param TN tag of the HTMLElement that the mapping is used for
  */
-type OptionalElementProperties<TN extends keyof HTMLElementTagNameMap> = {
-    [K in keyof HTMLElementTagNameMap[TN]]?: HTMLElementTagNameMap[TN][K];
+type OptionalElementProperties<E extends HTMLElement> = {
+    [K in keyof E]?: E[K];
 }
 
 type EventHandlers<S> = {
@@ -26,6 +26,9 @@ function toNodes(children:Child[]):Node[] {
 }
 type ChildGenerator<SelfType extends HTMLElement> = (self:SelfType) => Child|Child[];
 
+type ElementType<S extends string> = S extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[S] : HTMLElement;
+type Class<T> = new (...args:any[]) => T;
+
 /**
  * An AssemblyLine is a type of object that makes the construction
  * of HTMLElement objects easier. All methods (except for ```make()```)
@@ -33,14 +36,21 @@ type ChildGenerator<SelfType extends HTMLElement> = (self:SelfType) => Child|Chi
  *
  * @param TN tag of the HTMLElement that will be output by its ```make()``` method
  */
-export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
+export default class AssemblyLine<TN extends string, E extends ElementType<TN> = ElementType<TN>> {
 
     private readonly tagName:TN;
+    private readonly initElem?:()=>E;
 
-    private readonly elementTypeSpecific:OptionalElementProperties<TN> = {};
+    private readonly elementTypeSpecific:OptionalElementProperties<E> = {};
 
-    constructor(tagName:TN) {
+    /**
+     * Creates a new AssemblyLine.
+     * @param tagName element tag name (e.g. "a" or "h3")
+     * @param initElem custom function to instantiate the element
+     */
+    constructor(tagName:TN, initElem?:()=>E) {
         this.tagName = tagName; // store tag for element creation
+        this.initElem = initElem;
     }
 
     protected _id?:string;
@@ -85,6 +95,12 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
         return this;
     }
 
+    private _draggable?:boolean;
+    public draggable(isDraggable:boolean):this {
+        this._draggable = isDraggable;
+        return this;
+    }
+
     private _html?:string;
     /** Sets the ```innerHTML``` property. */
     public html(html:string) {
@@ -92,9 +108,9 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
         return this;
     }
 
-    private _children:(Child|ChildGenerator<HTMLElementTagNameMap[TN]>)[]= [];
+    private _children:(Child|ChildGenerator<E>)[]= [];
     /** Provides child elements to be appended to the output element. */
-    public children(...children:(Child|ChildGenerator<HTMLElementTagNameMap[TN]>)[]) {
+    public children(...children:(Child|ChildGenerator<E>)[]) {
         this._children.push(...children.filter(n => n !== null));
         return this;
     }
@@ -108,22 +124,22 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
         return this;
     }
 
-    private _handlers:EventHandlers<HTMLElementTagNameMap[TN]> = {};
-    public on<T extends keyof HTMLElementEventMap>(keyword:T, handler:EventHandlers<HTMLElementTagNameMap[TN]>[T]) {
+    private _handlers:EventHandlers<E> = {};
+    public on<T extends keyof HTMLElementEventMap>(keyword:T, handler:EventHandlers<E>[T]) {
         this._handlers[keyword] = handler;
         return this;
     }
 
-    private _onMake?:(self:HTMLElementTagNameMap[TN])=>void;
+    private _onMake?:(self:E)=>void;
     /** Provides a callback to be run after the element is created. */
-    public onMake(handler:(self:HTMLElementTagNameMap[TN])=>void) {
+    public onMake(handler:(self:E)=>void) {
         this._onMake = handler;
         return this;
     }
 
     /** Finalizes and creates the new element. */
-    public make():HTMLElementTagNameMap[TN] {
-        const out = document.createElement(this.tagName);
+    public make():E {
+        const out = this.initElem ? this.initElem() : document.createElement(this.tagName) as E;
 
         // id, class and attributes
         if (this._id !== undefined) out.id = this._id;
@@ -136,9 +152,10 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
         // text
         if (this._text !== undefined) out.innerText = this._text;
         if (this._tooltip !== undefined) out.title = this._tooltip;
+        if (this._draggable) out.draggable = true;
 
         // children
-        for (const c of this._children) {            
+        for (const c of this._children) {
             if (c) {
                 if (c instanceof Node) out.appendChild(c);
                 else if (c instanceof AssemblyLine) out.appendChild(c.make());
@@ -175,9 +192,9 @@ export default class AssemblyLine<TN extends keyof HTMLElementTagNameMap> {
      * @param exposedKeys keys of specific properties of the out HTMLElement type
      * @returns AssemblyLine with extra methods to set the properties with the keys from 'exposedKeys'
      */
-    public static specific<TN extends keyof HTMLElementTagNameMap, EKs extends keyof HTMLElementTagNameMap[TN]>(tagName:TN, exposedKeys:EKs[]) {
+    public static specific<TN extends keyof HTMLElementTagNameMap, EKs extends keyof ElementType<TN>>(tagName:TN, exposedKeys:EKs[]) {
         const out = new AssemblyLine(tagName) as AssemblyLine<TN> & {
-            [K in EKs]:(newVal:HTMLElementTagNameMap[TN][K])=>typeof out;
+            [K in EKs]:(newVal:ElementType<TN>[K])=>typeof out;
         };
 
         for (const k of exposedKeys) Reflect.defineProperty(out, k, {
