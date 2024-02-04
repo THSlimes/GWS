@@ -1,7 +1,7 @@
 import AssemblyLine from "../html-element-factory/AssemblyLine";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import ColorUtil, { Color } from "../util/ColorUtil";
-import { HasSections } from "../util/ElementUtil";
+import ElementUtil, { HasSections } from "../util/ElementUtil";
 import NumberUtil from "../util/NumberUtil";
 import FolderElement from "./FolderElement";
 import IconSelector from "./IconSelector";
@@ -11,8 +11,8 @@ type InsertionPosition = [Node, number];
 
 function insertAt<N extends Node>(position:InsertionPosition, node:N):N {
     const [parent, ind] = position;
-    if (ind === 0) parent.insertBefore(node, parent.firstChild);
-    else if (ind === parent.childNodes.length) parent.appendChild(node);
+    if (ind <= 0) parent.insertBefore(node, parent.firstChild);
+    else if (ind >= parent.childNodes.length) parent.appendChild(node);
     else parent.insertBefore(node, parent.childNodes[ind]);
 
     return node;
@@ -33,7 +33,12 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
     public toolbar!:HTMLDivElement;
     public body!:HTMLDivElement;
 
+    private selectedElement:HTMLElement|null = null;
+
     private get insertionPosition():InsertionPosition {
+        if (this.selectedElement) {            
+            return [this.body, ElementUtil.getChildIndex(this.body, this.selectedElement.parentNode!) + 1];
+        }
         return [this.body, this.body.childNodes.length];
     }
 
@@ -105,7 +110,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
 
                                     // make bold
                                     const isBold = self.toggleAttribute("selected");
-                                    selectedElement?.classList.toggle("bold", isBold);
+                                    this.selectedElement?.classList.toggle("bold", isBold);
                                 })
                                 .make(),
                             italicToggle = ElementFactory.p("format_italic")
@@ -119,7 +124,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
 
                                     // make italic
                                     const isItalic = self.toggleAttribute("selected");
-                                    selectedElement?.classList.toggle("italic", isItalic);
+                                    this.selectedElement?.classList.toggle("italic", isItalic);
                                 })
                                 .make(),
                             underlinedToggle = ElementFactory.p("format_underlined")
@@ -133,7 +138,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
 
                                     // make underlined
                                     const isUnderlined = self.toggleAttribute("selected");
-                                    selectedElement?.classList.toggle("underlined", isUnderlined);
+                                    this.selectedElement?.classList.toggle("underlined", isUnderlined);
                                 })
                                 .make(),
                             strikethroughToggle = ElementFactory.p("format_strikethrough")
@@ -147,7 +152,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
 
                                     // make strikethrough
                                     const isStrikethrough = self.toggleAttribute("selected");
-                                    selectedElement?.classList.toggle("strikethrough", isStrikethrough);
+                                    this.selectedElement?.classList.toggle("strikethrough", isStrikethrough);
                                 })
                                 .make(),
                             ElementFactory.folderElement("down", 250, true)
@@ -168,7 +173,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                             }
 
                                             fontSizeInput.addEventListener("mousedown", ev => {
-                                                selectedElementCopy = selectedElement;
+                                                selectedElementCopy = this.selectedElement;
                                                 selectedElementCopy?.classList.add("fake-focussed");
                                             });
                                             fontSizeInput.addEventListener("input", ev => {
@@ -201,7 +206,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                         })
                                         .on("input", (ev, colorInput) => {
                                             folder.heading.style.color = colorInput.value;
-                                            if (selectedElement) selectedElement.style.color = colorInput.value;
+                                            if (this.selectedElement) this.selectedElement.style.color = colorInput.value;
                                         })
                                         .make()
                                 )
@@ -248,7 +253,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                             sel.setAttribute("selected", "");
                                             alignSelector.heading.textContent = sel.textContent;
 
-                                            if (selectedElement) selectedElement.style.textAlign = sel.getAttribute("value")!;
+                                            if (this.selectedElement) this.selectedElement.style.textAlign = sel.getAttribute("value")!;
                                         });
                                     });
                                 })
@@ -293,6 +298,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                             ElementFactory.p("subject")
                                 .class("icon", "click-action")
                                 .tooltip("Nieuwe paragraaf")
+                                .noFocus()
                                 .on("click", () => { // add new paragraph
                                     this.insert(ElementFactory.p().attr("contenteditable", "plaintext-only").make());
                                 }),
@@ -331,18 +337,16 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                 .make()
         )
 
-        let selectedElement:HTMLElement|null = null
-
         this.body = this.appendChild(
             ElementFactory.div(undefined, "body", "rich-text")
                 .on("focusout", () => {
-                    selectedElement = null;
+                    this.selectedElement = null;
                 })
                 .on("focusin", (ev) => {
                     const target = ev.target;
 
                     if (target instanceof HTMLElement && target.classList.contains("element")) {
-                        selectedElement = target;
+                        this.selectedElement = target;
                         
                         // match styling selectors to selected element
                         boldToggle.toggleAttribute("selected", target.classList.contains("bold"));

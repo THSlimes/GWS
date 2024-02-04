@@ -101,6 +101,12 @@ export default class AssemblyLine<TN extends string, E extends ElementType<TN> =
         return this;
     }
 
+    private _noFocus?:boolean;
+    public noFocus(doNoFocus=true):this {
+        this._noFocus = doNoFocus;
+        return this;
+    }
+
     private _html?:string;
     /** Sets the ```innerHTML``` property. */
     public html(html:string) {
@@ -153,6 +159,7 @@ export default class AssemblyLine<TN extends string, E extends ElementType<TN> =
         if (this._text !== undefined) out.innerText = this._text;
         if (this._tooltip !== undefined) out.title = this._tooltip;
         if (this._draggable) out.draggable = true;
+        if (this._noFocus) out.addEventListener("mousedown", ev => ev.preventDefault());
 
         // children
         for (const c of this._children) {

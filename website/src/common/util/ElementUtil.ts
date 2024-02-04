@@ -18,6 +18,23 @@ export default abstract class ElementUtil {
     }
 
     /**
+     * Gives the index of a child of a node.
+     * @param parent parent node
+     * @param child child to determine index of
+     * @returns index of `child` in `parent` (-1 if `child` is not a child of `parent`)
+     */
+    public static getChildIndex(parent:Node, child:Node):number {
+        let [node, i] = [parent.firstChild, 0];
+
+        while (node !== null) {
+            if (node === child) return i;
+            else [node, i] = [node.nextSibling, i+1];
+        }
+
+        return -1;
+    }
+
+    /**
      * Gets an Element attribute as a number.
      * @param elem element with attribute
      * @param attrName name of attribute
