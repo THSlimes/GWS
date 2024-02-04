@@ -1,3 +1,4 @@
+import { FoldingDirection } from "../custom-elements/FolderElement";
 import NumberUtil from "../util/NumberUtil";
 import AssemblyLine, { AnchorElementAssemblyLine, HexColor, SelectAssemblyLine } from "./AssemblyLine";
 import FolderElementAssemblyLine from "./FolderElementAssemblyLine";
@@ -162,6 +163,12 @@ export default abstract class ElementFactory {
     public static hr() { return new AssemblyLine("hr"); }
     public static br() { return new AssemblyLine("br"); }
 
-    public static folderElement() { return new FolderElementAssemblyLine(); }
+    public static folderElement(foldDir?:FoldingDirection, closingDelay?:number, hideArrow?:boolean) {
+        const out = new FolderElementAssemblyLine();
+        if (foldDir) out.foldDir(foldDir);
+        if (typeof closingDelay === "number") out.closingDelay(closingDelay);
+        if (hideArrow) out.hideArrow(hideArrow);
+        return out;
+    }
 
 }

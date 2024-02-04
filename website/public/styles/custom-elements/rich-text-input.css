@@ -1,5 +1,8 @@
 @import url("../rich-text.css");
 
+@import url("../custom-elements/folder-element.css");
+@import url("../custom-elements/icon-selector.css");
+
 rich-text-input {
     display: block;
     position: relative;
@@ -26,6 +29,7 @@ rich-text-input {
             color: var(--text-dark);
             border-radius: var(--in-section-gap);
         }
+
         & folder-element {
             > .topper {
                 border-radius: var(--in-section-gap);
@@ -50,6 +54,7 @@ rich-text-input {
             }
 
         }
+
         & .color-heading { -webkit-text-stroke: .5px var(--text-dark); }
 
         > * {
@@ -76,6 +81,7 @@ rich-text-input {
             border-radius: var(--in-section-gap);
 
             > .element {
+                padding: 2px;
                 margin: 0px;
                 flex-grow: 1;
 

@@ -4,6 +4,7 @@ import ColorUtil, { Color } from "../util/ColorUtil";
 import { HasSections } from "../util/ElementUtil";
 import NumberUtil from "../util/NumberUtil";
 import FolderElement from "./FolderElement";
+import IconSelector from "./IconSelector";
 
 /** [parent Node, "before child" index] */
 type InsertionPosition = [Node, number];
@@ -85,6 +86,8 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
         let fontSizeInput:HTMLInputElement
         let colorSelector:FolderElement;
         let colorInput:HTMLInputElement;
+        let alignSelector:FolderElement;
+        let alignOptions:HTMLElement[];
 
         this.toolbar = this.appendChild(
             ElementFactory.div(undefined, "toolbar", "flex-columns", "main-axis-space-evenly", "section-gap")
@@ -147,10 +150,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                     selectedElement?.classList.toggle("strikethrough", isStrikethrough);
                                 })
                                 .make(),
-                            ElementFactory.folderElement()
-                                .foldDir("down")
-                                .hideArrow()
-                                .closingDelay(250)
+                            ElementFactory.folderElement("down", 250, true)
                                 .heading(
                                     ElementFactory.p("format_size")
                                         .class("icon", "click-action")
@@ -186,10 +186,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                         })
                                         .make()
                                 ),
-                            colorSelector = ElementFactory.folderElement()
-                                .foldDir("down")
-                                .hideArrow(true)
-                                .closingDelay(250)
+                            colorSelector = ElementFactory.folderElement("down", 250, true)
                                 .heading(
                                     ElementFactory.p("format_color_text")
                                         .class("icon", "click-action", "color-heading")
@@ -208,6 +205,53 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                         })
                                         .make()
                                 )
+                                .make(),
+                            alignSelector = ElementFactory.folderElement("down", 250)
+                                .class("category")
+                                .tooltip("Tekst uitlijnen")
+                                .heading(
+                                    ElementFactory.p("format_align_left").class("icon")
+                                )
+                                .children(
+                                    ElementFactory.div(undefined, "flex-columns")
+                                        .children(
+                                            ...(alignOptions = [
+                                                ElementFactory.p("format_align_left")
+                                                    .class("icon", "click-action")
+                                                    .attr("selected")
+                                                    .attr("value", "start")
+                                                    .tooltip("Links uitlijnen")
+                                                    .make(),
+                                                ElementFactory.p("format_align_center")
+                                                    .class("icon", "click-action")
+                                                    .attr("value", "center")
+                                                    .tooltip("Centreren")
+                                                    .make(),
+                                                ElementFactory.p("format_align_right")
+                                                    .class("icon", "click-action")
+                                                    .attr("value", "end")
+                                                    .tooltip("Rechts uitlijnen")
+                                                    .make(),
+                                                ElementFactory.p("format_align_justify")
+                                                    .class("icon", "click-action")
+                                                    .attr("value", "justify")
+                                                    .tooltip("Spreiden")
+                                                    .make()
+                                            ])
+                                        )
+                                )
+                                .onMake(container => {
+                                    alignOptions.forEach(sel => {
+                                        sel.addEventListener("mousedown", ev => ev.preventDefault());
+                                        sel.addEventListener("click", ev => {
+                                            alignOptions.forEach(sibling => sibling.removeAttribute("selected"));
+                                            sel.setAttribute("selected", "");
+                                            alignSelector.heading.textContent = sel.textContent;
+
+                                            if (selectedElement) selectedElement.style.textAlign = sel.getAttribute("value")!;
+                                        });
+                                    });
+                                })
                                 .make()
                         ),
                     ElementFactory.div(undefined, "section-types", "flex-columns", "cross-axis-center", "in-section-gap")
@@ -267,9 +311,8 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                             ElementFactory.p("attach_file_add")
                                 .class("icon", "click-action")
                                 .tooltip("Bestand toevoegen"),
-                            ElementFactory.folderElement()
+                            ElementFactory.folderElement("down", 250)
                                 .class("category")
-                                .foldDir("down")
                                 .heading(
                                     ElementFactory.p("data_object")
                                         .class("icon")
@@ -301,6 +344,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                     if (target instanceof HTMLElement && target.classList.contains("element")) {
                         selectedElement = target;
                         
+                        // match styling selectors to selected element
                         boldToggle.toggleAttribute("selected", target.classList.contains("bold"));
                         italicToggle.toggleAttribute("selected", target.classList.contains("italic"));
                         underlinedToggle.toggleAttribute("selected", target.classList.contains("underlined"));
@@ -308,6 +352,11 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                         fontSizeInput.value = getComputedStyle(target).fontSize.slice(0, -2);
                         colorInput.value = ColorUtil.toHex(getComputedStyle(target).color as Color);
                         colorSelector.heading.style.color = colorInput.value;
+                        alignOptions.forEach(sel => {
+                            if (sel.toggleAttribute("selected", getComputedStyle(target).textAlign === sel.getAttribute("value")!)) {
+                                alignSelector.heading.textContent = sel.textContent;
+                            }
+                        });
                     }
                 })
                 .make()

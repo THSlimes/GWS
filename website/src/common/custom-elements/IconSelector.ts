@@ -20,6 +20,10 @@ export default class IconSelector<V extends string> extends HTMLElement {
         }
     }
 
+    /**
+     * Creates a  new IconSelector.
+     * @param options [value, icon name, tooltip, selected] tuples
+     */
     constructor(...options:[V, string, string?, boolean?][]) {
         super();
         if (options.map(o => o[0]).some((v,i,a) => a.indexOf(v) !== i)) {
