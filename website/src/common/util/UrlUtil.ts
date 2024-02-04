@@ -1,10 +1,14 @@
+type MIMEBaseType = "application" | "audio" | "example" | "font" | "image" | "model" | "text" | "video";
+
 export default abstract class URLUtil {
-    private static linkToURL(link:string):URL {
+    private static toURL(link:string|URL):URL {
+        if (link instanceof URL) return link;
         try {
             return new URL(link); // is normal url
         }
         catch {
-            if (link.startsWith('/')) return new URL(location.origin + link); // is absolute path
+            if (!link) return new URL(location.href);
+            else if (link.startsWith('/')) return new URL(location.origin + link); // is absolute path
             else { // is local path
                 if (link.startsWith('./')) link = link.substring(2);
         
@@ -23,8 +27,8 @@ export default abstract class URLUtil {
      * @returns URL with `linkBack` set as the `return-to` parameter
      */
     public static createLinkBackURL(link:string|URL, linkBack:string|URL=location.href):URL {
-        link = typeof link === "string" ? this.linkToURL(link) : new URL(link.toString());
-        if (typeof linkBack === "string") linkBack = this.linkToURL(linkBack);
+        link = this.toURL(link);
+        linkBack = this.toURL(linkBack);
     
         link.searchParams.append("return-to", linkBack.toString());
 
@@ -32,13 +36,37 @@ export default abstract class URLUtil {
     }
     
     public static isLocal(link:string|URL) {
-        if (typeof link === "string") link = this.linkToURL(link);
-        return link.origin === location.origin;
+        try {
+            link = this.toURL(link);
+            link.origin === location.origin;
+        }
+        catch { return false; }
+    }
+
+    public static getType(url:URL|string):Promise<MIMEBaseType | "unknown"> {
+        return new Promise((resolve, reject) => {
+            try { url = this.toURL(url); }
+            catch { reject("INVALID URL"); }
+
+            const req = new XMLHttpRequest();
+            req.timeout = 2500; // 2.5 second timeout
+            req.onerror = ev => reject("REQUEST ERROR: UNKNOWN");
+            req.ontimeout = ev => reject("REQUEST ERROR: TIMEOUT");
+            req.onload = () => {
+                if (200 <= req.status && req.status < 300) {
+                    const contentType = req.getResponseHeader("Content-Type") ?? "unknown/unknown";
+                    resolve(contentType.substring(0, contentType.indexOf('/')) as MIMEBaseType | "unknown");
+                }
+                else reject(`REQUEST ERROR: ${req.statusText}`);
+            };
+            req.open("HEAD", url, true);
+            req.send();
+        });
     }
 
     /** Gets the key-value pairs stored in the URL hash. */
-    public static getHashProperties():Record<string,string> {
-        const pairs = location.hash.substring(1).split(',');
+    public static getHashProperties(url:URL|Location=location):Record<string,string> {
+        const pairs = url.hash.substring(1).split(',');
 
         const out:Record<string,string> = {};
         for (const p of pairs) {

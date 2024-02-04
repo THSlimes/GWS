@@ -27,6 +27,10 @@
         --type: "paragraaf";
     }
 
+    img {
+        object-fit: scale-down;
+    }
+
 
 
     .bold { font-weight: bolder; }

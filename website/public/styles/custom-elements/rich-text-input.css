@@ -77,12 +77,15 @@ rich-text-input {
         overflow-y: scroll;
 
         > .element-container {
+            box-sizing: border-box;
+
             outline: 2px dashed var(--shadow-dark);
             border-radius: var(--in-section-gap);
 
             > .element {
                 padding: 2px;
                 margin: 0px;
+
                 flex-grow: 1;
 
                 &.fake-focussed { outline: var(--text-dark) auto 1px; }
@@ -94,6 +97,24 @@ rich-text-input {
                     content: "Nieuwe " var(--type);
                 }
 
+            }
+
+            > .image-container {
+                flex-grow: 1;
+
+                > .element {
+                    width: 100%;
+                    object-fit: contain;
+
+                    &:-moz-broken { border: 10px solid red; }
+                }
+
+                > .url-status {
+                    font-style: italic;
+                    color: var(--indicate-bad);
+
+                    &:empty { display: none; }
+                }
             }
         }
     }

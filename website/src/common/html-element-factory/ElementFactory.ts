@@ -131,7 +131,11 @@ export default abstract class ElementFactory {
             return out;
         },
         time() { return new RangedInputAssemblyLine("time"); },
-        url() { return new TextInputAssemblyLine("url"); },
+        url(value?:string) {
+            const out = new TextInputAssemblyLine("url");
+            if (value) out.value(value);
+            return out;
+        },
         week(year?:number, week?:number) {
             const out = new DateInputAssemblyLine("week");
             if (year !== undefined && week !== undefined) out.value(year, week);

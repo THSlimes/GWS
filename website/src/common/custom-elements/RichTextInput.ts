@@ -3,6 +3,7 @@ import ElementFactory from "../html-element-factory/ElementFactory";
 import ColorUtil, { Color } from "../util/ColorUtil";
 import ElementUtil, { HasSections } from "../util/ElementUtil";
 import NumberUtil from "../util/NumberUtil";
+import URLUtil from "../util/URLUtil";
 import FolderElement from "./FolderElement";
 import IconSelector from "./IconSelector";
 
@@ -36,7 +37,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
     private selectedElement:HTMLElement|null = null;
 
     private get insertionPosition():InsertionPosition {
-        if (this.selectedElement) {            
+        if (this.selectedElement) {
             return [this.body, ElementUtil.getChildIndex(this.body, this.selectedElement.parentNode!) + 1];
         }
         return [this.body, this.body.childNodes.length];
@@ -310,7 +311,55 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                 .tooltip("Nieuwe genummerde lijst"),
                             ElementFactory.p("add_photo_alternate")
                                 .class("icon", "click-action")
-                                .tooltip("Afbeelding toevoegen"),
+                                .tooltip("Afbeelding toevoegen")
+                                .on("click", () => { // add new paragraph
+                                    this.insert(
+                                        ElementFactory.div(undefined, "image-container", "flex-rows", "in-section-gap")
+                                            .children(
+                                                () => {
+                                                    let urlInputTimeout:NodeJS.Timeout|undefined;
+                                                    const [image, urlInput, urlStatus] = [
+                                                        ElementFactory.img(location.origin + "/images/other/placeholder.svg")
+                                                            .class("element")
+                                                            .make(),
+                                                        ElementFactory.input.url()
+                                                            .placeholder("Link naar afbeelding...")
+                                                            .on("input", () => {
+                                                                const url = urlInput.value;
+
+                                                                clearTimeout(urlInputTimeout);
+                                                                urlInputTimeout = setTimeout(() => {
+                                                                    URLUtil.getType(url)
+                                                                    .then(type => {
+                                                                        if (type === "image") {
+                                                                            image.src = url;
+                                                                            urlStatus.textContent = "";
+                                                                        }
+                                                                        else {
+                                                                            urlStatus.textContent = "Link is geen afbeeldingslink.";
+                                                                            image.src = location.origin + "/images/other/placeholder.svg";
+                                                                        }
+                                                                    })
+                                                                    .catch(() => {
+                                                                        urlStatus.textContent = "Link is ongeldig.";
+                                                                        image.src = location.origin + "/images/other/placeholder.svg";
+                                                                    });
+                                                                }, 500);
+                                                            })
+                                                            .make(),
+                                                        ElementFactory.p()
+                                                            .class("url-status", "no-margin")
+                                                            .make(),
+                                                    ];
+
+                                                    return [image, urlInput, urlStatus];
+                                                }
+                                            )
+                                            .make(),
+                                        true,
+                                        false
+                                    );
+                                }),
                             ElementFactory.p("add_link")
                                 .class("icon", "click-action")
                                 .tooltip("Snelkoppeling toevoegen"),
