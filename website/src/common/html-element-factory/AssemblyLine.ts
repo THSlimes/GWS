@@ -156,7 +156,7 @@ export default class AssemblyLine<TN extends string, E extends ElementType<TN> =
         if (this._html) out.innerHTML = this._html;
 
         // text
-        if (this._text !== undefined) out.innerText = this._text;
+        if (this._text !== undefined) out.textContent = this._text;
         if (this._tooltip !== undefined) out.title = this._tooltip;
         if (this._draggable) out.draggable = true;
         if (this._noFocus) out.addEventListener("mousedown", ev => ev.preventDefault());
@@ -199,8 +199,8 @@ export default class AssemblyLine<TN extends string, E extends ElementType<TN> =
      * @param exposedKeys keys of specific properties of the out HTMLElement type
      * @returns AssemblyLine with extra methods to set the properties with the keys from 'exposedKeys'
      */
-    public static specific<TN extends keyof HTMLElementTagNameMap, EKs extends keyof ElementType<TN>>(tagName:TN, exposedKeys:EKs[]) {
-        const out = new AssemblyLine(tagName) as AssemblyLine<TN> & {
+    public static specific<TN extends keyof HTMLElementTagNameMap, EKs extends keyof ElementType<TN>>(tagName:TN, exposedKeys:EKs[], initElem:()=>ElementType<TN>) {
+        const out = new AssemblyLine(tagName, initElem) as AssemblyLine<TN> & {
             [K in EKs]:(newVal:ElementType<TN>[K])=>typeof out;
         };
 

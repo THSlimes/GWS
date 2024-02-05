@@ -44,9 +44,67 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
     }
 
     private insert<E extends Element>(newElem:E, focus=true, deleteOnEmpty=true) {
+        let insElem:Element;
+        
+        if (newElem instanceof HTMLImageElement) insElem = ElementFactory.div(undefined, "image-container", "flex-rows", "in-section-gap")
+            .children(() => {                
+                let urlInputTimeout:NodeJS.Timeout|undefined;
+
+                newElem.src ||= location.origin + "/images/other/placeholder.svg";
+                const defaultSrc = newElem.src;
+
+                const image = ElementFactory.img()
+                        .class("element")
+                        .make();
+
+                const urlInput = ElementFactory.input.url()
+                    .placeholder("Link naar afbeelding...")
+                    .on("input", () => {
+                        const url = urlInput.value;
+
+                        clearTimeout(urlInputTimeout);
+                        urlInputTimeout = setTimeout(() => {
+                            URLUtil.getType(url)
+                            .then(type => {
+                                if (type === "image") {
+                                    image.src = url;
+                                    urlStatus.textContent = "";
+                                }
+                                else {
+                                    urlStatus.textContent = "Link is geen afbeeldingslink.";
+                                    image.src = defaultSrc;
+                                }
+                            })
+                            .catch(() => {
+                                urlStatus.textContent = "Link is ongeldig.";
+                                image.src = defaultSrc;
+                            });
+                        }, 500);
+                    })
+                    .make();
+
+                const urlStatus = ElementFactory.p()
+                    .class("url-status", "no-margin")
+                    .make();
+
+                const widthSelector = ElementFactory.div(undefined, "width-selector", "flex-columns", "cross-axis-center", "in-section-gap")
+                    .children(
+                        ElementFactory.label("Breedte", "width"),
+                        ElementFactory.input.range(100, 1, 100, 1)
+                            .name("width")
+                            .on("input", (ev, widthInput) => image.style.width = widthInput.value + "%")
+                    );
+
+                return [image, urlInput, urlStatus, widthSelector];
+            })
+            .make();
+        else insElem = newElem;
+
+        insElem.classList.add("element"); // mark as element
+
         const container = ElementFactory.div(undefined, "element-container", "flex-columns", "cross-axis-center", "in-section-gap")
             .children(
-                newElem,
+                insElem,
                 container => ElementFactory.p("move_up")
                     .class("icon", "click-action", "no-margin")
                     .tooltip("Naar boven")
@@ -68,11 +126,10 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
         
         insertAt(this.insertionPosition, container);
 
-        newElem.classList.add("element");
-        if (deleteOnEmpty) newElem.addEventListener("keydown", ev => {
-            if (!newElem.textContent && (ev as KeyboardEvent).key === "Backspace") container.remove();
+        if (deleteOnEmpty) insElem.addEventListener("keydown", ev => {
+            if (!insElem.textContent && (ev as KeyboardEvent).key === "Backspace") container.remove();
         });
-        if (newElem instanceof HTMLElement && focus) newElem.focus();
+        if (insElem instanceof HTMLElement && focus) insElem.focus();
 
     }
 
@@ -100,66 +157,11 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                 .children(
                     ElementFactory.div(undefined, "styling", "flex-columns", "in-section-gap")
                         .children(
-                            boldToggle =ElementFactory.p("format_bold")
-                                .class("icon", "click-action")
-                                .tooltip("Dikgedrukt")
-                                .attr("can-unselect")
-                                .on("mousedown", (ev, self) => {
-                                    // prevent focus change
-                                    ev.stopImmediatePropagation();
-                                    ev.preventDefault();
-
-                                    // make bold
-                                    const isBold = self.toggleAttribute("selected");
-                                    this.selectedElement?.classList.toggle("bold", isBold);
-                                })
-                                .make(),
-                            italicToggle = ElementFactory.p("format_italic")
-                                .class("icon", "click-action")
-                                .tooltip("Cursief")
-                                .attr("can-unselect")
-                                .on("mousedown", (ev, self) => {
-                                    // prevent focus change
-                                    ev.stopImmediatePropagation();
-                                    ev.preventDefault();
-
-                                    // make italic
-                                    const isItalic = self.toggleAttribute("selected");
-                                    this.selectedElement?.classList.toggle("italic", isItalic);
-                                })
-                                .make(),
-                            underlinedToggle = ElementFactory.p("format_underlined")
-                                .class("icon", "click-action")
-                                .tooltip("Onderstreept")
-                                .attr("can-unselect")
-                                .on("mousedown", (ev, self) => {
-                                    // prevent focus change
-                                    ev.stopImmediatePropagation();
-                                    ev.preventDefault();
-
-                                    // make underlined
-                                    const isUnderlined = self.toggleAttribute("selected");
-                                    this.selectedElement?.classList.toggle("underlined", isUnderlined);
-                                })
-                                .make(),
-                            strikethroughToggle = ElementFactory.p("format_strikethrough")
-                                .class("icon", "click-action")
-                                .tooltip("Doorgestreept")
-                                .attr("can-unselect")
-                                .on("mousedown", (ev, self) => {
-                                    // prevent focus change
-                                    ev.stopImmediatePropagation();
-                                    ev.preventDefault();
-
-                                    // make strikethrough
-                                    const isStrikethrough = self.toggleAttribute("selected");
-                                    this.selectedElement?.classList.toggle("strikethrough", isStrikethrough);
-                                })
-                                .make(),
                             ElementFactory.folderElement("down", 250, true)
+                                .class("font-size-selector")
                                 .heading(
                                     ElementFactory.p("format_size")
-                                        .class("icon", "click-action")
+                                        .class("icon")
                                         .tooltip("Tekstgrootte")
                                 )
                                 .children(
@@ -192,19 +194,55 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                         })
                                         .make()
                                 ),
+                            boldToggle =ElementFactory.p("format_bold")
+                                .class("icon", "click-action")
+                                .tooltip("Dikgedrukt")
+                                .attr("can-unselect")
+                                .noFocus()
+                                .on("mousedown", (ev, self) => { // make bold
+                                    const isBold = self.toggleAttribute("selected");
+                                    this.selectedElement?.classList.toggle("bold", isBold);
+                                })
+                                .make(),
+                            italicToggle = ElementFactory.p("format_italic")
+                                .class("icon", "click-action")
+                                .tooltip("Cursief")
+                                .attr("can-unselect")
+                                .noFocus()
+                                .on("mousedown", (ev, self) => { // make italic
+                                    const isItalic = self.toggleAttribute("selected");
+                                    this.selectedElement?.classList.toggle("italic", isItalic);
+                                })
+                                .make(),
+                            underlinedToggle = ElementFactory.p("format_underlined")
+                                .class("icon", "click-action")
+                                .tooltip("Onderstreept")
+                                .attr("can-unselect")
+                                .noFocus()
+                                .on("mousedown", (ev, self) => { // make underlined
+                                    const isUnderlined = self.toggleAttribute("selected");
+                                    this.selectedElement?.classList.toggle("underlined", isUnderlined);
+                                })
+                                .make(),
+                            strikethroughToggle = ElementFactory.p("format_strikethrough")
+                                .class("icon", "click-action")
+                                .tooltip("Doorgestreept")
+                                .attr("can-unselect")
+                                .noFocus()
+                                .on("mousedown", (ev, self) => { // make strikethrough
+                                    const isStrikethrough = self.toggleAttribute("selected");
+                                    this.selectedElement?.classList.toggle("strikethrough", isStrikethrough);
+                                })
+                                .make(),
                             colorSelector = ElementFactory.folderElement("down", 250, true)
                                 .heading(
                                     ElementFactory.p("format_color_text")
-                                        .class("icon", "click-action", "color-heading")
+                                        .class("icon", "color-heading")
                                         .tooltip("Tekstkleur")
                                 )
                                 .children(
                                     folder => colorInput = ElementFactory.input.color("#000000")
-                                        .on("mousedown", ev => {
-                                            // prevent focus change
-                                            ev.stopImmediatePropagation();
-                                            ev.preventDefault();
-                                        })
+                                        .noFocus()
                                         .on("input", (ev, colorInput) => {
                                             folder.heading.style.color = colorInput.value;
                                             if (this.selectedElement) this.selectedElement.style.color = colorInput.value;
@@ -227,28 +265,31 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                                     .attr("selected")
                                                     .attr("value", "start")
                                                     .tooltip("Links uitlijnen")
+                                                    .noFocus()
                                                     .make(),
                                                 ElementFactory.p("format_align_center")
                                                     .class("icon", "click-action")
                                                     .attr("value", "center")
                                                     .tooltip("Centreren")
+                                                    .noFocus()
                                                     .make(),
                                                 ElementFactory.p("format_align_right")
                                                     .class("icon", "click-action")
                                                     .attr("value", "end")
                                                     .tooltip("Rechts uitlijnen")
+                                                    .noFocus()
                                                     .make(),
                                                 ElementFactory.p("format_align_justify")
                                                     .class("icon", "click-action")
                                                     .attr("value", "justify")
                                                     .tooltip("Spreiden")
+                                                    .noFocus()
                                                     .make()
                                             ])
                                         )
                                 )
                                 .onMake(container => {
                                     alignOptions.forEach(sel => {
-                                        sel.addEventListener("mousedown", ev => ev.preventDefault());
                                         sel.addEventListener("click", ev => {
                                             alignOptions.forEach(sibling => sibling.removeAttribute("selected"));
                                             sel.setAttribute("selected", "");
@@ -262,6 +303,19 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                         ),
                     ElementFactory.div(undefined, "section-types", "flex-columns", "cross-axis-center", "in-section-gap")
                         .children(
+                            ElementFactory.p("add_link")
+                                .class("icon", "click-action")
+                                .tooltip("Snelkoppeling toevoegen"),
+                            ElementFactory.p("attach_file_add")
+                                .class("icon", "click-action")
+                                .tooltip("Bestand toevoegen"),
+                            ElementFactory.p("add_photo_alternate")
+                                .class("icon", "click-action")
+                                .tooltip("Afbeelding toevoegen")
+                                .on("click", () => { // add new image
+                                    this.insert(ElementFactory.img().make(), true, false);
+                                }),
+                            
                             ElementFactory.folderElement()
                                 .class("category")
                                 .foldDir("down")
@@ -309,63 +363,6 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                             ElementFactory.p("format_list_numbered")
                                 .class("icon", "click-action")
                                 .tooltip("Nieuwe genummerde lijst"),
-                            ElementFactory.p("add_photo_alternate")
-                                .class("icon", "click-action")
-                                .tooltip("Afbeelding toevoegen")
-                                .on("click", () => { // add new paragraph
-                                    this.insert(
-                                        ElementFactory.div(undefined, "image-container", "flex-rows", "in-section-gap")
-                                            .children(
-                                                () => {
-                                                    let urlInputTimeout:NodeJS.Timeout|undefined;
-                                                    const [image, urlInput, urlStatus] = [
-                                                        ElementFactory.img(location.origin + "/images/other/placeholder.svg")
-                                                            .class("element")
-                                                            .make(),
-                                                        ElementFactory.input.url()
-                                                            .placeholder("Link naar afbeelding...")
-                                                            .on("input", () => {
-                                                                const url = urlInput.value;
-
-                                                                clearTimeout(urlInputTimeout);
-                                                                urlInputTimeout = setTimeout(() => {
-                                                                    URLUtil.getType(url)
-                                                                    .then(type => {
-                                                                        if (type === "image") {
-                                                                            image.src = url;
-                                                                            urlStatus.textContent = "";
-                                                                        }
-                                                                        else {
-                                                                            urlStatus.textContent = "Link is geen afbeeldingslink.";
-                                                                            image.src = location.origin + "/images/other/placeholder.svg";
-                                                                        }
-                                                                    })
-                                                                    .catch(() => {
-                                                                        urlStatus.textContent = "Link is ongeldig.";
-                                                                        image.src = location.origin + "/images/other/placeholder.svg";
-                                                                    });
-                                                                }, 500);
-                                                            })
-                                                            .make(),
-                                                        ElementFactory.p()
-                                                            .class("url-status", "no-margin")
-                                                            .make(),
-                                                    ];
-
-                                                    return [image, urlInput, urlStatus];
-                                                }
-                                            )
-                                            .make(),
-                                        true,
-                                        false
-                                    );
-                                }),
-                            ElementFactory.p("add_link")
-                                .class("icon", "click-action")
-                                .tooltip("Snelkoppeling toevoegen"),
-                            ElementFactory.p("attach_file_add")
-                                .class("icon", "click-action")
-                                .tooltip("Bestand toevoegen"),
                             ElementFactory.folderElement("down", 250)
                                 .class("category")
                                 .heading(

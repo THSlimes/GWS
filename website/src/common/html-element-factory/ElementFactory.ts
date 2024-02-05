@@ -66,7 +66,7 @@ export default abstract class ElementFactory {
     }
 
     public static img(src?:string, alt?:string) {
-        const out = AssemblyLine.specific("img", ["src","alt"])
+        const out = AssemblyLine.specific("img", ["src","alt"], () => document.createElement("img"))
         if (src) out.src(src);
         return alt ? out.alt(alt) : out;
     }
@@ -120,7 +120,15 @@ export default abstract class ElementFactory {
         },
         password() { return new TextInputAssemblyLine("password"); },
         radio() { return new CheckableInputAssemblyLine("radio"); },
-        range() { return new NumberInputAssemblyLine("range"); },
+        range(value?:number, min?:number, max?:number, step?:number) {
+            const out = new NumberInputAssemblyLine("range");
+            if (typeof value === "number") out.value(value);
+            else if (typeof min === "number") out.value(min);
+            if (typeof min === "number") out.min(min);
+            if (typeof max === "number") out.max(max);
+            if (typeof step === "number") out.step(step);
+            return out;
+        },
         reset() { return new ButtonLikeInputAssemblyLine("reset"); },
         search() { return new TextInputAssemblyLine("search"); },
         submit() { return new ButtonLikeInputAssemblyLine("submit"); },
@@ -145,6 +153,13 @@ export default abstract class ElementFactory {
         }
     };
 
+    public static label(text?:string, forName?:string) {
+        const out = AssemblyLine.specific("label", ["htmlFor"], () => document.createElement("label"));
+        if (text) out.text(text);
+        if (forName) out.htmlFor(forName);
+        return out;
+    }
+
     public static button(onClick?:(e:MouseEvent, self:HTMLButtonElement)=>void) {
         const out = new AssemblyLine("button");
         if (onClick) out.on("click", onClick);
@@ -152,7 +167,7 @@ export default abstract class ElementFactory {
     }
 
     public static textarea(text?:string) {
-        const out = AssemblyLine.specific("textarea", ["value", "placeholder", "minLength", "maxLength", "readOnly", "spellcheck"]);
+        const out = AssemblyLine.specific("textarea", ["value", "placeholder", "minLength", "maxLength", "readOnly", "spellcheck"], () => document.createElement("textarea"));
         if (text) out.value(text);
         return out;
     }
@@ -161,8 +176,8 @@ export default abstract class ElementFactory {
         const out = new SelectAssemblyLine();
         return out.options(options);
     }
-    public static option() { return AssemblyLine.specific("option", ["value", "selected"]); }
-    public static optgroup() { return AssemblyLine.specific("optgroup", ["label"]) }
+    public static option() { return AssemblyLine.specific("option", ["value", "selected"], () => document.createElement("option")); }
+    public static optgroup() { return AssemblyLine.specific("optgroup", ["label"], () => document.createElement("optgroup")); }
 
     public static hr() { return new AssemblyLine("hr"); }
     public static br() { return new AssemblyLine("br"); }
