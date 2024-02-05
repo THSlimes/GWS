@@ -46,16 +46,13 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
     private insert<E extends Element>(newElem:E, focus=true, deleteOnEmpty=true) {
         let insElem:Element;
         
-        if (newElem instanceof HTMLImageElement) insElem = ElementFactory.div(undefined, "image-container", "flex-rows", "in-section-gap")
-            .children(() => {                
+        if (newElem instanceof HTMLImageElement) insElem = ElementFactory.div(undefined, "image-container", "flex-rows", "cross-axis-center", "in-section-gap")
+            .children(() => {
                 let urlInputTimeout:NodeJS.Timeout|undefined;
 
                 newElem.src ||= location.origin + "/images/other/placeholder.svg";
                 const defaultSrc = newElem.src;
-
-                const image = ElementFactory.img()
-                        .class("element")
-                        .make();
+                console.log(newElem.src);
 
                 const urlInput = ElementFactory.input.url()
                     .placeholder("Link naar afbeelding...")
@@ -67,17 +64,17 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                             URLUtil.getType(url)
                             .then(type => {
                                 if (type === "image") {
-                                    image.src = url;
+                                    newElem.src = url;
                                     urlStatus.textContent = "";
                                 }
                                 else {
                                     urlStatus.textContent = "Link is geen afbeeldingslink.";
-                                    image.src = defaultSrc;
+                                    newElem.src = defaultSrc;
                                 }
                             })
                             .catch(() => {
                                 urlStatus.textContent = "Link is ongeldig.";
-                                image.src = defaultSrc;
+                                newElem.src = defaultSrc;
                             });
                         }, 500);
                     })
@@ -92,10 +89,10 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                         ElementFactory.label("Breedte", "width"),
                         ElementFactory.input.range(100, 1, 100, 1)
                             .name("width")
-                            .on("input", (ev, widthInput) => image.style.width = widthInput.value + "%")
+                            .on("input", (ev, widthInput) => newElem.style.width = widthInput.value + "%")
                     );
 
-                return [image, urlInput, urlStatus, widthSelector];
+                return [newElem, urlInput, urlStatus, widthSelector];
             })
             .make();
         else insElem = newElem;

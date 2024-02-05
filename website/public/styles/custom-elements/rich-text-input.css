@@ -104,14 +104,7 @@ rich-text-input {
             > .image-container {
                 flex-grow: 1;
 
-                > .element {
-                    align-self: center;
-
-                    width: 100%;
-                    object-fit: contain;
-
-                    &:-moz-broken { border: 10px solid red; }
-                }
+                > * { width: 100%; }
 
                 > .url-status {
                     font-style: italic;

@@ -28,7 +28,7 @@
     }
 
     img {
-        object-fit: scale-down;
+        object-fit: contain;
     }
 
 
