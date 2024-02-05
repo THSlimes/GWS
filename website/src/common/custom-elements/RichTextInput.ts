@@ -44,6 +44,9 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
     }
 
     private insert<E extends Element>(newElem:E, focus=true, deleteOnEmpty=true) {
+
+        newElem.classList.add("element"); // mark as element
+
         let insElem:Element;
         
         if (newElem instanceof HTMLImageElement) insElem = ElementFactory.div(undefined, "image-container", "flex-rows", "cross-axis-center", "in-section-gap")
@@ -52,7 +55,6 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
 
                 newElem.src ||= location.origin + "/images/other/placeholder.svg";
                 const defaultSrc = newElem.src;
-                console.log(newElem.src);
 
                 const urlInput = ElementFactory.input.url()
                     .placeholder("Link naar afbeelding...")
@@ -96,8 +98,6 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
             })
             .make();
         else insElem = newElem;
-
-        insElem.classList.add("element"); // mark as element
 
         const container = ElementFactory.div(undefined, "element-container", "flex-columns", "cross-axis-center", "in-section-gap")
             .children(
@@ -260,25 +260,25 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                                 ElementFactory.p("format_align_left")
                                                     .class("icon", "click-action")
                                                     .attr("selected")
-                                                    .attr("value", "start")
+                                                    .attr("value", "align-left")
                                                     .tooltip("Links uitlijnen")
                                                     .noFocus()
                                                     .make(),
                                                 ElementFactory.p("format_align_center")
                                                     .class("icon", "click-action")
-                                                    .attr("value", "center")
+                                                    .attr("value", "align-center")
                                                     .tooltip("Centreren")
                                                     .noFocus()
                                                     .make(),
                                                 ElementFactory.p("format_align_right")
                                                     .class("icon", "click-action")
-                                                    .attr("value", "end")
+                                                    .attr("value", "align-right")
                                                     .tooltip("Rechts uitlijnen")
                                                     .noFocus()
                                                     .make(),
                                                 ElementFactory.p("format_align_justify")
                                                     .class("icon", "click-action")
-                                                    .attr("value", "justify")
+                                                    .attr("value", "align-justify")
                                                     .tooltip("Spreiden")
                                                     .noFocus()
                                                     .make()
@@ -286,13 +286,15 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                         )
                                 )
                                 .onMake(container => {
-                                    alignOptions.forEach(sel => {
-                                        sel.addEventListener("click", ev => {
-                                            alignOptions.forEach(sibling => sibling.removeAttribute("selected"));
-                                            sel.setAttribute("selected", "");
-                                            alignSelector.heading.textContent = sel.textContent;
+                                    alignOptions.forEach(opt => {
+                                        opt.addEventListener("click", ev => {
+                                            alignOptions.forEach(otherOpt => otherOpt.toggleAttribute("selected", opt === otherOpt));
+                                            alignSelector.heading.textContent = opt.textContent;
 
-                                            if (this.selectedElement) this.selectedElement.style.textAlign = sel.getAttribute("value")!;
+                                            if (this.selectedElement) {
+                                                this.selectedElement.classList.remove(...alignOptions.map(otherOpt => otherOpt.getAttribute("value")!));
+                                                this.selectedElement.classList.add(opt.getAttribute("value")!)
+                                            }
                                         });
                                     });
                                 })
@@ -310,7 +312,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                 .class("icon", "click-action")
                                 .tooltip("Afbeelding toevoegen")
                                 .on("click", () => { // add new image
-                                    this.insert(ElementFactory.img().make(), true, false);
+                                    this.insert(ElementFactory.img().class("align-center").make(), true, false);
                                 }),
                             
                             ElementFactory.folderElement()
@@ -322,7 +324,12 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                         .class("icon", "click-action")
                                         .tooltip("Nieuwe titel")
                                         .on("click", () => { // add new title h1
-                                            this.insert(ElementFactory.h1().class("title").attr("contenteditable", "plaintext-only").make());
+                                            this.insert(
+                                                ElementFactory.h1()
+                                                    .class("title", "align-left")
+                                                    .attr("contenteditable", "plaintext-only")
+                                                    .make()
+                                            );
                                         })
                                 )
                                 .children(
@@ -330,19 +337,34 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                         .class("icon", "click-action")
                                         .tooltip("Nieuwe kop 1")
                                         .on("click", () => { // add new h1
-                                            this.insert(ElementFactory.h1().attr("contenteditable", "plaintext-only").make());
+                                            this.insert(
+                                                ElementFactory.h1()
+                                                    .class("align-left")
+                                                    .attr("contenteditable", "plaintext-only")
+                                                    .make()
+                                            );
                                         }),
                                     ElementFactory.p("format_h2")
                                         .class("icon", "click-action")
                                         .tooltip("Nieuwe kop 2")
                                         .on("click", () => { // add new h2
-                                            this.insert(ElementFactory.h2().attr("contenteditable", "plaintext-only").make());
+                                            this.insert(
+                                                ElementFactory.h2()
+                                                    .class("align-left")
+                                                    .attr("contenteditable", "plaintext-only")
+                                                    .make()
+                                            );
                                         }),
                                     ElementFactory.p("format_h3")
                                         .class("icon", "click-action")
                                         .tooltip("Nieuwe kop 3")
                                         .on("click", () => { // add new h3
-                                            this.insert(ElementFactory.h3().attr("contenteditable", "plaintext-only").make());
+                                            this.insert(
+                                                ElementFactory.h3()
+                                                    .class("align-left")
+                                                    .attr("contenteditable", "plaintext-only")
+                                                    .make()
+                                            );
                                         }),
 
                                 )
@@ -352,7 +374,12 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                 .tooltip("Nieuwe paragraaf")
                                 .noFocus()
                                 .on("click", () => { // add new paragraph
-                                    this.insert(ElementFactory.p().attr("contenteditable", "plaintext-only").make());
+                                    this.insert(
+                                        ElementFactory.p()
+                                            .class("align-left")
+                                            .attr("contenteditable", "plaintext-only")
+                                            .make()
+                                        );
                                 }),
                             ElementFactory.p("format_list_bulleted")
                                 .class("icon", "click-action")
@@ -386,25 +413,39 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                     this.selectedElement = null;
                 })
                 .on("focusin", (ev) => {
-                    const target = ev.target;
+                    let target = ev.target;
 
-                    if (target instanceof HTMLElement && target.classList.contains("element")) {
-                        this.selectedElement = target;
+                    if (target instanceof HTMLElement) {
                         
-                        // match styling selectors to selected element
-                        boldToggle.toggleAttribute("selected", target.classList.contains("bold"));
-                        italicToggle.toggleAttribute("selected", target.classList.contains("italic"));
-                        underlinedToggle.toggleAttribute("selected", target.classList.contains("underlined"));
-                        strikethroughToggle.toggleAttribute("selected", target.classList.contains("strikethrough"));
-                        fontSizeInput.value = getComputedStyle(target).fontSize.slice(0, -2);
-                        colorInput.value = ColorUtil.toHex(getComputedStyle(target).color as Color);
-                        colorSelector.heading.style.color = colorInput.value;
-                        alignOptions.forEach(sel => {
-                            if (sel.toggleAttribute("selected", getComputedStyle(target).textAlign === sel.getAttribute("value")!)) {
-                                alignSelector.heading.textContent = sel.textContent;
-                            }
-                        });
-                    }
+                        let elem = target; // find element to select
+                        while (!elem.classList.contains("element")) {
+                            const q = elem.querySelector(".element");
+                            if (q instanceof HTMLElement) elem = q;
+                            else if (elem.parentElement) elem = elem.parentElement;
+                            else throw Error("uh oh :(");
+                        }
+
+                        this.selectedElement = elem;
+                        
+                        if (this.selectedElement) {
+                            // match styling selectors to selected element
+                            fontSizeInput.value = getComputedStyle(this.selectedElement).fontSize.slice(0, -2);
+
+                            boldToggle.toggleAttribute("selected", this.selectedElement.classList.contains("bold"));
+                            italicToggle.toggleAttribute("selected", this.selectedElement.classList.contains("italic"));
+                            underlinedToggle.toggleAttribute("selected", this.selectedElement.classList.contains("underlined"));
+                            strikethroughToggle.toggleAttribute("selected", this.selectedElement.classList.contains("strikethrough"));
+
+                            colorInput.value = ColorUtil.toHex(getComputedStyle(this.selectedElement).color as Color);
+                            colorSelector.heading.style.color = colorInput.value;
+
+                            alignOptions.forEach(sel => sel.removeAttribute("selected"));
+                            const selectedOpt = alignOptions.find(opt => this.selectedElement!.classList.contains(opt.getAttribute("value")!));
+                            selectedOpt?.setAttribute("selected", "");
+                            alignSelector.heading.textContent = selectedOpt?.textContent ?? "format_align_left";
+                        }
+
+                        }
                 })
                 .make()
         );

@@ -37,4 +37,18 @@
     .italic { font-style: italic; }
     .underlined { text-decoration: underline; }
     .strikethrough { text-decoration: line-through; }
+
+    .align-left {
+        text-align: start;
+        align-self: flex-start;
+    }
+    .align-center {
+        text-align: center;
+        align-self: center;
+    }
+    .align-right {
+        text-align: end;
+        align-self: flex-end;
+    }
+    .align-justify { text-align: justify; }
 }
