@@ -1,11 +1,10 @@
-import AssemblyLine from "../html-element-factory/AssemblyLine";
 import ElementFactory from "../html-element-factory/ElementFactory";
+import ArrayUtil from "../util/ArrayUtil";
 import ColorUtil, { Color } from "../util/ColorUtil";
 import ElementUtil, { HasSections } from "../util/ElementUtil";
 import NumberUtil from "../util/NumberUtil";
 import URLUtil from "../util/URLUtil";
 import FolderElement from "./FolderElement";
-import IconSelector from "./IconSelector";
 
 /** [parent Node, "before child" index] */
 type InsertionPosition = [Node, number];
@@ -29,6 +28,10 @@ function swap(a:Element, b:Element) {
     bRep.replaceWith(a);
 }
 
+type RichTextSection = "shortcut" | "attachment" | "image" | "title" | "h1" | "h2" | "h3" | "paragraph" | "list" | "numbered-list" | "event-calendar" | "event-note";
+const ALL_HEADERS:RichTextSection[] = ["title", "h1", "h2", "h3"];
+const ALL_WIDGETS:RichTextSection[] = ["event-calendar", "event-note"];
+
 export default class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body"> {
 
     public toolbar!:HTMLDivElement;
@@ -38,12 +41,15 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
 
     private get insertionPosition():InsertionPosition {
         if (this.selectedElement) {
-            return [this.body, ElementUtil.getChildIndex(this.body, this.selectedElement.parentNode!) + 1];
+            return [
+                this.selectedElement.parentNode!.parentNode!,
+                ElementUtil.getChildIndex(this.selectedElement.parentNode!.parentNode!, this.selectedElement.parentNode!) + 1
+            ];
         }
         return [this.body, this.body.childNodes.length];
     }
 
-    private insert<E extends Element>(newElem:E, focus=true, deleteOnEmpty=true) {
+    private insert<E extends Element>(newElem:E, position:InsertionPosition, focus=true, deleteOnEmpty=true) {
 
         newElem.classList.add("element"); // mark as element
 
@@ -121,7 +127,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
             )
             .make();
         
-        insertAt(this.insertionPosition, container);
+        insertAt(position, container);
 
         if (deleteOnEmpty) insElem.addEventListener("keydown", ev => {
             if (!insElem.textContent && (ev as KeyboardEvent).key === "Backspace") container.remove();
@@ -191,7 +197,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                         })
                                         .make()
                                 ),
-                            boldToggle =ElementFactory.p("format_bold")
+                            boldToggle = ElementFactory.p("format_bold")
                                 .class("icon", "click-action")
                                 .tooltip("Dikgedrukt")
                                 .attr("can-unselect")
@@ -300,112 +306,10 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                 })
                                 .make()
                         ),
-                    ElementFactory.div(undefined, "section-types", "flex-columns", "cross-axis-center", "in-section-gap")
-                        .children(
-                            ElementFactory.p("add_link")
-                                .class("icon", "click-action")
-                                .tooltip("Snelkoppeling toevoegen"),
-                            ElementFactory.p("attach_file_add")
-                                .class("icon", "click-action")
-                                .tooltip("Bestand toevoegen"),
-                            ElementFactory.p("add_photo_alternate")
-                                .class("icon", "click-action")
-                                .tooltip("Afbeelding toevoegen")
-                                .on("click", () => { // add new image
-                                    this.insert(ElementFactory.img().class("align-center").make(), true, false);
-                                }),
-                            
-                            ElementFactory.folderElement()
-                                .class("category")
-                                .foldDir("down")
-                                .closingDelay(250)
-                                .heading(
-                                    ElementFactory.p("title")
-                                        .class("icon", "click-action")
-                                        .tooltip("Nieuwe titel")
-                                        .on("click", () => { // add new title h1
-                                            this.insert(
-                                                ElementFactory.h1()
-                                                    .class("title", "align-left")
-                                                    .attr("contenteditable", "plaintext-only")
-                                                    .make()
-                                            );
-                                        })
-                                )
-                                .children(
-                                    ElementFactory.p("format_h1")
-                                        .class("icon", "click-action")
-                                        .tooltip("Nieuwe kop 1")
-                                        .on("click", () => { // add new h1
-                                            this.insert(
-                                                ElementFactory.h1()
-                                                    .class("align-left")
-                                                    .attr("contenteditable", "plaintext-only")
-                                                    .make()
-                                            );
-                                        }),
-                                    ElementFactory.p("format_h2")
-                                        .class("icon", "click-action")
-                                        .tooltip("Nieuwe kop 2")
-                                        .on("click", () => { // add new h2
-                                            this.insert(
-                                                ElementFactory.h2()
-                                                    .class("align-left")
-                                                    .attr("contenteditable", "plaintext-only")
-                                                    .make()
-                                            );
-                                        }),
-                                    ElementFactory.p("format_h3")
-                                        .class("icon", "click-action")
-                                        .tooltip("Nieuwe kop 3")
-                                        .on("click", () => { // add new h3
-                                            this.insert(
-                                                ElementFactory.h3()
-                                                    .class("align-left")
-                                                    .attr("contenteditable", "plaintext-only")
-                                                    .make()
-                                            );
-                                        }),
-
-                                )
-                                .tooltip("Nieuwe kop/titel"),
-                            ElementFactory.p("subject")
-                                .class("icon", "click-action")
-                                .tooltip("Nieuwe paragraaf")
-                                .noFocus()
-                                .on("click", () => { // add new paragraph
-                                    this.insert(
-                                        ElementFactory.p()
-                                            .class("align-left")
-                                            .attr("contenteditable", "plaintext-only")
-                                            .make()
-                                        );
-                                }),
-                            ElementFactory.p("format_list_bulleted")
-                                .class("icon", "click-action")
-                                .tooltip("Nieuwe lijst"),
-                            ElementFactory.p("format_list_numbered")
-                                .class("icon", "click-action")
-                                .tooltip("Nieuwe genummerde lijst"),
-                            ElementFactory.folderElement("down", 250)
-                                .class("category")
-                                .heading(
-                                    ElementFactory.p("data_object")
-                                        .class("icon")
-                                        .tooltip("Objecten")
-                                )
-                                .children(
-                                    ElementFactory.p("calendar_month")
-                                        .class("icon", "click-action")
-                                        .tooltip("Activiteiten-kalender toevoegen"),
-                                    ElementFactory.p("sticky_note_2")
-                                        .class("icon", "click-action")
-                                        .tooltip("Activiteiten toevoegen")
-                                )
-                        ),
+                    this.makeSectionTypes(() => this.insertionPosition)
                 )
                 .make()
-        )
+        );
 
         this.body = this.appendChild(
             ElementFactory.div(undefined, "body", "rich-text")
@@ -450,6 +354,148 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                 .make()
         );
         
+    }
+
+    private makeSectionTypes(insPosCallback:()=>InsertionPosition, exclude:RichTextSection[]=[]):HTMLDivElement {
+        return ElementFactory.div(undefined, "section-types", "flex-columns", "cross-axis-center", "in-section-gap", "no-bullet")
+            .children(
+                !exclude.includes("shortcut") && ElementFactory.p("add_link")
+                    .class("icon", "click-action")
+                    .tooltip("Snelkoppeling toevoegen"),
+                !exclude.includes("attachment") && ElementFactory.p("attach_file_add")
+                    .class("icon", "click-action")
+                    .tooltip("Bestand toevoegen"),
+                !exclude.includes("image") && ElementFactory.p("add_photo_alternate")
+                    .class("icon", "click-action")
+                    .tooltip("Afbeelding toevoegen")
+                    .on("click", () => { // add new image
+                        this.insert(ElementFactory.img().class("align-center").make(), insPosCallback(), true, false);
+                    }),
+                !ArrayUtil.includesAll(exclude, ...ALL_HEADERS) && ElementFactory.folderElement()
+                    .class("category")
+                    .foldDir("down")
+                    .closingDelay(250)
+                    .heading(
+                        folder => exclude.includes("title") ?
+                            folder.contents.firstElementChild! :
+                            ElementFactory.p("title")
+                                .class("icon", "click-action")
+                                .tooltip("Nieuwe titel")
+                                .noFocus()
+                                .on("click", () => { // add new title h1
+                                    this.insert(
+                                        ElementFactory.h1()
+                                            .class("title", "align-left")
+                                            .attr("contenteditable", "plaintext-only")
+                                            .make(),
+                                        insPosCallback()
+                                    );
+                                })
+                    )
+                    .children(
+                        !exclude.includes("h1") && ElementFactory.p("format_h1")
+                            .class("icon", "click-action")
+                            .tooltip("Nieuwe kop 1")
+                            .noFocus()
+                            .on("click", () => { // add new normal h1
+                                this.insert(
+                                    ElementFactory.h1()
+                                        .class("align-left")
+                                        .attr("contenteditable", "plaintext-only")
+                                        .make(),
+                                    insPosCallback()
+                                );
+                            }),
+                        !exclude.includes("h2") && ElementFactory.p("format_h2")
+                            .class("icon", "click-action")
+                            .tooltip("Nieuwe kop 2")
+                            .noFocus()
+                            .on("click", () => { // add new h2
+                                this.insert(
+                                    ElementFactory.h2()
+                                        .class("align-left")
+                                        .attr("contenteditable", "plaintext-only")
+                                        .make(),
+                                    insPosCallback()
+                                );
+                            }),
+                        !exclude.includes("h3") && ElementFactory.p("format_h3")
+                            .class("icon", "click-action")
+                            .tooltip("Nieuwe kop 3")
+                            .noFocus()
+                            .on("click", () => { // add new h3
+                                this.insert(
+                                    ElementFactory.h3()
+                                        .class("align-left")
+                                        .attr("contenteditable", "plaintext-only")
+                                        .make(),
+                                    insPosCallback()
+                                );
+                            }),
+
+                    )
+                    .tooltip("Nieuwe kop/titel"),
+                !exclude.includes("paragraph") && ElementFactory.p("subject")
+                    .class("icon", "click-action")
+                    .tooltip("Nieuwe paragraaf")
+                    .noFocus()
+                    .on("click", () => { // add new paragraph
+                        this.insert(
+                            ElementFactory.p()
+                                .class("align-left")
+                                .attr("contenteditable", "plaintext-only")
+                                .make(),
+                            insPosCallback()
+                        );
+                    }),
+                !exclude.includes("list") && ElementFactory.p("format_list_bulleted")
+                    .class("icon", "click-action")
+                    .tooltip("Nieuwe lijst")
+                    .on("click", () => {
+                        this.insert(
+                            ElementFactory.ul()
+                                .children(
+                                    ul => this.makeSectionTypes(() => {
+                                        if (ul.contains(this.selectedElement)) return [ul, ElementUtil.getChildIndex(ul, this.selectedElement!.parentElement!) + 1];
+                                        else return [ul, Infinity];
+                                    }, ["list", "numbered-list"])
+                                )
+                                .make(),
+                            insPosCallback()
+                        );
+                    }),
+                !exclude.includes("numbered-list") && ElementFactory.p("format_list_numbered")
+                    .class("icon", "click-action")
+                    .tooltip("Nieuwe genummerde lijst")
+                    .on("click", () => {
+                        this.insert(
+                            ElementFactory.ol()
+                                .children(
+                                    ol => this.makeSectionTypes(() => {
+                                        if (ol.contains(this.selectedElement)) return [ol, ElementUtil.getChildIndex(ol, this.selectedElement!.parentElement!) + 1];
+                                        else return [ol, Infinity];
+                                    }, ["list", "numbered-list"])
+                                )
+                                .make(),
+                            insPosCallback()
+                        );
+                    }),
+                !ArrayUtil.includesAll(exclude, ...ALL_WIDGETS) &&ElementFactory.folderElement("down", 250)
+                    .class("category")
+                    .heading(
+                        ElementFactory.p("widgets")
+                            .class("icon")
+                            .tooltip("Widgets")
+                    )
+                    .children(
+                        !exclude.includes("event-calendar") && ElementFactory.p("calendar_month")
+                            .class("icon", "click-action")
+                            .tooltip("Activiteiten-kalender toevoegen"),
+                        !exclude.includes("event-note") && ElementFactory.p("sticky_note_2")
+                            .class("icon", "click-action")
+                            .tooltip("Activiteiten toevoegen")
+                    )
+            ).make();
     }
 
 }

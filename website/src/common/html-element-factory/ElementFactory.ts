@@ -182,6 +182,22 @@ export default abstract class ElementFactory {
     public static hr() { return new AssemblyLine("hr"); }
     public static br() { return new AssemblyLine("br"); }
 
+    public static ul() {
+        return AssemblyLine.specific("ul", [], () => document.createElement("ul"));
+    }
+
+    public static ol() {
+        return AssemblyLine.specific("ul", [], () => document.createElement("ol"));
+    }
+
+    public static li(text?:string) {
+        const out = AssemblyLine.specific("li", [], () => document.createElement("li"));
+        if (text) out.text(text);
+        return out;
+    }
+
+    // custom elements
+
     public static folderElement(foldDir?:FoldingDirection, closingDelay?:number, hideArrow?:boolean) {
         const out = new FolderElementAssemblyLine();
         if (foldDir) out.foldDir(foldDir);

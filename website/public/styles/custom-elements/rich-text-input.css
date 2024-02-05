@@ -17,6 +17,31 @@ rich-text-input {
 
     /* &, & * { outline: 1px solid red; } */
 
+    & folder-element {
+        > .topper {
+            border-radius: var(--in-section-gap);
+            > * { margin: 0px; }
+        }
+
+        > .contents {
+        }
+
+        &.category {
+            > .topper {
+                outline: var(--std-border);
+                transition: border-bottom-left-radius 200ms linear;
+            }
+            &[open] > .topper { border-bottom-left-radius: 0px; }
+
+            > .contents {
+                background-color: var(--primary);
+                border: var(--std-border);
+                border-radius: 0px 0px var(--in-section-gap) var(--in-section-gap);
+            }
+        }
+
+    }
+
     > .toolbar {
         padding: calc(var(--in-section-gap) / 4);
 
@@ -28,31 +53,6 @@ rich-text-input {
         & .click-action {
             color: var(--text-dark);
             border-radius: var(--in-section-gap);
-        }
-
-        & folder-element {
-            > .topper {
-                border-radius: var(--in-section-gap);
-                > * { margin: 0px; }
-            }
-
-            > .contents {
-            }
-
-            &.category {
-                > .topper {
-                    outline: var(--std-border);
-                    transition: border-bottom-left-radius 200ms linear;
-                }
-                &[open] > .topper { border-bottom-left-radius: 0px; }
-
-                > .contents {
-                    background-color: var(--primary);
-                    border: var(--std-border);
-                    border-radius: 0px 0px var(--in-section-gap) var(--in-section-gap);
-                }
-            }
-
         }
 
         & .font-size-selector > .contents > input { width: 4em; }
@@ -78,13 +78,17 @@ rich-text-input {
 
         overflow-y: scroll;
 
-        > .element-container {
+        & .element-container {
             box-sizing: border-box;
+            
+            padding: var(--in-section-gap);
 
             outline: 2px dashed var(--shadow-dark);
             border-radius: var(--in-section-gap);
 
             > .element {
+                align-self: center;
+
                 padding: 2px;
                 margin: 0px;
 
@@ -92,7 +96,7 @@ rich-text-input {
 
                 &.fake-focussed { outline: var(--text-dark) auto 1px; }
         
-                &:empty::before {
+                &:empty::after {
                     color: var(--shadow-dark);
                     font-style: italic;
                     font-weight: bold;

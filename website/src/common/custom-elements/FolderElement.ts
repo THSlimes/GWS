@@ -44,7 +44,8 @@ export default class FolderElement extends HTMLElement {
     }
 
     
-    private readonly contents:HTMLDivElement;
+    private readonly _contents:HTMLDivElement;
+    public get contents() { return this._contents; }
 
     /** Whether the folder is currently open. */
     public get isOpen() { return this.hasAttribute("open"); }
@@ -78,7 +79,7 @@ export default class FolderElement extends HTMLElement {
         );
 
         contentPosition ??= ElementUtil.getAttrAs<ContentPosition>(this, "content-position", v => v === "absolute" || v === "static") ?? "absolute";
-        this.contents = super.appendChild(
+        this._contents = super.appendChild(
             ElementFactory.div()
                 .class("contents", contentPosition)
                 .children(...originalContents)
@@ -89,7 +90,7 @@ export default class FolderElement extends HTMLElement {
         openOn ??= ElementUtil.getAttrAs<keyof HTMLElementEventMap>(this, "open-on") ?? "mouseenter";
         closeOn ??= ElementUtil.getAttrAs<keyof HTMLElementEventMap>(this, "close-on") ?? "mouseleave";
 
-        $(this.contents).hide(); // start closed
+        $(this._contents).hide(); // start closed
         if (openOn === closeOn) {
             this.topper.addEventListener(openOn, () => this.isOpen ? this.close() : this.open());
         }
@@ -119,7 +120,7 @@ export default class FolderElement extends HTMLElement {
      * @returns the added node
      */
     public override appendChild<T extends Node>(node: T): T {
-        return this.contents.appendChild(node);
+        return this._contents.appendChild(node);
     }
 
     /**
@@ -128,7 +129,7 @@ export default class FolderElement extends HTMLElement {
      * @param nodes
      */
     public override append(...nodes: (string | Node)[]): void {
-        return this.contents.append(...nodes);
+        return this._contents.append(...nodes);
     }
 
     /**
@@ -138,21 +139,21 @@ export default class FolderElement extends HTMLElement {
         const headingBB = this._heading.getBoundingClientRect();
         switch (this._foldDir) {
             case "down":
-                this.contents.style.left = "0px";
-                this.contents.style.top = this.clientHeight + "px";
+                this._contents.style.left = "0px";
+                this._contents.style.top = this.clientHeight + "px";
 
                 this.arrow.style.rotate = "90deg";
                 break;
             case "right":
-                this.contents.style.left = (this.parentElement!.getBoundingClientRect().right - this.getBoundingClientRect().left) + "px";
-                this.contents.style.top = "0px";
+                this._contents.style.left = (this.parentElement!.getBoundingClientRect().right - this.getBoundingClientRect().left) + "px";
+                this._contents.style.top = "0px";
 
                 this.arrow.style.rotate = "90deg";
                 break;
         }
-        this.contents.style.setProperty("--top", this.contents.style.top??"0px");
+        this._contents.style.setProperty("--top", this._contents.style.top??"0px");
 
-        $(this.contents).stop().slideDown(200);
+        $(this._contents).stop().slideDown(200);
         this.setAttribute("open", "");
     }
 
@@ -160,7 +161,7 @@ export default class FolderElement extends HTMLElement {
      * Immediately closes the FolderElement.
      */
     public close() {
-        $(this.contents).stop().slideUp(200);
+        $(this._contents).stop().slideUp(200);
         this.arrow.style.rotate = "0deg";
         this.removeAttribute("open");
     }

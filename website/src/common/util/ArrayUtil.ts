@@ -45,4 +45,8 @@ export default abstract class ArrayUtil {
         return out;
     }
 
+    public static includesAll<T>(arr:T[], ...searchElements:T[]) {
+        return searchElements.every(e => arr.includes(e));
+    }
+
 }

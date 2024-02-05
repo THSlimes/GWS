@@ -181,18 +181,6 @@ div#split-view {
     }
 }
 
-/* RICH-TEXT */
-
-.rich-text {
-    & .italic { font-style: italic; }
-    & .bold { font-weight: bolder; }
-    & .underlined { text-decoration: underline; }
-    & .strikethrough { text-decoration: line-through; }
-    & .monospace { font-family: monospace; }
-
-    & p:not(:last-child) { margin: 1em 0px 1em 0px; }
-}
-
 /* UTILITY CLASSES */
 
 *[hidden] { display: none !important; }

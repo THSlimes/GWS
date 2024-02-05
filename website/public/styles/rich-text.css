@@ -1,6 +1,5 @@
 .rich-text {
     > * {
-        padding: var(--in-section-gap);
         margin: var(--in-section-gap) 0px;
     }
 
@@ -29,6 +28,26 @@
 
     img {
         object-fit: contain;
+    }
+
+    ul {
+        display: flex;
+        flex-direction: column;
+        row-gap: var(--in-section-gap);
+
+        > *:not(.no-bullet)::before { content: "● "; }
+    }
+
+    ol {
+        display: flex;
+        flex-direction: column;
+        row-gap: var(--in-section-gap);
+
+        counter-reset: index;
+        > *:not(.no-bullet)::before {
+            counter-increment: index;
+            content: counter(index) ". ";
+        }
     }
 
 

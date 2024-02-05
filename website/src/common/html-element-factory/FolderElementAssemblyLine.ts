@@ -25,8 +25,8 @@ export default class FolderElementAssemblyLine extends AssemblyLine<"folder-elem
         return this;
     }
 
-    protected _heading?:HTMLElement|AssemblyLine<any>;
-    public heading(heading:HTMLElement|AssemblyLine<any>):this {
+    protected _heading?:Element|AssemblyLine<any>|((folder:FolderElement)=>Element|AssemblyLine<any>);
+    public heading(heading:Element|AssemblyLine<any>|((folder:FolderElement)=>Element|AssemblyLine<any>)):this {
         this._heading = heading;
         return this;
     }
@@ -37,7 +37,10 @@ export default class FolderElementAssemblyLine extends AssemblyLine<"folder-elem
         if (this._foldDir) out.foldDir = this._foldDir;
         out.arrowHidden = this._arrowHidden ?? false;
         if (this._closingDelay) out.closingDelay = this._closingDelay;
-        if (this._heading) out.heading = this._heading instanceof AssemblyLine ? this._heading.make() : this._heading;
+        if (this._heading) {
+            if (!(this._heading instanceof Element || this._heading instanceof AssemblyLine)) this._heading = this._heading(out);
+            out.heading = this._heading instanceof AssemblyLine ? this._heading.make() : this._heading;
+        }
 
         return out;
     }
