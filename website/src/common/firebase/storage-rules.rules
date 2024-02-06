@@ -1,0 +1,22 @@
+rules_version = '2';
+
+service firebase.storage {
+    match /b/{bucket}/o {
+
+        // Tests whether the authenticated user has the given permissions
+        function hasPermissions(requiredPerms) {
+            return requiredPerms.size() == 0 // no permissions required
+                || (request.auth != null && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.permissions.hasAll(requiredPerms));
+        }
+
+        match /attachments/{attmPath=**} {
+            allow get : if hasPermissions(["DOWNLOAD_ATTACHMENTS"]);
+            allow create : if hasPermissions(["UPLOAD_ATTACHMENTS"]);
+        }
+
+        match /photos/homepage/{filename} {
+            allow read;
+        }
+
+    }
+}

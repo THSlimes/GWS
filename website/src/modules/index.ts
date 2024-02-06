@@ -35,7 +35,7 @@ listAll(carouselImagesFolder)
 .then(photoRefs => {
     photoRefs.items.forEach((photoRef, i) => {
         getDownloadURL(photoRef)
-        .then(url => {
+        .then(url => {                        
             CAROUSEL_IMAGES[i] = createCarouselImg(url, i === 0 ? "high" : "low");
             CAROUSEL.prepend(CAROUSEL_IMAGES[i]);
 
@@ -175,7 +175,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             NEXT_PAGE_BUTTON.disabled = currPage === NUM_PAGES-1;
             LAST_PAGE_BUTTON.disabled = currPage === NUM_PAGES-1;
     
-            PAGE_NUMBER.innerText = `${pageNum+1} / ${NUM_PAGES}`;
+            PAGE_NUMBER.textContent = `${pageNum+1} / ${NUM_PAGES}`;
         })
         .catch(console.warn);
     }

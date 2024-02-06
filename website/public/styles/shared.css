@@ -43,8 +43,8 @@ span.icon { font-size: inherit; }
     --text-light: #FFFFFF;
     --text-dark: #000000;
 
-    --shadow-light: rgba(255, 255, 255, .125);
-    --shadow-dark: rgba(0, 0, 0, .125);
+    --shadow-light: rgba(255, 255, 255, .25);
+    --shadow-dark: rgba(0, 0, 0, .25);
 
     --indicate-good: aquamarine;
     --indicate-neutral: orange;
@@ -100,7 +100,7 @@ p, input, label {
     color: var(--text-dark);
 }
 
-input, textarea {
+input, textarea, select {
     padding: calc(var(--in-section-gap) / 2);
 
     box-sizing: border-box;

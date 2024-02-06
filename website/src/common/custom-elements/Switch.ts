@@ -8,7 +8,7 @@ export default class Switch extends HTMLElement {
         if (newVal !== this._value) {
             this._value = newVal;
             newVal ? this.setAttribute("on", "") : this.removeAttribute("on");
-            this.indicator.innerText = newVal ? "check" : "close";
+            this.indicator.textContent = newVal ? "check" : "close";
             for (const dep of this.dependants) {
                 if (newVal !== this.inverted) dep.removeAttribute("disabled");
                 else dep.setAttribute("disabled","");

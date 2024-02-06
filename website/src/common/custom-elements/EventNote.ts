@@ -13,6 +13,7 @@ import EventCalendar from "./EventCalendar";
 import URLUtil from "../util/URLUtil";
 import Switch from "./Switch";
 import { HexColor } from "../html-element-factory/AssemblyLine";
+import FunctionUtil from "../util/FunctionUtil";
 
 /** Amount of detail present in an EventNote element. */
 export type DetailLevel = "full" | "high" | "normal" | "low";
@@ -259,7 +260,6 @@ export class EditableEventNote extends EventNote implements HasSections<"categor
             this.style.setProperty("--background-color", bgColor);
             this.style.setProperty("--text-color", ColorUtil.getMostContrasting(bgColor, "#000000", "#ffffff"));
         }
-        let refreshColorTimeout:NodeJS.Timeout|undefined;
 
         this.appendChild(
             ElementFactory.div(undefined, "general", "in-section-gap")
@@ -273,10 +273,7 @@ export class EditableEventNote extends EventNote implements HasSections<"categor
                         .class("category")
                         .placeholder("categorie")
                         .spellcheck(true)
-                        .on("input", () => {
-                            clearTimeout(refreshColorTimeout);
-                            refreshColorTimeout = setTimeout(refreshColors, 500);
-                        })
+                        .on("input", () => FunctionUtil.setDelayedCallback(refreshColors, 500))
                         .make(),
                     ElementFactory.div(undefined, "color", "flex-rows", "center-content", "in-section-gap")
                         .children(

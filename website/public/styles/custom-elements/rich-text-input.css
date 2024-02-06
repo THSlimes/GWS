@@ -86,13 +86,14 @@ rich-text-input {
             outline: 2px dashed var(--shadow-dark);
             border-radius: var(--in-section-gap);
 
-            > .element {
+            > .do-serialize {
                 align-self: center;
 
-                padding: 2px;
                 margin: 0px;
 
                 flex-grow: 1;
+
+                &.text-box { padding: 2px; }
 
                 &.fake-focussed { outline: var(--text-dark) auto 1px; }
         

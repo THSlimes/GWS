@@ -18,7 +18,7 @@ export default class FolderElement extends HTMLElement {
     private _foldDir:FoldingDirection;
     public set foldDir(newDir:FoldingDirection) {
         this._foldDir = newDir;
-        this.arrow.innerText = "chevron_right";
+        this.arrow.textContent = "chevron_right";
     }
     public closingDelay:number;
     private closingTimeout?:NodeJS.Timeout;

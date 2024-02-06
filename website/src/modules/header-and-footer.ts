@@ -197,14 +197,14 @@ function createHeader(config:NavbarConfig):HTMLElement {
     function openSidebar() {
         $(sidebarContainer).stop().fadeIn(200);
         sidebar.setAttribute("shown", "");
-        openMenuButton.innerText = "menu_open";
+        openMenuButton.textContent = "menu_open";
         document.body.classList.add("no-scroll");
     }
 
     function closeSidebar() {
         $(sidebarContainer).stop().fadeOut(200);
         sidebar.removeAttribute("shown");
-        openMenuButton.innerText = "menu";
+        openMenuButton.textContent = "menu";
         document.body.classList.remove("no-scroll");
     }
 

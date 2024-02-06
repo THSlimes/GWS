@@ -328,7 +328,7 @@ export default class EventCalendar extends HTMLElement {
                                     this.dayCellContainer.scrollTo(0, scrollY - 2);
                                     
                                     if (numLeft === 0) {
-                                        loadBefore.innerText = `Geen activiteiten voor ${DateUtil.DATE_FORMATS.DAY.LONG(newDays.find(ec => ec.events.length !== 0)!.date)}`;
+                                        loadBefore.textContent = `Geen activiteiten voor ${DateUtil.DATE_FORMATS.DAY.LONG(newDays.find(ec => ec.events.length !== 0)!.date)}`;
                                         loadBefore.classList.add("no-more");
                                     }
                                     else loadingBefore = false;
@@ -348,7 +348,7 @@ export default class EventCalendar extends HTMLElement {
                                     const scrollY = extensionCells.map(dc => dc.element).filter(e => this.dayCellContainer.contains(e)).reduce((prev,curr) => prev + curr.clientHeight, 0);
                                     
                                     if (numLeft === 0) {
-                                        loadAfter.innerText = `Geen activiteiten na ${DateUtil.DATE_FORMATS.DAY.LONG(newDays.findLast(ec => ec.events.length !== 0)!.date)}`;
+                                        loadAfter.textContent = `Geen activiteiten na ${DateUtil.DATE_FORMATS.DAY.LONG(newDays.findLast(ec => ec.events.length !== 0)!.date)}`;
                                         loadAfter.classList.add("no-more");
                                     }
                                     else loadingAfter = false;

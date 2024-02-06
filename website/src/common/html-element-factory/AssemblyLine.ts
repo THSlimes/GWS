@@ -82,7 +82,7 @@ export default class AssemblyLine<TN extends string, E extends ElementType<TN> =
     }
 
     private _text?:string;
-    /** Sets the ```innerText``` property. */
+    /** Sets the ```textContent``` property. */
     public text(txt:string) {
         this._text = txt;
         return this;
@@ -233,6 +233,11 @@ export class AnchorElementAssemblyLine extends AssemblyLine<"a"> {
         return this;
     }
 
+    private _downloadLink?:string;
+    public download(downloadLink:string="") {
+        this._downloadLink = downloadLink;
+    }
+
     private _openInNewTab = false;
     /** Determines whether the link opens in a new tab. */
     public openInNewTab(openInNewTab:boolean) {
@@ -244,6 +249,7 @@ export class AnchorElementAssemblyLine extends AssemblyLine<"a"> {
         const out = super.make();
 
         if (this._href !== undefined) out.href = this._href;
+        if (this._downloadLink !== undefined) out.download = this._downloadLink;
         if (this._openInNewTab) out.target = "_blank";
 
         return out;
@@ -251,8 +257,8 @@ export class AnchorElementAssemblyLine extends AssemblyLine<"a"> {
 
 }
 
-type SmartSelect = HTMLSelectElement & { prevValue?:string };
-export class SelectAssemblyLine extends AssemblyLine<"select"> {
+type SmartSelect<V extends string> = HTMLSelectElement & { prevValue?:V };
+export class SelectAssemblyLine<V extends string> extends AssemblyLine<"select"> {
 
     constructor() {
         super("select");
@@ -260,12 +266,13 @@ export class SelectAssemblyLine extends AssemblyLine<"select"> {
 
     private _options:Record<string,[string,boolean]> = {};
     /** Adds a single option to the select element. */
-    public option(value:string, displayText=value, hidden=false) {
+    public option<AV extends string>(value:AV, displayText=value as string, hidden=false) {
         this._options[value] = [displayText, hidden];
-        return this;
+        return this as SelectAssemblyLine<V|AV>;
     }
+
     /** Adds multiple options at once to the select element. */
-    public options(values:(string|[string,boolean])[]|Record<string,string|[string,boolean]>) {
+    public options<AV extends string>(values:(AV|[AV,boolean])[]|Record<AV,string|[string,boolean]>) {
         if (Array.isArray(values)) values.forEach(v => {
             if (Array.isArray(v)) this._options[v[0]] = v;
             else this._options[v] = [v, false];
@@ -275,29 +282,29 @@ export class SelectAssemblyLine extends AssemblyLine<"select"> {
             this._options[v] = Array.isArray(display) ? display : [display, false];
         }
 
-        return this;
+        return this as SelectAssemblyLine<V|AV>;
     }
 
-    private _value?:string;
-    public value(value:string) {
+    private _value?:V;
+    public value(value:V) {
         this._value = value;
         return this;
     }
 
-    private _onValueChanged?:(curr:string, prev?:string)=>void
-    public onValueChanged(callback:(curr:string, prev?:string)=>void) {
+    private _onValueChanged?:(curr:V, prev?:V)=>void
+    public onValueChanged(callback:(curr:V, prev?:V)=>void) {
         this._onValueChanged = callback;
         return this;
     }
 
-    public override make(): SmartSelect {
-        const out = super.make() as SmartSelect;
+    public override make(): SmartSelect<V> & { value:V } {
+        const out = super.make() as SmartSelect<V> & { value:V };
 
         for (const v in this._options) {
             const option = document.createElement("option");
             option.value = v;
             option.selected = v === this._value;
-            option.innerText = this._options[v][0];
+            option.textContent = this._options[v][0];
             if (this._options[v][1]) option.hidden = true;
             out.options.add(option);
         }

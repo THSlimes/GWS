@@ -258,7 +258,8 @@ export default abstract class DateUtil {
             return new Date(d);
         },
 
-        isValid(d:Date):boolean {
+        isValid(d:Date|string):boolean {
+            d = typeof d === "string" ? new Date(d) : d;
             return !isNaN(d.getTime());
         }
 

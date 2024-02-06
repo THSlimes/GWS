@@ -1,9 +1,12 @@
+import { checkPermissions } from "../firebase/authentication/permission-based-redirect";
+import Permission from "../firebase/database/Permission";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import ArrayUtil from "../util/ArrayUtil";
 import ColorUtil, { Color } from "../util/ColorUtil";
 import ElementUtil, { HasSections } from "../util/ElementUtil";
+import FunctionUtil from "../util/FunctionUtil";
 import NumberUtil from "../util/NumberUtil";
-import URLUtil from "../util/URLUtil";
+import URLUtil, { FileType } from "../util/URLUtil";
 import FolderElement from "./FolderElement";
 
 /** [parent Node, "before child" index] */
@@ -32,7 +35,35 @@ type RichTextSection = "shortcut" | "attachment" | "image" | "title" | "h1" | "h
 const ALL_HEADERS:RichTextSection[] = ["title", "h1", "h2", "h3"];
 const ALL_WIDGETS:RichTextSection[] = ["event-calendar", "event-note"];
 
+const FILE_TYPE_ICONS:Record<FileType, string> = {
+    image: "photo_library",
+    application: "collections_bookmark",
+    audio: "library_music",
+    example: "quiz",
+    font: "font_download",
+    model: "deployed_code",
+    text: "library_books",
+    video: "video_library",
+    unknown: "quiz",
+    "compressed-folder": "folder_zip",
+    pdf: "picture_as_pdf"
+};
+
+const FILE_SIZE_UNITS = ['B', "kB", "MB", "GB", "TB", "PB", "YB"];
+function getFileSizeString(numBytes:number):string {
+    let unitInd = 0;
+    let numUnits = numBytes;
+    while (numUnits >= 1000) [unitInd, numUnits] = [unitInd + 1, numUnits / 1000];
+
+    return `${numUnits.toFixed(1)}${FILE_SIZE_UNITS[unitInd]}`;
+}
+
 export default class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body"> {
+
+    private static CAN_DOWNLOAD_ATTACHMENTS = false;
+    static {
+        checkPermissions(Permission.DOWNLOAD_ATTACHMENTS, hasPerms => this.CAN_DOWNLOAD_ATTACHMENTS = hasPerms, true, true);
+    }
 
     public toolbar!:HTMLDivElement;
     public body!:HTMLDivElement;
@@ -51,79 +82,152 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
 
     private insert<E extends Element>(newElem:E, position:InsertionPosition, focus=true, deleteOnEmpty=true) {
 
-        newElem.classList.add("element"); // mark as element
+        newElem.classList.add("do-serialize"); // mark as element
 
         let insElem:Element;
         
-        if (newElem instanceof HTMLImageElement) insElem = ElementFactory.div(undefined, "image-container", "flex-rows", "cross-axis-center", "in-section-gap")
-            .children(() => {
-                let urlInputTimeout:NodeJS.Timeout|undefined;
+        if (newElem instanceof HTMLImageElement) {
+            insElem = ElementFactory.div(undefined, "image-container", "flex-rows", "cross-axis-center", "in-section-gap")
+                .children(() => {
+                    newElem.src ||= location.origin + "/images/other/placeholder.svg";
+                    const defaultSrc = newElem.src;
 
-                newElem.src ||= location.origin + "/images/other/placeholder.svg";
-                const defaultSrc = newElem.src;
+                    // create URL input element
+                    const urlInput = ElementFactory.input.url()
+                        .placeholder("Link naar afbeelding...")
+                        .on("input", () => FunctionUtil.setDelayedCallback(urlInputCallback, 500))
+                        .make();
 
-                const urlInput = ElementFactory.input.url()
-                    .placeholder("Link naar afbeelding...")
-                    .on("input", () => {
+                    const urlInputCallback = () => { // callback to run after urlInput input event
                         const url = urlInput.value;
 
-                        clearTimeout(urlInputTimeout);
-                        urlInputTimeout = setTimeout(() => {
-                            URLUtil.getType(url)
-                            .then(type => {
-                                if (type === "image") {
-                                    newElem.src = url;
-                                    urlStatus.textContent = "";
-                                }
-                                else {
-                                    urlStatus.textContent = "Link is geen afbeeldingslink.";
-                                    newElem.src = defaultSrc;
+                        URLUtil.getType(url)
+                        .then(type => {
+                            if (type === "image") {
+                                newElem.src = url;
+                                urlStatus.textContent = "";
+                            }
+                            else {
+                                urlStatus.textContent = "Link is geen afbeeldingslink.";
+                                newElem.src = defaultSrc;
+                            }
+                        })
+                        .catch(() => {
+                            urlStatus.textContent = "Link is ongeldig.";
+                            newElem.src = defaultSrc;
+                        });
+                    }
+
+                    // create URL status element
+                    const urlStatus = ElementFactory.p()
+                        .class("url-status", "no-margin")
+                        .make();
+
+                    // create image width selector
+                    const widthSelector = ElementFactory.div(undefined, "width-selector", "flex-columns", "cross-axis-center", "in-section-gap")
+                        .children(
+                            ElementFactory.label("Breedte", "width"),
+                            ElementFactory.input.range(100, 1, 100, 1)
+                                .name("width")
+                                .on("input", (ev, widthInput) => newElem.style.width = widthInput.value + "%")
+                        );
+
+                    return [newElem, urlInput, urlStatus, widthSelector];
+                })
+                .make();
+        }
+        else if (newElem instanceof HTMLAnchorElement && newElem.classList.contains("attachment")) {
+            insElem = ElementFactory.div(undefined, "attachment-container", "flex-rows", "in-section-gap")
+                .children(() => {
+                    let sourceInput;
+
+                    const sourceSelector = ElementFactory.div(undefined, "source-selector", "flex-columns", "cross-axis-center", "in-section-gap")
+                    .children(
+                        ElementFactory.label("Bron"),
+                        sourceInput = ElementFactory.select({ "firebase-storage": "Firebase cloud-opslag", "external": "Directe link" })
+                            .onValueChanged(v => {
+                                newElem.setAttribute("type", v);
+
+                                switch (v) {
+                                    case "firebase-storage":
+                                        linkInput.placeholder = "Bestandspad...";
+                                        break;
+                                    case "external":
+                                    default:
+                                        linkInput.placeholder = "Link naar bestand...";
+                                        break;
                                 }
                             })
-                            .catch(() => {
-                                urlStatus.textContent = "Link is ongeldig.";
-                                newElem.src = defaultSrc;
-                            });
-                        }, 500);
-                    })
-                    .make();
-
-                const urlStatus = ElementFactory.p()
-                    .class("url-status", "no-margin")
-                    .make();
-
-                const widthSelector = ElementFactory.div(undefined, "width-selector", "flex-columns", "cross-axis-center", "in-section-gap")
-                    .children(
-                        ElementFactory.label("Breedte", "width"),
-                        ElementFactory.input.range(100, 1, 100, 1)
-                            .name("width")
-                            .on("input", (ev, widthInput) => newElem.style.width = widthInput.value + "%")
+                            .make()
                     );
 
-                return [newElem, urlInput, urlStatus, widthSelector];
-            })
-            .make();
+                    const linkInput = ElementFactory.input.text()
+                        .class("link-input")
+                        .placeholder("Bestandspad...")
+                        .on("input", () => FunctionUtil.setDelayedCallback(getFileDetails, 500))
+                        .make();
+                    
+                    const getFileDetails = () => {
+                        const detailPromise = URLUtil.getInfo(linkInput.value);
+                        
+                        const fileNameLabel = newElem.getElementsByClassName("file-name")[0];
+                        const fileSizeLabel = newElem.getElementsByClassName("file-size")[0];
+                        const fileTypeIcon = newElem.getElementsByClassName("file-type-icon")[0];
+                        const downloadIcon = newElem.getElementsByClassName("download-icon")[0];
+
+                        detailPromise.then(details => {
+                            newElem.classList.remove("error"); // mark as valid
+                            fileNameLabel.textContent = details.name;
+                            fileSizeLabel.textContent = details.size ? getFileSizeString(details.size) : "";
+                            fileTypeIcon.textContent = FILE_TYPE_ICONS[details.fileType];
+                            downloadIcon.textContent = "download";
+                            downloadIcon.classList.add("click-action");
+
+                            newElem.setAttribute("href", details.href);
+                            newElem.setAttribute("download", "");
+                        })
+                        .catch(err => {
+                            newElem.classList.add("error"); // mark as invalid
+                            fileNameLabel.textContent = "Kan bestand niet vinden";
+                            fileSizeLabel.textContent = "";
+                            fileTypeIcon.textContent = "error";
+                            downloadIcon.textContent = "file_download_off";
+                            downloadIcon.classList.remove("click-action");
+
+                            newElem.removeAttribute("href");
+                            newElem.removeAttribute("download");
+                        });
+                    };
+                    
+                    return [newElem, sourceSelector, linkInput];
+                })
+                .make();
+        }
         else insElem = newElem;
 
-        const container = ElementFactory.div(undefined, "element-container", "flex-columns", "cross-axis-center", "in-section-gap")
+        const container:HTMLDivElement = ElementFactory.div(undefined, "element-container", "flex-columns", "main-axis-space-between", "cross-axis-center",  "in-section-gap")
             .children(
                 insElem,
-                container => ElementFactory.p("move_up")
-                    .class("icon", "click-action", "no-margin")
-                    .tooltip("Naar boven")
-                    .on("click", () => {
-                        if (container.previousElementSibling) swap(container, container.previousElementSibling)
-                    }),
-                ElementFactory.p("move_down")
-                    .class("icon", "click-action", "no-margin")
-                    .tooltip("Naar beneden")
-                    .on("click", () => {
-                        if (container.nextElementSibling) swap(container, container.nextElementSibling)
-                    }),
-                container => ElementFactory.p("remove")
-                    .class("icon", "click-action", "no-margin")
-                    .tooltip("Verwijderen")
-                    .on("click", () => container.remove())
+                ElementFactory.div(undefined, "controls", "flex-columns", "in-section-gap")
+                .children(
+                    ElementFactory.p("move_up")
+                        .class("icon", "click-action", "no-margin")
+                        .tooltip("Naar boven")
+                        .on("click", () => {
+                            if (container.previousElementSibling) swap(container, container.previousElementSibling)
+                        }),
+                    ElementFactory.p("move_down")
+                        .class("icon", "click-action", "no-margin")
+                        .tooltip("Naar beneden")
+                        .on("click", () => {
+                            if (container.nextElementSibling) swap(container, container.nextElementSibling)
+                        }),
+                    ElementFactory.p("remove")
+                        .class("icon", "click-action", "no-margin")
+                        .tooltip("Verwijderen")
+                        .on("click", () => container.remove())
+
+                )
             )
             .make();
         
@@ -321,12 +425,15 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
 
                     if (target instanceof HTMLElement) {
                         
-                        let elem = target; // find element to select
-                        while (!elem.classList.contains("element")) {
-                            const q = elem.querySelector(".element");
+                        let elem:HTMLElement|null = target; // find element to select
+                        while (!elem.classList.contains("do-serialize")) {
+                            const q:Element|null = elem.querySelector(".element");
                             if (q instanceof HTMLElement) elem = q;
                             else if (elem.parentElement) elem = elem.parentElement;
-                            else throw Error("uh oh :(");
+                            else {
+                                elem = null;
+                                break;
+                            }
                         }
 
                         this.selectedElement = elem;
@@ -362,9 +469,31 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                 !exclude.includes("shortcut") && ElementFactory.p("add_link")
                     .class("icon", "click-action")
                     .tooltip("Snelkoppeling toevoegen"),
-                !exclude.includes("attachment") && ElementFactory.p("attach_file_add")
+                !exclude.includes("attachment") && ElementFactory.p("attach_file")
                     .class("icon", "click-action")
-                    .tooltip("Bestand toevoegen"),
+                    .tooltip("Bijlage toevoegen")
+                    .on("click", () => {
+                        this.insert(
+                            ElementFactory.a()
+                                .openInNewTab(true)
+                                .class("attachment", "flex-columns", "cross-axis-center", "in-section-gap")
+                                .children(
+                                    ElementFactory.p("collections_bookmark")
+                                        .class("icon", "file-type-icon"),
+                                    ElementFactory.div(undefined, "file-info", "flex-rows")
+                                        .children(
+                                            ElementFactory.p("Bestandsnaam")
+                                                .class("file-name", "no-margin"),
+                                            ElementFactory.p("Bestandsgrootte")
+                                                .class("file-size", "no-margin"),
+                                        ),
+                                    ElementFactory.p("download")
+                                        .class("icon", "click-action", "download-icon")
+                                )
+                                .make(),
+                            insPosCallback(), false, false
+                        );
+                    }),
                 !exclude.includes("image") && ElementFactory.p("add_photo_alternate")
                     .class("icon", "click-action")
                     .tooltip("Afbeelding toevoegen")
@@ -385,7 +514,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                 .on("click", () => { // add new title h1
                                     this.insert(
                                         ElementFactory.h1()
-                                            .class("title", "align-left")
+                                            .class("title", "align-left", "text-input")
                                             .attr("contenteditable", "plaintext-only")
                                             .make(),
                                         insPosCallback()
@@ -400,7 +529,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                             .on("click", () => { // add new normal h1
                                 this.insert(
                                     ElementFactory.h1()
-                                        .class("align-left")
+                                        .class("align-left", "text-input")
                                         .attr("contenteditable", "plaintext-only")
                                         .make(),
                                     insPosCallback()
@@ -413,7 +542,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                             .on("click", () => { // add new h2
                                 this.insert(
                                     ElementFactory.h2()
-                                        .class("align-left")
+                                        .class("align-left", "text-input")
                                         .attr("contenteditable", "plaintext-only")
                                         .make(),
                                     insPosCallback()
@@ -426,7 +555,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                             .on("click", () => { // add new h3
                                 this.insert(
                                     ElementFactory.h3()
-                                        .class("align-left")
+                                        .class("align-left", "text-input")
                                         .attr("contenteditable", "plaintext-only")
                                         .make(),
                                     insPosCallback()
@@ -442,7 +571,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                     .on("click", () => { // add new paragraph
                         this.insert(
                             ElementFactory.p()
-                                .class("align-left")
+                                .class("align-left", "text-input")
                                 .attr("contenteditable", "plaintext-only")
                                 .make(),
                             insPosCallback()

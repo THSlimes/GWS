@@ -1,4 +1,29 @@
+import DateUtil from "./DateUtil";
+import NumberUtil from "./NumberUtil";
+
 type MIMEBaseType = "application" | "audio" | "example" | "font" | "image" | "model" | "text" | "video";
+type MimeType = `${MIMEBaseType}/${string}`;
+export type FileType = MIMEBaseType | "compressed-folder" | "pdf" | "unknown";
+const COMPRESSED_FOLDER_MIME_TYPES:MimeType[] = [
+    "application/x-freearc",
+    "application/x-bzip",
+    "application/x-bzip2",
+    "application/gzip",
+    "application/vnd.rar",
+    "application/x-tar",
+    "application/zip",
+    "application/x-7z-compressed"
+];
+const PDF_MIME_TYPE:MimeType = "application/pdf";
+
+export interface FileInfo {
+    href:string,
+    name:string,
+    contentType:string,
+    fileType:FileType,
+    size?:number,
+    lastModified?:Date
+}
 
 export default abstract class URLUtil {
     private static toURL(link:string|URL):URL {
@@ -43,24 +68,52 @@ export default abstract class URLUtil {
         catch { return false; }
     }
 
-    public static getType(url:URL|string):Promise<MIMEBaseType | "unknown"> {
+    public static getType(url:URL|string):Promise<FileType> {
         return new Promise((resolve, reject) => {
-            try { url = this.toURL(url); }
-            catch { reject("INVALID URL"); }
+            this.getInfo(url)
+            .then(info => resolve(info.fileType))
+            .catch(reject);
+        });
+    }
 
-            const req = new XMLHttpRequest();
-            req.timeout = 2500; // 2.5 second timeout
-            req.onerror = ev => reject("REQUEST ERROR: UNKNOWN");
-            req.ontimeout = ev => reject("REQUEST ERROR: TIMEOUT");
-            req.onload = () => {
-                if (200 <= req.status && req.status < 300) {
-                    const contentType = req.getResponseHeader("Content-Type") ?? "unknown/unknown";
-                    resolve(contentType.substring(0, contentType.indexOf('/')) as MIMEBaseType | "unknown");
-                }
-                else reject(`REQUEST ERROR: ${req.statusText}`);
-            };
-            req.open("HEAD", url, true);
-            req.send();
+    public static getInfo(link:URL|string):Promise<FileInfo> {
+        return new Promise((resolve, reject) => {
+            try {
+                const url = this.toURL(link);
+
+                const req = new XMLHttpRequest();
+                req.timeout = 2500; // 2.5 second timeout
+                req.onerror = ev => reject("REQUEST ERROR: UNKNOWN");
+                req.ontimeout = ev => reject("REQUEST ERROR: TIMEOUT");
+                req.onload = () => {
+                    if (200 <= req.status && req.status < 300) {
+                        console.log(req.getAllResponseHeaders());
+
+                        const headers = {
+                            contentType: req.getResponseHeader("content-type"),
+                            contentLength: req.getResponseHeader("content-length"),
+                            lastModified: req.getResponseHeader("last-modified")
+                        };
+                        
+                        const href = url.href;
+                        const name = url.pathname.substring(url.pathname.lastIndexOf('/') + 1);
+                        const contentType = headers.contentType ?? "unknown/unknown";
+                        let fileType:FileType;
+                        if (COMPRESSED_FOLDER_MIME_TYPES.some(cpmt => contentType.startsWith(cpmt))) fileType = "compressed-folder";
+                        else if (contentType.startsWith(PDF_MIME_TYPE)) fileType = "pdf";
+                        else fileType = contentType.substring(0, contentType.indexOf('/')) as FileType;
+
+                        const size = headers.contentLength && NumberUtil.isInt(headers.contentLength) ? Number.parseInt(headers.contentLength) : undefined;
+                        const lastModified = headers.lastModified && DateUtil.Timestamps.isValid(headers.lastModified) ? new Date(headers.lastModified) : undefined;
+
+                        resolve({ href, name, contentType, fileType, size, lastModified });
+                    }
+                    else reject(`REQUEST ERROR: ${req.statusText}`);
+                };
+                req.open("HEAD", url, true);
+                req.send();
+            }
+            catch { reject("INVALID URL"); }
         });
     }
 

@@ -7,6 +7,8 @@ enum Permission {
     READ_MEMBER_ARTICLES = "READ_MEMBER_ARTICLES", // whether the user can read articles exclusive to members
     CREATE_ARTICLES = "CREATE_ARTICLES", // whether the user can create new articles
     UPDATE_ARTICLES = "UPDATE_ARTICLES", // whether the user can update preexisting articles
+    UPLOAD_ATTACHMENTS = "UPLOAD_ATTACHMENTS", // whether the user can upload a new attachment
+    DOWNLOAD_ATTACHMENTS = "DOWNLOAD_ATTACHMENTS", // whether the user is allowed to download an attachment
 
     // event related
     CREATE_EVENTS = "CREATE_EVENTS", // whether the user can create a new event
@@ -49,6 +51,8 @@ const PERMISSION_TRANSLATIONS:Record<Permission,string> = {
     [Permission.READ_MEMBER_ARTICLES]: "Berichten voor leden lezen",
     [Permission.CREATE_ARTICLES]: "Berichten posten",
     [Permission.UPDATE_ARTICLES]: "Berichten bewerken",
+    [Permission.UPLOAD_ATTACHMENTS]: "Bijlages uploaden",
+    [Permission.DOWNLOAD_ATTACHMENTS]: "Bijlages downloaden",
 
     [Permission.CREATE_EVENTS]: "Activiteiten toevoegen",
     [Permission.UPDATE_EVENTS]: "Activiteit-info bewerken",

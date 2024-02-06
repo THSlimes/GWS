@@ -172,8 +172,8 @@ export default abstract class ElementFactory {
         return out;
     }
 
-    public static select(options:string[]|Record<string,string> = []) {
-        const out = new SelectAssemblyLine();
+    public static select<V extends string>(options:V[]|Record<V,string|[string,boolean]> = []) {
+        const out = new SelectAssemblyLine<V>();
         return out.options(options);
     }
     public static option() { return AssemblyLine.specific("option", ["value", "selected"], () => document.createElement("option")); }
