@@ -16,6 +16,12 @@ const COMPRESSED_FOLDER_MIME_TYPES:MimeType[] = [
 ];
 const PDF_MIME_TYPE:MimeType = "application/pdf";
 
+export function getFileType(contentType:string):FileType {
+    if (COMPRESSED_FOLDER_MIME_TYPES.some(cpmt => contentType.startsWith(cpmt))) return "compressed-folder";
+    else if (contentType.startsWith(PDF_MIME_TYPE)) return "pdf";
+    else return contentType.substring(0, contentType.indexOf('/')) as FileType;
+}
+
 export interface FileInfo {
     href:string,
     name:string,
@@ -98,11 +104,7 @@ export default abstract class URLUtil {
                         const href = url.href;
                         const name = url.pathname.substring(url.pathname.lastIndexOf('/') + 1);
                         const contentType = headers.contentType ?? "unknown/unknown";
-                        let fileType:FileType;
-                        if (COMPRESSED_FOLDER_MIME_TYPES.some(cpmt => contentType.startsWith(cpmt))) fileType = "compressed-folder";
-                        else if (contentType.startsWith(PDF_MIME_TYPE)) fileType = "pdf";
-                        else fileType = contentType.substring(0, contentType.indexOf('/')) as FileType;
-
+                        let fileType = getFileType(contentType);
                         const size = headers.contentLength && NumberUtil.isInt(headers.contentLength) ? Number.parseInt(headers.contentLength) : undefined;
                         const lastModified = headers.lastModified && DateUtil.Timestamps.isValid(headers.lastModified) ? new Date(headers.lastModified) : undefined;
 

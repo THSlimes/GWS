@@ -1,5 +1,6 @@
 import { checkPermissions } from "../firebase/authentication/permission-based-redirect";
 import Permission from "../firebase/database/Permission";
+import Attachments from "../firebase/storage/Attachments";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import ArrayUtil from "../util/ArrayUtil";
 import ColorUtil, { Color } from "../util/ColorUtil";
@@ -55,15 +56,10 @@ function getFileSizeString(numBytes:number):string {
     let numUnits = numBytes;
     while (numUnits >= 1000) [unitInd, numUnits] = [unitInd + 1, numUnits / 1000];
 
-    return `${numUnits.toFixed(1)}${FILE_SIZE_UNITS[unitInd]}`;
+    return numUnits.toFixed(1) + FILE_SIZE_UNITS[unitInd];
 }
 
 export default class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body"> {
-
-    private static CAN_DOWNLOAD_ATTACHMENTS = false;
-    static {
-        checkPermissions(Permission.DOWNLOAD_ATTACHMENTS, hasPerms => this.CAN_DOWNLOAD_ATTACHMENTS = hasPerms, true, true);
-    }
 
     public toolbar!:HTMLDivElement;
     public body!:HTMLDivElement;
@@ -139,36 +135,44 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
         else if (newElem instanceof HTMLAnchorElement && newElem.classList.contains("attachment")) {
             insElem = ElementFactory.div(undefined, "attachment-container", "flex-rows", "in-section-gap")
                 .children(() => {
-                    let sourceInput;
+                    let sourceInput:HTMLSelectElement
+                                & { prevValue?: "firebase-storage" | "external" }
+                                & { value: "firebase-storage" | "external" };
 
                     const sourceSelector = ElementFactory.div(undefined, "source-selector", "flex-columns", "cross-axis-center", "in-section-gap")
                     .children(
                         ElementFactory.label("Bron"),
                         sourceInput = ElementFactory.select({ "firebase-storage": "Firebase cloud-opslag", "external": "Directe link" })
                             .onValueChanged(v => {
-                                newElem.setAttribute("type", v);
+                                newElem.setAttribute("source", v);
+                                getFileDetails();
 
                                 switch (v) {
                                     case "firebase-storage":
-                                        linkInput.placeholder = "Bestandspad...";
+                                        pathInput.placeholder = "Bestandspad...";
                                         break;
                                     case "external":
                                     default:
-                                        linkInput.placeholder = "Link naar bestand...";
+                                        pathInput.placeholder = "Link naar bestand...";
                                         break;
                                 }
                             })
                             .make()
                     );
 
-                    const linkInput = ElementFactory.input.text()
+                    const pathInput = ElementFactory.input.text()
                         .class("link-input")
                         .placeholder("Bestandspad...")
-                        .on("input", () => FunctionUtil.setDelayedCallback(getFileDetails, 500))
+                        .on("input", () => {
+                            FunctionUtil.setDelayedCallback(getFileDetails, 500);
+                            newElem.setAttribute("path", pathInput.value);
+                        })
                         .make();
                     
-                    const getFileDetails = () => {
-                        const detailPromise = URLUtil.getInfo(linkInput.value);
+                    const getFileDetails = () => { // callback to get attachment details
+                        const detailPromise = sourceInput.value === "firebase-storage" ?
+                            Attachments.getInfo(pathInput.value) :
+                            URLUtil.getInfo(pathInput.value);
                         
                         const fileNameLabel = newElem.getElementsByClassName("file-name")[0];
                         const fileSizeLabel = newElem.getElementsByClassName("file-size")[0];
@@ -199,7 +203,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                         });
                     };
                     
-                    return [newElem, sourceSelector, linkInput];
+                    return [newElem, sourceSelector, pathInput];
                 })
                 .make();
         }

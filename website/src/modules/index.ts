@@ -35,7 +35,7 @@ listAll(carouselImagesFolder)
 .then(photoRefs => {
     photoRefs.items.forEach((photoRef, i) => {
         getDownloadURL(photoRef)
-        .then(url => {                        
+        .then(url => {
             CAROUSEL_IMAGES[i] = createCarouselImg(url, i === 0 ? "high" : "low");
             CAROUSEL.prepend(CAROUSEL_IMAGES[i]);
 
@@ -54,7 +54,7 @@ const CAROUSEL = new ElementCarousel(5000, 800);
 CAROUSEL.append(
     ElementFactory.h1("Studievereniging Den Geitenwollen Soc.")
         .id("carousel-name")
-        .attrs({ "cover":"", "parallax-factor":.7 })
+        .attrs({ "cover": "", "parallax-factor": .7 })
         .make(),
     ElementFactory.div().attr("cover").make()
 );

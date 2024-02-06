@@ -1,4 +1,4 @@
-export default class FunctionUtil {
+export default abstract class FunctionUtil {
 
     /** [callback, wrapped timeout] tuples */
     private static readonly delayedCallbacks:[VoidFunction, NodeJS.Timeout][] = [];
