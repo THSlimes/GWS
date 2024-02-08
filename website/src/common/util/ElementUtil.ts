@@ -1,38 +1,6 @@
+import NodeUtil from "./NodeUtil";
+
 export default abstract class ElementUtil {
-
-    public static whenInsertedIn<N extends Node>(node:N, ancestor:Node):Promise<N> {
-        return new Promise((resolve, reject) => {
-            if (ancestor.contains(node)) resolve(node); // already a child
-            else { // set up observer
-                const obs = new MutationObserver(mutations => {
-                    for (const m of mutations) {
-                        if (m.target === node) {
-                            resolve(node);
-                            obs.disconnect(); // cleanup
-                        }
-                    }
-                });
-                obs.observe(ancestor, { childList:true, subtree:true })
-            }
-        });
-    }
-
-    /**
-     * Gives the index of a child of a node.
-     * @param parent parent node
-     * @param child child to determine index of
-     * @returns index of `child` in `parent` (-1 if `child` is not a child of `parent`)
-     */
-    public static getChildIndex(parent:Node, child:Node):number {
-        let [node, i] = [parent.firstChild, 0];
-
-        while (node !== null) {
-            if (node === child) return i;
-            else [node, i] = [node.nextSibling, i+1];
-        }
-
-        return -1;
-    }
 
     /**
      * Gets an Element attribute as a number.
@@ -60,6 +28,34 @@ export default abstract class ElementUtil {
         const v = elem.getAttribute(attrName)!;
         if (checker) return checker(v) ? v as T : null;
         else return v as T;
+    }
+
+    public static queryAncestors(node:Node|null, selector:string, includeNode=false):Element[] {
+        if (node === null) return [];
+        else {
+            const out:Element[] = [];
+            if (includeNode && node instanceof Element && node.matches(selector)) out.push(node);
+
+            let n:Node|null = node.parentNode;
+            while (n !== null) {
+                if (n instanceof Element && n.matches(selector)) out.push(n);
+                n = n.parentNode;
+            }
+
+            return out;
+        }
+    }
+
+    public static isChain(elem:Element):boolean {
+        if (NodeUtil.isEmpty(elem)) return true; // end of chain
+        else if (elem.childElementCount === 1) return this.isChain(elem.firstElementChild!); // link in chain
+        else return false; // > 1 child elements, not a chain
+    }
+
+    public static getChainEnd(elem:Element):Element {
+        if (NodeUtil.isEmpty(elem)) return elem; // end of chain, empty
+        else if (elem.childElementCount === 1) return this.getChainEnd(elem.firstElementChild!); // link in chain, look further down
+        else return elem; // chain stops prematurely, return end
     }
     
     public static isAtScrollTop(elem:Element, tolerance=1) {

@@ -29,6 +29,8 @@ type ChildGenerator<SelfType extends HTMLElement> = (self:SelfType) => Child|Chi
 type ElementType<S extends string> = S extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[S] : HTMLElement;
 type Class<T> = new (...args:any[]) => T;
 
+type UserSelect =  "none" | "auto" | "text" | "contain" | "all";
+
 /**
  * An AssemblyLine is a type of object that makes the construction
  * of HTMLElement objects easier. All methods (except for ```make()```)
@@ -107,6 +109,15 @@ export default class AssemblyLine<TN extends string, E extends ElementType<TN> =
         return this;
     }
 
+    private _canSelect?:UserSelect;
+    public canSelect(canSelect:UserSelect|boolean):this {
+        if (canSelect === true) canSelect = "all";
+        else if (canSelect === false) canSelect = "none";
+        
+        this._canSelect = canSelect;
+        return this;
+    }
+
     private _html?:string;
     /** Sets the ```innerHTML``` property. */
     public html(html:string) {
@@ -160,6 +171,7 @@ export default class AssemblyLine<TN extends string, E extends ElementType<TN> =
         if (this._tooltip !== undefined) out.title = this._tooltip;
         if (this._draggable) out.draggable = true;
         if (this._noFocus) out.addEventListener("mousedown", ev => ev.preventDefault());
+        if (this._canSelect) out.style.userSelect = this._canSelect;
 
         // children
         for (const c of this._children) {

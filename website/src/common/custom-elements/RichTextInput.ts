@@ -1,11 +1,11 @@
-import { checkPermissions } from "../firebase/authentication/permission-based-redirect";
-import Permission from "../firebase/database/Permission";
+import TextStyling from "../TextStyling";
 import Attachments from "../firebase/storage/Attachments";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import ArrayUtil from "../util/ArrayUtil";
 import ColorUtil, { Color } from "../util/ColorUtil";
 import ElementUtil, { HasSections } from "../util/ElementUtil";
 import FunctionUtil from "../util/FunctionUtil";
+import NodeUtil from "../util/NodeUtil";
 import NumberUtil from "../util/NumberUtil";
 import URLUtil, { FileType } from "../util/URLUtil";
 import FolderElement from "./FolderElement";
@@ -13,23 +13,11 @@ import FolderElement from "./FolderElement";
 /** [parent Node, "before child" index] */
 type InsertionPosition = [Node, number];
 
-function insertAt<N extends Node>(position:InsertionPosition, node:N):N {
+function insertAt(position:InsertionPosition, ...nodes:Node[]):void {
     const [parent, ind] = position;
-    if (ind <= 0) parent.insertBefore(node, parent.firstChild);
-    else if (ind >= parent.childNodes.length) parent.appendChild(node);
-    else parent.insertBefore(node, parent.childNodes[ind]);
-
-    return node;
-}
-
-function swap(a:Element, b:Element) {
-    const [aRep, bRep] = [document.createTextNode(""), document.createTextNode("")];
-
-    a.replaceWith(aRep);
-    b.replaceWith(bRep);
-
-    aRep.replaceWith(b);
-    bRep.replaceWith(a);
+    if (ind <= 0) nodes.forEach(n => parent.insertBefore(n, parent.firstChild));
+    else if (ind >= parent.childNodes.length) nodes.forEach(n => parent.appendChild(n));
+    else nodes.forEach(n => parent.insertBefore(n, parent.childNodes[ind]));
 }
 
 type RichTextSection = "shortcut" | "attachment" | "image" | "title" | "h1" | "h2" | "h3" | "paragraph" | "list" | "numbered-list" | "event-calendar" | "event-note";
@@ -70,7 +58,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
         if (this.selectedElement) {
             return [
                 this.selectedElement.parentNode!.parentNode!,
-                ElementUtil.getChildIndex(this.selectedElement.parentNode!.parentNode!, this.selectedElement.parentNode!) + 1
+                NodeUtil.getChildIndex(this.selectedElement.parentNode!.parentNode!, this.selectedElement.parentNode!) + 1
             ];
         }
         return [this.body, this.body.childNodes.length];
@@ -218,13 +206,13 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                         .class("icon", "click-action", "no-margin")
                         .tooltip("Naar boven")
                         .on("click", () => {
-                            if (container.previousElementSibling) swap(container, container.previousElementSibling)
+                            if (container.previousElementSibling) NodeUtil.swap(container, container.previousElementSibling)
                         }),
                     ElementFactory.p("move_down")
                         .class("icon", "click-action", "no-margin")
                         .tooltip("Naar beneden")
                         .on("click", () => {
-                            if (container.nextElementSibling) swap(container, container.nextElementSibling)
+                            if (container.nextElementSibling) NodeUtil.swap(container, container.nextElementSibling)
                         }),
                     ElementFactory.p("remove")
                         .class("icon", "click-action", "no-margin")
@@ -242,6 +230,15 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
         });
         if (insElem instanceof HTMLElement && focus) insElem.focus();
 
+    }
+
+    private hasBodySelection() {
+        const selection = getSelection();
+        if (selection && selection.rangeCount !== 0) {
+            const range = selection.getRangeAt(0);
+            return this.body.contains(range.commonAncestorContainer);
+        }
+        else return false;
     }
 
     constructor() {
@@ -265,6 +262,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
 
         this.toolbar = this.appendChild(
             ElementFactory.div(undefined, "toolbar", "flex-columns", "main-axis-space-evenly", "section-gap")
+                .canSelect(false)
                 .children(
                     ElementFactory.div(undefined, "styling", "flex-columns", "in-section-gap")
                         .children(
@@ -309,10 +307,16 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                 .class("icon", "click-action")
                                 .tooltip("Dikgedrukt")
                                 .attr("can-unselect")
+                                .attr("disabled")
                                 .noFocus()
-                                .on("mousedown", (ev, self) => { // make bold
-                                    const isBold = self.toggleAttribute("selected");
-                                    this.selectedElement?.classList.toggle("bold", isBold);
+                                .on("click", (ev, self) => { // make bold
+                                    if (!boldToggle.hasAttribute("disabled")) TextStyling.applyStyleTag("bold", this.body);
+                                })
+                                .onMake(boldToggle => {
+                                    document.addEventListener("selectionchange", () => {
+                                        boldToggle.toggleAttribute("disabled", !this.hasBodySelection());
+                                        boldToggle.toggleAttribute("selected", TextStyling.isInStyleTag("bold"));
+                                    });
                                 })
                                 .make(),
                             italicToggle = ElementFactory.p("format_italic")
@@ -320,9 +324,14 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                 .tooltip("Cursief")
                                 .attr("can-unselect")
                                 .noFocus()
-                                .on("mousedown", (ev, self) => { // make italic
-                                    const isItalic = self.toggleAttribute("selected");
-                                    this.selectedElement?.classList.toggle("italic", isItalic);
+                                .on("click", (ev, self) => { // make italic
+                                    if (!italicToggle.hasAttribute("disabled")) TextStyling.applyStyleTag("italic", this.body);
+                                })
+                                .onMake(italicToggle => {
+                                    document.addEventListener("selectionchange", () => {
+                                        italicToggle.toggleAttribute("disabled", !this.hasBodySelection());
+                                        italicToggle.toggleAttribute("selected", TextStyling.isInStyleTag("italic"));
+                                    });
                                 })
                                 .make(),
                             underlinedToggle = ElementFactory.p("format_underlined")
@@ -330,9 +339,14 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                 .tooltip("Onderstreept")
                                 .attr("can-unselect")
                                 .noFocus()
-                                .on("mousedown", (ev, self) => { // make underlined
-                                    const isUnderlined = self.toggleAttribute("selected");
-                                    this.selectedElement?.classList.toggle("underlined", isUnderlined);
+                                .on("click", (ev, self) => { // make underlined
+                                    if (!underlinedToggle.hasAttribute("disabled")) TextStyling.applyStyleTag("underlined", this.body);
+                                })
+                                .onMake(underlinedToggle => {
+                                    document.addEventListener("selectionchange", () => {
+                                        underlinedToggle.toggleAttribute("disabled", !this.hasBodySelection());
+                                        underlinedToggle.toggleAttribute("selected", TextStyling.isInStyleTag("underlined"));
+                                    });
                                 })
                                 .make(),
                             strikethroughToggle = ElementFactory.p("format_strikethrough")
@@ -340,12 +354,18 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                 .tooltip("Doorgestreept")
                                 .attr("can-unselect")
                                 .noFocus()
-                                .on("mousedown", (ev, self) => { // make strikethrough
-                                    const isStrikethrough = self.toggleAttribute("selected");
-                                    this.selectedElement?.classList.toggle("strikethrough", isStrikethrough);
+                                .on("click", (ev, self) => { // make strikethrough
+                                    if (!strikethroughToggle.hasAttribute("disabled")) TextStyling.applyStyleTag("strikethrough", this.body);
+                                })
+                                .onMake(strikethroughToggle => {
+                                    document.addEventListener("selectionchange", () => {
+                                        strikethroughToggle.toggleAttribute("disabled", !this.hasBodySelection());
+                                        strikethroughToggle.toggleAttribute("selected", TextStyling.isInStyleTag("strikethrough"));
+                                    });
                                 })
                                 .make(),
                             colorSelector = ElementFactory.folderElement("down", 250, true)
+                                .class("color-selector")
                                 .heading(
                                     ElementFactory.p("format_color_text")
                                         .class("icon", "color-heading")
@@ -421,9 +441,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
 
         this.body = this.appendChild(
             ElementFactory.div(undefined, "body", "rich-text")
-                .on("focusout", () => {
-                    this.selectedElement = null;
-                })
+                .on("focusout", () => this.selectedElement = null)
                 .on("focusin", (ev) => {
                     let target = ev.target;
 
@@ -462,6 +480,13 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
 
                         }
                 })
+                .on("input", () => {
+                    // remove empty spans
+                    const spans = this.body.getElementsByTagName("span");
+                    Array.from(spans).forEach(span => {
+                        if (!span.textContent) span.remove();
+                    });
+                })
                 .make()
         );
         
@@ -469,6 +494,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
 
     private makeSectionTypes(insPosCallback:()=>InsertionPosition, exclude:RichTextSection[]=[]):HTMLDivElement {
         return ElementFactory.div(undefined, "section-types", "flex-columns", "cross-axis-center", "in-section-gap", "no-bullet")
+            .canSelect(false)
             .children(
                 !exclude.includes("shortcut") && ElementFactory.p("add_link")
                     .class("icon", "click-action")
@@ -483,16 +509,16 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                 .class("attachment", "flex-columns", "cross-axis-center", "in-section-gap")
                                 .children(
                                     ElementFactory.p("collections_bookmark")
-                                        .class("icon", "file-type-icon"),
+                                        .class("icon", "file-type-icon", "do-serialize"),
                                     ElementFactory.div(undefined, "file-info", "flex-rows")
                                         .children(
                                             ElementFactory.p("Bestandsnaam")
-                                                .class("file-name", "no-margin"),
+                                                .class("file-name", "no-margin", "do-serialize"),
                                             ElementFactory.p("Bestandsgrootte")
-                                                .class("file-size", "no-margin"),
+                                                .class("file-size", "no-margin", "do-serialize"),
                                         ),
                                     ElementFactory.p("download")
-                                        .class("icon", "click-action", "download-icon")
+                                        .class("icon", "click-action", "download-icon", "do-serialize")
                                 )
                                 .make(),
                             insPosCallback(), false, false
@@ -577,6 +603,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                             ElementFactory.p()
                                 .class("align-left", "text-input")
                                 .attr("contenteditable", "plaintext-only")
+                                // .children(ElementFactory.span("RED TEXT").style({"color": "red"}))
                                 .make(),
                             insPosCallback()
                         );
@@ -589,7 +616,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                             ElementFactory.ul()
                                 .children(
                                     ul => this.makeSectionTypes(() => {
-                                        if (ul.contains(this.selectedElement)) return [ul, ElementUtil.getChildIndex(ul, this.selectedElement!.parentElement!) + 1];
+                                        if (ul.contains(this.selectedElement)) return [ul, NodeUtil.getChildIndex(ul, this.selectedElement!.parentElement!) + 1];
                                         else return [ul, Infinity];
                                     }, ["list", "numbered-list"])
                                 )
@@ -605,7 +632,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                             ElementFactory.ol()
                                 .children(
                                     ol => this.makeSectionTypes(() => {
-                                        if (ol.contains(this.selectedElement)) return [ol, ElementUtil.getChildIndex(ol, this.selectedElement!.parentElement!) + 1];
+                                        if (ol.contains(this.selectedElement)) return [ol, NodeUtil.getChildIndex(ol, this.selectedElement!.parentElement!) + 1];
                                         else return [ol, Infinity];
                                     }, ["list", "numbered-list"])
                                 )

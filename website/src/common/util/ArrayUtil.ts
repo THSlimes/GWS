@@ -32,6 +32,29 @@ export default abstract class ArrayUtil {
     public static sortAlphabetically<T extends string>(arr:T[]):T[] {
         return arr.toSorted((a,b) => a.localeCompare(b));
     }
+
+    public static remove<T>(arr:T[], elem:T, removeAll=false):boolean {
+        let out = false;
+
+        if (removeAll) {
+            let ind = arr.indexOf(elem);
+            while (ind !== -1) {
+                arr.splice(ind, 1);
+                ind = arr.indexOf(elem);
+                out = true;
+            }
+        }
+        else {
+            let ind = arr.indexOf(elem);
+            if (ind !== -1) {
+                arr.splice(ind, 1);
+                ind = arr.indexOf(elem);
+                out = true;
+            }
+        }
+
+        return out;
+    }
     
     /**
      * Counts how many array elements match the predicate.

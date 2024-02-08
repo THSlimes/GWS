@@ -55,6 +55,9 @@ export default abstract class ElementFactory {
         const out = new AssemblyLine('p');
         return text ? out.text(text) : out;
     }
+    public static text(text?:string) {
+        return document.createTextNode(text ?? "");
+    }
     public static span(text?:string) {
         const out = new AssemblyLine('span');
         return text ? out.text(text) : out;

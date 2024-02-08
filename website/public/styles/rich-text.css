@@ -3,10 +3,10 @@
         margin: var(--in-section-gap) 0px;
     }
 
-    & * { color: var(--text-dark); }
-
     & h1 {
         --type: "kop 1";
+
+        color: var(--text-dark);
 
         &.title {
             --type: "titel";
@@ -16,17 +16,25 @@
 
     & h2 {
         --type: "kop 2";
+
+        color: var(--text-dark);
     }
 
     & h3 {
         --type: "kop 3";
+
+        color: var(--text-dark);
     }
 
     & p {
         --type: "paragraaf";
+
+        color: var(--text-dark);
     }
 
     a {
+        color: var(--text-dark);
+
         &.attachment {
             padding: var(--in-section-gap) var(--min-section-gap);
 
@@ -72,6 +80,10 @@
         flex-direction: column;
         row-gap: var(--in-section-gap);
 
+        padding-left: 0px;
+
+        color: var(--text-dark);
+
         > *:not(.no-bullet)::before { content: "● "; }
     }
 
@@ -79,6 +91,10 @@
         display: flex;
         flex-direction: column;
         row-gap: var(--in-section-gap);
+
+        padding-left: 0px;
+
+        color: var(--text-dark);
 
         counter-reset: index;
         > *:not(.no-bullet)::before {
@@ -90,6 +106,7 @@
 
 
     .bold { font-weight: bolder; }
+    .unbold { font-weight: lighter; }
     .italic { font-style: italic; }
     .underlined { text-decoration: underline; }
     .strikethrough { text-decoration: line-through; }

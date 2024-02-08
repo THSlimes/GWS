@@ -10,6 +10,7 @@ import ElementUtil from "../util/ElementUtil";
 import URLUtil from "../util/URLUtil";
 import { showError } from "../ui/info-messages";
 import getErrorMessage from "../firebase/authentication/error-messages";
+import NodeUtil from "../util/NodeUtil";
 
 const DAY_ABBREVIATIONS = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
 
@@ -304,7 +305,7 @@ export default class EventCalendar extends HTMLElement {
 
                 const loadAfter = this.dayCellContainer.appendChild(ElementFactory.div(undefined, "center-content", "load-more", "load-after").make());
 
-                ElementUtil.whenInsertedIn(this.dayCellContainer, document.body)
+                NodeUtil.whenInsertedIn(this.dayCellContainer, document.body)
                 .then(() => {
                     this.dayCellContainer.scrollBy(0, 2);
                     
