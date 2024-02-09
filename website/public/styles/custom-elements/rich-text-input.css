@@ -59,19 +59,14 @@ rich-text-input {
 
         & .color-picker {
             & .color-bulb {
-                width: 2rem;
-                height: 2rem;
+                width: 1.5rem;
+                height: 1.5rem;
                 border-radius: 100%;
 
                 > p {
-                    font-size: 2rem;
-                    translate: 0px -.15rem;
+                    font-size: 1.5rem;
+                    translate: 0px -.1125rem;
                 }
-            }
-
-            > .contents > * {
-                & > .topper { border-radius: 0px; }
-                &:last-child > .topper { border-radius: 0px 0px var(--in-section-gap) var(--in-section-gap); }
             }
         }
 

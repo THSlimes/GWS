@@ -21,4 +21,22 @@ export default abstract class NumberUtil {
         return !isNaN(Number.parseInt(asString)) && (Number.parseInt(asString) === Number.parseFloat(asString));
     }
 
+    public static range(from:number, to:number, step=1, includeTo=false):number[] {
+        const out:number[] = [];
+
+        step = Math.abs(step);
+
+        if (from < to) {
+            if (includeTo) for (let i = from; i <= to; i += step) out.push(i);
+            else for (let i = from; i < to; i += step) out.push(i);
+        }
+        else {
+            if (includeTo) for (let i = from; i >= to; i -= step) out.push(i);
+            else for (let i = from; i > to; i -= step) out.push(i);
+        }
+
+
+        return out;
+    }
+
 }

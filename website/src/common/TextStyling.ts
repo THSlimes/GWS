@@ -9,16 +9,18 @@ interface StyleTagNameValueMap {
     "underlined": null,
     "strikethrough": null,
     "text-color": HexColor,
+    "background-color": HexColor
 }
 export type StyleTagClassName = keyof StyleTagNameValueMap;
 
-const STYLE_TAG_CLASS_NAMES:StyleTagClassName[] = ["bold", "italic", "underlined", "strikethrough", "text-color"];
+const STYLE_TAG_CLASS_NAMES:StyleTagClassName[] = ["bold", "italic", "underlined", "strikethrough", "text-color", "background-color"];
 const DEFAULT_TAG_CLASS_NAME_VALUES:StyleTagNameValueMap = {
     "bold": null,
     "italic": null,
     "underlined": null,
     "strikethrough": null,
-    "text-color": "#000000"
+    "text-color": "#000000",
+    "background-color": "#000000"
 };
 
 export default abstract class TextStyling {
@@ -95,6 +97,8 @@ export default abstract class TextStyling {
                 return {};
             case "text-color":
                 return { "color": value! };
+            case "background-color":
+                return { "backgroundColor": value! };
         }
     }
 

@@ -3,7 +3,7 @@ import Attachments from "../firebase/storage/Attachments";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import ArrayUtil from "../util/ArrayUtil";
 import ColorUtil from "../util/ColorUtil";
-import { HasSections } from "../util/ElementUtil";
+import ElementUtil, { HasSections } from "../util/ElementUtil";
 import FunctionUtil from "../util/FunctionUtil";
 import NodeUtil from "../util/NodeUtil";
 import NumberUtil from "../util/NumberUtil";
@@ -224,11 +224,14 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
 
     }
 
-    private hasBodySelection() {
+    private stylableElementSelected() {
         const selection = getSelection();
         if (selection && selection.rangeCount !== 0) {
             const range = selection.getRangeAt(0);
-            return this.body.contains(range.commonAncestorContainer);
+            console.log();
+            
+            return this.body.contains(range.commonAncestorContainer)
+                && ElementUtil.queryAncestors(range.commonAncestorContainer, ".supports-style-tags", true).length !== 0;
         }
         else return false;
     }
@@ -251,7 +254,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
             })
             .onMake(toggle => {
                 const checkAttrsListener = () => {
-                    toggle.toggleAttribute("disabled", !this.hasBodySelection() || !this.body.contains(document.activeElement));
+                    toggle.toggleAttribute("disabled", !this.stylableElementSelected() || !this.body.contains(document.activeElement));
                     toggle.toggleAttribute("selected", TextStyling.isInStyleTag(tagName));
                 };
                 document.addEventListener("selectionchange", checkAttrsListener);
@@ -260,8 +263,8 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
             .make();
     }
 
-    private static readonly PICKER_BASE_COLORS:HexColor[] = ["#ffffff", "#ff0000", "#ffa500", "#ffff00", "#008000", "#0000ff", "#4b0082", "#ee82ee"];
-    private static readonly PICKER_SHADE_RATIOS:number[] = [1, .75, .5, .25];
+    private static readonly PICKER_BASE_COLORS:HexColor[] = ["#FF0000", "#FF8700", "#FFD300", "#DEFF0A", "#A1FF0A", "#0AFF99", "#0AEFFF", "#147DF5", "#580AFF", "#BE0AFF"];
+    private static readonly PICKER_SHADE_RATIOS:number[] = [.25, .5, .75];
     private makeColorBulb(color:HexColor, onSelect:(c:HexColor)=>void) {
         return ElementFactory.div()
             .class("color-bulb", "click-action", "center-content")
@@ -272,30 +275,37 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
             )
             .on("click", () => onSelect(color))
     }
-    private makeColorPicker(onSelect:(c:HexColor)=>void, tooltip:string) {
+    private makeColorPicker(onSelect:(c:HexColor)=>void, icon:string, tooltip:string) {
         return ElementFactory.folderElement("down", 250, true)
-            .heading(ElementFactory.p("format_color_text").class("icon").tooltip(tooltip))
+            .heading(ElementFactory.p(icon).class("icon").tooltip(tooltip))
             .class("color-picker", "category")
             .attr("disabled")
             .noFocus()
             .canSelect(false)
             .children(
-                ...RichTextInput.PICKER_BASE_COLORS.map(baseColor => {
-                    return ElementFactory.folderElement("right", 250, false)
-                        .class("category")
-                        .heading(this.makeColorBulb(baseColor, onSelect))
-                        .children(
-                            ...ArrayUtil.uniqueElements([
-                                ...RichTextInput.PICKER_SHADE_RATIOS.map(ratio => ColorUtil.mix("#ffffff", baseColor, ratio)),
-                                baseColor,
-                                ...RichTextInput.PICKER_SHADE_RATIOS.toReversed().map(ratio => ColorUtil.mix("#000000", baseColor, ratio)),
+                ElementFactory.div(undefined, "color-category", "flex-columns")
+                    .children(
+                        ...NumberUtil.range(RichTextInput.PICKER_BASE_COLORS.length-1, 0, 1, true)
+                            .map(n => this.makeColorBulb(ColorUtil.mix("#000000", "#ffffff", n/(RichTextInput.PICKER_BASE_COLORS.length-1)), onSelect))
 
-                            ]).map(c => this.makeColorBulb(c, onSelect))
+                    ),
+                ElementFactory.div(undefined, "color-category", "flex-columns")
+                    .children(...RichTextInput.PICKER_BASE_COLORS.map(c => this.makeColorBulb(c, onSelect))),
+                ...RichTextInput.PICKER_SHADE_RATIOS.map(ratio =>
+                    ElementFactory.div(undefined, "color-category", "flex-columns")
+                        .children(
+                            ...RichTextInput.PICKER_BASE_COLORS.map(c => this.makeColorBulb(ColorUtil.mix(c, "#ffffff", ratio), onSelect))
                         )
-                })
+                ),
+                ...RichTextInput.PICKER_SHADE_RATIOS.toReversed().map(ratio =>
+                    ElementFactory.div(undefined, "color-category", "flex-columns")
+                        .children(
+                            ...RichTextInput.PICKER_BASE_COLORS.map(c => this.makeColorBulb(ColorUtil.mix(c, "#000000", ratio), onSelect))
+                        )
+                )
             )
             .onMake(picker => {
-                const checkDisabled = () => picker.toggleAttribute("disabled", !this.hasBodySelection() || !this.body.contains(document.activeElement));
+                const checkDisabled = () => picker.toggleAttribute("disabled", !this.stylableElementSelected() || !this.body.contains(document.activeElement));
                 document.addEventListener("selectionchange", checkDisabled);
                 document.addEventListener("focusout", checkDisabled);
             })
@@ -356,7 +366,8 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                             this.makeStyleTagToggle("italic", "format_italic", "Cursief"),
                             this.makeStyleTagToggle("underlined", "format_underlined", "Onderstreept"),
                             this.makeStyleTagToggle("strikethrough", "format_strikethrough", "Doorgestreept"),
-                            this.makeColorPicker(c => TextStyling.applyStyleTag(this.body, "text-color", c), "Tekstkleur"),
+                            this.makeColorPicker(c => TextStyling.applyStyleTag(this.body, "text-color", c), "format_color_text", "Tekstkleur"),
+                            this.makeColorPicker(c => TextStyling.applyStyleTag(this.body, "background-color", c), "format_ink_highlighter", "Markeringskleur"),
                             alignSelector = ElementFactory.folderElement("down", 250)
                                 .class("category")
                                 .tooltip("Tekst uitlijnen")
@@ -512,7 +523,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                 .on("click", () => { // add new title h1
                                     this.insert(
                                         ElementFactory.h1()
-                                            .class("title", "align-left", "text-input")
+                                            .class("title", "align-left", "text-input", "supports-style-tags")
                                             .attr("contenteditable", "plaintext-only")
                                             .make(),
                                         insPosCallback()
@@ -527,7 +538,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                             .on("click", () => { // add new normal h1
                                 this.insert(
                                     ElementFactory.h1()
-                                        .class("align-left", "text-input")
+                                        .class("align-left", "text-input", "supports-style-tags")
                                         .attr("contenteditable", "plaintext-only")
                                         .make(),
                                     insPosCallback()
@@ -540,7 +551,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                             .on("click", () => { // add new h2
                                 this.insert(
                                     ElementFactory.h2()
-                                        .class("align-left", "text-input")
+                                        .class("align-left", "text-input", "supports-style-tags")
                                         .attr("contenteditable", "plaintext-only")
                                         .make(),
                                     insPosCallback()
@@ -553,7 +564,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                             .on("click", () => { // add new h3
                                 this.insert(
                                     ElementFactory.h3()
-                                        .class("align-left", "text-input")
+                                        .class("align-left", "text-input", "supports-style-tags")
                                         .attr("contenteditable", "plaintext-only")
                                         .make(),
                                     insPosCallback()
@@ -569,7 +580,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                     .on("click", () => { // add new paragraph
                         this.insert(
                             ElementFactory.p()
-                                .class("align-left", "text-input")
+                                .class("align-left", "text-input", "supports-style-tags")
                                 .attr("contenteditable", "plaintext-only")
                                 .make(),
                             insPosCallback()
