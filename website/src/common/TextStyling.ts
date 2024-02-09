@@ -32,17 +32,19 @@ export default abstract class TextStyling {
      * @returns true if the current selection is totally within the given style tag
      */
     public static isInStyleTag<TCN extends StyleTagClassName>(tagClass:TCN, value?:StyleTagNameValueMap[TCN]):boolean {
+        return this.getContainingStyleTag(tagClass, value) !== null;
+    }
+
+    public static getContainingStyleTag<TCN extends StyleTagClassName>(tagClass:TCN, value?:StyleTagNameValueMap[TCN]):Element|null {
         const selection = getSelection();
-        
+
         if (selection && selection.rangeCount !== 0) {
             const range = selection.getRangeAt(0);
-            const commonAncestor = range.commonAncestorContainer;
-
-            return ElementUtil.queryAncestors(commonAncestor, `.${tagClass}`, true)
-                .filter(anc => value === undefined || anc.getAttribute("value") === value)
-                .length !== 0;
+            const tagElements = ElementUtil.queryAncestors(range.commonAncestorContainer, `.${tagClass}`, true)
+                .filter(tagElem => value === undefined || tagElem.getAttribute("value") === value);
+            return tagElements[0] ?? null;
         }
-        else return false;
+        else return null
     }
 
     private static makeTempTextNode(containingElement:Element, onLegitimize=()=>{}, onRemove=()=>{}):Text {
@@ -237,9 +239,7 @@ export default abstract class TextStyling {
             });
             
             // select contents again
-            if (contents.length !== 0) {
-                console.log(contents);
-                
+            if (contents.length !== 0) {                
                 range.setStartBefore(contents[0]);
                 range.setEndAfter(contents.at(-1)!);
             }

@@ -97,7 +97,7 @@ rich-text-input {
             outline: 2px dashed var(--shadow-dark);
             border-radius: var(--in-section-gap);
 
-            > .do-serialize {
+            > *[do-serialize] {
                 align-self: center;
 
                 margin: 0px;

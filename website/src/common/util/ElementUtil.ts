@@ -74,4 +74,7 @@ export default abstract class ElementUtil {
  */
 export type HasSections<S extends string> = {
     [k in S]: HTMLElement|null;
-} & { initElement():void };
+} & {
+    /** Method which initializes the element. */
+    initElement():void
+};
