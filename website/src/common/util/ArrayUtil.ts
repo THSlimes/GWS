@@ -55,6 +55,19 @@ export default abstract class ArrayUtil {
 
         return out;
     }
+
+    public static uniqueElements<T>(arr:T[]):T[] {
+        const out = [...arr];
+
+        for (let i = 0; i < out.length; i ++) {
+            const e = out[i];
+            for (let j = i+1; j < out.length; j ++) {
+                while (j < out.length && out[j] === e) out.splice(j, 1);
+            }
+        }
+
+        return out;
+    }
     
     /**
      * Counts how many array elements match the predicate.

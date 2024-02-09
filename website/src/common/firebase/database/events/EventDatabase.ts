@@ -1,4 +1,4 @@
-import { HexColor } from "../../../html-element-factory/AssemblyLine";
+import { HexColor } from "../../../util/StyleUtil";
 import DateUtil from "../../../util/DateUtil";
 import StringUtil from "../../../util/StringUtil";
 import { Opt } from "../../../util/UtilTypes";

@@ -57,7 +57,23 @@ rich-text-input {
 
         & .font-size-selector > .contents > input { width: 4em; }
 
-        & .color-heading { -webkit-text-stroke: .5px var(--text-dark); }
+        & .color-picker {
+            & .color-bulb {
+                width: 2rem;
+                height: 2rem;
+                border-radius: 100%;
+
+                > p {
+                    font-size: 2rem;
+                    translate: 0px -.15rem;
+                }
+            }
+
+            > .contents > * {
+                & > .topper { border-radius: 0px; }
+                &:last-child > .topper { border-radius: 0px 0px var(--in-section-gap) var(--in-section-gap); }
+            }
+        }
 
         > * {
             border-radius: var(--in-section-gap);

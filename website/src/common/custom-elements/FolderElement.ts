@@ -136,25 +136,27 @@ export default class FolderElement extends HTMLElement {
      * Immediately opens the FolderElement.
      */
     public open() {
-        const headingBB = this._heading.getBoundingClientRect();
-        switch (this._foldDir) {
-            case "down":
-                this._contents.style.left = "0px";
-                this._contents.style.top = this.clientHeight + "px";
+        if (!this.hasAttribute("disabled")) {
+            const headingBB = this._heading.getBoundingClientRect();
+            switch (this._foldDir) {
+                case "down":
+                    this._contents.style.left = "0px";
+                    this._contents.style.top = this.clientHeight + "px";
 
-                this.arrow.style.rotate = "90deg";
-                break;
-            case "right":
-                this._contents.style.left = (this.parentElement!.getBoundingClientRect().right - this.getBoundingClientRect().left) + "px";
-                this._contents.style.top = "0px";
+                    this.arrow.style.rotate = "90deg";
+                    break;
+                case "right":
+                    this._contents.style.left = (this.parentElement!.getBoundingClientRect().right - this.getBoundingClientRect().left) + "px";
+                    this._contents.style.top = "0px";
 
-                this.arrow.style.rotate = "90deg";
-                break;
+                    this.arrow.style.rotate = "90deg";
+                    break;
+            }
+            this._contents.style.setProperty("--top", this._contents.style.top??"0px");
+
+            $(this._contents).stop().slideDown(200);
+            this.setAttribute("open", "");
         }
-        this._contents.style.setProperty("--top", this._contents.style.top??"0px");
-
-        $(this._contents).stop().slideDown(200);
-        this.setAttribute("open", "");
     }
 
     /**

@@ -22,7 +22,7 @@ function createPermissionLabel(perm:Permission, editable:boolean, onRemove:(labe
                     .on("click", () => onRemove(label)) :
                 null,
         )
-        .style({"background-color": ColorUtil.getStringColor(perm)})
+        .style({"backgroundColor": ColorUtil.getStringColor(perm)})
         .make();
 }
 

@@ -154,7 +154,7 @@ export default class EventCalendar extends HTMLElement {
                 ...(options.markedTypes ?? []).map(mt => DC_TYPE_DETECTORS[mt](cellDate,viewDate) ? mt : null)
             )
             .style({
-                "grid-area": options.gridArea ? options.gridArea.join(" / ") : "unset"
+                "gridArea": options.gridArea ? options.gridArea.join(" / ") : "unset"
             })
             .children(
                 ElementFactory.p(
@@ -259,7 +259,7 @@ export default class EventCalendar extends HTMLElement {
                 DAY_ABBREVIATIONS.forEach((v,i) => {
                     this.dayCellContainer.appendChild(
                         ElementFactory.p(v).class("day-name").style({
-                            "grid-area": doTranspose(viewMode) ? `${i + 1} / 1 / ${i + 2} / 2` : `1 / ${i+1} / 2 / ${i+2}`
+                            "gridArea": doTranspose(viewMode) ? `${i + 1} / 1 / ${i + 2} / 2` : `1 / ${i+1} / 2 / ${i+2}`
                         }
                     ).make());
                 });
@@ -287,7 +287,7 @@ export default class EventCalendar extends HTMLElement {
                 );
 
                 DAY_ABBREVIATIONS.forEach((v,i) => { // add day names
-                    this.dayCellContainer.appendChild(ElementFactory.p(v).class("day-name").style({"grid-area": `1 / ${i+1} / 2 / ${i+2}`}).make());
+                    this.dayCellContainer.appendChild(ElementFactory.p(v).class("day-name").style({"gridArea": `1 / ${i+1} / 2 / ${i+2}`}).make());
                 });
 
                 this.dayCellContainer.append(...newDays.map(d=>d.element)); // append new day-cells

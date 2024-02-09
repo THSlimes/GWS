@@ -1,12 +1,13 @@
-import TextStyling from "../TextStyling";
+import TextStyling, { StyleTagClassName } from "../TextStyling";
 import Attachments from "../firebase/storage/Attachments";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import ArrayUtil from "../util/ArrayUtil";
-import ColorUtil, { Color } from "../util/ColorUtil";
-import ElementUtil, { HasSections } from "../util/ElementUtil";
+import ColorUtil from "../util/ColorUtil";
+import { HasSections } from "../util/ElementUtil";
 import FunctionUtil from "../util/FunctionUtil";
 import NodeUtil from "../util/NodeUtil";
 import NumberUtil from "../util/NumberUtil";
+import { HexColor } from "../util/StyleUtil";
 import URLUtil, { FileType } from "../util/URLUtil";
 import FolderElement from "./FolderElement";
 
@@ -37,15 +38,6 @@ const FILE_TYPE_ICONS:Record<FileType, string> = {
     "compressed-folder": "folder_zip",
     pdf: "picture_as_pdf"
 };
-
-const FILE_SIZE_UNITS = ['B', "kB", "MB", "GB", "TB", "PB", "YB"];
-function getFileSizeString(numBytes:number):string {
-    let unitInd = 0;
-    let numUnits = numBytes;
-    while (numUnits >= 1000) [unitInd, numUnits] = [unitInd + 1, numUnits / 1000];
-
-    return numUnits.toFixed(1) + FILE_SIZE_UNITS[unitInd];
-}
 
 export default class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body"> {
 
@@ -161,7 +153,6 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                         const detailPromise = sourceInput.value === "firebase-storage" ?
                             Attachments.getInfo(pathInput.value) :
                             URLUtil.getInfo(pathInput.value);
-                        
                         const fileNameLabel = newElem.getElementsByClassName("file-name")[0];
                         const fileSizeLabel = newElem.getElementsByClassName("file-size")[0];
                         const fileTypeIcon = newElem.getElementsByClassName("file-type-icon")[0];
@@ -170,7 +161,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                         detailPromise.then(details => {
                             newElem.classList.remove("error"); // mark as valid
                             fileNameLabel.textContent = details.name;
-                            fileSizeLabel.textContent = details.size ? getFileSizeString(details.size) : "";
+                            fileSizeLabel.textContent = details.size ? URLUtil.getFileSizeString(details.size) : "";
                             fileTypeIcon.textContent = FILE_TYPE_ICONS[details.fileType];
                             downloadIcon.textContent = "download";
                             downloadIcon.classList.add("click-action");
@@ -179,6 +170,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                             newElem.setAttribute("download", "");
                         })
                         .catch(err => {
+                            console.error(err);
                             newElem.classList.add("error"); // mark as invalid
                             fileNameLabel.textContent = "Kan bestand niet vinden";
                             fileSizeLabel.textContent = "";
@@ -247,16 +239,73 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
         this.initElement();
     }
 
+    private makeStyleTagToggle(tagName:StyleTagClassName, icon:string, tooltip:string) {
+        return ElementFactory.p(icon)
+            .class("icon", "click-action")
+            .tooltip(tooltip)
+            .attr("can-unselect")
+            .attr("disabled")
+            .noFocus()
+            .on("click", (ev, boldToggle) => { // make bold
+                if (!boldToggle.hasAttribute("disabled")) TextStyling.applyStyleTag(this.body, tagName);
+            })
+            .onMake(toggle => {
+                const checkAttrsListener = () => {
+                    toggle.toggleAttribute("disabled", !this.hasBodySelection() || !this.body.contains(document.activeElement));
+                    toggle.toggleAttribute("selected", TextStyling.isInStyleTag(tagName));
+                };
+                document.addEventListener("selectionchange", checkAttrsListener);
+                document.addEventListener("focusout", checkAttrsListener);
+            })
+            .make();
+    }
+
+    private static readonly PICKER_BASE_COLORS:HexColor[] = ["#ffffff", "#ff0000", "#ffa500", "#ffff00", "#008000", "#0000ff", "#4b0082", "#ee82ee"];
+    private static readonly PICKER_SHADE_RATIOS:number[] = [1, .75, .5, .25];
+    private makeColorBulb(color:HexColor, onSelect:(c:HexColor)=>void) {
+        return ElementFactory.div()
+            .class("color-bulb", "click-action", "center-content")
+            .children(
+                ElementFactory.p('⬤')
+                    .class("no-margin")
+                    .style({"color": color})
+            )
+            .on("click", () => onSelect(color))
+    }
+    private makeColorPicker(onSelect:(c:HexColor)=>void, tooltip:string) {
+        return ElementFactory.folderElement("down", 250, true)
+            .heading(ElementFactory.p("format_color_text").class("icon").tooltip(tooltip))
+            .class("color-picker", "category")
+            .attr("disabled")
+            .noFocus()
+            .canSelect(false)
+            .children(
+                ...RichTextInput.PICKER_BASE_COLORS.map(baseColor => {
+                    return ElementFactory.folderElement("right", 250, false)
+                        .class("category")
+                        .heading(this.makeColorBulb(baseColor, onSelect))
+                        .children(
+                            ...ArrayUtil.uniqueElements([
+                                ...RichTextInput.PICKER_SHADE_RATIOS.map(ratio => ColorUtil.mix("#ffffff", baseColor, ratio)),
+                                baseColor,
+                                ...RichTextInput.PICKER_SHADE_RATIOS.toReversed().map(ratio => ColorUtil.mix("#000000", baseColor, ratio)),
+
+                            ]).map(c => this.makeColorBulb(c, onSelect))
+                        )
+                })
+            )
+            .onMake(picker => {
+                const checkDisabled = () => picker.toggleAttribute("disabled", !this.hasBodySelection() || !this.body.contains(document.activeElement));
+                document.addEventListener("selectionchange", checkDisabled);
+                document.addEventListener("focusout", checkDisabled);
+            })
+            .make();
+    }
+
     initElement(): void {
         this.classList.add("boxed", "flex-rows", "section-gap");
 
-        let boldToggle:HTMLElement;
-        let italicToggle:HTMLElement;
-        let underlinedToggle:HTMLElement;
-        let strikethroughToggle:HTMLElement;
-        let fontSizeInput:HTMLInputElement
-        let colorSelector:FolderElement;
-        let colorInput:HTMLInputElement;
+        let fontSizeInput:HTMLInputElement;
         let alignSelector:FolderElement;
         let alignOptions:HTMLElement[];
 
@@ -303,84 +352,11 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                         })
                                         .make()
                                 ),
-                            boldToggle = ElementFactory.p("format_bold")
-                                .class("icon", "click-action")
-                                .tooltip("Dikgedrukt")
-                                .attr("can-unselect")
-                                .attr("disabled")
-                                .noFocus()
-                                .on("click", (ev, self) => { // make bold
-                                    if (!boldToggle.hasAttribute("disabled")) TextStyling.applyStyleTag("bold", this.body);
-                                })
-                                .onMake(boldToggle => {
-                                    document.addEventListener("selectionchange", () => {
-                                        boldToggle.toggleAttribute("disabled", !this.hasBodySelection());
-                                        boldToggle.toggleAttribute("selected", TextStyling.isInStyleTag("bold"));
-                                    });
-                                })
-                                .make(),
-                            italicToggle = ElementFactory.p("format_italic")
-                                .class("icon", "click-action")
-                                .tooltip("Cursief")
-                                .attr("can-unselect")
-                                .noFocus()
-                                .on("click", (ev, self) => { // make italic
-                                    if (!italicToggle.hasAttribute("disabled")) TextStyling.applyStyleTag("italic", this.body);
-                                })
-                                .onMake(italicToggle => {
-                                    document.addEventListener("selectionchange", () => {
-                                        italicToggle.toggleAttribute("disabled", !this.hasBodySelection());
-                                        italicToggle.toggleAttribute("selected", TextStyling.isInStyleTag("italic"));
-                                    });
-                                })
-                                .make(),
-                            underlinedToggle = ElementFactory.p("format_underlined")
-                                .class("icon", "click-action")
-                                .tooltip("Onderstreept")
-                                .attr("can-unselect")
-                                .noFocus()
-                                .on("click", (ev, self) => { // make underlined
-                                    if (!underlinedToggle.hasAttribute("disabled")) TextStyling.applyStyleTag("underlined", this.body);
-                                })
-                                .onMake(underlinedToggle => {
-                                    document.addEventListener("selectionchange", () => {
-                                        underlinedToggle.toggleAttribute("disabled", !this.hasBodySelection());
-                                        underlinedToggle.toggleAttribute("selected", TextStyling.isInStyleTag("underlined"));
-                                    });
-                                })
-                                .make(),
-                            strikethroughToggle = ElementFactory.p("format_strikethrough")
-                                .class("icon", "click-action")
-                                .tooltip("Doorgestreept")
-                                .attr("can-unselect")
-                                .noFocus()
-                                .on("click", (ev, self) => { // make strikethrough
-                                    if (!strikethroughToggle.hasAttribute("disabled")) TextStyling.applyStyleTag("strikethrough", this.body);
-                                })
-                                .onMake(strikethroughToggle => {
-                                    document.addEventListener("selectionchange", () => {
-                                        strikethroughToggle.toggleAttribute("disabled", !this.hasBodySelection());
-                                        strikethroughToggle.toggleAttribute("selected", TextStyling.isInStyleTag("strikethrough"));
-                                    });
-                                })
-                                .make(),
-                            colorSelector = ElementFactory.folderElement("down", 250, true)
-                                .class("color-selector")
-                                .heading(
-                                    ElementFactory.p("format_color_text")
-                                        .class("icon", "color-heading")
-                                        .tooltip("Tekstkleur")
-                                )
-                                .children(
-                                    folder => colorInput = ElementFactory.input.color("#000000")
-                                        .noFocus()
-                                        .on("input", (ev, colorInput) => {
-                                            folder.heading.style.color = colorInput.value;
-                                            if (this.selectedElement) this.selectedElement.style.color = colorInput.value;
-                                        })
-                                        .make()
-                                )
-                                .make(),
+                            this.makeStyleTagToggle("bold", "format_bold", "Dikgedrukt"),
+                            this.makeStyleTagToggle("italic", "format_italic", "Cursief"),
+                            this.makeStyleTagToggle("underlined", "format_underlined", "Onderstreept"),
+                            this.makeStyleTagToggle("strikethrough", "format_strikethrough", "Doorgestreept"),
+                            this.makeColorPicker(c => TextStyling.applyStyleTag(this.body, "text-color", c), "Tekstkleur"),
                             alignSelector = ElementFactory.folderElement("down", 250)
                                 .class("category")
                                 .tooltip("Tekst uitlijnen")
@@ -463,14 +439,6 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                         if (this.selectedElement) {
                             // match styling selectors to selected element
                             fontSizeInput.value = getComputedStyle(this.selectedElement).fontSize.slice(0, -2);
-
-                            boldToggle.toggleAttribute("selected", this.selectedElement.classList.contains("bold"));
-                            italicToggle.toggleAttribute("selected", this.selectedElement.classList.contains("italic"));
-                            underlinedToggle.toggleAttribute("selected", this.selectedElement.classList.contains("underlined"));
-                            strikethroughToggle.toggleAttribute("selected", this.selectedElement.classList.contains("strikethrough"));
-
-                            colorInput.value = ColorUtil.toHex(getComputedStyle(this.selectedElement).color as Color);
-                            colorSelector.heading.style.color = colorInput.value;
 
                             alignOptions.forEach(sel => sel.removeAttribute("selected"));
                             const selectedOpt = alignOptions.find(opt => this.selectedElement!.classList.contains(opt.getAttribute("value")!));
@@ -603,7 +571,6 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                             ElementFactory.p()
                                 .class("align-left", "text-input")
                                 .attr("contenteditable", "plaintext-only")
-                                // .children(ElementFactory.span("RED TEXT").style({"color": "red"}))
                                 .make(),
                             insPosCallback()
                         );

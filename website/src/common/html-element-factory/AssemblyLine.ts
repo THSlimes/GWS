@@ -1,4 +1,4 @@
-export type HexColor = `#${string}`;
+import StyleUtil, { StyleMap } from "../util/StyleUtil";
 
 /**
  * OptionalElementProperties defines a mapping for values of a specific
@@ -132,11 +132,13 @@ export default class AssemblyLine<TN extends string, E extends ElementType<TN> =
         return this;
     }
 
-    private _styleProps:Record<string,string|null> = {};
+    private _styleMap:StyleMap = {};
     /** Defines key-value pairs for CSS-properties. */
-    public style(styleMap:Record<string,{ toString():string }|null>) {
+    public style(styleMap:StyleMap) {
         for (const k in styleMap) {
-            if (styleMap[k] !== null) this._styleProps[k] = styleMap[k]!.toString();
+            const v = styleMap[k];
+            if (v === undefined) delete this._styleMap[k];
+            else this._styleMap[k] = v;
         }
         return this;
     }
@@ -187,7 +189,7 @@ export default class AssemblyLine<TN extends string, E extends ElementType<TN> =
         }
 
         // style
-        for (const k in this._styleProps) out.style.setProperty(k, this._styleProps[k]);
+        StyleUtil.apply(this._styleMap, out);
 
         // element-type specific properties
         for (const k in this.elementTypeSpecific) out[k] = this.elementTypeSpecific[k]!;

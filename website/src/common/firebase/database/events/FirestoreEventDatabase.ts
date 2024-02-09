@@ -1,7 +1,7 @@
 import { FirestoreDataConverter, QueryCompositeFilterConstraint, QueryConstraint, QueryDocumentSnapshot, QueryFilterConstraint, QueryNonFilterConstraint, Timestamp, and, collection, collectionGroup, deleteDoc, doc, documentId, getCountFromServer, getDoc, getDocs, limit, or, orderBy, query, setDoc, updateDoc, where, writeBatch } from "@firebase/firestore";
 import EventDatabase, { EventQueryFilter, EventRegistration, RegisterableEventInfo, EventInfo } from "./EventDatabase";
 import { AUTH, DB, onAuth } from "../../init-firebase";
-import { HexColor } from "../../../html-element-factory/AssemblyLine";
+import { HexColor } from "../../../util/StyleUtil";
 import { FirebaseError } from "firebase/app";
 
 /** An event as it is stored in the database. */

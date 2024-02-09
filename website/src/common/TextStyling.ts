@@ -1,22 +1,44 @@
+import { HexColor, StyleMap } from "./util/StyleUtil";
 import ElementFactory from "./html-element-factory/ElementFactory";
 import ElementUtil from "./util/ElementUtil";
 import NodeUtil from "./util/NodeUtil";
 
-type RangeBoundary = [Node, number];
+interface StyleTagNameValueMap {
+    "bold": null,
+    "italic": null,
+    "underlined": null,
+    "strikethrough": null,
+    "text-color": HexColor,
+}
+export type StyleTagClassName = keyof StyleTagNameValueMap;
 
-type StyleTagClassName = "bold" | "italic" | "underlined" | "strikethrough";
-const STYLE_TAG_CLASS_NAMES:StyleTagClassName[] = ["bold", "italic", "underlined", "strikethrough"];
+const STYLE_TAG_CLASS_NAMES:StyleTagClassName[] = ["bold", "italic", "underlined", "strikethrough", "text-color"];
+const DEFAULT_TAG_CLASS_NAME_VALUES:StyleTagNameValueMap = {
+    "bold": null,
+    "italic": null,
+    "underlined": null,
+    "strikethrough": null,
+    "text-color": "#000000"
+};
 
 export default abstract class TextStyling {
 
-    public static isInStyleTag(tagClass:StyleTagClassName):boolean {
+    /**
+     * Determines whether the current selection in fully encompassed by a certain style tag.
+     * @param tagClass class-name of the style tag
+     * @param value value associated with the style tag (e.g. its color for when `tagclass` is `"color"`)
+     * @returns true if the current selection is totally within the given style tag
+     */
+    public static isInStyleTag<TCN extends StyleTagClassName>(tagClass:TCN, value?:StyleTagNameValueMap[TCN]):boolean {
         const selection = getSelection();
         
         if (selection && selection.rangeCount !== 0) {
             const range = selection.getRangeAt(0);
             const commonAncestor = range.commonAncestorContainer;
 
-            return ElementUtil.queryAncestors(commonAncestor, `.${tagClass}`, true).length !== 0;
+            return ElementUtil.queryAncestors(commonAncestor, `.${tagClass}`, true)
+                .filter(anc => value === undefined || anc.getAttribute("value") === value)
+                .length !== 0;
         }
         else return false;
     }
@@ -63,8 +85,22 @@ export default abstract class TextStyling {
         return out;
     }
 
-    public static applyStyleTag(tagClass:StyleTagClassName, containingElement:Element):boolean {
+    private static getStyleMap<TCN extends StyleTagClassName>(tagClass:TCN, value=DEFAULT_TAG_CLASS_NAME_VALUES[tagClass]):StyleMap {
+        switch (tagClass) {
+            case "bold":
+            case "italic":
+            case "underlined":
+            case "strikethrough":
+            default:
+                return {};
+            case "text-color":
+                return { "color": value! };
+        }
+    }
 
+    public static applyStyleTag<TCN extends StyleTagClassName>(containingElement:Element, tagClass:TCN, value=DEFAULT_TAG_CLASS_NAME_VALUES[tagClass]):boolean {
+
+        let reapplyAfterwards = false;
         NodeUtil.deepReplaceAll(containingElement, '​', "");
 
         const selection = getSelection();
@@ -73,7 +109,8 @@ export default abstract class TextStyling {
             const isCollapsed = range.collapsed;
             const commonAncestor = range.commonAncestorContainer;
             const tagElem = ElementUtil.queryAncestors(commonAncestor, `.${tagClass}`, true)[0];
-            const isInTag = this.isInStyleTag(tagClass);
+            const isInTag = tagElem !== undefined;
+            reapplyAfterwards = isInTag && tagElem.getAttribute("value") !== value;
             
             let contents = Array.from(range.extractContents().childNodes);
 
@@ -122,6 +159,8 @@ export default abstract class TextStyling {
             else { // add new tag
                 const replacement = ElementFactory.span()
                     .class(tagClass)
+                    .attr("value", value)
+                    .style(this.getStyleMap(tagClass, value))
                     .children(...contents)
                     .make();
 
@@ -149,7 +188,8 @@ export default abstract class TextStyling {
             for (const className of STYLE_TAG_CLASS_NAMES) {
                 const elements = Array.from(containingElement.getElementsByClassName(className));
                 elements.forEach(elem => {
-                    if (elem.parentElement?.closest(`.${className}`)) { // has ancestor with class name
+                    if (ElementUtil.queryAncestors(elem, `.${className}`).length !== 0) {
+                        // has ancestor with class name and value
                         elem.replaceWith(...Array.from(elem.childNodes));
                     }
                 });
@@ -171,7 +211,9 @@ export default abstract class TextStyling {
                             nextSibling = nextSibling.nextSibling;
                         }
                         
-                        if (nextSibling instanceof Element && nextSibling.classList.contains(className)) { // combine
+                        if (nextSibling instanceof Element && nextSibling.classList.contains(className) &&
+                            nextSibling.getAttribute("value") === elem.getAttribute("value")) {
+                            // combine
                             nextSibling.prepend(...Array.from(elem.childNodes));
                             elem.remove();
                         }
@@ -209,7 +251,7 @@ export default abstract class TextStyling {
             });
         }
 
-        return this.isInStyleTag(tagClass);
+        return reapplyAfterwards ? this.applyStyleTag(containingElement, tagClass, value) : this.isInStyleTag(tagClass, value);
     }
 
 }

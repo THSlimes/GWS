@@ -110,6 +110,9 @@
     .italic { font-style: italic; }
     .underlined { text-decoration: underline; }
     .strikethrough { text-decoration: line-through; }
+    .color {
+        &[value="#ff0000"] { color: #ff0000; }
+    }
 
     .align-left {
         text-align: start;

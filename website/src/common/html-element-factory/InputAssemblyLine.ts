@@ -1,5 +1,6 @@
 import DateUtil from "../util/DateUtil";
-import AssemblyLine, { HexColor } from "./AssemblyLine";
+import AssemblyLine from "./AssemblyLine";
+import { HexColor } from "../util/StyleUtil";
 
 /** Maps the 'type' field of an HTMLInputElement to the type of its 'value' field */
 type HTMLInputElementTypeMap = {

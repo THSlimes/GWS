@@ -12,7 +12,7 @@ import Permission from "../firebase/database/Permission";
 import EventCalendar from "./EventCalendar";
 import URLUtil from "../util/URLUtil";
 import Switch from "./Switch";
-import { HexColor } from "../html-element-factory/AssemblyLine";
+import { HexColor } from "../util/StyleUtil";
 import FunctionUtil from "../util/FunctionUtil";
 
 /** Amount of detail present in an EventNote element. */

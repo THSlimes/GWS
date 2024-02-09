@@ -119,6 +119,15 @@ export default abstract class URLUtil {
         });
     }
 
+    private static readonly FILE_SIZE_UNITS = ['B', "kB", "MB", "GB", "TB", "PB", "YB"];
+    public static getFileSizeString(numBytes:number):string {
+        let unitInd = 0;
+        let numUnits = numBytes;
+        while (numUnits >= 1000) [unitInd, numUnits] = [unitInd + 1, numUnits / 1000];
+    
+        return numUnits.toFixed(1) + this.FILE_SIZE_UNITS[unitInd];
+    }
+
     /** Gets the key-value pairs stored in the URL hash. */
     public static getHashProperties(url:URL|Location=location):Record<string,string> {
         const pairs = url.hash.substring(1).split(',');

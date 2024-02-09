@@ -19,6 +19,10 @@ folder-element {
         }
     }
 
+    &[disabled] {
+        filter: contrast(.5);
+    }
+
     > .contents {
         z-index: 99;
 

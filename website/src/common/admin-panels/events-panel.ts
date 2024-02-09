@@ -7,7 +7,7 @@ import getErrorMessage from "../firebase/authentication/error-messages";
 import CachingEventDatebase from "../firebase/database/events/CachingEventDatebase";
 import { EventInfo, RegisterableEventInfo } from "../firebase/database/events/EventDatabase";
 import FirestoreEventDatebase from "../firebase/database/events/FirestoreEventDatabase";
-import { HexColor } from "../html-element-factory/AssemblyLine";
+import { HexColor } from "../util/StyleUtil";
 import { showError, showSuccess } from "../ui/info-messages";
 import DateUtil from "../util/DateUtil";
 import NumberUtil from "../util/NumberUtil";

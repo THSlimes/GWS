@@ -110,6 +110,21 @@ export default abstract class ColorUtil {
         return this.toHex(options[bestInd]);
     }
 
+    public static mix(c1:Color, c2:Color, c1Ratio:number):HexColor {
+        c1 = this.toRGB(c1);
+        c2 = this.toRGB(c2);
+        c1Ratio = NumberUtil.clamp(c1Ratio, 0, 1);
+        const c2Ratio = 1-c1Ratio;
+
+        const mixed:RGBColor = [
+            Math.floor(c1[0]*c1Ratio + c2[0]*c2Ratio),
+            Math.floor(c1[1]*c1Ratio + c2[1]*c2Ratio),
+            Math.floor(c1[2]*c1Ratio + c2[2]*c2Ratio)
+        ];
+        
+        return this.toHex(mixed);
+    }
+
     public static getStringColor(cat: string):HexColor {
         if (!cat) return this.DEFAULT_COLOR;
         cat = cat.toLowerCase();

@@ -1,6 +1,7 @@
 import { FoldingDirection } from "../custom-elements/FolderElement";
 import NumberUtil from "../util/NumberUtil";
-import AssemblyLine, { AnchorElementAssemblyLine, HexColor, SelectAssemblyLine } from "./AssemblyLine";
+import AssemblyLine, { AnchorElementAssemblyLine, SelectAssemblyLine } from "./AssemblyLine";
+import { HexColor } from "../util/StyleUtil";
 import FolderElementAssemblyLine from "./FolderElementAssemblyLine";
 import { ButtonLikeInputAssemblyLine, CheckableInputAssemblyLine, DateInputAssemblyLine, InputAssemblyLine, NumberInputAssemblyLine, RangedInputAssemblyLine, TextInputAssemblyLine } from "./InputAssemblyLine";
 
