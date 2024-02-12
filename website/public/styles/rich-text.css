@@ -1,3 +1,5 @@
+@import url("./custom-elements/smart-attachment.css");
+
 .rich-text {
     > * {
         margin: var(--in-section-gap) 0px;
@@ -32,43 +34,8 @@
         color: var(--text-dark);
     }
 
-    a {
+    & a {
         color: var(--text-dark);
-
-        &.attachment {
-            padding: var(--in-section-gap) var(--min-section-gap);
-
-            width: max-content !important;
-            flex-grow: unset !important;
-
-            background-color: var(--tertiary);
-
-            border-radius: var(--in-section-gap);
-            box-shadow: var(--std-shadow);
-
-            & * { color: var(--text-light); }
-
-            > .file-type-icon {
-            }
-
-            > .file-info {
-                > .file-name {}
-
-                > .file-size {
-                    font-size: smaller;
-                    font-style: italic;
-
-                    &:empty { display: none; }
-                }
-            }
-
-            > .download-icon {
-                margin-left: var(--min-section-gap);
-                --hover-bg-color: color-mix(in srgb, var(--tertiary), white 12.5%);
-            }
-
-            &.error { background-color: var(--indicate-bad); }
-        }
     }
 
     img {

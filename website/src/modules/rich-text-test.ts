@@ -1,3 +1,3 @@
-import "../common/custom-elements/RichTextInput";
+import "../common/custom-elements/rich-text/RichTextInput";
 
 import "./header-and-footer";

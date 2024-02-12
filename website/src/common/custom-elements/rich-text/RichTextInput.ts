@@ -1,16 +1,17 @@
-import TextStyling, { StyleTagClassName } from "../TextStyling";
-import Attachments from "../firebase/storage/Attachments";
-import ElementFactory from "../html-element-factory/ElementFactory";
-import { showError } from "../ui/info-messages";
-import ArrayUtil from "../util/ArrayUtil";
-import ColorUtil from "../util/ColorUtil";
-import ElementUtil, { HasSections } from "../util/ElementUtil";
-import FunctionUtil from "../util/FunctionUtil";
-import NodeUtil from "../util/NodeUtil";
-import NumberUtil from "../util/NumberUtil";
-import { HexColor } from "../util/StyleUtil";
-import URLUtil, { FileType } from "../util/URLUtil";
-import FolderElement from "./FolderElement";
+import TextStyling, { StyleTagClassName } from "./TextStyling";
+import ElementFactory from "../../html-element-factory/ElementFactory";
+import { showError } from "../../ui/info-messages";
+import ArrayUtil from "../../util/ArrayUtil";
+import ColorUtil from "../../util/ColorUtil";
+import ElementUtil, { HasSections } from "../../util/ElementUtil";
+import FunctionUtil from "../../util/FunctionUtil";
+import NodeUtil from "../../util/NodeUtil";
+import NumberUtil from "../../util/NumberUtil";
+import { HexColor } from "../../util/StyleUtil";
+import URLUtil from "../../util/URLUtil";
+import FolderElement from "../FolderElement";
+import RichTextSerializer from "./RichTextSerializer";
+import SmartAttachment from "../SmartAttachment";
 
 /** [parent Node, "before child" index] tuple */
 type InsertionPosition = [Node, number];
@@ -28,26 +29,16 @@ function insertAt(position:InsertionPosition, ...nodes:Node[]):void {
 }
 
 /** Union type of the possible names of a rich-text section. */
-type RichTextSection = "shortcut" | "attachment" | "image" | "title" | "h1" | "h2" | "h3" | "paragraph" | "list" | "numbered-list" | "event-calendar" | "event-note";
-/** All RichTextSections categorized as headers. */
-const ALL_HEADERS:RichTextSection[] = ["title", "h1", "h2", "h3"];
-/** All RichTextSections categorized as widgets. */
-const ALL_WIDGETS:RichTextSection[] = ["event-calendar", "event-note"];
+export type RichTextSectionName = "shortcut" | "attachment" | "image" | "title" | "h1" | "h2" | "h3" | "paragraph" | "list" | "numbered-list" | "event-calendar" | "event-note";
+const richTextSectionNames:RichTextSectionName[] = ["shortcut", "attachment", "image", "title", "h1", "h2", "h3", "paragraph", "list", "numbered-list", "event-calendar", "event-note"];
+export function isRichTextSectionName(str:string):str is RichTextSectionName {
+    return richTextSectionNames.some(rtsn => str === rtsn);
+}
 
-/** Icon names associated with each FileType. */
-const FILE_TYPE_ICONS:Record<FileType, string> = {
-    image: "photo_library",
-    application: "collections_bookmark",
-    audio: "library_music",
-    example: "quiz",
-    font: "font_download",
-    model: "deployed_code",
-    text: "library_books",
-    video: "video_library",
-    unknown: "quiz",
-    "compressed-folder": "folder_zip",
-    pdf: "picture_as_pdf"
-};
+/** All RichTextSections categorized as headers. */
+const ALL_HEADERS:RichTextSectionName[] = ["title", "h1", "h2", "h3"];
+/** All RichTextSections categorized as widgets. */
+const ALL_WIDGETS:RichTextSectionName[] = ["event-calendar", "event-note"];
 
 
 
@@ -55,6 +46,17 @@ const FILE_TYPE_ICONS:Record<FileType, string> = {
  * A RichTextInput is a type of HTMLElement that allows for editing text to an advanced degree.
  */
 export default class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body"> {
+
+    public get value():string {
+        return RichTextSerializer.serialize(this.body);
+    }
+
+    public set value(newVal:string) {
+        while (this.body.firstChild) this.body.firstChild.remove();
+
+        const newSections = RichTextSerializer.deserialize(newVal);
+        // TODO: proper deserialization
+    }
 
     /** Toolbar child element */
     public toolbar!:HTMLDivElement;
@@ -82,14 +84,15 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
      * @param deleteOnEmpty whether to delete the new element when backspace is pressed
      * while `newElem.textContent` is empty.
      */
-    private insert(newElem:Element, position:InsertionPosition, focus=true, deleteOnEmpty=true) {
+    private insert(type:RichTextSectionName, newElem:Element, position:InsertionPosition, focus=true, deleteOnEmpty=true) {
 
         newElem.setAttribute("do-serialize", ""); // mark as element
+        newElem.setAttribute("type", type);
 
         let insElem:Element;
         
         if (newElem instanceof HTMLImageElement) { // custom container for images
-            insElem = ElementFactory.div(undefined, "image-container", "flex-rows", "cross-axis-center", "in-section-gap")
+            insElem = ElementFactory.div(undefined, "image-container", "element-container", "flex-rows", "cross-axis-center", "in-section-gap")
                 .children(() => {
                     newElem.src ||= location.origin + "/images/other/placeholder.svg";
                     const defaultSrc = newElem.src;
@@ -138,8 +141,8 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                 })
                 .make();
         }
-        else if (newElem instanceof HTMLAnchorElement && newElem.classList.contains("attachment")) { // custom container for attachments
-            insElem = ElementFactory.div(undefined, "attachment-container", "flex-rows", "in-section-gap")
+        else if (newElem instanceof SmartAttachment) { // custom container for attachments
+            insElem = ElementFactory.div(undefined, "attachment-container", "element-container", "flex-rows", "in-section-gap")
                 .children(() => {
                     let sourceInput:HTMLSelectElement
                                 & { prevValue?: "firebase-storage" | "external" }
@@ -150,64 +153,20 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                         ElementFactory.label("Bron"),
                         sourceInput = ElementFactory.select({ "firebase-storage": "Firebase cloud-opslag", "external": "Directe link" })
                             .onValueChanged(v => {
-                                newElem.setAttribute("source", v);
-                                getFileDetails();
-
-                                switch (v) {
-                                    case "firebase-storage":
-                                        pathInput.placeholder = "Bestandspad...";
-                                        break;
-                                    case "external":
-                                    default:
-                                        pathInput.placeholder = "Link naar bestand...";
-                                        break;
-                                }
+                                newElem.src = v;
+                                pathInput.placeholder = v === "firebase-storage" ? "Bestandspad..." : "Link naar bestand...";
                             })
                             .make()
                     );
 
+                    const setInputCallback = () => newElem.href = pathInput.value;
                     const pathInput = ElementFactory.input.text()
                         .class("link-input")
                         .placeholder("Bestandspad...")
                         .on("input", () => {
-                            FunctionUtil.setDelayedCallback(getFileDetails, 500);
-                            newElem.setAttribute("path", pathInput.value);
+                            FunctionUtil.setDelayedCallback(setInputCallback, 500);
                         })
                         .make();
-                    
-                    const getFileDetails = () => { // callback to get attachment details
-                        const detailPromise = sourceInput.value === "firebase-storage" ?
-                            Attachments.getInfo(pathInput.value) :
-                            URLUtil.getInfo(pathInput.value);
-                        const fileNameLabel = newElem.getElementsByClassName("file-name")[0];
-                        const fileSizeLabel = newElem.getElementsByClassName("file-size")[0];
-                        const fileTypeIcon = newElem.getElementsByClassName("file-type-icon")[0];
-                        const downloadIcon = newElem.getElementsByClassName("download-icon")[0];
-
-                        detailPromise.then(details => {
-                            newElem.classList.remove("error"); // mark as valid
-                            fileNameLabel.textContent = details.name;
-                            fileSizeLabel.textContent = details.size ? URLUtil.getFileSizeString(details.size) : "";
-                            fileTypeIcon.textContent = FILE_TYPE_ICONS[details.fileType];
-                            downloadIcon.textContent = "download";
-                            downloadIcon.classList.add("click-action");
-
-                            newElem.setAttribute("href", details.href);
-                            newElem.setAttribute("download", "");
-                        })
-                        .catch(err => {
-                            console.error(err);
-                            newElem.classList.add("error"); // mark as invalid
-                            fileNameLabel.textContent = "Kan bestand niet vinden";
-                            fileSizeLabel.textContent = "";
-                            fileTypeIcon.textContent = "error";
-                            downloadIcon.textContent = "file_download_off";
-                            downloadIcon.classList.remove("click-action");
-
-                            newElem.removeAttribute("href");
-                            newElem.removeAttribute("download");
-                        });
-                    };
                     
                     return [newElem, sourceSelector, pathInput];
                 })
@@ -249,7 +208,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
             console.log();
             
             return this.body.contains(range.commonAncestorContainer)
-                && ElementUtil.queryAncestors(range.commonAncestorContainer, ".supports-style-tags", true).length !== 0;
+                && ElementUtil.queryAncestors(range.commonAncestorContainer, "[supports-style-tags]", true).length !== 0;
         }
         else return false;
     }
@@ -361,6 +320,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                 .children(
                     ElementFactory.div(undefined, "styling", "flex-columns", "in-section-gap")
                         .children(
+                            RichTextInput.makeIconButton("upload", () => console.log(this.value)),
                             ElementFactory.folderElement("down", 250, true)
                                 .class("font-size-selector")
                                 .heading(
@@ -500,39 +460,20 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
      * @param insPosCallback function to generate the insertion position
      * @param exclude section types to not make buttons for
      */
-    private makeSectionTypes(insPosCallback:()=>InsertionPosition, exclude:RichTextSection[]=[]):HTMLDivElement {
+    private makeSectionTypes(insPosCallback:()=>InsertionPosition, exclude:RichTextSectionName[]=[]):HTMLDivElement {
         return ElementFactory.div(undefined, "section-types", "flex-columns", "cross-axis-center", "in-section-gap", "no-bullet")
             .canSelect(false)
             .children(
                 !exclude.includes("shortcut") && RichTextInput.makeIconButton("add_link", () => {}, "Snelkoppeling toevoegen"),
                 !exclude.includes("attachment") && RichTextInput.makeIconButton("attachment", () => {
                     this.insert(
-                        ElementFactory.a()
-                            .openInNewTab(true)
-                            .class("attachment", "flex-columns", "cross-axis-center", "in-section-gap")
-                            .children(
-                                ElementFactory.p("collections_bookmark")
-                                    .class("icon", "file-type-icon")
-                                    .attr("do-serialize"),
-                                ElementFactory.div(undefined, "file-info", "flex-rows")
-                                    .children(
-                                        ElementFactory.p("Bestandsnaam")
-                                            .class("file-name", "no-margin")
-                                            .attr("do-serialize"),
-                                        ElementFactory.p("Bestandsgrootte")
-                                            .class("file-size", "no-margin")
-                                            .attr("do-serialize"),
-                                    ),
-                                ElementFactory.p("download")
-                                    .class("icon", "click-action", "download-icon")
-                                    .attr("do-serialize")
-                            )
-                            .make(),
+                        "attachment",
+                        new SmartAttachment(),
                         insPosCallback(), false, false
                     );
                 }, "Bijlage toevoegen"),
                 !exclude.includes("image") && RichTextInput.makeIconButton("add_photo_alternate", () => { // add new image
-                    this.insert(ElementFactory.img().class("align-center").make(), insPosCallback(), true, false);
+                    this.insert("image", ElementFactory.img().class("align-center").make(), insPosCallback(), true, false);
                 }, "Afbeelding toevoegen"),
                 !ArrayUtil.includesAll(exclude, ...ALL_HEADERS) && ElementFactory.folderElement()
                     .class("category")
@@ -543,8 +484,10 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                             folder.contents.firstElementChild! :
                             RichTextInput.makeIconButton("title", () => { // add new title h1
                                 this.insert(
+                                    "title",
                                     ElementFactory.h1()
-                                        .class("title", "align-left", "text-input", "supports-style-tags")
+                                        .class("title", "align-left", "text-input")
+                                        .attr("supports-style-tags")
                                         .attr("contenteditable", "plaintext-only")
                                         .make(),
                                     insPosCallback()
@@ -554,8 +497,10 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                     .children(
                         !exclude.includes("h1") && RichTextInput.makeIconButton("format_h1", () => { // add new normal h1
                                 this.insert(
+                                    "h1",
                                     ElementFactory.h1()
-                                        .class("align-left", "text-input", "supports-style-tags")
+                                        .class("align-left", "text-input")
+                                        .attr("supports-style-tags")
                                         .attr("contenteditable", "plaintext-only")
                                         .make(),
                                     insPosCallback()
@@ -563,8 +508,10 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                             }, "Nieuwe kop 1"),
                         !exclude.includes("h2") && RichTextInput.makeIconButton("format_h2", () => { // add new normal h2
                             this.insert(
+                                "h2",
                                 ElementFactory.h2()
-                                    .class("align-left", "text-input", "supports-style-tags")
+                                    .class("align-left", "text-input")
+                                    .attr("supports-style-tags")
                                     .attr("contenteditable", "plaintext-only")
                                     .make(),
                                 insPosCallback()
@@ -572,8 +519,10 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                         }, "Nieuwe kop 2"),
                         !exclude.includes("h3") && RichTextInput.makeIconButton("format_h3", () => { // add new normal h3
                             this.insert(
+                                "h3",
                                 ElementFactory.h3()
-                                    .class("align-left", "text-input", "supports-style-tags")
+                                    .class("align-left", "text-input")
+                                    .attr("supports-style-tags")
                                     .attr("contenteditable", "plaintext-only")
                                     .make(),
                                 insPosCallback()
@@ -583,8 +532,10 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                     .tooltip("Nieuwe kop/titel"),
                 !exclude.includes("paragraph") && RichTextInput.makeIconButton("subject", () => { // add new paragraph
                         this.insert(
+                            "paragraph",
                             ElementFactory.p()
-                                .class("align-left", "text-input", "supports-style-tags")
+                                .class("align-left", "text-input")
+                                .attr("supports-style-tags")
                                 .attr("contenteditable", "plaintext-only")
                                 .make(),
                             insPosCallback()
@@ -592,6 +543,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                     }, "Nieuwe paragraaf"),
                 !exclude.includes("list") && RichTextInput.makeIconButton("format_list_bulleted", () => {
                         this.insert(
+                            "list",
                             ElementFactory.ul()
                                 .children(
                                     ul => this.makeSectionTypes(() => {
@@ -605,6 +557,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                     }, "Nieuwe lijst"),
                 !exclude.includes("numbered-list") && RichTextInput.makeIconButton("format_list_numbered", () => {
                         this.insert(
+                            "numbered-list",
                             ElementFactory.ol()
                                 .children(
                                     ol => this.makeSectionTypes(() => {

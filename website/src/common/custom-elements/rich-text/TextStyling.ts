@@ -1,7 +1,7 @@
-import { HexColor, StyleMap } from "./util/StyleUtil";
-import ElementFactory from "./html-element-factory/ElementFactory";
-import ElementUtil from "./util/ElementUtil";
-import NodeUtil from "./util/NodeUtil";
+import { HexColor, StyleMap } from "../../util/StyleUtil";
+import ElementFactory from "../../html-element-factory/ElementFactory";
+import ElementUtil from "../../util/ElementUtil";
+import NodeUtil from "../../util/NodeUtil";
 
 interface StyleTagNameValueMap {
     "bold": null,
