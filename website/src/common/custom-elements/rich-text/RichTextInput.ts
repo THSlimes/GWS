@@ -445,7 +445,9 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
         return ElementFactory.div(undefined, "section-types", "flex-columns", "cross-axis-center", "in-section-gap", "no-bullet")
             .canSelect(false)
             .children(
-                !exclude.includes("shortcut") && RichTextInput.makeIconButton("add_link", () => {}, "Snelkoppeling toevoegen"),
+                !exclude.includes("shortcut") && RichTextInput.makeIconButton("add_link", () => {
+                    
+                }, "Snelkoppeling toevoegen"),
                 !exclude.includes("attachment") && RichTextInput.makeIconButton("attachment", () => {
                     const newElem = new MultisourceAttachment();
                     newElem.classList.add("align-left");

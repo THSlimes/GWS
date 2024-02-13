@@ -78,17 +78,15 @@
         &[value="#ff0000"] { color: #ff0000; }
     }
 
-    .align-left {
-        text-align: start;
-        align-self: flex-start;
-    }
-    .align-center {
-        text-align: center;
-        align-self: center;
-    }
-    .align-right {
-        text-align: end;
-        align-self: flex-end;
-    }
+    .align-left { text-align: start; }
+    .align-center { text-align: center; }
+    .align-right { text-align: end; }
     .align-justify { text-align: justify; }
+
+    multisource-image, multisource-attachment {
+        &.align-left { align-self: flex-start !important; }
+        &.align-center { align-self: center !important; }
+        &.align-right { align-self: flex-end !important; }
+        &.align-justify { align-self: center !important; }
+    }
 }

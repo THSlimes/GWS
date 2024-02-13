@@ -10,7 +10,7 @@ service firebase.storage {
         }
 
         match /openbaar/{attmPath=**} {
-            allow get;
+            allow get, list;
             allow create : if hasPermissions(["UPLOAD_FILES"]);
         }
 
