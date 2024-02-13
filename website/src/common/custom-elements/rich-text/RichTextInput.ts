@@ -8,10 +8,10 @@ import FunctionUtil from "../../util/FunctionUtil";
 import NodeUtil from "../../util/NodeUtil";
 import NumberUtil from "../../util/NumberUtil";
 import { HexColor } from "../../util/StyleUtil";
-import URLUtil from "../../util/URLUtil";
 import FolderElement from "../FolderElement";
 import RichTextSerializer from "./RichTextSerializer";
-import SmartAttachment from "../SmartAttachment";
+import MultisourceAttachment, { AttachmentOrigin } from "../MultisourceAttachment";
+import MultisourceImage from "../MultisourceImage";
 
 /** [parent Node, "before child" index] tuple */
 type InsertionPosition = [Node, number];
@@ -63,15 +63,25 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
     /** Body child element */
     public body!:HTMLDivElement;
 
-    private selectedElement:HTMLElement|null = null;
+    private _selectedElement:HTMLElement|null = null;
+    private set selectedElement(elem:HTMLElement|null) {
+        this._selectedElement = elem;
+    }
+    private get selectedElement() {
+        if (!this.body.contains(this._selectedElement)) this.selectedElement = null;
+        return this._selectedElement;
+    }
 
     /** Position at which to insert new elements. */
     private get insertionPosition():InsertionPosition {
         if (this.selectedElement) {
-            return [
-                this.selectedElement.parentNode!.parentNode!,
-                NodeUtil.getChildIndex(this.selectedElement.parentNode!.parentNode!, this.selectedElement.parentNode!) + 1
-            ];
+            console.log(this.selectedElement);
+
+            const target = ElementUtil.queryAncestors(this.selectedElement, "[insertion-target]")[0] ?? this.body;
+            let targetChild:Node = this.selectedElement; // find child of target which is/contains the selected element
+            while (targetChild.parentNode !== target) targetChild = targetChild.parentNode!;
+
+            return [target, NodeUtil.getChildIndex(target,targetChild) + 1];
         }
         return [this.body, this.body.childNodes.length];
     }
@@ -84,91 +94,63 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
      * @param deleteOnEmpty whether to delete the new element when backspace is pressed
      * while `newElem.textContent` is empty.
      */
-    private insert(type:RichTextSectionName, newElem:Element, position:InsertionPosition, focus=true, deleteOnEmpty=true) {
+    private insert(type:RichTextSectionName, newElem:HTMLElement, position:InsertionPosition, focus=true, deleteOnEmpty=true) {
 
         newElem.setAttribute("do-serialize", ""); // mark as element
         newElem.setAttribute("type", type);
 
         let insElem:Element;
-        
-        if (newElem instanceof HTMLImageElement) { // custom container for images
-            insElem = ElementFactory.div(undefined, "image-container", "element-container", "flex-rows", "cross-axis-center", "in-section-gap")
+
+        if (newElem instanceof MultisourceAttachment || newElem instanceof MultisourceImage) { // custom container for attachments
+            insElem = ElementFactory.div(undefined, "multisource-container", "element-container", "flex-rows", "in-section-gap")
                 .children(() => {
-                    newElem.src ||= location.origin + "/images/other/placeholder.svg";
-                    const defaultSrc = newElem.src;
+                    const out:HTMLElement[] = [newElem];
 
-                    // create URL input element
-                    const urlInput = ElementFactory.input.url()
-                        .placeholder("Link naar afbeelding...")
-                        .on("input", () => FunctionUtil.setDelayedCallback(urlInputCallback, 500))
-                        .make();
+                    let originInput:HTMLSelectElement & { prevValue?:AttachmentOrigin, value:AttachmentOrigin };
 
-                    const urlInputCallback = () => { // callback to run after urlInput input event
-                        const url = urlInput.value;
-
-                        URLUtil.getType(url)
-                        .then(type => {
-                            if (type === "image") {
-                                newElem.src = url;
-                                urlStatus.textContent = "";
-                            }
-                            else {
-                                urlStatus.textContent = "Link is geen afbeeldingslink.";
-                                newElem.src = defaultSrc;
-                            }
-                        })
-                        .catch(() => {
-                            urlStatus.textContent = "Link is ongeldig.";
-                            newElem.src = defaultSrc;
-                        });
-                    }
-
-                    // create URL status element
-                    const urlStatus = ElementFactory.p()
-                        .class("url-status", "no-margin")
-                        .make();
-
-                    // create image width selector
-                    const widthSelector = ElementFactory.div(undefined, "width-selector", "flex-columns", "cross-axis-center", "in-section-gap")
+                    // origin selector
+                    ElementFactory.div(undefined, "origin-selector", "flex-columns", "cross-axis-center", "in-section-gap")
                         .children(
-                            ElementFactory.label("Breedte", "width"),
-                            ElementFactory.input.range(100, 1, 100, 1)
-                                .name("width")
-                                .on("input", (ev, widthInput) => newElem.style.width = widthInput.value + "%")
-                        );
-
-                    return [newElem, urlInput, urlStatus, widthSelector];
-                })
-                .make();
-        }
-        else if (newElem instanceof SmartAttachment) { // custom container for attachments
-            insElem = ElementFactory.div(undefined, "attachment-container", "element-container", "flex-rows", "in-section-gap")
-                .children(() => {
-                    let sourceInput:HTMLSelectElement
-                                & { prevValue?: "firebase-storage" | "external" }
-                                & { value: "firebase-storage" | "external" };
-
-                    const sourceSelector = ElementFactory.div(undefined, "source-selector", "flex-columns", "cross-axis-center", "in-section-gap")
-                    .children(
-                        ElementFactory.label("Bron"),
-                        sourceInput = ElementFactory.select({ "firebase-storage": "Firebase cloud-opslag", "external": "Directe link" })
-                            .onValueChanged(v => {
-                                newElem.src = v;
-                                pathInput.placeholder = v === "firebase-storage" ? "Bestandspad..." : "Link naar bestand...";
-                            })
-                            .make()
-                    );
-
-                    const setInputCallback = () => newElem.href = pathInput.value;
-                    const pathInput = ElementFactory.input.text()
-                        .class("link-input")
-                        .placeholder("Bestandspad...")
-                        .on("input", () => {
-                            FunctionUtil.setDelayedCallback(setInputCallback, 500);
-                        })
+                            ElementFactory.label("Bron"),
+                            originInput = ElementFactory.select({
+                                    "firebase-storage-public": "Firebase cloud-opslag (openbaar)",
+                                    "firebase-storage-protected": "Firebase cloud-opslag (beveiligd)",
+                                    "external": "Directe link"
+                                })
+                                .value(newElem.origin)
+                                .onValueChanged(v => {
+                                    newElem.origin = v;
+                                    pathInput.placeholder = v === "external" ? "Link naar bestand..." : "Bestandspad...";
+                                })
+                                .make()
+                        )
+                        .onMake(self => out.push(self))
                         .make();
+
+                    // path input
+                    const setSrcCallback = () => newElem.src = pathInput.value;
+                    const pathInput = ElementFactory.input.text()
+                        .class("src-input")
+                        .placeholder("Bestandspad...")
+                        .value(newElem.src)
+                        .on("input", () => {
+                            FunctionUtil.setDelayedCallback(setSrcCallback, 500);
+                        })
+                        .onMake(self => out.push(self))
+                        .make();
+
+                    if (newElem instanceof MultisourceImage) { // width selector for images
+                        ElementFactory.div(undefined, "width-selector", "flex-columns", "cross-axis-center", "in-section-gap")
+                            .children(
+                                ElementFactory.label("Breedte"),
+                                ElementFactory.input.range(100, 0, 100, 1)
+                                    .onValueChanged(val => newElem.style.width = `${val}%`)
+                            )
+                            .onMake(self => out.push(self))
+                            .make();
+                    }
                     
-                    return [newElem, sourceSelector, pathInput];
+                    return out;
                 })
                 .make();
         }
@@ -205,7 +187,6 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
         const selection = getSelection();
         if (selection && selection.rangeCount !== 0) {
             const range = selection.getRangeAt(0);
-            console.log();
             
             return this.body.contains(range.commonAncestorContainer)
                 && ElementUtil.queryAncestors(range.commonAncestorContainer, "[supports-style-tags]", true).length !== 0;
@@ -395,7 +376,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                         opt.addEventListener("click", ev => {
                                             alignOptions.forEach(otherOpt => otherOpt.toggleAttribute("selected", opt === otherOpt));
                                             alignSelector.heading.textContent = opt.textContent;
-
+                                            
                                             if (this.selectedElement) {
                                                 this.selectedElement.classList.remove(...alignOptions.map(otherOpt => otherOpt.getAttribute("value")!));
                                                 this.selectedElement.classList.add(opt.getAttribute("value")!)
@@ -412,7 +393,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
 
         this.body = this.appendChild(
             ElementFactory.div(undefined, "body", "rich-text")
-                .on("focusout", () => this.selectedElement = null)
+                .on("blur", () => this.selectedElement = null)
                 .on("focusin", (ev) => {
                     let target = ev.target;
 
@@ -420,7 +401,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                         
                         let elem:HTMLElement|null = target; // find element to select
                         while (!elem.hasAttribute("do-serialize")) {
-                            const q:Element|null = elem.querySelector(".element");
+                            const q:Element|null = elem.querySelector("[do-serialize]");
                             if (q instanceof HTMLElement) elem = q;
                             else if (elem.parentElement) elem = elem.parentElement;
                             else {
@@ -466,14 +447,22 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
             .children(
                 !exclude.includes("shortcut") && RichTextInput.makeIconButton("add_link", () => {}, "Snelkoppeling toevoegen"),
                 !exclude.includes("attachment") && RichTextInput.makeIconButton("attachment", () => {
+                    const newElem = new MultisourceAttachment();
+                    newElem.classList.add("align-left");
                     this.insert(
                         "attachment",
-                        new SmartAttachment(),
+                        newElem,
                         insPosCallback(), false, false
                     );
                 }, "Bijlage toevoegen"),
                 !exclude.includes("image") && RichTextInput.makeIconButton("add_photo_alternate", () => { // add new image
-                    this.insert("image", ElementFactory.img().class("align-center").make(), insPosCallback(), true, false);
+                    const newElem = new MultisourceImage();
+                    newElem.classList.add("align-center");
+                    this.insert(
+                        "image",
+                        newElem,
+                        insPosCallback(), false, false
+                    );
                 }, "Afbeelding toevoegen"),
                 !ArrayUtil.includesAll(exclude, ...ALL_HEADERS) && ElementFactory.folderElement()
                     .class("category")
@@ -545,6 +534,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                         this.insert(
                             "list",
                             ElementFactory.ul()
+                                .attr("insertion-target")
                                 .children(
                                     ul => this.makeSectionTypes(() => {
                                         if (ul.contains(this.selectedElement)) return [ul, NodeUtil.getChildIndex(ul, this.selectedElement!.parentElement!) + 1];
@@ -559,6 +549,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                         this.insert(
                             "numbered-list",
                             ElementFactory.ol()
+                                .attr("insertion-target")
                                 .children(
                                     ol => this.makeSectionTypes(() => {
                                         if (ol.contains(this.selectedElement)) return [ol, NodeUtil.getChildIndex(ol, this.selectedElement!.parentElement!) + 1];

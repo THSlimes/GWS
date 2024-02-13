@@ -1,4 +1,4 @@
-import { getDownloadURL, getMetadata, ref } from "@firebase/storage";
+import { StorageError, getDownloadURL, getMetadata, ref } from "@firebase/storage";
 import { checkPermissions } from "../firebase/authentication/permission-based-redirect";
 import Permission from "../firebase/database/Permission";
 import { STORAGE } from "../firebase/init-firebase";
@@ -6,13 +6,18 @@ import URLUtil, { FileInfo, FileType, getFileType } from "../util/URLUtil";
 import ElementUtil, { HasSections } from "../util/ElementUtil";
 import ElementFactory from "../html-element-factory/ElementFactory";
 
-export type AttachmentSource = "firebase-storage" | "external";
+export type AttachmentOrigin = "firebase-storage-public" | "firebase-storage-protected" | "external";
+export function isAttachmentOrigin(str:string):str is AttachmentOrigin {
+    return str === "firebase-storage-public"
+        || str === "firebase-storage-private"
+        || str === "external";
+}
 
-export default class SmartAttachment extends HTMLElement implements HasSections<"filetypeIcon"|"fileNameLabel"|"fileSizeLabel"|"downloadButton"> {
+export default class MultisourceAttachment extends HTMLElement implements HasSections<"filetypeIcon"|"fileNameLabel"|"fileSizeLabel"|"downloadButton"> {
 
-    private static CAN_DOWNLOAD_FROM_FIREBASE = false;
+    private static CAN_DOWNLOAD_PROTECTED_ATTACHMENTS = false;
     static {
-        checkPermissions(Permission.DOWNLOAD_ATTACHMENTS, hasPerms => this.CAN_DOWNLOAD_FROM_FIREBASE = hasPerms, true, true);
+        checkPermissions(Permission.DOWNLOAD_PROTECTED_FILES, hasPerms => this.CAN_DOWNLOAD_PROTECTED_ATTACHMENTS = hasPerms, true, true);
     }
 
     private static readonly FILE_SIZE_UNITS = ['B', "kB", "MB", "GB", "TB", "PB", "YB"];
@@ -39,40 +44,43 @@ export default class SmartAttachment extends HTMLElement implements HasSections<
         pdf: "picture_as_pdf"
     };
 
-    private _src:AttachmentSource;
+    private _origin:AttachmentOrigin;
     /** Location where data is queried from. */
-    public get src() { return this._src; }
-    public set src(newSrc:AttachmentSource) {
-        if (newSrc !== this._src) {
-            this._src = newSrc;
+    public get origin() { return this._origin; }
+    public set origin(newSrc:AttachmentOrigin) {
+        if (newSrc !== this._origin) {
+            this._origin = newSrc;
             this.setAttribute("src", newSrc);
             this.refresh();
         }
     }
 
-    private _href:string;
+    private _src:string;
     /** Link/path to the attachment file. */
-    public get href() { return this._href; }
-    public set href(newHref:string) {
-        if (newHref !== this._href) {
-            this._href = newHref;
+    public get src() { return this._src; }
+    public set src(newHref:string) {
+        if (newHref !== this._src) {
+            this._src = newHref;
             this.setAttribute("href", newHref);
             this.refresh();
         }
     }
 
     private refresh():Promise<void> {
-        const infoPromise = this.src === "firebase-storage" ?
-            SmartAttachment.getInfoFromFirebase(this.href) :
-            URLUtil.getInfo(this.href);
+        
+        const infoPromise = this.origin === "external" ?
+            URLUtil.getInfo(this.src) :
+            this.origin === "firebase-storage-protected" ?
+                MultisourceAttachment.getInfoFromFirebase("beveiligd", this.src) :
+                MultisourceAttachment.getInfoFromFirebase("openbaar", this.src);
 
         return new Promise((resolve, reject) => {
             infoPromise.then(info => {
                 this.classList.remove("error");
 
-                this.filetypeIcon.textContent = SmartAttachment.FILE_TYPE_ICONS[info.fileType];
+                this.filetypeIcon.textContent = MultisourceAttachment.FILE_TYPE_ICONS[info.fileType];
                 this.fileNameLabel.textContent = info.name;
-                this.fileSizeLabel.textContent = info.size ? SmartAttachment.getFileSizeString(info.size) : "";
+                this.fileSizeLabel.textContent = info.size ? MultisourceAttachment.getFileSizeString(info.size) : "";
                 this.downloadButton.textContent = "download";
                 this.downloadButton.title = "Bestand downloaden";
                 this.downloadButton.classList.add("click-action")
@@ -81,9 +89,8 @@ export default class SmartAttachment extends HTMLElement implements HasSections<
             })
             .catch(err => {
                 this.classList.add("error");
-
                 this.filetypeIcon.textContent = "error";
-                this.fileNameLabel.textContent = "Kan bestand niet vinden";
+                this.fileNameLabel.textContent = err instanceof Error ? err.message : "Er ging iets mis";
                 this.fileSizeLabel.textContent = "";
                 this.downloadButton.textContent = "file_download_off";
                 this.downloadButton.title = "";
@@ -100,13 +107,13 @@ export default class SmartAttachment extends HTMLElement implements HasSections<
     public fileSizeLabel!:HTMLParagraphElement;
     public downloadButton!:HTMLAnchorElement;
 
-    constructor(source?:AttachmentSource, href?:string) {
+    constructor(source?:AttachmentOrigin, href?:string) {
         super();
 
         this.initElement();
 
-        this._src = source ?? ElementUtil.getAttrAs(this, "src", str => str === "firebase-storage" || str === "external") ?? "firebase-storage";
-        this._href = source ?? this.getAttribute("href") ?? "";
+        this._origin = source ?? ElementUtil.getAttrAs(this, "src", isAttachmentOrigin) ?? "firebase-storage-public";
+        this._src = source ?? this.getAttribute("href") ?? "";
         this.refresh();
     }
 
@@ -143,11 +150,13 @@ export default class SmartAttachment extends HTMLElement implements HasSections<
 
     }
 
-    private static getInfoFromFirebase(base:string, ...segments:string[]):Promise<FileInfo> {
+    private static getInfoFromFirebase(base:"openbaar"|"beveiligd", ...segments:string[]):Promise<FileInfo> {
         return new Promise((resolve, reject) => {
-            if (!this.CAN_DOWNLOAD_FROM_FIREBASE) reject("MISSING DOWNLOAD PERMISSIONS");
+            if (base === "beveiligd" && !this.CAN_DOWNLOAD_PROTECTED_ATTACHMENTS) {
+                reject(new Error("Geen toegang tot bestand", { cause: "missing permissions" }));
+            }
             else {
-                const fullPath = "attachments/" + [base, ...segments].join('/');
+                const fullPath = [base, ...segments].join('/');
                 const fileRef = ref(STORAGE, fullPath);
 
                 Promise.all([getMetadata(fileRef), getDownloadURL(fileRef)])
@@ -161,11 +170,34 @@ export default class SmartAttachment extends HTMLElement implements HasSections<
                         lastModified: new Date(metadata.updated)
                     });
                 })
-                .catch(reject);
+                .catch(err => {
+
+                    if (err instanceof StorageError) switch(err.code) {
+                        case "storage/object-not-found":
+                            reject(new Error("Kan bestand niet vinden", { cause: "not found" }));
+                            break;
+                        case "storage/unauthorized":
+                            reject(new Error("Geen toegang tot bestand", { cause: "missing permissions" }));
+                            break;
+                        default:
+                            reject(new Error("Er ging iets mis", { cause: "unknown" }));
+                            break;
+                    }
+                    else reject(err);
+
+                });
             }
         });
     }
 
 }
 
-customElements.define("smart-attachment", SmartAttachment);
+customElements.define("multisource-attachment", MultisourceAttachment);
+
+class AttachmentQueryError extends Error {
+
+    constructor(cause:string, message:string) {
+        super(cause);
+    }
+
+}

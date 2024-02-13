@@ -117,17 +117,12 @@ rich-text-input {
 
             }
 
-            > .image-container {
+            > .multisource-container {
                 flex-grow: 1;
 
                 > * { width: 100%; }
 
-                > .url-status {
-                    font-style: italic;
-                    color: var(--indicate-bad);
-
-                    &:empty { display: none; }
-                }
+                > .src-input {}
 
                 > .width-selector {
                     width: 100%;

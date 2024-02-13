@@ -1,4 +1,5 @@
-@import url("./custom-elements/smart-attachment.css");
+@import url("./custom-elements/multisource-image.css");
+@import url("./custom-elements/multisource-attachment.css");
 
 .rich-text {
     > * {
@@ -36,10 +37,6 @@
 
     & a {
         color: var(--text-dark);
-    }
-
-    img {
-        object-fit: contain;
     }
 
     ul {

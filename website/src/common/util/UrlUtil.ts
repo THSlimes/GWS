@@ -89,8 +89,11 @@ export default abstract class URLUtil {
 
                 const req = new XMLHttpRequest();
                 req.timeout = 2500; // 2.5 second timeout
-                req.onerror = ev => reject("REQUEST ERROR: UNKNOWN");
-                req.ontimeout = ev => reject("REQUEST ERROR: TIMEOUT");
+                req.onerror = ev => reject(req.status === 404 ?
+                    new Error("Kan bestand niet vinden", { cause: "not found" }) :
+                    new Error("Er ging iets mis", { cause: "unknown" })
+                );
+                req.ontimeout = ev => reject(new Error("Kan bestand niet vinden", { cause: "timeout" }));
                 req.onload = () => {
                     if (200 <= req.status && req.status < 300) {
                         
@@ -109,12 +112,12 @@ export default abstract class URLUtil {
 
                         resolve({ href, name, contentType, fileType, size, lastModified });
                     }
-                    else reject(`REQUEST ERROR: ${req.statusText}`);
+                    else reject(new Error("Er ging iets mis", { cause: "unknown" }));
                 };
                 req.open("HEAD", url, true);
                 req.send();
             }
-            catch { reject("INVALID URL"); }
+            catch { reject(new Error("URL is ongeldig", { cause: "invalid url" })); }
         });
     }
 

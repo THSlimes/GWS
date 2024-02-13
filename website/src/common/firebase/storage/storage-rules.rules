@@ -9,9 +9,14 @@ service firebase.storage {
                 || (request.auth != null && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.permissions.hasAll(requiredPerms));
         }
 
-        match /attachments/{attmPath=**} {
-            allow get : if hasPermissions(["DOWNLOAD_ATTACHMENTS"]);
-            allow create : if hasPermissions(["UPLOAD_ATTACHMENTS"]);
+        match /openbaar/{attmPath=**} {
+            allow get;
+            allow create : if hasPermissions(["UPLOAD_FILES"]);
+        }
+
+        match /beveiligd/{attmPath=**} {
+            allow get : if hasPermissions(["DOWNLOAD_PROTECTED_FILES"]);
+            allow create : if hasPermissions(["UPLOAD_FILES"]);
         }
 
         match /photos/homepage/{filename} {

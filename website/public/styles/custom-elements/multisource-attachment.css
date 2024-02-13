@@ -1,4 +1,4 @@
-smart-attachment {
+multisource-attachment {
     padding: var(--in-section-gap) var(--min-section-gap);
 
     width: max-content !important;

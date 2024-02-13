@@ -1,0 +1,25 @@
+multisource-image {
+
+    max-width: 100%;
+
+    > img {
+        width: 100%;
+        object-fit: contain;
+    }
+
+    > .error-message {
+        min-width: 0px;
+        width: 100%;
+
+        overflow: hidden;
+
+        padding: var(--in-section-gap) var(--min-section-gap);
+
+        background-color: var(--indicate-bad);
+        
+        border-radius: var(--in-section-gap);
+
+        > * { color: var(--text-light) !important; }
+    }
+
+}
