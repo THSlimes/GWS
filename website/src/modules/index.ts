@@ -18,6 +18,8 @@ import NumberUtil from "../common/util/NumberUtil";
 
 // INSERTING CAROUSEL IMAGES
 
+const CAROUSEL_IMAGES_FOLDER_PATH = "/openbaar/fotos-homepagina";
+
 const CAROUSEL_IMAGES:Record<number,HTMLImageElement> = {};
 
 function createCarouselImg(url:string, priority:"high"|"low"|"auto"="auto"):HTMLImageElement {
@@ -30,7 +32,7 @@ function createCarouselImg(url:string, priority:"high"|"low"|"auto"="auto"):HTML
         .make();
 }
 
-const carouselImagesFolder = ref(STORAGE, "/photos/homepage");
+const carouselImagesFolder = ref(STORAGE, CAROUSEL_IMAGES_FOLDER_PATH);
 listAll(carouselImagesFolder)
 .then(photoRefs => {
     photoRefs.items.forEach((photoRef, i) => {
