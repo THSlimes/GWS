@@ -84,6 +84,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
         const newSections = RichTextSerializer.deserialize(newVal);
         for (const section of newSections) {
             if (section instanceof HTMLElement) this.insert(inferSectionName(section), section, [this.body, Infinity]);
+            else if (section.nodeType === Node.TEXT_NODE) this.insert("paragraph", ElementFactory.p(section.textContent!).make(), [this.body, Infinity]);
             else this.body.appendChild(section);
         }
     }
@@ -285,10 +286,11 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
         else return false;
     }
 
-    constructor() {
+    constructor(value?:string) {
         super();
 
         this.initElement();
+        if (value !== undefined) this.value = value;
     }
 
     /** Creates a button based on an icon. */
@@ -392,11 +394,6 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                 .children(
                     ElementFactory.div(undefined, "styling", "flex-columns", "in-section-gap")
                         .children(
-                            RichTextInput.makeIconButton("refresh", () => {
-                                const val = this.value;
-                                console.log(val);
-                                this.value = val;
-                            }),
                             ElementFactory.folderElement("down", 250, true)
                                 .class("font-size-selector")
                                 .heading(

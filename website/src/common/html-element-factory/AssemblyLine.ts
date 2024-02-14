@@ -1,3 +1,4 @@
+import RichTextInput from "../custom-elements/rich-text/RichTextInput";
 import StyleUtil, { StyleMap } from "../util/StyleUtil";
 
 /**
@@ -331,6 +332,29 @@ export class SelectAssemblyLine<V extends string> extends AssemblyLine<"select">
             const valueCallback = this._onValueChanged;
             out.addEventListener("change", () => valueCallback(out.value, out.prevValue));
         }
+
+        return out;
+    }
+
+}
+
+export class RichTextInputAssemblyLine extends AssemblyLine<"rich-text-input", RichTextInput> {
+
+    constructor() {
+        super("rich-text-input", () => new RichTextInput);
+    }
+
+    private _value?:string;
+    public value(val:string):this {
+        this._value = val;
+
+        return this;
+    }
+
+    public override make() {
+        const out = super.make();
+
+        if (this._value) out.value = this._value;
 
         return out;
     }

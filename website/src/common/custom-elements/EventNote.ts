@@ -14,6 +14,7 @@ import URLUtil from "../util/URLUtil";
 import Switch from "./Switch";
 import { HexColor } from "../util/StyleUtil";
 import FunctionUtil from "../util/FunctionUtil";
+import RichTextInput from "./rich-text/RichTextInput";
 
 /** Amount of detail present in an EventNote element. */
 export type DetailLevel = "full" | "high" | "normal" | "low";
@@ -235,7 +236,7 @@ customElements.define("event-note", EventNote);
 export class EditableEventNote extends EventNote implements HasSections<"category"|"useColor"|"color"|"startsAt"|"endsAt"> {
 
     public override name!:HTMLTextAreaElement;
-    public override description!:HTMLTextAreaElement;
+    public override description!:RichTextInput;
     public category!:HTMLInputElement;
     public useColor!:Switch;
     public color!:HTMLInputElement;
@@ -310,12 +311,10 @@ export class EditableEventNote extends EventNote implements HasSections<"categor
                 .make()
         );
 
-        this.description = this.appendChild( // description
-            ElementFactory.textarea(this.event.description)
+        this.description = this.appendChild(
+            ElementFactory.input.richText(this.event.description)
                 .class("description")
                 .attr("no-resize")
-                .placeholder("Omschrijving")
-                .spellcheck(true)
                 .make()
         );
 

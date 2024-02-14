@@ -1,4 +1,5 @@
 @import url("../custom-elements/switch.css");
+@import url("../custom-elements/rich-text-input.css");
 
 event-note, editable-event-note {
     display: block;

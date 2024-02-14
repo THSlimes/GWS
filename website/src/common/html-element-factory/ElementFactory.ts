@@ -1,6 +1,6 @@
 import { FoldingDirection } from "../custom-elements/FolderElement";
 import NumberUtil from "../util/NumberUtil";
-import AssemblyLine, { AnchorElementAssemblyLine, SelectAssemblyLine } from "./AssemblyLine";
+import AssemblyLine, { AnchorElementAssemblyLine, RichTextInputAssemblyLine, SelectAssemblyLine } from "./AssemblyLine";
 import { HexColor } from "../util/StyleUtil";
 import FolderElementAssemblyLine from "./FolderElementAssemblyLine";
 import { ButtonLikeInputAssemblyLine, CheckableInputAssemblyLine, DateInputAssemblyLine, InputAssemblyLine, NumberInputAssemblyLine, RangedInputAssemblyLine, TextInputAssemblyLine } from "./InputAssemblyLine";
@@ -153,6 +153,11 @@ export default abstract class ElementFactory {
             if (year !== undefined && week !== undefined) out.value(year, week);
             else if (year !== undefined) out.value(year, 1);
             else if (week !== undefined) out.value(new Date().getFullYear(), week);
+            return out;
+        },
+        richText(val?:string) {
+            const out = new RichTextInputAssemblyLine();
+            if (val) out.value(val);
             return out;
         }
     };
