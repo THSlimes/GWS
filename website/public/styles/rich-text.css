@@ -39,6 +39,11 @@
         --type: "snelkoppeling";
 
         color: var(--text-dark);
+
+        &[target="_blank"]:not(:empty)::after {
+            content: "open_in_new";
+            font-family: "icon";
+        }
     }
 
     ul {
