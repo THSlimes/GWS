@@ -239,6 +239,7 @@ div#split-view {
 .section-gap-y { column-gap: var(--section-gap-y); }
 .section-gap { gap: var(--section-gap-y) var(--section-gap-x); }
 .in-section-gap { gap: var(--in-section-gap); }
+.in-section-padding { padding: var(--in-section-gap); }
 
 .no-scroll { overflow: hidden; }
 [no-resize] { resize: none; }

@@ -36,6 +36,8 @@
     }
 
     & a {
+        --type: "snelkoppeling";
+
         color: var(--text-dark);
     }
 

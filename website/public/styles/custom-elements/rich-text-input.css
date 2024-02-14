@@ -1,7 +1,7 @@
 @import url("../rich-text.css");
 
 @import url("../custom-elements/folder-element.css");
-@import url("../custom-elements/icon-selector.css");
+@import url("../custom-elements/switch.css");
 
 rich-text-input {
     display: block;
@@ -117,7 +117,7 @@ rich-text-input {
 
             }
 
-            > .multisource-container {
+            > .specialized-container {
                 flex-grow: 1;
 
                 > * { width: 100%; }

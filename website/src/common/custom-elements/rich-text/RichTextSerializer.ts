@@ -48,8 +48,6 @@ export default abstract class RichTextSerializer {
                     });
 
                     switch (type) {
-                        case "shortcut":
-                            break;
                         case "attachment":
                         case "image":
                             out.setAttribute("src", node.getAttribute("src") ?? "firebase-storage-public");
@@ -58,6 +56,9 @@ export default abstract class RichTextSerializer {
                             return [out];
                         case "title":
                             out.classList.add("title"); // mark as title
+                        case "shortcut":
+                            out.setAttribute("href", node.getAttribute("href") ?? "");
+                            if (node.getAttribute("target") === "_blank") out.setAttribute("target", "_blank");
                         case "h1":
                         case "h2":
                         case "h3":

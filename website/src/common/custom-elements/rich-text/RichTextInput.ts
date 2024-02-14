@@ -12,6 +12,7 @@ import FolderElement from "../FolderElement";
 import RichTextSerializer from "./RichTextSerializer";
 import MultisourceAttachment, { AttachmentOrigin } from "../MultisourceAttachment";
 import MultisourceImage from "../MultisourceImage";
+import Switch from "../Switch";
 
 /** [parent Node, "before child" index] tuple */
 type InsertionPosition = [Node, number];
@@ -101,8 +102,36 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
 
         let insElem:Element;
 
-        if (newElem instanceof MultisourceAttachment || newElem instanceof MultisourceImage) { // custom container for attachments
-            insElem = ElementFactory.div(undefined, "multisource-container", "element-container", "flex-rows", "in-section-gap")
+        if (newElem instanceof HTMLAnchorElement) { // custom container for shortcuts
+            insElem = ElementFactory.div(undefined, "specialized-container", "element-container", "flex-rows", "in-section-gap")
+                .children(() => {
+                    const out:HTMLElement[] = [newElem];
+
+                    ElementFactory.input.url()
+                        .onValueChanged(url => newElem.href = url)
+                        .placeholder("Koppeling...")
+                        .onMake(self => out.push(self))
+                        .make();
+
+                    const openInNewTabSwitch = new Switch(false);
+                    openInNewTabSwitch.addEventListener("input", () => {
+                        openInNewTabSwitch.value ?newElem.setAttribute("target", "_blank") : newElem.removeAttribute("target");
+                    });
+                    out.push(
+                        ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
+                            .children(
+                                ElementFactory.label("In nieuw tabblad openen?"),
+                                openInNewTabSwitch
+                            )
+                            .make()
+                    );
+
+                    return out;
+                })
+                .make()
+        }
+        else if (newElem instanceof MultisourceAttachment || newElem instanceof MultisourceImage) { // custom container for attachments
+            insElem = ElementFactory.div(undefined, "specialized-container", "element-container", "flex-rows", "in-section-gap")
                 .children(() => {
                     const out:HTMLElement[] = [newElem];
 
@@ -445,10 +474,19 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
         return ElementFactory.div(undefined, "section-types", "flex-columns", "cross-axis-center", "in-section-gap", "no-bullet")
             .canSelect(false)
             .children(
-                !exclude.includes("shortcut") && RichTextInput.makeIconButton("add_link", () => {
+                !exclude.includes("shortcut") && RichTextInput.makeIconButton("add_link", () => { // add new shortcut
+                    this.insert(
+                        "shortcut",
+                        ElementFactory.a()
+                            .class("align-left", "text-input")
+                            .attr("supports-style-tags")
+                            .attr("contenteditable", "plaintext-only")
+                            .make(),
+                        insPosCallback()
+                    );
                     
                 }, "Snelkoppeling toevoegen"),
-                !exclude.includes("attachment") && RichTextInput.makeIconButton("attachment", () => {
+                !exclude.includes("attachment") && RichTextInput.makeIconButton("attach_file_add", () => {
                     const newElem = new MultisourceAttachment();
                     newElem.classList.add("align-left");
                     this.insert(
