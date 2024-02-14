@@ -78,7 +78,7 @@ const URI_ATTRIBUTES:Record<string, string|string[]> = {
     html: "manifest",
     source: "src",
     track: "src",
-    video: ["poster", "src"] 
+    video: ["poster", "src"]
 };
 const URI_SPECIAL:Record<string, string> = {
     img: "srcset",

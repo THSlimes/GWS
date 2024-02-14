@@ -1,6 +1,8 @@
 import NodeUtil from "../../util/NodeUtil";
 import { isRichTextSectionName } from "./RichTextInput";
 
+const EVENT_LISTENER_ATTRIBUTE_NAMES = ["onfullscreenchange", "onfullscreenerror", "onabort", "onanimationcancel", "onanimationend", "onanimationiteration", "onanimationstart", "onauxclick", "onbeforeinput", "onbeforetoggle", "onblur", "oncancel", "oncanplay", "oncanplaythrough", "onchange", "onclick", "onclose", "oncompositionend", "oncompositionstart", "oncompositionupdate", "oncontextmenu", "oncopy", "oncuechange", "oncut", "ondblclick", "ondrag", "ondragend", "ondragenter", "ondragleave", "ondragover", "ondragstart", "ondrop", "ondurationchange", "onemptied", "onended", "onerror", "onfocus", "onfocusin", "onfocusout", "onformdata", "ongotpointercapture", "oninput", "oninvalid", "onkeydown", "onkeypress", "onkeyup", "onload", "onloadeddata", "onloadedmetadata", "onloadstart", "onlostpointercapture", "onmousedown", "onmouseenter", "onmouseleave", "onmousemove", "onmouseout", "onmouseover", "onmouseup", "onpaste", "onpause", "onplay", "onplaying", "onpointercancel", "onpointerdown", "onpointerenter", "onpointerleave", "onpointermove", "onpointerout", "onpointerover", "onpointerup", "onprogress", "onratechange", "onreset", "onresize", "onscroll", "onscrollend", "onsecuritypolicyviolation", "onseeked", "onseeking", "onselect", "onselectionchange", "onselectstart", "onslotchange", "onstalled", "onsubmit", "onsuspend", "ontimeupdate", "ontoggle", "ontouchcancel", "ontouchend", "ontouchmove", "ontouchstart", "ontransitioncancel", "ontransitionend", "ontransitionrun", "ontransitionstart", "onvolumechange", "onwaiting", "onwebkitanimationend", "onwebkitanimationiteration", "onwebkitanimationstart", "onwebkittransitionend", "onwheel"];
+
 export default abstract class RichTextSerializer {
 
     private static ESCAPE_CONFIG:Record<string,string> = {
@@ -57,7 +59,7 @@ export default abstract class RichTextSerializer {
                         case "title":
                             out.classList.add("title"); // mark as title
                         case "shortcut":
-                            out.setAttribute("href", node.getAttribute("href") ?? "");
+                            if (node.hasAttribute("href")) out.setAttribute("href", node.getAttribute("href")!);
                             if (node.getAttribute("target") === "_blank") out.setAttribute("target", "_blank");
                         case "h1":
                         case "h2":
@@ -97,7 +99,24 @@ export default abstract class RichTextSerializer {
     }
 
     public static deserialize(value:string):Node[] {
-        throw new Error();
+        try {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(value, "text/html");
+            NodeUtil.onEach(doc, n => {
+                if (n instanceof Element) {
+                    if (n.tagName === "SCRIPT") n.remove(); // remove all script tags
+                    EVENT_LISTENER_ATTRIBUTE_NAMES.forEach(evListenerAttrName => n.removeAttribute(evListenerAttrName)); // remove event listeners
+                    Array.from(n.attributes).forEach(attr => { // remove javascript protocol attributes
+                        if (attr.value.toLowerCase().includes("javascript:")) n.removeAttribute(attr.name);
+                    });
+                }
+            });
+
+            return Array.from(doc.body.childNodes);
+        }
+        catch (e) {
+            throw new DeserializationError(e instanceof Error ? e.message : "unknown cause");
+        }
     }
 
 }
@@ -110,6 +129,12 @@ class SerializationError extends Error {
         super(`failed to serialize: ${cause}`);
     }
 
-    
+}
+
+class DeserializationError extends Error {
+
+    constructor(cause:string) {
+        super(`failed to deserialize: ${cause}`);
+    }
 
 }

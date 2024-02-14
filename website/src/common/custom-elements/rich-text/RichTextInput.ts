@@ -24,9 +24,13 @@ type InsertionPosition = [Node, number];
  */
 function insertAt(position:InsertionPosition, ...nodes:Node[]):void {
     const [parent, ind] = position;
-    if (ind <= 0) nodes.forEach(n => parent.insertBefore(n, parent.firstChild));
-    else if (ind >= parent.childNodes.length) nodes.forEach(n => parent.appendChild(n));
-    else nodes.forEach(n => parent.insertBefore(n, parent.childNodes[ind]));
+    if (ind <= 0) {
+        for (const n of nodes) parent.insertBefore(n, parent.firstChild);
+    }
+    else if (ind >= parent.childNodes.length) {
+        for (const n of nodes) parent.appendChild(n)
+    }
+    else for (const n of nodes) parent.insertBefore(n, parent.childNodes[ind]);
 }
 
 /** Union type of the possible names of a rich-text section. */
@@ -36,11 +40,32 @@ export function isRichTextSectionName(str:string):str is RichTextSectionName {
     return richTextSectionNames.some(rtsn => str === rtsn);
 }
 
-/** All RichTextSections categorized as headers. */
-const ALL_HEADERS:RichTextSectionName[] = ["title", "h1", "h2", "h3"];
-/** All RichTextSections categorized as widgets. */
-const ALL_WIDGETS:RichTextSectionName[] = ["event-calendar", "event-note"];
+/** All RichTextSectionNames categorized as headers. */
+const HEADER_SECTION_NAMES:RichTextSectionName[] = ["title", "h1", "h2", "h3"];
+/** All RichTextSectionNames that have editable text. */
+const TEXT_SECTION_NAMES:RichTextSectionName[] = [...HEADER_SECTION_NAMES, "paragraph", "attachment"];
+/** All RichTextSectionNames categorized as widgets. */
+const WIDGET_SECTION_NAMES:RichTextSectionName[] = ["event-calendar", "event-note"];
 
+const EXCLUDED_INSERTABLE_SUBSECTIONS:{[k in RichTextSectionName]?: RichTextSectionName[]} = {
+    list: ["list", "numbered-list"],
+    "numbered-list": ["list", "numbered-list"]
+};
+
+function inferSectionName(elem:Element):RichTextSectionName {
+    if (elem instanceof HTMLAnchorElement) return "shortcut";
+    else if (elem instanceof MultisourceAttachment) return "attachment";
+    else if (elem instanceof MultisourceImage) return "image";
+    else if (elem instanceof HTMLHeadingElement) {
+        if (elem.tagName === "H1") return elem.classList.contains("title") ? "title" : "h1";
+        else if (elem.tagName === "H2") return "h2";
+        else return "h3";
+    }
+    else if (elem instanceof HTMLParagraphElement) return "paragraph";
+    else if (elem instanceof HTMLUListElement) return "list";
+    else if (elem instanceof HTMLOListElement) return "numbered-list";
+    else throw Error(`could not infer section type of ${elem.outerHTML}`);
+}
 
 
 /**
@@ -53,10 +78,14 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
     }
 
     public set value(newVal:string) {
-        while (this.body.firstChild) this.body.firstChild.remove();
+        this.selectedElement = null;
+        NodeUtil.empty(this.body); // remove children
 
         const newSections = RichTextSerializer.deserialize(newVal);
-        // TODO: proper deserialization
+        for (const section of newSections) {
+            if (section instanceof HTMLElement) this.insert(inferSectionName(section), section, [this.body, Infinity]);
+            else this.body.appendChild(section);
+        }
     }
 
     /** Toolbar child element */
@@ -64,9 +93,14 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
     /** Body child element */
     public body!:HTMLDivElement;
 
+    private readonly unselectCallback = () => this.selectedElement = null;
     private _selectedElement:HTMLElement|null = null;
     private set selectedElement(elem:HTMLElement|null) {
+        const oldElem = this._selectedElement;
+        if (oldElem) oldElem.removeEventListener("blur", this.unselectCallback);
+
         this._selectedElement = elem;
+        if (elem) elem.addEventListener("blur", this.unselectCallback);
     }
     private get selectedElement() {
         if (!this.body.contains(this._selectedElement)) this.selectedElement = null;
@@ -76,15 +110,13 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
     /** Position at which to insert new elements. */
     private get insertionPosition():InsertionPosition {
         if (this.selectedElement) {
-            console.log(this.selectedElement);
 
-            const target = ElementUtil.queryAncestors(this.selectedElement, "[insertion-target]")[0] ?? this.body;
             let targetChild:Node = this.selectedElement; // find child of target which is/contains the selected element
-            while (targetChild.parentNode !== target) targetChild = targetChild.parentNode!;
+            while (targetChild.parentNode !== this.body) targetChild = targetChild.parentNode!;
 
-            return [target, NodeUtil.getChildIndex(target,targetChild) + 1];
+            return [(this.body), NodeUtil.getChildIndex(this.body,targetChild) + 1];
         }
-        return [this.body, this.body.childNodes.length];
+        return [this.body, Infinity];
     }
 
     /**
@@ -95,10 +127,10 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
      * @param deleteOnEmpty whether to delete the new element when backspace is pressed
      * while `newElem.textContent` is empty.
      */
-    private insert(type:RichTextSectionName, newElem:HTMLElement, position:InsertionPosition, focus=true, deleteOnEmpty=true) {
+    private insert(type:RichTextSectionName, newElem:HTMLElement, position:InsertionPosition) {
 
         newElem.setAttribute("do-serialize", ""); // mark as element
-        newElem.setAttribute("type", type);
+        newElem.setAttribute("type", type); // mark type
 
         let insElem:Element;
 
@@ -113,9 +145,9 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                         .onMake(self => out.push(self))
                         .make();
 
-                    const openInNewTabSwitch = new Switch(false);
+                    const openInNewTabSwitch = new Switch(newElem.target === "_blank");
                     openInNewTabSwitch.addEventListener("input", () => {
-                        openInNewTabSwitch.value ?newElem.setAttribute("target", "_blank") : newElem.removeAttribute("target");
+                        openInNewTabSwitch.value ? newElem.setAttribute("target", "_blank") : newElem.removeAttribute("target");
                     });
                     out.push(
                         ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
@@ -141,7 +173,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                     ElementFactory.div(undefined, "origin-selector", "flex-columns", "cross-axis-center", "in-section-gap")
                         .children(
                             ElementFactory.label("Bron"),
-                            originInput = ElementFactory.select({
+                            originInput = ElementFactory.select<AttachmentOrigin>({
                                     "firebase-storage-public": "Firebase cloud-opslag (openbaar)",
                                     "firebase-storage-protected": "Firebase cloud-opslag (beveiligd)",
                                     "external": "Directe link"
@@ -204,10 +236,40 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
         
         insertAt(position, container);
 
-        if (deleteOnEmpty) insElem.addEventListener("keydown", ev => {
-            if (!insElem.textContent && (ev as KeyboardEvent).key === "Backspace") container.remove();
-        });
-        if (insElem instanceof HTMLElement && focus) insElem.focus();
+        // section type specific code
+        if (TEXT_SECTION_NAMES.includes(type)) { // marking text element properties
+            newElem.classList.add("text-input");
+            newElem.setAttribute("contenteditable", "plaintext-only");
+            newElem.setAttribute("supports-style-tags", "");
+
+            newElem.addEventListener("keydown", ev => {
+                if (!insElem.textContent && (ev as KeyboardEvent).key === "Backspace") container.remove();
+            });
+            newElem.focus();
+        }
+
+        if (type in EXCLUDED_INSERTABLE_SUBSECTIONS) {
+            newElem.setAttribute("insertion-target", "");
+
+            // recursively insert children
+            const children = NodeUtil.extractChildren(newElem);
+            for (const child of children) {
+                if (child instanceof HTMLElement) {
+                    this.insert(inferSectionName(child), child, [newElem, Infinity])
+                }
+                else newElem.appendChild(child);
+            }
+
+            newElem.prepend(this.makeSectionTypes(() => {
+                if (this.selectedElement && newElem.contains(this.selectedElement)) {
+                    let targetChild:Node = this.selectedElement; // find child of target which is/contains the selected element
+                    while (targetChild.parentNode !== newElem) targetChild = targetChild.parentNode!;
+
+                    return [newElem, NodeUtil.getChildIndex(newElem, targetChild) + 1];
+                }
+                else return [newElem, Infinity]; // append to newElem
+            }, EXCLUDED_INSERTABLE_SUBSECTIONS[type]));
+        }
 
     }
 
@@ -330,7 +392,11 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                 .children(
                     ElementFactory.div(undefined, "styling", "flex-columns", "in-section-gap")
                         .children(
-                            RichTextInput.makeIconButton("upload", () => console.log(this.value)),
+                            RichTextInput.makeIconButton("refresh", () => {
+                                const val = this.value;
+                                console.log(val);
+                                this.value = val;
+                            }),
                             ElementFactory.folderElement("down", 250, true)
                                 .class("font-size-selector")
                                 .heading(
@@ -401,9 +467,9 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                         )
                                 )
                                 .onMake(container => {
-                                    alignOptions.forEach(opt => {
+                                    for (const opt of alignOptions) {
                                         opt.addEventListener("click", ev => {
-                                            alignOptions.forEach(otherOpt => otherOpt.toggleAttribute("selected", opt === otherOpt));
+                                            for (const otherOpt of alignOptions) otherOpt.toggleAttribute("selected", opt === otherOpt);
                                             alignSelector.heading.textContent = opt.textContent;
                                             
                                             if (this.selectedElement) {
@@ -411,7 +477,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                                 this.selectedElement.classList.add(opt.getAttribute("value")!)
                                             }
                                         });
-                                    });
+                                    }
                                 })
                                 .make()
                         ),
@@ -445,7 +511,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                             // match styling selectors to selected element
                             fontSizeInput.value = getComputedStyle(this.selectedElement).fontSize.slice(0, -2);
 
-                            alignOptions.forEach(sel => sel.removeAttribute("selected"));
+                            for (const sel of alignOptions) sel.removeAttribute("selected");
                             const selectedOpt = alignOptions.find(opt => this.selectedElement!.classList.contains(opt.getAttribute("value")!));
                             selectedOpt?.setAttribute("selected", "");
                             alignSelector.heading.textContent = selectedOpt?.textContent ?? "format_align_left";
@@ -477,11 +543,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                 !exclude.includes("shortcut") && RichTextInput.makeIconButton("add_link", () => { // add new shortcut
                     this.insert(
                         "shortcut",
-                        ElementFactory.a()
-                            .class("align-left", "text-input")
-                            .attr("supports-style-tags")
-                            .attr("contenteditable", "plaintext-only")
-                            .make(),
+                        ElementFactory.a().class("align-left").make(),
                         insPosCallback()
                     );
                     
@@ -492,7 +554,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                     this.insert(
                         "attachment",
                         newElem,
-                        insPosCallback(), false, false
+                        insPosCallback()
                     );
                 }, "Bijlage toevoegen"),
                 !exclude.includes("image") && RichTextInput.makeIconButton("add_photo_alternate", () => { // add new image
@@ -501,10 +563,10 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                     this.insert(
                         "image",
                         newElem,
-                        insPosCallback(), false, false
+                        insPosCallback()
                     );
                 }, "Afbeelding toevoegen"),
-                !ArrayUtil.includesAll(exclude, ...ALL_HEADERS) && ElementFactory.folderElement()
+                !ArrayUtil.includesAll(exclude, ...HEADER_SECTION_NAMES) && ElementFactory.folderElement()
                     .class("category")
                     .foldDir("down")
                     .closingDelay(250)
@@ -514,11 +576,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                             RichTextInput.makeIconButton("title", () => { // add new title h1
                                 this.insert(
                                     "title",
-                                    ElementFactory.h1()
-                                        .class("title", "align-left", "text-input")
-                                        .attr("supports-style-tags")
-                                        .attr("contenteditable", "plaintext-only")
-                                        .make(),
+                                    ElementFactory.h1().class("title", "align-left").make(),
                                     insPosCallback()
                                 );
                             }, "Titel toevoegen")
@@ -527,33 +585,21 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                         !exclude.includes("h1") && RichTextInput.makeIconButton("format_h1", () => { // add new normal h1
                                 this.insert(
                                     "h1",
-                                    ElementFactory.h1()
-                                        .class("align-left", "text-input")
-                                        .attr("supports-style-tags")
-                                        .attr("contenteditable", "plaintext-only")
-                                        .make(),
+                                    ElementFactory.h1().class("align-left").make(),
                                     insPosCallback()
                                 );
                             }, "Nieuwe kop 1"),
                         !exclude.includes("h2") && RichTextInput.makeIconButton("format_h2", () => { // add new normal h2
                             this.insert(
                                 "h2",
-                                ElementFactory.h2()
-                                    .class("align-left", "text-input")
-                                    .attr("supports-style-tags")
-                                    .attr("contenteditable", "plaintext-only")
-                                    .make(),
+                                ElementFactory.h2().class("align-left").make(),
                                 insPosCallback()
                             );
                         }, "Nieuwe kop 2"),
                         !exclude.includes("h3") && RichTextInput.makeIconButton("format_h3", () => { // add new normal h3
                             this.insert(
                                 "h3",
-                                ElementFactory.h3()
-                                    .class("align-left", "text-input")
-                                    .attr("supports-style-tags")
-                                    .attr("contenteditable", "plaintext-only")
-                                    .make(),
+                                ElementFactory.h3().class("align-left").make(),
                                 insPosCallback()
                             );
                         }, "Nieuwe kop 3")
@@ -562,45 +608,25 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                 !exclude.includes("paragraph") && RichTextInput.makeIconButton("subject", () => { // add new paragraph
                         this.insert(
                             "paragraph",
-                            ElementFactory.p()
-                                .class("align-left", "text-input")
-                                .attr("supports-style-tags")
-                                .attr("contenteditable", "plaintext-only")
-                                .make(),
+                            ElementFactory.p().class("align-left").make(),
                             insPosCallback()
                         );
                     }, "Nieuwe paragraaf"),
                 !exclude.includes("list") && RichTextInput.makeIconButton("format_list_bulleted", () => {
                         this.insert(
                             "list",
-                            ElementFactory.ul()
-                                .attr("insertion-target")
-                                .children(
-                                    ul => this.makeSectionTypes(() => {
-                                        if (ul.contains(this.selectedElement)) return [ul, NodeUtil.getChildIndex(ul, this.selectedElement!.parentElement!) + 1];
-                                        else return [ul, Infinity];
-                                    }, ["list", "numbered-list"])
-                                )
-                                .make(),
+                            ElementFactory.ul().make(),
                             insPosCallback()
                         );
                     }, "Nieuwe lijst"),
                 !exclude.includes("numbered-list") && RichTextInput.makeIconButton("format_list_numbered", () => {
                         this.insert(
                             "numbered-list",
-                            ElementFactory.ol()
-                                .attr("insertion-target")
-                                .children(
-                                    ol => this.makeSectionTypes(() => {
-                                        if (ol.contains(this.selectedElement)) return [ol, NodeUtil.getChildIndex(ol, this.selectedElement!.parentElement!) + 1];
-                                        else return [ol, Infinity];
-                                    }, ["list", "numbered-list"])
-                                )
-                                .make(),
+                            ElementFactory.ol().make(),
                             insPosCallback()
                         );
                     }, "Nieuwe genummerde lijst"),
-                !ArrayUtil.includesAll(exclude, ...ALL_WIDGETS) &&ElementFactory.folderElement("down", 250)
+                !ArrayUtil.includesAll(exclude, ...WIDGET_SECTION_NAMES) &&ElementFactory.folderElement("down", 250)
                     .class("category")
                     .heading(
                         ElementFactory.p("widgets")

@@ -8,6 +8,13 @@ export default abstract class NodeUtil {
         while (node.firstChild) node.removeChild(node.firstChild);
         return node;
     }
+
+    public static extractChildren(node:Node):ChildNode[] {
+        const out:ChildNode[] = [];
+        while (node.firstChild) out.push(node.removeChild(node.firstChild));
+
+        return out;
+    }
     
     public static swap(a:ChildNode, b:ChildNode) {
         const [aRep, bRep] = [document.createTextNode(""), document.createTextNode("")];
