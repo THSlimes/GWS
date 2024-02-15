@@ -14,6 +14,7 @@ rich-text-input {
     max-height: 80vh;
 
     background-color: var(--secondary);
+    text-align: unset !important;
 
     &[compact] {
         > .toolbar > * { font-size: 80%; }

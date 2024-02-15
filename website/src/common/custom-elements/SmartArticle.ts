@@ -149,7 +149,7 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
 
 }
 
-customElements.define("smart-article", SmartArticle, {extends: "article"});
+window.addEventListener("DOMContentLoaded", () => customElements.define("smart-article", SmartArticle, {extends: "article"}));
 
 export class EditableSmartArticle extends SmartArticle implements HasSections<"category"|"showOnHomepage"|"onlyForMembers"> {
     
@@ -243,4 +243,4 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
 
 }
 
-customElements.define("editable-smart-article", EditableSmartArticle);
+window.addEventListener("DOMContentLoaded", () => customElements.define("editable-smart-article", EditableSmartArticle));

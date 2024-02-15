@@ -121,4 +121,4 @@ export default class MultisourceImage extends HTMLElement implements HasSections
 
 }
 
-customElements.define("multisource-image", MultisourceImage);
+window.addEventListener("DOMContentLoaded", () => customElements.define("multisource-image", MultisourceImage));

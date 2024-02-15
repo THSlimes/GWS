@@ -1,14 +1,15 @@
 import ElementFactory from "../html-element-factory/ElementFactory";
+import { HasSections } from "../util/ElementUtil";
 
-export default class Switch extends HTMLElement {
+export default class Switch extends HTMLElement implements HasSections<"indicator"> {
 
-    private _value:boolean;
+    private _value!:boolean;
     public get value() { return this._value; }
     public set value(newVal:boolean) {
         if (newVal !== this._value) {
             this._value = newVal;
             newVal ? this.setAttribute("on", "") : this.removeAttribute("on");
-            this.indicator.textContent = newVal ? "check" : "close";
+            if (this.indicator) this.indicator.textContent = newVal ? "check" : "close";
             for (const dep of this.dependants) {
                 if (newVal !== this.inverted) dep.removeAttribute("disabled");
                 else dep.setAttribute("disabled","");
@@ -22,7 +23,7 @@ export default class Switch extends HTMLElement {
     private readonly dependants:Element[] = [];
     private readonly inverted:boolean;
 
-    private readonly indicator:HTMLHeadingElement;
+    public indicator!:HTMLHeadingElement;
 
     /**
      * Creates a new switch element.
@@ -34,9 +35,6 @@ export default class Switch extends HTMLElement {
         super();
 
         this.inverted = inverted || this.hasAttribute("inverted");
-
-        this.appendChild(ElementFactory.div(undefined, "knob", "click-action").make());
-        this.indicator = this.appendChild(ElementFactory.h4().class("icon", "indicator").make());
         
         dependants ??= this.getAttribute("dependants") ?? undefined;
         if (dependants) {
@@ -52,6 +50,13 @@ export default class Switch extends HTMLElement {
 
         initial ||= this.hasAttribute("on"); // default to attribute
         [this.value, this._value] = [initial, initial];
+
+        this.initElement();
+    }
+
+    initElement(): void {
+        this.appendChild(ElementFactory.div(undefined, "knob", "click-action").make());
+        this.indicator = this.appendChild(ElementFactory.h4(this._value ? "check" : "close").class("icon", "indicator").make());
         
         this.addEventListener("click", () => this.toggle());
     }
@@ -63,4 +68,4 @@ export default class Switch extends HTMLElement {
 
 }
 
-customElements.define("switch-input", Switch);
+window.addEventListener("DOMContentLoaded", () => customElements.define("switch-input", Switch));

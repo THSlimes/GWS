@@ -1,6 +1,5 @@
 import ElementFactory from "../html-element-factory/ElementFactory";
 import { EventInfo, RegisterableEventInfo } from "../firebase/database/events/EventDatabase";
-import RichText from "../ui/RichText";
 import { showError, showSuccess, showWarning } from "../ui/info-messages";
 import { HasSections } from "../util/ElementUtil";
 import getErrorMessage from "../firebase/authentication/error-messages";
@@ -15,6 +14,7 @@ import Switch from "./Switch";
 import { HexColor } from "../util/StyleUtil";
 import FunctionUtil from "../util/FunctionUtil";
 import RichTextInput from "./rich-text/RichTextInput";
+import RichTextSerializer from "./rich-text/RichTextSerializer";
 
 /** Amount of detail present in an EventNote element. */
 export type DetailLevel = "full" | "high" | "normal" | "low";
@@ -106,7 +106,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
         this.style.setProperty("--text-color", ColorUtil.getMostContrasting(bgColor, "#111111", "#ffffff"));
 
         // event name
-        this.name = this.appendChild(ElementFactory.heading(this.expanded ? 1 : 5).html(RichText.parseLine(this.event.name)).class("name", "rich-text").make());
+        this.name = this.appendChild(ElementFactory.heading(this.expanded ? 1 : 5).html(this.event.name).class("name", "rich-text").make());
 
         // event start/end time
         let timespanText = DateUtil.Timespans.areFullDays([this.event.starts_at, this.event.ends_at]) ?
@@ -119,7 +119,11 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
         this.timespan = this.appendChild(ElementFactory.p(timespanText).class("timespan", "subtitle", "italic").make());
 
         // description
-        this.description = this.appendChild(RichText.parse(this.event.description));
+        this.description = this.appendChild(
+            ElementFactory.div(undefined, "body", "rich-text", "flex-rows", "in-section-gap")
+                .children(...RichTextSerializer.deserialize(this.event.description))
+                .make()
+        );
         this.description.classList.add("description");
 
         // registration button
@@ -231,7 +235,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
 
 }
 
-customElements.define("event-note", EventNote);
+window.addEventListener("DOMContentLoaded", () => customElements.define("event-note", EventNote));
 
 export class EditableEventNote extends EventNote implements HasSections<"category"|"useColor"|"color"|"startsAt"|"endsAt"> {
 
@@ -365,4 +369,4 @@ export class EditableEventNote extends EventNote implements HasSections<"categor
 
 }
 
-customElements.define("editable-event-note", EditableEventNote);
+window.addEventListener("DOMContentLoaded", () => customElements.define("editable-event-note", EditableEventNote));

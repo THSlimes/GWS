@@ -1,7 +1,6 @@
 import $ from "jquery";
 
 import ElementFactory from "../html-element-factory/ElementFactory";
-import RichText from "./RichText";
 import Responsive from "./Responsive";
 
 let MESSAGE_AREA:HTMLDivElement;
@@ -21,7 +20,7 @@ window.addEventListener("DOMContentLoaded", () => {
 type MessageType = "info" | "success" | "warning" | "error";
 function createMessage(text:string, type:MessageType="info", lifetime=5000) {
     const out = ElementFactory.p()
-        .html(RichText.parseLine(text))
+        .text(text)
         .class("boxed", "message", type)
         .make();
     

@@ -11,6 +11,7 @@ import { HexColor } from "../util/StyleUtil";
 import { showError, showSuccess } from "../ui/info-messages";
 import DateUtil from "../util/DateUtil";
 import NumberUtil from "../util/NumberUtil";
+import RichTextInput from "../custom-elements/rich-text/RichTextInput";
 
 enum ValidityStatus {
     VALID = "valid",
@@ -38,7 +39,7 @@ let NAME_INPUT:HTMLTextAreaElement;
 let CATEGORY_INPUT:HTMLInputElement;
 let USE_COLOR_SWITCH:Switch;
 let COLOR_INPUT:HTMLInputElement;
-let DESCRIPTION_INPUT:HTMLTextAreaElement;
+let DESCRIPTION_INPUT:RichTextInput;
 let GENERAL_FEEDBACK:HTMLDivElement;
 
 function checkGeneralDetails():Validity {
@@ -151,7 +152,7 @@ window.addEventListener("DOMContentLoaded", () => { // getting elements from pag
     CATEGORY_INPUT = document.getElementById("new-event-category") as HTMLInputElement;
     USE_COLOR_SWITCH = document.getElementById("new-event-use-color") as Switch;
     COLOR_INPUT = document.getElementById("new-event-color") as HTMLInputElement;
-    DESCRIPTION_INPUT = document.getElementById("new-event-description") as HTMLTextAreaElement;
+    DESCRIPTION_INPUT = document.getElementById("new-event-description") as RichTextInput;
     GENERAL_FEEDBACK = document.getElementById("new-event-general-feedback") as HTMLDivElement;
 
     WHOLE_DAYS_SWITCH = document.getElementById("new-event-whole-days") as Switch;

@@ -192,7 +192,7 @@ export default class MultisourceAttachment extends HTMLElement implements HasSec
 
 }
 
-customElements.define("multisource-attachment", MultisourceAttachment);
+window.addEventListener("DOMContentLoaded", () => customElements.define("multisource-attachment", MultisourceAttachment));
 
 class AttachmentQueryError extends Error {
 

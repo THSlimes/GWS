@@ -1,5 +1,4 @@
 import TextStyling, { StyleTagClassName } from "./TextStyling";
-import ElementFactory from "../../html-element-factory/ElementFactory";
 import { showError } from "../../ui/info-messages";
 import ArrayUtil from "../../util/ArrayUtil";
 import ColorUtil from "../../util/ColorUtil";
@@ -13,6 +12,7 @@ import RichTextSerializer from "./RichTextSerializer";
 import MultisourceAttachment, { AttachmentOrigin } from "../MultisourceAttachment";
 import MultisourceImage from "../MultisourceImage";
 import Switch from "../Switch";
+import ElementFactory from "../../html-element-factory/ElementFactory";
 
 /** [parent Node, "before child" index] tuple */
 type InsertionPosition = [Node, number];
@@ -649,4 +649,4 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
 
 }
 
-customElements.define("rich-text-input", RichTextInput);
+window.addEventListener("DOMContentLoaded", () => customElements.define("rich-text-input", RichTextInput));

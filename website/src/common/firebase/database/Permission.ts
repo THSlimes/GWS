@@ -62,5 +62,7 @@ const PERMISSION_TRANSLATIONS:Record<Permission,string> = {
 };
 
 export function toHumanReadable(perm:Permission) {
-    return PERMISSION_TRANSLATIONS[perm] ?? "Onbekende machtiging 💀";
+    const out = PERMISSION_TRANSLATIONS[perm];
+    if (out === undefined) throw new Error(`unknown permission: "${perm}"`);
+    else return out;
 }

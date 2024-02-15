@@ -4,7 +4,6 @@ import "./create-split-view";
 import ArticleDatabase from "../common/firebase/database/articles/ArticleDatabase";
 import SmartArticle from "../common/custom-elements/SmartArticle";
 import { FirestoreArticleDatabase } from "../common/firebase/database/articles/FirestoreArticleDatabase";
-import RichText from "../common/ui/RichText";
 import { runOnErrorCode } from "../common/firebase/authentication/error-messages";
 import URLUtil from "../common/util/URLUtil";
 
@@ -28,7 +27,7 @@ else window.addEventListener("DOMContentLoaded", () => {
                 DB.getNext(articleInfo, { forHomepage:true, forMembers:false })
                 .then(nextArticle => {
                     if (nextArticle) {
-                        NEXT_ARTICLE_BUTTON.querySelector(".article-title")!.innerHTML = RichText.parseLine(nextArticle.heading);
+                        NEXT_ARTICLE_BUTTON.querySelector(".article-title")!.innerHTML = nextArticle.heading;
                         NEXT_ARTICLE_BUTTON.addEventListener("click", () => location.href = articleLink(nextArticle.id));
                     }
                     else NEXT_ARTICLE_BUTTON.disabled = true;
@@ -36,7 +35,7 @@ else window.addEventListener("DOMContentLoaded", () => {
                 DB.getPrevious(articleInfo, { forHomepage:true, forMembers:false })
                 .then(prevArticle => {
                     if (prevArticle) {
-                        PREV_ARTICLE_BUTTON.querySelector(".article-title")!.innerHTML = RichText.parseLine(prevArticle.heading);
+                        PREV_ARTICLE_BUTTON.querySelector(".article-title")!.innerHTML = prevArticle.heading;
                         PREV_ARTICLE_BUTTON.addEventListener("click", () => location.href = articleLink(prevArticle.id));
                     }
                     else PREV_ARTICLE_BUTTON.disabled = true;
