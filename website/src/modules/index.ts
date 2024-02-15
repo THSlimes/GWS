@@ -88,7 +88,7 @@ function getPeriod(articles:ArticleInfo[]):[Date, Date] {
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
-    const NUM_ARTICLES = await DB.count({ forHomepage:true }); // total number of articles
+    const NUM_ARTICLES = await DB.count({ forHomepage:true, forMembers:false }); // total number of articles
 
     // where to put article previews
     const RECENT_MESSAGES_ELEM = document.getElementById("recent-messages")!;
@@ -130,32 +130,39 @@ window.addEventListener("DOMContentLoaded", async () => {
         return new Promise(async (resolve, reject) => {
             if (pages[pageNum].retrieved) resolve(pages[pageNum]); // already retrieved
             else if (pageNum === 0) { // get most recent articles
-                pages[pageNum].articles = await DB.get({ limit: PAGE_SIZE, forHomepage:true, sortByCreatedAt:"descending" });
+                pages[pageNum].articles = await DB.get({ limit: PAGE_SIZE, forHomepage:true, forMembers:false, sortByCreatedAt:"descending" });
                 pages[pageNum].retrieved = true;
                 resolve(pages[pageNum]);
             }
             else if (pageNum === NUM_PAGES-1) { // get least recent articles
-                pages[pageNum].articles = await DB.get({ limit: pages[pageNum].size, forHomepage:true, sortByCreatedAt:"ascending" });
+                pages[pageNum].articles = await DB.get({ limit: pages[pageNum].size, forHomepage:true, forMembers:false, sortByCreatedAt:"ascending" });
                 pages[pageNum].articles.sort((a,b) => b.created_at.getTime() - a.created_at.getTime()); // sort manually
                 pages[pageNum].retrieved = true;
                 resolve(pages[pageNum]);
             }
             else if (pages[pageNum-1].retrieved) { // get pages from before previous page
-                pages[pageNum].articles = await DB.get({
+                DB.get({
                     limit: pages[pageNum].size,
                     forHomepage: true,
                     sortByCreatedAt:"descending",
-                    before: getPeriod(pages[pageNum-1].articles)[1]
-                });
-                pages[pageNum].retrieved = true;
-                resolve(pages[pageNum]);
+                    before: getPeriod(pages[pageNum-1].articles)[1],
+                    forMembers: false,
+                })
+                .then(articles => {
+                    pages[pageNum].articles = articles;
+                    pages[pageNum].retrieved = true;
+
+                    resolve(pages[pageNum]);
+                })
+                .catch(reject);
             }
             else if (pages[pageNum+1].retrieved) { // get pages from after next page
                 pages[pageNum].articles = await DB.get({
                     limit: pages[pageNum].size,
                     forHomepage: true,
                     sortByCreatedAt:"descending",
-                    before: getPeriod(pages[pageNum+1].articles)[0]
+                    before: getPeriod(pages[pageNum+1].articles)[0],
+                    forMembers: false,
                 });
                 pages[pageNum].retrieved = true;
                 resolve(pages[pageNum]);
@@ -169,7 +176,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         getPage(pageNum)
         .then(info => {
             $(RECENT_MESSAGES_ELEM).children("article").remove();
-            RECENT_MESSAGES_ELEM.prepend(...info.articles.map(a => SmartArticle.fromInfo(a, true)));
+            RECENT_MESSAGES_ELEM.prepend(...info.articles.map(a => new SmartArticle(a, true)));
     
             // updating buttons and page indicator
             FIRST_PAGE_BUTTON.disabled = currPage === 0;

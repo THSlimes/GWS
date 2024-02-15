@@ -20,12 +20,12 @@ else window.addEventListener("DOMContentLoaded", () => {
     const PREV_ARTICLE_BUTTON = document.getElementById("prev-article-button") as HTMLButtonElement;
 
     DB.getById(articleId)
-    .then(article => {
-        if (article) {
-            ARTICLE_DIV.prepend(SmartArticle.fromInfo(article, false));
+    .then(articleInfo => {
+        if (articleInfo) {
+            ARTICLE_DIV.prepend(new SmartArticle(articleInfo, false));
 
-            if (article.show_on_homepage) {
-                DB.getNext(article, { forHomepage:true })
+            if (articleInfo.show_on_homepage) {
+                DB.getNext(articleInfo, { forHomepage:true, forMembers:false })
                 .then(nextArticle => {
                     if (nextArticle) {
                         NEXT_ARTICLE_BUTTON.querySelector(".article-title")!.innerHTML = RichText.parseLine(nextArticle.heading);
@@ -33,7 +33,7 @@ else window.addEventListener("DOMContentLoaded", () => {
                     }
                     else NEXT_ARTICLE_BUTTON.disabled = true;
                 });
-                DB.getPrevious(article, { forHomepage:true })
+                DB.getPrevious(articleInfo, { forHomepage:true, forMembers:false })
                 .then(prevArticle => {
                     if (prevArticle) {
                         PREV_ARTICLE_BUTTON.querySelector(".article-title")!.innerHTML = RichText.parseLine(prevArticle.heading);

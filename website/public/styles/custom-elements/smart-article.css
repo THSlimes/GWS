@@ -1,19 +1,19 @@
 @import url("../rich-text.css");
+@import url("./switch.css");
+@import url("./rich-text-input.css");
 
 /* ARTICLE DEFAULT STYLE */
 
-article {
+article, editable-smart-article {
 
-    & img { max-width: 100%; }
+    position: relative;
 
-    & .heading {}
-    &:not([is-preview]) .heading { font-size: 250%; }
-    > .body > p {
-        line-height: 1.6em; /* better readability */
-        text-align: justify;
-    }
+    > .heading { width: 100%; }
+    &:not([preview]) > .heading { font-size: 200%; }
 
-    &[is-preview] {
+    > .body { width: 100%; }
+
+    &[preview] {
         > .body { overflow: hidden; }
     
         & .read-more {
@@ -24,7 +24,18 @@ article {
         }
     }
 
-    > .created-at { color: var(--accent); }
+    > .post-date { color: var(--accent); }
+    
+    > .quick-actions {
+        position: absolute;
+        top: var(--in-section-gap);
+        right: var(--in-section-gap);
+        
+        & > * {
+            color: inherit;
+            border-radius: var(--in-section-gap);
+        }
+    }
 
 }
 

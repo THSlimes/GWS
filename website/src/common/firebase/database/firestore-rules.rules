@@ -14,21 +14,10 @@ service cloud.firestore {
         }
 
         match /articles/{id} {
-            allow get : if request.method == "get" // requires get and read permissions
-                && (!("needed_to_get" in resource.data) || hasPermissions(resource.data.needed_to_get))
-                && (!("needed_to_read" in resource.data) || hasPermissions(resource.data.needed_to_read));
-            allow list : if request.method == "list" // required list and read permissions
-                && (!("needed_to_list" in resource.data) || hasPermissions(resource.data.needed_to_list))
-                && (!("needed_to_read" in resource.data) || hasPermissions(resource.data.needed_to_read));
-            allow create : if request.method == "create" // required create and write permissions
-                && (!("needed_to_create" in resource.data) || hasPermissions(resource.data.needed_to_create))
-                && (!("needed_to_write" in resource.data) || hasPermissions(resource.data.needed_to_write));
-            allow update : if request.method == "update" // required update and write permissions
-                && (!("needed_to_update" in resource.data) || hasPermissions(resource.data.needed_to_update))
-                && (!("needed_to_write" in resource.data) || hasPermissions(resource.data.needed_to_write));
-            allow delete : if request.method == "delete" // requires delete and write permissions
-                && (!("needed_to_delete" in resource.data) || hasPermissions(resource.data.needed_to_delete))
-                && (!("needed_to_write" in resource.data) || hasPermissions(resource.data.needed_to_write));
+            allow get, list : if !resource.data.only_for_members || hasPermissions(["READ_MEMBER_ARTICLES"]);
+            allow update : if hasPermissions(["UPDATE_ARTICLES"]);
+            allow delete : if hasPermissions(["DELETE_ARTICLES"]);
+            allow create : if hasPermissions(["CREATE_ARTICLES"]);
         }
 
         match /events/{id} {

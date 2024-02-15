@@ -243,10 +243,6 @@ export class EditableEventNote extends EventNote implements HasSections<"categor
     public startsAt!:HTMLInputElement;
     public endsAt!:HTMLInputElement;
 
-    constructor(event: EventInfo, lod: DetailLevel = "normal", expanded = false) {
-        super(event, lod, expanded);
-    }
-
     override initElement(): void {
         
         if (this.expanded) this.setAttribute("expanded", "");
@@ -313,6 +309,7 @@ export class EditableEventNote extends EventNote implements HasSections<"categor
 
         this.description = this.appendChild(
             ElementFactory.input.richText(this.event.description)
+                .compact()
                 .class("description")
                 .attr("no-resize")
                 .make()

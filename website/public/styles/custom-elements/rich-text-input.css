@@ -8,14 +8,17 @@ rich-text-input {
     position: relative;
 
     padding: var(--in-section-gap);
+    box-sizing: border-box;
     width: 100%;
-    max-width: 50vw;
     height: 100%;
     max-height: 80vh;
 
     background-color: var(--secondary);
 
-    /* &, & * { outline: 1px solid red; } */
+    &[compact] {
+        > .toolbar > * { font-size: 80%; }
+        > .body > * { font-size: 90%; }
+    }
 
     & folder-element {
         > .topper {

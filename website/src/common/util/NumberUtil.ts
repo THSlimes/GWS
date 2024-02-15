@@ -21,6 +21,11 @@ export default abstract class NumberUtil {
         return !isNaN(Number.parseInt(asString)) && (Number.parseInt(asString) === Number.parseFloat(asString));
     }
 
+    public static parse(asString:string, NaNDefault:number=0):number {
+        const out = Number.parseFloat(asString);
+        return isNaN(out) ? NaNDefault : out;
+    }
+
     public static range(from:number, to:number, step=1, includeTo=false):number[] {
         const out:number[] = [];
 

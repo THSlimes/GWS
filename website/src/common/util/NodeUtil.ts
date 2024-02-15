@@ -9,6 +9,29 @@ export default abstract class NodeUtil {
         return node;
     }
 
+    /**
+     * Limits the number of words in an element.
+     * @param node Node to limit word count of
+     * @param limit maximum number of words
+     * @returns number of words left
+     */
+    public static limitWords(node:Node, limit:number):number {
+        if (node.nodeType === Node.TEXT_NODE) {
+            if (limit <= 0) node.textContent = ""; // past limit
+            else { // not past limit
+                const words = node.textContent!.split(' ', limit);
+                limit -= words.length;
+                node.textContent = words.join(' ');
+            }
+        }
+        else {
+            node.childNodes.forEach(childNode => limit = this.limitWords(childNode, limit));
+            node.normalize();
+        }
+    
+        return limit;
+    }
+
     public static extractChildren(node:Node):ChildNode[] {
         const out:ChildNode[] = [];
         while (node.firstChild) out.push(node.removeChild(node.firstChild));

@@ -7,22 +7,9 @@ import Database, { Info, QueryFilter } from "../Database";
 type TimeSpan = [Date, Date];
 type OpenTimespan = [Date|undefined, Date|undefined];
 
-export class EventRegistration {
-
-    public readonly uid:string;
-    public readonly registered_at:Date;
-    public readonly display_name:string;
-
-    constructor(uid:string, registered_at:Date, display_name:string) {
-        this.uid = uid;
-        this.registered_at = registered_at;
-        this.display_name = display_name;
-    }
-
-}
-
 /** An EventInfo object contains all relevant information of an event.  */
 export class EventInfo extends Info {
+    
     /** The Database from where the EventInfo was retrieved. */
     public readonly sourceDB:EventDatabase;
 

@@ -347,7 +347,11 @@ export class RichTextInputAssemblyLine extends AssemblyLine<"rich-text-input", R
     private _value?:string;
     public value(val:string):this {
         this._value = val;
+        return this;
+    }
 
+    public compact(isCompact=true):this {
+        if (isCompact) super.attr("compact");
         return this;
     }
 

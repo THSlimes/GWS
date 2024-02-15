@@ -7,6 +7,7 @@ enum Permission {
     READ_MEMBER_ARTICLES = "READ_MEMBER_ARTICLES", // whether the user can read articles exclusive to members
     CREATE_ARTICLES = "CREATE_ARTICLES", // whether the user can create new articles
     UPDATE_ARTICLES = "UPDATE_ARTICLES", // whether the user can update preexisting articles
+    DELETE_ARTICLES = "DELETE_ARTICLES", // whether the user can delete articles
     UPLOAD_FILES = "UPLOAD_FILES", // whether the user can upload a new attachment
     DOWNLOAD_PROTECTED_FILES = "DOWNLOAD_PROTECTED_FILES", // whether the user is allowed to download a protected file
 
@@ -33,24 +34,13 @@ export default Permission;
 
 export const ALL_PERMISSIONS = Object.values(Permission);
 Object.freeze(ALL_PERMISSIONS);
-/**
- * Represents database documents for which someone needs extra permission
- * to perform certain actions.
- */
-export type PermissionGuarded = {
-    needed_to_get?:Permission[],
-    needed_to_list?:Permission[],
-    needed_to_read?:Permission[],
-    needed_to_create?:Permission[],
-    needed_to_update?:Permission[],
-    needed_to_delete?:Permission[],
-    needed_to_write?:Permission[]
-};
 
 const PERMISSION_TRANSLATIONS:Record<Permission,string> = {
     [Permission.READ_MEMBER_ARTICLES]: "Berichten voor leden lezen",
     [Permission.CREATE_ARTICLES]: "Berichten posten",
+    [Permission.DELETE_ARTICLES]: "Berichten verwijderen",
     [Permission.UPDATE_ARTICLES]: "Berichten bewerken",
+    
     [Permission.UPLOAD_FILES]: "Bestanden uploaden",
     [Permission.DOWNLOAD_PROTECTED_FILES]: "Beveiligde bestanden downloaden",
 

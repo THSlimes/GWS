@@ -43,7 +43,7 @@ export function isRichTextSectionName(str:string):str is RichTextSectionName {
 /** All RichTextSectionNames categorized as headers. */
 const HEADER_SECTION_NAMES:RichTextSectionName[] = ["title", "h1", "h2", "h3"];
 /** All RichTextSectionNames that have editable text. */
-const TEXT_SECTION_NAMES:RichTextSectionName[] = [...HEADER_SECTION_NAMES, "paragraph", "attachment"];
+const TEXT_SECTION_NAMES:RichTextSectionName[] = [...HEADER_SECTION_NAMES, "paragraph", "shortcut"];
 /** All RichTextSectionNames categorized as widgets. */
 const WIDGET_SECTION_NAMES:RichTextSectionName[] = ["event-calendar", "event-note"];
 
@@ -53,9 +53,9 @@ const EXCLUDED_INSERTABLE_SUBSECTIONS:{[k in RichTextSectionName]?: RichTextSect
 };
 
 function inferSectionName(elem:Element):RichTextSectionName {
-    if (elem instanceof HTMLAnchorElement) return "shortcut";
-    else if (elem instanceof MultisourceAttachment) return "attachment";
-    else if (elem instanceof MultisourceImage) return "image";
+    if (elem.tagName === 'A') return "shortcut";
+    else if (elem.tagName === "MULTISOURCE-ATTACHMENT") return "attachment";
+    else if (elem.tagName === "MULTISOURCE-IMAGE") return "image";
     else if (elem instanceof HTMLHeadingElement) {
         if (elem.tagName === "H1") return elem.classList.contains("title") ? "title" : "h1";
         else if (elem.tagName === "H2") return "h2";
@@ -72,6 +72,11 @@ function inferSectionName(elem:Element):RichTextSectionName {
  * A RichTextInput is a type of HTMLElement that allows for editing text to an advanced degree.
  */
 export default class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body"> {
+
+    public set isCompact(newVal:boolean) {
+        this.toggleAttribute("compact", newVal);
+    }
+    public get isCompact() { return this.hasAttribute("compact"); }
 
     public get value():string {
         return RichTextSerializer.serialize(this.body);
@@ -163,7 +168,8 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                 })
                 .make()
         }
-        else if (newElem instanceof MultisourceAttachment || newElem instanceof MultisourceImage) { // custom container for attachments
+        else if (newElem.tagName === "MULTISOURCE-ATTACHMENT" || newElem.tagName === "MULTISOURCE-IMAGE") { // custom container for attachments
+            const castElem = newElem as MultisourceAttachment|MultisourceImage;
             insElem = ElementFactory.div(undefined, "specialized-container", "element-container", "flex-rows", "in-section-gap")
                 .children(() => {
                     const out:HTMLElement[] = [newElem];
@@ -179,9 +185,9 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                     "firebase-storage-protected": "Firebase cloud-opslag (beveiligd)",
                                     "external": "Directe link"
                                 })
-                                .value(newElem.origin)
+                                .value(castElem.origin)
                                 .onValueChanged(v => {
-                                    newElem.origin = v;
+                                    castElem.origin = v;
                                     pathInput.placeholder = v === "external" ? "Link naar bestand..." : "Bestandspad...";
                                 })
                                 .make()
@@ -190,22 +196,22 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                         .make();
 
                     // path input
-                    const setSrcCallback = () => newElem.src = pathInput.value;
+                    const setSrcCallback = () => castElem.src = pathInput.value;
                     const pathInput = ElementFactory.input.text()
                         .class("src-input")
                         .placeholder("Bestandspad...")
-                        .value(newElem.src)
+                        .value(castElem.src ?? "")
                         .on("input", () => {
                             FunctionUtil.setDelayedCallback(setSrcCallback, 500);
                         })
                         .onMake(self => out.push(self))
                         .make();
 
-                    if (newElem instanceof MultisourceImage) { // width selector for images
+                    if (newElem.tagName === "MULTISOURCE-IMAGE") { // width selector for images
                         ElementFactory.div(undefined, "width-selector", "flex-columns", "cross-axis-center", "in-section-gap")
                             .children(
                                 ElementFactory.label("Breedte"),
-                                ElementFactory.input.range(100, 0, 100, 1)
+                                ElementFactory.input.range(NumberUtil.parse(newElem.style.width.slice(0, -1), 100), 0, 100, 1)
                                     .onValueChanged(val => newElem.style.width = `${val}%`)
                             )
                             .onMake(self => out.push(self))

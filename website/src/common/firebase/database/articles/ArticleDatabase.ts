@@ -2,20 +2,26 @@ import Database, { Info, QueryFilter } from "../Database";
 
 export class ArticleInfo extends Info {
 
+    /** The Database from where the ArticleInfo was retrieved. */
+    public readonly sourceDB:ArticleDatabase;
+
     public readonly heading:string;
     public readonly body:string;
     public readonly created_at:Date;
     public readonly category:string;
     public readonly show_on_homepage:boolean;
+    public readonly only_for_members:boolean
 
-    constructor(id:string, heading:string, body:string, created_at:Date, category:string, show_on_homepage:boolean) {
+    constructor(sourceDB:ArticleDatabase, id:string, heading:string, body:string, created_at:Date, category:string, show_on_homepage:boolean, only_for_members:boolean) {
         super(id);
 
+        this.sourceDB = sourceDB;
         this.heading = heading;
         this.body = body;
         this.created_at = created_at;
         this.category = category;
         this.show_on_homepage = show_on_homepage;
+        this.only_for_members = only_for_members;
     }
 
     public satisfies(options:ArticleQueryFilter):boolean {
@@ -40,6 +46,8 @@ export type ArticleQueryFilter = QueryFilter<Info> & {
     category?: string;
     /** Whether to only retrieve articles to be shown on the homepage. */
     forHomepage?: boolean;
+    /** Whether to only retrieve articles that are (not) for members only. */
+    forMembers?: boolean;
 };
 
 export default abstract class ArticleDatabase extends Database<ArticleInfo> {

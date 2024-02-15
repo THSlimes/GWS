@@ -1,6 +1,5 @@
-import ArrayUtil from "../../../util/ArrayUtil";
 import DateUtil from "../../../util/DateUtil";
-import EventDatabase, { EventQueryFilter, EventInfo, EventRegistration } from "./EventDatabase";
+import EventDatabase, { EventQueryFilter, EventInfo } from "./EventDatabase";
 
 /**
  * A CachingEventDatabase is a type of EventDatabase which

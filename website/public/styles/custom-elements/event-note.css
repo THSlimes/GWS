@@ -32,16 +32,20 @@ event-note, editable-event-note {
         overflow: hidden;
         text-overflow: ellipsis;
     }
+
     > .timespan {
         margin: 0px;
     }
+
     > .description {
         max-height: 50vh;
         overflow-y: scroll;
 
         text-align: justify;
     }
+
     > .register-button {}
+    
     > .quick-actions {
         position: absolute;
         top: var(--in-section-gap);
