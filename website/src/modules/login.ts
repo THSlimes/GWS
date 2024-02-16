@@ -15,12 +15,12 @@ redirectIfLoggedIn("/", true); // can't log in when already logged in
 
 function login(email:string, password:string, stayLoggedIn:boolean=false) {
     return new Promise<UserCredential>(async (resolve, reject) => {
-        // set login persistance
-        await AUTH.setPersistence(stayLoggedIn ? browserLocalPersistence : browserSessionPersistence);
-
-        // login
-        signInWithEmailAndPassword(AUTH, email, password)
-        .then(resolve)
+        AUTH.setPersistence(stayLoggedIn ? browserLocalPersistence : browserSessionPersistence) // set login persistance
+        .then(() => { // login
+            signInWithEmailAndPassword(AUTH, email, password)
+            .then(resolve)
+            .catch(reject);
+        })
         .catch(reject);
     });
 }

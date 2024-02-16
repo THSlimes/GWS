@@ -44,4 +44,25 @@ export default abstract class NumberUtil {
         return out;
     }
 
+    /**
+     * Determines the options that is closest to the `anchor`.
+     * (where between two number `a` and `b` is defined as `|a-b|`)
+     * @param anchor number to compute distance to
+     * @param options options to pick from
+     * @returns element of `options` which is closest to `anchor`
+     */
+    public static closest<N extends number>(anchor:number, options:N[]):N {
+        if (options.length === 0) throw new Error(`parameter "options" must contain at least one element`);
+
+        let minDist = Math.abs(anchor - options[0]);
+        let minOption:N = options[0];
+        
+        for (let i = 1; i < options.length; i ++) {
+            const dist = Math.abs(anchor - options[i]);
+            if (dist < minDist) [minDist, minOption] = [dist, options[i]];
+        }
+
+        return minOption;
+    }
+
 }

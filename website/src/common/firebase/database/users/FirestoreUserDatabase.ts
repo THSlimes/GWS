@@ -94,18 +94,18 @@ export class FirestoreUserDatabase extends UserDatabase {
 
         return new Promise(async (resolve, reject) => {
             const q = query(FirestoreUserDatabase.COLLECTION, ...constraints); // create query
-            try {
-                if (doCount) resolve((await getCountFromServer(q)).data().count); // get count
-                else { // get documents
-                    const snapshot = await getDocs(q);
+            if (doCount) getCountFromServer(q) // get count
+                .then(res => resolve(res.data().count))
+                .catch(reject);
+            else getDocs(q)
+                .then(snapshot => { // get documents
                     const out: UserInfo[] = [];
                     snapshot.forEach(doc => out.push(doc.data()));
                     // save permissions into cache
                     out.forEach(user => Cache.set(`permissions-${user.id}`, user.permissions));
                     resolve(out);
-                }
-            }
-            catch (e) { reject(e); }
+                })
+                .catch(reject);
         });
     }
 

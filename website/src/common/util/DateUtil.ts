@@ -195,17 +195,17 @@ export default abstract class DateUtil {
     /** Methods that deal with exact moments in time. */
     public static Timestamps = {
         /** Determines the earliest of the given Date objects. */
-        earliest(d1:Date, ...dRest:Date[]) {
-            let earliest = d1;
-            dRest.forEach(d => earliest = d < earliest ? d : earliest);
+        earliest(...dates:Date[]) {
+            let earliest = dates[0];
+            for (let i = 1; i < dates.length; i ++) earliest = dates[i] < earliest ? dates[i] : earliest;
             return earliest;
         },
         
         /** Determines the latest of the given Date objects. */
-        latest(d1:Date, ...dRest:Date[]) {
-            let earliest = d1;
-            dRest.forEach(d => earliest = d > earliest ? d : earliest);
-            return earliest;
+        latest(...dates:Date[]) {
+            let latest = dates[0];
+            for (let i = 1; i < dates.length; i ++) latest = dates[i] > latest ? dates[i] : latest;
+            return latest;
         },
 
         /** Gives the first moment before the given date. */

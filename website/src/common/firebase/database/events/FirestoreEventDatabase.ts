@@ -216,19 +216,19 @@ export default class FirestoreEventDatebase extends EventDatabase {
         return new Promise(async (resolve, reject) => {
             const queries = rangeConstraints.map(rc => query(this.collection, ...rc, ...baseConstraints));
 
-            try {
-                if (doCount && queries.length === 1) resolve((await getCountFromServer(queries[0])).data().count); // get simple count
-                else { // get documents (or do manual count)
-                    const snapshots = await Promise.all(queries.map(q => getDocs(q)));
+            if (doCount && queries.length === 1) getCountFromServer(queries[0])
+                .then(res => resolve(res.data().count))
+                .catch(reject);
+            else Promise.all(queries.map(q => getDocs(q)))
+                .then(snapshots => {
                     let out:Record<string, EventInfo> = {};
                     snapshots.forEach(sn => {
                         sn.forEach(doc => out[doc.id] = doc.data());
                     });
 
                     resolve(doCount ? Object.keys(out).length : Object.values(out));
-                }
-            }
-            catch (e) { reject(e); }
+                })
+                .catch(reject);
         });
 
     }

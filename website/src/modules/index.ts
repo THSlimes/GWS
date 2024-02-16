@@ -15,6 +15,8 @@ import ElementCarousel from "../common/custom-elements/ElementCarousel";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
 import Placeholder from "../common/custom-elements/Placeholder";
 import NumberUtil from "../common/util/NumberUtil";
+import ArticlePaginator from "../common/firebase/database/articles/ArticlePaginator";
+import NodeUtil from "../common/util/NodeUtil";
 
 // INSERTING CAROUSEL IMAGES
 
@@ -68,128 +70,57 @@ window.addEventListener("DOMContentLoaded", () => { // inserting after page load
 
 // RETRIEVING ARTICLES
 
-/** Information of a page of articles. */
-type PageInfo = {
-    pageNum: number,
-    retrieved:boolean,
-    size: number,
-    articles: ArticleInfo[]
-};
-type PageCollection = Record<number, PageInfo>;
-
 const DB:ArticleDatabase = new FirestoreArticleDatabase();
 const PAGE_SIZE = 5; // number of articles per page
 
-/** Computes the [latest, earliest] creation dates of the given articles. */
-function getPeriod(articles:ArticleInfo[]):[Date, Date] {
-    // sort newest to oldest creation dates
-    const sorted = articles.map(a => a.created_at).toSorted((a,b) => b.getTime()-a.getTime());
-    return [sorted[0], sorted.at(-1)!];
-}
+let currentPageIndex = 0;
 
-window.addEventListener("DOMContentLoaded", async () => {
-    const NUM_ARTICLES = await DB.count({ forHomepage:true, forMembers:false }); // total number of articles
+const ARTICLE_PAGINATOR = new ArticlePaginator(DB, PAGE_SIZE, { forHomepage: true, forMembers: false }, "descending");
 
-    // where to put article previews
-    const RECENT_MESSAGES_ELEM = document.getElementById("recent-messages")!;
-    // navigation buttons
+window.addEventListener("DOMContentLoaded", () => {
+    // getting ui elements from page
+    const CURRENT_PAGE = document.getElementById("current-page") as HTMLDivElement;
+
     const FIRST_PAGE_BUTTON = document.getElementById("first-page") as HTMLInputElement;
-    const PREV_PAGE_BUTTON = document.getElementById("previous-page") as HTMLInputElement;
+    const PREVIOUS_PAGE_BUTTON = document.getElementById("previous-page") as HTMLInputElement;
     const NEXT_PAGE_BUTTON = document.getElementById("next-page") as HTMLInputElement;
     const LAST_PAGE_BUTTON = document.getElementById("last-page") as HTMLInputElement;
+
     const PAGE_NUMBER = document.getElementById("page-number") as HTMLSpanElement;
 
-    // adding button interactivity
-    FIRST_PAGE_BUTTON.addEventListener("click", () => insertPage(currPage = 0));
-    PREV_PAGE_BUTTON.addEventListener("click", () => insertPage(--currPage));
-    NEXT_PAGE_BUTTON.addEventListener("click", () => insertPage(++currPage));
-    LAST_PAGE_BUTTON.addEventListener("click", () => insertPage(currPage = NUM_PAGES-1));
-    [FIRST_PAGE_BUTTON, PREV_PAGE_BUTTON, NEXT_PAGE_BUTTON, LAST_PAGE_BUTTON].forEach(b => {
-        b.addEventListener("click", () => window.scrollTo({
-            top: RECENT_MESSAGES_ELEM.scrollTop + window.innerHeight,
-            behavior:"smooth"
-        }));
-    });
+    ARTICLE_PAGINATOR.getSize()
+    .then(sizes => {// adding button functionality
+        FIRST_PAGE_BUTTON.addEventListener("click", () => loadPage(currentPageIndex = 0).catch(console.error));
+        PREVIOUS_PAGE_BUTTON.addEventListener("click", () => loadPage(currentPageIndex = Math.max(0, currentPageIndex - 1)).catch(console.error));
+        NEXT_PAGE_BUTTON.addEventListener("click", () => loadPage(currentPageIndex = Math.min(sizes.numPages-1, currentPageIndex + 1)).catch(console.error));
+        LAST_PAGE_BUTTON.addEventListener("click", () => loadPage(currentPageIndex = sizes.numPages-1).catch(console.error));
+    })
+    .catch(console.error);
 
+    function loadPage(pageIndex:number):Promise<void> {
+        NodeUtil.empty(CURRENT_PAGE); // clear old articles
+        
+        return new Promise((resolve, reject) => {
+            ARTICLE_PAGINATOR.getPage(pageIndex)
+            .then(info => {
+                CURRENT_PAGE.append(...info.articles.map(a => new SmartArticle(a, true))); // add article elements
 
-    // divide into pages
-    const NUM_PAGES = Math.ceil(NUM_ARTICLES / PAGE_SIZE);
-    const pages:PageCollection = {};
-    for (let i = 0; i < NUM_PAGES; i ++) pages[i] = {
-        pageNum: i,
-        retrieved: false,
-        // last page might have fewer pages
-        size: (NUM_ARTICLES % PAGE_SIZE === 0) || (i < NUM_PAGES-1) ? PAGE_SIZE : NUM_ARTICLES % PAGE_SIZE,
-        articles: []
-    };
+                ARTICLE_PAGINATOR.getSize()
+                .then(sizes => {
+                    PAGE_NUMBER.textContent = `${pageIndex + 1}/${sizes.numPages}`;
 
-    /** Retrieves a page by its index. */
-    function getPage(pageNum:number):Promise<PageInfo> {
-        pageNum = NumberUtil.clamp(Math.floor(pageNum), 0, NUM_PAGES-1); // ensure valid index
-
-        return new Promise(async (resolve, reject) => {
-            if (pages[pageNum].retrieved) resolve(pages[pageNum]); // already retrieved
-            else if (pageNum === 0) { // get most recent articles
-                pages[pageNum].articles = await DB.get({ limit: PAGE_SIZE, forHomepage:true, forMembers:false, sortByCreatedAt:"descending" });
-                pages[pageNum].retrieved = true;
-                resolve(pages[pageNum]);
-            }
-            else if (pageNum === NUM_PAGES-1) { // get least recent articles
-                pages[pageNum].articles = await DB.get({ limit: pages[pageNum].size, forHomepage:true, forMembers:false, sortByCreatedAt:"ascending" });
-                pages[pageNum].articles.sort((a,b) => b.created_at.getTime() - a.created_at.getTime()); // sort manually
-                pages[pageNum].retrieved = true;
-                resolve(pages[pageNum]);
-            }
-            else if (pages[pageNum-1].retrieved) { // get pages from before previous page
-                DB.get({
-                    limit: pages[pageNum].size,
-                    forHomepage: true,
-                    sortByCreatedAt:"descending",
-                    before: getPeriod(pages[pageNum-1].articles)[1],
-                    forMembers: false,
+                    window.scrollBy({ top: CURRENT_PAGE.getBoundingClientRect().top, behavior: "smooth" });
+                    FIRST_PAGE_BUTTON.disabled = PREVIOUS_PAGE_BUTTON.disabled = pageIndex === 0;
+                    LAST_PAGE_BUTTON.disabled = NEXT_PAGE_BUTTON.disabled = pageIndex === sizes.numPages - 1;
                 })
-                .then(articles => {
-                    pages[pageNum].articles = articles;
-                    pages[pageNum].retrieved = true;
-
-                    resolve(pages[pageNum]);
-                })
-                .catch(reject);
-            }
-            else if (pages[pageNum+1].retrieved) { // get pages from after next page
-                pages[pageNum].articles = await DB.get({
-                    limit: pages[pageNum].size,
-                    forHomepage: true,
-                    sortByCreatedAt:"descending",
-                    before: getPeriod(pages[pageNum+1].articles)[0],
-                    forMembers: false,
-                });
-                pages[pageNum].retrieved = true;
-                resolve(pages[pageNum]);
-            }
-            else reject("can only retrieve one page at a time");
+                .catch(console.error);
+            })
+            .catch(reject);
         });
     }
-    
-    /** Inserts the articles in a page into the webpage. */
-    async function insertPage(pageNum:number) {
-        getPage(pageNum)
-        .then(info => {
-            $(RECENT_MESSAGES_ELEM).children("article").remove();
-            RECENT_MESSAGES_ELEM.prepend(...info.articles.map(a => new SmartArticle(a, true)));
-    
-            // updating buttons and page indicator
-            FIRST_PAGE_BUTTON.disabled = currPage === 0;
-            PREV_PAGE_BUTTON.disabled = currPage === 0;
-            NEXT_PAGE_BUTTON.disabled = currPage === NUM_PAGES-1;
-            LAST_PAGE_BUTTON.disabled = currPage === NUM_PAGES-1;
-    
-            PAGE_NUMBER.textContent = `${pageNum+1} / ${NUM_PAGES}`;
-        })
-        .catch(console.warn);
-    }
 
-    let currPage = 0;
-    insertPage(currPage); // initial load
-    
+    // initial load
+    loadPage(currentPageIndex)
+    .catch(console.error);
+
 });
