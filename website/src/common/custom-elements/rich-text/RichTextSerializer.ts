@@ -70,6 +70,8 @@ export default abstract class RichTextSerializer {
                             NodeUtil.onEach(out, n => { // remove value attribute from style tags
                                 if (n instanceof Element) n.removeAttribute("value");
                             });
+
+                            if (node.style.fontSize) out.style.fontSize = node.style.fontSize;
                             
                             return [out];
                         case "list":

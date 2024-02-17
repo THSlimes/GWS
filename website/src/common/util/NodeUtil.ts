@@ -19,7 +19,7 @@ export default abstract class NodeUtil {
         if (node.nodeType === Node.TEXT_NODE) {
             if (limit <= 0) node.textContent = ""; // past limit
             else { // not past limit
-                const words = node.textContent!.split(' ', limit);
+                const words = node.textContent!.split(' ', isFinite(limit) ? limit : undefined);
                 limit -= words.length;
                 node.textContent = words.join(' ');
             }

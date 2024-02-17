@@ -13,7 +13,7 @@
 
         &.title {
             --type: "titel";
-            font-size: 250%;
+            font-weight: bolder;
         }
     }
 
@@ -46,7 +46,7 @@
         }
     }
 
-    ul {
+    & ul {
         display: flex;
         flex-direction: column;
         row-gap: var(--in-section-gap);
@@ -58,7 +58,7 @@
         > *:not(.no-bullet)::before { content: "● "; }
     }
 
-    ol {
+    & ol {
         display: flex;
         flex-direction: column;
         row-gap: var(--in-section-gap);
@@ -73,8 +73,6 @@
             content: counter(index) ". ";
         }
     }
-
-
 
     .bold { font-weight: bolder; }
     .unbold { font-weight: lighter; }

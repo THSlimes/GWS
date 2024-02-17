@@ -1,7 +1,7 @@
 import getErrorMessage from "../firebase/authentication/error-messages";
 import { checkPermissions } from "../firebase/authentication/permission-based-redirect";
 import Permission from "../firebase/database/Permission";
-import ArticleDatabase, { ArticleInfo } from "../firebase/database/articles/ArticleDatabase";
+import { ArticleInfo } from "../firebase/database/articles/ArticleDatabase";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import { showError, showSuccess, showWarning } from "../ui/info-messages";
 import DateUtil from "../util/DateUtil";
@@ -10,6 +10,8 @@ import NodeUtil from "../util/NodeUtil";
 import Switch from "./Switch";
 import RichTextInput from "./rich-text/RichTextInput";
 import RichTextSerializer from "./rich-text/RichTextSerializer";
+
+export type ArticleLOD = "full" | "medium" | "low";
 
 /**
  * A SmartArticle is a custom type of article. It provides a consistent way
@@ -25,126 +27,169 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
         checkPermissions(Permission.UPDATE_ARTICLES, canDelete => this.CAN_EDIT = canDelete, true, true);
     }
 
-    private static DEFAULT_PREVIEW_CUTOFF = 50;
-    private static PREVIEW_HIDDEN_ELEMENT_TYPES:string[] = ["IMG", "MULTISOURCE-IMAGE", "MULTISOURCE-ATTACHMENT", "UL", "OL"];
+    private static LOD_CUTOFFS:Record<ArticleLOD, number> = {
+        "full": Infinity,
+        "medium": 50,
+        "low": 30
+    };
+    public static LOD_HIDDEN_ELEMENT_TYPES:Record<ArticleLOD, string[]> = {
+        full: [],
+        medium: ["IMG", "MULTISOURCE-IMAGE", "MULTISOURCE-ATTACHMENT", "UL", "OL"],
+        low: ["H1", "H2", "H3", "H4", "H5", "H6", "IMG", "MULTISOURCE-IMAGE", "MULTISOURCE-ATTACHMENT", "UL", "OL"]
+    };
 
     protected readonly article:ArticleInfo;
-    protected readonly isPreview:boolean;
+    public readonly lod:ArticleLOD;
 
     public heading!:HTMLElement;
     public body!:HTMLElement;
-    public readMore:HTMLElement|null = null;
+    public readMore!:HTMLElement;
     public postDate!:HTMLElement;
 
     public quickActions!:HTMLDivElement;
 
-    constructor(articleInfo:ArticleInfo, isPreview=false) {
+    constructor(articleInfo:ArticleInfo, lod:ArticleLOD="medium") {
         super();
 
         this.article = articleInfo;
-        this.isPreview = isPreview;
+        this.lod = lod;
 
         this.initElement();
     }
 
     initElement(): void {
         this.style.display = "flex";
-        this.classList.add("flex-rows", "section-gap");
+        this.setAttribute("lod", this.lod);
 
-        this.heading = this.appendChild( // heading element
-            ElementFactory.a(this.isPreview ? SmartArticle.getLinkTo(this.article) : undefined)
-                .class("heading")
-                .children(ElementFactory.h1(this.article.heading))
+
+        // heading element
+        this.heading = ElementFactory.a(this.lod !== "full" ? SmartArticle.getLinkTo(this.article) : undefined)
+            .class("heading")
+            .children(ElementFactory.h1(this.article.heading))
+            .make();
+
+
+        // body element
+        this.body = ElementFactory.div(undefined, "body", "rich-text", "flex-rows", "in-section-gap")
+            .children(...RichTextSerializer.deserialize(this.article.body))
+            .make();
+
+        NodeUtil.onEach(this.body, node => { // hide disallowed element types
+            if (node instanceof Element) node.toggleAttribute("hidden", SmartArticle.LOD_HIDDEN_ELEMENT_TYPES[this.lod].includes(node.tagName));
+        });
+        if (NodeUtil.limitWords(this.body, SmartArticle.LOD_CUTOFFS[this.lod]) <= 0) this.body.textContent += '…'; // limit word count
+
+
+        // post-date element
+        this.postDate = ElementFactory.p("Geplaatst op " + DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT(this.article.created_at))
+            .class("post-date", "no-margin")
+            .make();
+
+        
+        // link to full article
+        this.readMore = this.lod === "low" ?
+            this.readMore = ElementFactory.a(SmartArticle.getLinkTo(this.article), "article_shortcut")
+                .tooltip("Naar bericht gaan")
+                .class("read-more", "icon")
+                .make() :
+            ElementFactory.a(SmartArticle.getLinkTo(this.article), "Lees verder »")
+                .class("read-more")
                 .make()
-        );
 
-        this.body = this.appendChild( // body element
-            ElementFactory.div(undefined, "body", "rich-text", "flex-rows", "in-section-gap")
-                .children(...RichTextSerializer.deserialize(this.article.body))
-                .make()
-        );
+        
+        // quick-actions
+        this.quickActions = ElementFactory.div(undefined, "quick-actions", "flex-columns", "cross-axis-center")
+            .children(
+                this.lod === "low" && this.readMore,
+                SmartArticle.CAN_EDIT && ElementFactory.p("edit_square")
+                    .id("edit-button")
+                    .class("icon", "click-action")
+                    .tooltip("Bericht bewerken")
+                    .on("click", (ev, self) => {
+                        if (this.lod === "full") { // only allow editing in full LOD
+                            // upgrade to editable version
+                            this.replaceWith(new EditableSmartArticle(this.article, this.lod));
+                        }
+                        else location.href = SmartArticle.getLinkTo(this.article, true);
+                    }),
+                SmartArticle.CAN_DELETE && ElementFactory.p("delete")
+                    .id("delete-button")
+                    .class("icon", "click-action")
+                    .tooltip("Bericht verwijderen")
+                    .on("click", (ev, self) => {
+                        if (self.hasAttribute("awaiting-confirmation")) {
+                            this.article.sourceDB.delete(this.article)
+                            .then(() => {
+                                showSuccess("Bericht succesvol verwijderd.");
+                                location.href = '/'; // go to homepage
+                            })
+                            .catch(err => showError(getErrorMessage(err)));
+                        }
+                        else {
+                            self.textContent = "delete_forever";
+                            self.title = "Definitief verwijderen";
+                            self.setAttribute("awaiting-confirmation", "");
+                            self.classList.add("pulsate-in");
 
-        this.postDate = this.appendChild( // post-date element
-            ElementFactory.p("Geplaatst op " + DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT(this.article.created_at))
-                .class("post-date", "no-margin")
-                .make()
-        );
+                            showWarning("Zeker weten? Een bericht verwijderen kan niet worden teruggedraaid!", 5000);
+                            setTimeout(() => {
+                                self.textContent = "delete";
+                                self.title = "Bericht verwijderen";
+                                self.classList.remove("pulsate-in");
+                                self.removeAttribute("awaiting-confirmation");
+                            }, 5000);
+                        }
+                    }),
+                ElementFactory.p("share")
+                    .id("share-button")
+                    .class("icon", "click-action")
+                    .tooltip("Delen")
+                    .on("click", () => {
+                        const url = SmartArticle.getLinkTo(this.article);
+                        if (navigator.canShare({ url, title: `GWS Bericht - ${this.article.heading}` })) {
+                            navigator.share({ url, title: `GWS Bericht - ${this.article.heading}` });
+                        }
+                        else navigator.clipboard.writeText(url)
+                            .then(() => showSuccess("Link gekopieerd!"))
+                            .catch(() => showError("Kan link niet kopiëren, probeer het later opnieuw."));
+                    })
+            )
+            .make();
 
-        if (this.isPreview) {
-            this.setAttribute("preview", "");
 
-            NodeUtil.onEach(this.body, node => { // hide disallowed element types
-                if (node instanceof Element) node.toggleAttribute("hidden", SmartArticle.PREVIEW_HIDDEN_ELEMENT_TYPES.includes(node.tagName));
-            });
-
-            if (NodeUtil.limitWords(this.body, SmartArticle.DEFAULT_PREVIEW_CUTOFF) <= 0) this.body.textContent += '…';
-
-            this.readMore = ElementFactory.a(SmartArticle.getLinkTo(this.article), "Lees verder »").class("read-more").make();
-            this.body.after(this.readMore);
+        // adding sections to element
+        if (this.lod === "low") {
+            this.classList.add("flex-columns", "in-section-gap", "main-axis-space-between", "cross-axis-center");
+            this.append(
+                ElementFactory.div(undefined, "flex-rows", "in-section-gap")
+                    .children(
+                        this.heading,
+                        this.body,
+                        this.postDate
+                    )
+                    .make(),
+                this.quickActions
+            );
         }
         else {
-            this.quickActions = this.appendChild( // quick-actions menu
-            ElementFactory.div(undefined, "quick-actions")
-                .children(
-                    SmartArticle.CAN_EDIT && ElementFactory.p("edit_square")
-                        .id("edit-button")
-                        .class("icon", "click-action")
-                        .tooltip("Activiteit bewerken")
-                        .on("click", (ev, self) => {
-                            // upgrade to editable version
-                            this.replaceWith(new EditableSmartArticle(this.article, this.isPreview));
-                        }),
-                    SmartArticle.CAN_DELETE && ElementFactory.p("delete")
-                        .id("delete-button")
-                        .class("icon", "click-action")
-                        .tooltip("Bericht verwijderen")
-                        .on("click", (ev, self) => {
-                            if (self.hasAttribute("awaiting-confirmation")) {
-                                this.article.sourceDB.delete(this.article)
-                                .then(() => {
-                                    showSuccess("Bericht succesvol verwijderd.");
-                                    location.href = '/'; // go to homepage
-                                })
-                                .catch(err => showError(getErrorMessage(err)));
-                            }
-                            else {
-                                self.textContent = "delete_forever";
-                                self.title = "Definitief verwijderen";
-                                self.setAttribute("awaiting-confirmation", "");
-                                self.classList.add("pulsate-in");
-
-                                showWarning("Zeker weten? Een bericht verwijderen kan niet worden teruggedraaid!", 5000);
-                                setTimeout(() => {
-                                    self.textContent = "delete";
-                                    self.title = "Bericht verwijderen";
-                                    self.classList.remove("pulsate-in");
-                                    self.removeAttribute("awaiting-confirmation");
-                                }, 5000);
-                            }
-                        }),
-                    ElementFactory.p("share")
-                        .id("share-button")
-                        .class("icon", "click-action")
-                        .tooltip("Delen")
-                        .on("click", () => {
-                            const url = SmartArticle.getLinkTo(this.article);
-                            if (navigator.canShare({ url, title: `GWS Bericht - ${this.article.heading}` })) {
-                                navigator.share({ url, title: `GWS Bericht - ${this.article.heading}` });
-                            }
-                            else navigator.clipboard.writeText(url)
-                                .then(() => showSuccess("Link gekopieerd!"))
-                                .catch(() => showError("Kan link niet kopiëren, probeer het later opnieuw."));
-                        })
-                )
-                .make()
+            this.classList.add("flex-rows", this.lod === "full" ? "section-gap" : "in-section-gap");
+            this.append(
+                this.heading,
+                this.body,
+                this.readMore,
+                this.postDate,
+                this.quickActions
             );
         }
     }
 
-    private static getLinkTo(article:ArticleInfo|string):string {
+    private static getLinkTo(article:ArticleInfo|string, editMode=false):string {
         if (article instanceof ArticleInfo) article = article.id;
-        
-        return `${location.origin}/article.html?id=${article}`;
+
+        let out = `${location.origin}/article.html?id=${article}`;
+        if (editMode) out += "&mode=edit";
+
+        return out;
     }
 
 }
@@ -162,6 +207,7 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
     initElement(): void {
         this.style.display = "flex";
         this.classList.add("flex-rows", "section-gap");
+        this.setAttribute("lod", this.lod);
         
         this.heading = this.appendChild(
             ElementFactory.input.text(this.article.heading)
@@ -199,7 +245,7 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
         );
 
         this.quickActions = this.appendChild( // quick-actions
-            ElementFactory.div(undefined, "quick-actions")
+            ElementFactory.div(undefined, "quick-actions", "flex-columns", "cross-axis-center")
                 .children(
                     ElementFactory.p("save_as")
                         .id("save-changes-button")
@@ -223,7 +269,7 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
                                 this.article.sourceDB.write(newArticle)
                                 .then(() => {
                                     showSuccess("Wijzigingen opgeslagen!");
-                                    this.replaceWith(new SmartArticle(newArticle, this.isPreview));
+                                    this.replaceWith(new SmartArticle(newArticle, this.lod));
                                 })
                                 .catch(err => showError(getErrorMessage(err)));
                             }
@@ -233,7 +279,7 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
                         .class("icon", "click-action")
                         .tooltip("Wijzigingen annuleren")
                         .on("click", () => {
-                            this.replaceWith(new SmartArticle(this.article, this.isPreview));
+                            this.replaceWith(new SmartArticle(this.article, this.lod));
                         })
                 )
                 .make()

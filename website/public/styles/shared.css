@@ -100,7 +100,7 @@ p, input, label {
     color: var(--text-dark);
 }
 
-input, textarea, select {
+input, textarea, select, *[contenteditable="plaintext-only"] {
     padding: calc(var(--in-section-gap) / 2);
 
     box-sizing: border-box;

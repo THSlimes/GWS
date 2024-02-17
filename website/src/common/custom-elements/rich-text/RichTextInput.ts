@@ -409,6 +409,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                 )
                                 .children(
                                     fontSizeInput = ElementFactory.input.number(12)
+                                        .step(.1)
                                         .onMake(fontSizeInput => {
                                             let selectedElementCopy:HTMLElement|null;
                                             function refocus() { // re-focusses on the previously focussed element
@@ -512,7 +513,9 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                         
                         if (this.selectedElement) {
                             // match styling selectors to selected element
-                            fontSizeInput.value = getComputedStyle(this.selectedElement).fontSize.slice(0, -2);
+                            fontSizeInput.value = this.selectedElement.style.fontSize ?
+                                this.selectedElement.style.fontSize.slice(-2, -1) :
+                                "14";
 
                             for (const sel of alignOptions) sel.removeAttribute("selected");
                             const selectedOpt = alignOptions.find(opt => this.selectedElement!.classList.contains(opt.getAttribute("value")!));
@@ -546,7 +549,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                 !exclude.includes("shortcut") && RichTextInput.makeIconButton("add_link", () => { // add new shortcut
                     this.insert(
                         "shortcut",
-                        ElementFactory.a().class("align-left").make(),
+                        ElementFactory.a().class("align-left").style({ fontSize: "16px" }).make(),
                         insPosCallback()
                     );
                     
@@ -579,7 +582,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                             RichTextInput.makeIconButton("title", () => { // add new title h1
                                 this.insert(
                                     "title",
-                                    ElementFactory.h1().class("title", "align-left").make(),
+                                    ElementFactory.h1().class("title", "align-left").style({ fontSize: "40px" }).make(),
                                     insPosCallback()
                                 );
                             }, "Titel toevoegen")
@@ -588,21 +591,21 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                         !exclude.includes("h1") && RichTextInput.makeIconButton("format_h1", () => { // add new normal h1
                                 this.insert(
                                     "h1",
-                                    ElementFactory.h1().class("align-left").make(),
+                                    ElementFactory.h1().class("align-left").style({ fontSize: "32px" }).make(),
                                     insPosCallback()
                                 );
                             }, "Nieuwe kop 1"),
                         !exclude.includes("h2") && RichTextInput.makeIconButton("format_h2", () => { // add new normal h2
                             this.insert(
                                 "h2",
-                                ElementFactory.h2().class("align-left").make(),
+                                ElementFactory.h2().class("align-left").style({ fontSize: "24px" }).make(),
                                 insPosCallback()
                             );
                         }, "Nieuwe kop 2"),
                         !exclude.includes("h3") && RichTextInput.makeIconButton("format_h3", () => { // add new normal h3
                             this.insert(
                                 "h3",
-                                ElementFactory.h3().class("align-left").make(),
+                                ElementFactory.h3().class("align-left").style({ fontSize: "18.5px" }).make(),
                                 insPosCallback()
                             );
                         }, "Nieuwe kop 3")
@@ -611,7 +614,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                 !exclude.includes("paragraph") && RichTextInput.makeIconButton("subject", () => { // add new paragraph
                         this.insert(
                             "paragraph",
-                            ElementFactory.p().class("align-left").make(),
+                            ElementFactory.p().class("align-left").style({ fontSize: "16px" }).make(),
                             insPosCallback()
                         );
                     }, "Nieuwe paragraaf"),

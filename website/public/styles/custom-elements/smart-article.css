@@ -8,45 +8,74 @@ article, editable-smart-article {
 
     position: relative;
 
-    > .heading { width: 100%; }
-    &:not([preview]) > .heading { font-size: 200%; }
+    & .heading {
+        width: 100%;
+        font-weight: bold;
+    }
+    & .body { width: 100%; }
 
-    > .body { width: 100%; }
+    & .post-date { color: var(--accent); }
 
-    &[preview] {
-        > .body { overflow: hidden; }
-    
-        & .read-more {
-            margin: 0px;
-            color: var(--accent) !important;
-            font-style: italic;
-            white-space: nowrap;
-        }
+    & .read-more {
+        margin: 0px;
+        color: var(--accent) !important;
+        white-space: nowrap;
     }
 
-    > .post-date { color: var(--accent); }
-    
-    > .quick-actions {
-        position: absolute;
-        top: var(--in-section-gap);
-        right: var(--in-section-gap);
-        
-        & > * {
+    & .quick-actions {
+        width: max-content;
+        flex-wrap: nowrap;
+
+        > * {
             color: inherit;
             border-radius: var(--in-section-gap);
         }
     }
+    
+    
+    &[lod="full"] {
+        & .heading { font-size: 175%; }
+        & .read-more { display: none; }
+        & .quick-actions {
+            position: absolute;
+            top: var(--in-section-gap);
+            right: var(--in-section-gap);
+        }
+    }
 
+    &[lod="full"], &[lod="medium"] {
+        & .read-more { font-style: italic; }
+    }
+
+    &[lod="medium"] {
+        & .quick-actions { display: none; }
+    }
+    
+    &[lod="medium"], &[lod="low"] {
+        & .post-date { font-size: 75%; }
+    }
+
+    &[lod="low"] {
+        & .heading {
+            > h1 { margin: .5rem 0px; }
+            font-size: 80%;
+        }
+    }
+
+}
+
+editable-smart-article {
+    & .body { min-height: 50vh; }
 }
 
 /* TABLET-VIEWPORT OVERRIDE */
 
 @media (max-aspect-ratio: 3 / 4) {
-    article:not([is=preview]) .heading { font-size: 200%; }
+    article[lod="full"] .heading { font-size: 150%; }
 }
 
 /* PHONE-VIEWPORT OVERRIDE */
 
 @media (max-aspect-ratio: 3 / 5) {
-    article:not([is=preview]) .heading { font-size: 125%; }
+    article[lod="full"] .heading { font-size: 125%; }
 }

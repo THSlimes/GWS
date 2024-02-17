@@ -44,13 +44,6 @@
     }
 }
 
-#page-navigator {
-    padding: var(--in-section-gap);
-    column-gap: var(--in-section-gap);
-
-    > #page-indicator { margin: 0px 0px 0px var(--min-section-gap); }
-}
-
 @keyframes zoom-in {
     0% { opacity: 0; scale: 0; }
     25% { opacity: 0; scale: 0; }

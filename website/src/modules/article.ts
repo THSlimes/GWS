@@ -2,7 +2,7 @@ import "./header-and-footer";
 import "./create-split-view";
 
 import ArticleDatabase from "../common/firebase/database/articles/ArticleDatabase";
-import SmartArticle from "../common/custom-elements/SmartArticle";
+import SmartArticle, { EditableSmartArticle } from "../common/custom-elements/SmartArticle";
 import { FirestoreArticleDatabase } from "../common/firebase/database/articles/FirestoreArticleDatabase";
 import { runOnErrorCode } from "../common/firebase/authentication/error-messages";
 import URLUtil from "../common/util/URLUtil";
@@ -11,7 +11,9 @@ import URLUtil from "../common/util/URLUtil";
 export function articleLink(id: string) { return `/article.html?id=${id}`; }
 
 const DB:ArticleDatabase = new FirestoreArticleDatabase();
-const articleId = new URLSearchParams(window.location.search).get("id");
+const urlSearchParams = new URLSearchParams(window.location.search);
+const articleId = urlSearchParams.get("id");
+const isEditMode = urlSearchParams.get("mode") === "edit";
 if (!articleId) window.location.replace('/'); // no article provided, go to homepage
 else window.addEventListener("DOMContentLoaded", () => {
     const ARTICLE_DIV = document.getElementById("article")!;
@@ -21,7 +23,8 @@ else window.addEventListener("DOMContentLoaded", () => {
     DB.getById(articleId)
     .then(articleInfo => {
         if (articleInfo) {
-            ARTICLE_DIV.prepend(new SmartArticle(articleInfo, false));
+            const article = isEditMode ? new EditableSmartArticle(articleInfo, "full") : new SmartArticle(articleInfo, "full");
+            ARTICLE_DIV.prepend(article);
 
             if (articleInfo.show_on_homepage) {
                 DB.getNext(articleInfo, { forHomepage:true, forMembers:false })

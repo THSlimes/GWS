@@ -104,9 +104,11 @@ rich-text-input {
             > *[do-serialize] {
                 align-self: center;
 
+                padding: 2px;
                 margin: 0px;
-
                 flex-grow: 1;
+
+                border-radius: calc(var(--in-section-gap) / 2);
 
                 &.text-box { padding: 2px; }
 

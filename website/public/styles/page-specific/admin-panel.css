@@ -2,6 +2,7 @@
 
 @import url("../custom-elements/event-calendar.css");
 @import url("../custom-elements/switch.css");
+@import url("../custom-elements/smart-article.css");
 
 .content {
     display: grid;

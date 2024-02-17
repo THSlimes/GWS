@@ -6,6 +6,7 @@ import Permission from "../common/firebase/database/Permission";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
 import { initAccountsPanel } from "../common/admin-panels/users-panel";
 import { initEventsPanel } from "../common/admin-panels/events-panel";
+import { initArticlesPanel } from "../common/admin-panels/articles-panel";
 
 // only permitted users can view page
 redirectIfMissingPermission("/", [Permission.VIEW_ADMIN_PANEL, Permission.READ_OTHER_USER_INFO], true, true);
@@ -27,6 +28,7 @@ const PANEL_CONFIG:Record<PanelId, { icon:string, label:string, default?:true, s
     "messages-panel": {
         icon: "mail",
         label: "Berichten",
+        selectCallback: initArticlesPanel,
         default: true
     },
     "links-panel": {
