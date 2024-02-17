@@ -90,14 +90,14 @@ window.addEventListener("DOMContentLoaded", () => {
 
     ARTICLE_PAGINATOR.getSize()
     .then(sizes => {// adding button functionality
-        FIRST_PAGE_BUTTON.addEventListener("click", () => loadPage(currentPageIndex = 0).catch(console.error));
-        PREVIOUS_PAGE_BUTTON.addEventListener("click", () => loadPage(currentPageIndex = Math.max(0, currentPageIndex - 1)).catch(console.error));
-        NEXT_PAGE_BUTTON.addEventListener("click", () => loadPage(currentPageIndex = Math.min(sizes.numPages-1, currentPageIndex + 1)).catch(console.error));
-        LAST_PAGE_BUTTON.addEventListener("click", () => loadPage(currentPageIndex = sizes.numPages-1).catch(console.error));
+        FIRST_PAGE_BUTTON.addEventListener("click", () => loadPage(currentPageIndex = 0, true).catch(console.error));
+        PREVIOUS_PAGE_BUTTON.addEventListener("click", () => loadPage(currentPageIndex = Math.max(0, currentPageIndex - 1), true).catch(console.error));
+        NEXT_PAGE_BUTTON.addEventListener("click", () => loadPage(currentPageIndex = Math.min(sizes.numPages-1, currentPageIndex + 1), true).catch(console.error));
+        LAST_PAGE_BUTTON.addEventListener("click", () => loadPage(currentPageIndex = sizes.numPages-1, true).catch(console.error));
     })
     .catch(console.error);
 
-    function loadPage(pageIndex:number):Promise<void> {
+    function loadPage(pageIndex:number, scrollToTop=false):Promise<void> {
         NodeUtil.empty(CURRENT_PAGE); // clear old articles
         
         return new Promise((resolve, reject) => {
@@ -109,7 +109,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 .then(sizes => {
                     PAGE_NUMBER.textContent = `${pageIndex + 1}/${sizes.numPages}`;
 
-                    window.scrollBy({ top: CURRENT_PAGE.getBoundingClientRect().top, behavior: "smooth" });
+                    if (scrollToTop) window.scrollBy({ top: CURRENT_PAGE.getBoundingClientRect().top, behavior: "smooth" });
                     FIRST_PAGE_BUTTON.disabled = PREVIOUS_PAGE_BUTTON.disabled = pageIndex === 0;
                     LAST_PAGE_BUTTON.disabled = NEXT_PAGE_BUTTON.disabled = pageIndex === sizes.numPages - 1;
                 })
