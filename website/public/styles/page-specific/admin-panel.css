@@ -33,7 +33,8 @@
         grid-area: 1 / 2 / 2 / 3;
         min-width: 0px;
         width: 100%;
-        /* &, & * { outline: 1px solid red; } */
+
+        > h1:first-child { text-decoration: underline; }
     }
 
 }
