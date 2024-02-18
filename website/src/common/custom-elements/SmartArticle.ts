@@ -1,5 +1,5 @@
 import getErrorMessage from "../firebase/authentication/error-messages";
-import { checkPermissions } from "../firebase/authentication/permission-based-redirect";
+import { checkPermissions, onPermissionCheck } from "../firebase/authentication/permission-based-redirect";
 import Permission from "../firebase/database/Permission";
 import ArticleDatabase, { ArticleInfo } from "../firebase/database/articles/ArticleDatabase";
 import ElementFactory from "../html-element-factory/ElementFactory";
@@ -20,11 +20,13 @@ export type ArticleLOD = "full" | "medium" | "low";
 export default class SmartArticle extends HTMLElement implements HasSections<"heading"|"body"|"readMore"|"postDate"|"quickActions"> {
 
     protected static CAN_DELETE = false;
-    protected static CAN_EDIT = false;
+    protected static CAN_UPDATE = false;
 
     static {
-        checkPermissions(Permission.DELETE_ARTICLES, canDelete => this.CAN_DELETE = canDelete, true, true);
-        checkPermissions(Permission.UPDATE_ARTICLES, canDelete => this.CAN_EDIT = canDelete, true, true);
+        onPermissionCheck([Permission.DELETE_ARTICLES, Permission.UPDATE_ARTICLES], (_, res) => {
+            this.CAN_DELETE = res.DELETE_ARTICLES;
+            this.CAN_UPDATE = res.UPDATE_ARTICLES;
+        }, true, true);
     }
 
     private static LOD_CUTOFFS:Record<ArticleLOD, number> = {
@@ -101,7 +103,7 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
         this.quickActions = ElementFactory.div(undefined, "quick-actions", "flex-columns", "cross-axis-center")
             .children(
                 this.lod === "low" && this.readMore,
-                SmartArticle.CAN_EDIT && ElementFactory.p("edit_square")
+                SmartArticle.CAN_UPDATE && ElementFactory.p("edit_square")
                     .id("edit-button")
                     .class("icon", "click-action")
                     .tooltip("Bericht bewerken")

@@ -4,12 +4,12 @@ import Permission from "../Permission";
 export class UserInfo extends Info {
     
     public readonly joined_at:Date;
-    public readonly member_until?:Date;
+    public readonly member_until:Date;
     public readonly first_name:string;
     public readonly family_name:string;
     public readonly permissions:Permission[];
 
-    constructor(id:string, joined_at:Date, member_until:Date|undefined, first_name:string, family_name:string, permissions:Permission[]) {
+    constructor(id:string, joined_at:Date, member_until:Date, first_name:string, family_name:string, permissions:Permission[]) {
         super(id);
 
         this.joined_at = joined_at;

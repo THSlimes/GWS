@@ -5,7 +5,7 @@ import ElementFactory from "../common/html-element-factory/ElementFactory";
 import Responsive, { Viewport } from "../common/ui/Responsive";
 import { AUTH, onAuth, checkLoginState } from "../common/firebase/init-firebase";
 import { showError } from "../common/ui/info-messages";
-import { checkPermissions } from "../common/firebase/authentication/permission-based-redirect";
+import { checkPermissions, onPermissionCheck } from "../common/firebase/authentication/permission-based-redirect";
 import Permission from "../common/firebase/database/Permission";
 import Cache from "../common/Cache";
 
@@ -153,7 +153,7 @@ function createHeader(config:NavbarConfig):HTMLElement {
                                 .tooltip("Administratie-paneel")
                                 .on("click", () => location.href = "/admin-panel.html")
                                 .onMake(self => {
-                                    checkPermissions(Permission.VIEW_ADMIN_PANEL, res => self.style.display = res ? "" : "none", true, true);
+                                    onPermissionCheck(Permission.VIEW_ADMIN_PANEL, hasPerms => self.style.display = hasPerms ? "" : "none", true, true);
                                 }),
                             ElementFactory.p("login")
                                 .class("icon", "click-action")

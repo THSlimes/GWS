@@ -20,12 +20,12 @@ enum Permission {
 
     // user related
     READ_OWN_USER_INFO = "READ_OWN_USER_INFO", // whether the user has access to their own info
-    EDIT_OWN_USER_INFO = "EDIT_OWN_USER_INFO", // whether the user can edit their own info
-    EDIT_OWN_PERMISSIONS = "EDIT_OWN_PERMISSIONS", // whether the user can edit their own permissions
+    UPDATE_OWN_USER_INFO = "UPDATE_OWN_USER_INFO", // whether the user can edit their own info
+    UPDATE_OWN_PERMISSIONS = "UPDATE_OWN_PERMISSIONS", // whether the user can edit their own permissions
 
     READ_OTHER_USER_INFO = "READ_OTHER_USER_INFO", // whether the user is allowed to see details of other users
-    EDIT_OTHER_USER_INFO = "EDIT_OTHER_USER_INFO", // whether the user can update the details of other users
-    EDIT_OTHER_USER_PERMISSIONS = "EDIT_OTHER_USER_PERMISSIONS", // whether the user can edit the permissions of others
+    UPDATE_OTHER_USER_INFO = "UPDATE_OTHER_USER_INFO", // whether the user can update the details of other users
+    UPDATE_OTHER_USER_PERMISSIONS = "UPDATE_OTHER_USER_PERMISSIONS", // whether the user can edit the permissions of others
 
     // admin related
     VIEW_ADMIN_PANEL = "VIEW_ADMIN_PANEL", // whether the user has access to the administration panel
@@ -37,7 +37,7 @@ Object.freeze(ALL_PERMISSIONS);
 
 const PERMISSION_TRANSLATIONS:Record<Permission,string> = {
     [Permission.READ_MEMBER_ARTICLES]: "Berichten voor leden lezen",
-    [Permission.CREATE_ARTICLES]: "Berichten posten",
+    [Permission.CREATE_ARTICLES]: "Berichten plaatsen",
     [Permission.DELETE_ARTICLES]: "Berichten verwijderen",
     [Permission.UPDATE_ARTICLES]: "Berichten bewerken",
     
@@ -51,12 +51,12 @@ const PERMISSION_TRANSLATIONS:Record<Permission,string> = {
     [Permission.DEREGISTER_FOR_EVENTS]: "Uitschrijven van activiteiten ",
 
     [Permission.READ_OWN_USER_INFO]: "Account-info van henzelf lezen",
-    [Permission.EDIT_OWN_USER_INFO]: "Account-info van henzelf bewerken",
-    [Permission.EDIT_OWN_PERMISSIONS]: "Account-machtigingen van henzelf bewerken",
+    [Permission.UPDATE_OWN_USER_INFO]: "Account-info van henzelf bewerken",
+    [Permission.UPDATE_OWN_PERMISSIONS]: "Account-machtigingen van henzelf bewerken",
 
     [Permission.READ_OTHER_USER_INFO]: "Account-info van anderen zien",
-    [Permission.EDIT_OTHER_USER_INFO]: "Account-info van anderen bewerken",
-    [Permission.EDIT_OTHER_USER_PERMISSIONS]: "Account-machtigingen van anderen bewerken",
+    [Permission.UPDATE_OTHER_USER_INFO]: "Account-info van anderen bewerken",
+    [Permission.UPDATE_OTHER_USER_PERMISSIONS]: "Account-machtigingen van anderen bewerken",
 
     [Permission.VIEW_ADMIN_PANEL]: "Administratie-paneel zien",
 };

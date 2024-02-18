@@ -6,7 +6,7 @@ import getErrorMessage from "../firebase/authentication/error-messages";
 import { onAuth } from "../firebase/init-firebase";
 import ColorUtil from "../util/ColorUtil";
 import DateUtil from "../util/DateUtil";
-import { checkPermissions } from "../firebase/authentication/permission-based-redirect";
+import { checkPermissions, onPermissionCheck } from "../firebase/authentication/permission-based-redirect";
 import Permission from "../firebase/database/Permission";
 import EventCalendar from "./EventCalendar";
 import URLUtil from "../util/URLUtil";
@@ -29,15 +29,17 @@ const VISIBILITY_AT_LOD:Record<DetailLevel, Record<EventNoteSection, boolean>> =
 export class EventNote extends HTMLElement implements HasSections<EventNoteSection> {
 
     protected static CAN_DELETE = false;
-    protected static CAN_EDIT = false;
+    protected static CAN_UPDATE = false;
     protected static CAN_REGISTER = false;
     protected static CAN_DEREGISTER = false;
 
     static {
-        checkPermissions(Permission.DELETE_EVENTS, canDelete => this.CAN_DELETE = canDelete, true, true);
-        checkPermissions(Permission.UPDATE_ARTICLES, canDelete => this.CAN_EDIT = canDelete, true, true);
-        checkPermissions(Permission.REGISTER_FOR_EVENTS, canDelete => this.CAN_REGISTER = canDelete, true, true);
-        checkPermissions(Permission.DEREGISTER_FOR_EVENTS, canDelete => this.CAN_DEREGISTER = canDelete, true, true);
+        onPermissionCheck([Permission.DELETE_EVENTS, Permission.UPDATE_EVENTS, Permission.REGISTER_FOR_EVENTS, Permission.DEREGISTER_FOR_EVENTS], (_, res) => {
+            this.CAN_DELETE = res.DELETE_EVENTS;
+            this.CAN_UPDATE = res.UPDATE_EVENTS;
+            this.CAN_REGISTER = res.REGISTER_FOR_EVENTS;
+            this.CAN_DEREGISTER = res.DEREGISTER_FOR_EVENTS;
+        }, true, true);
     }
 
     /** Gives a [text,icon,disabled] button state based on the events state. */
@@ -170,7 +172,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
         this.quickActions = this.appendChild(
             ElementFactory.div(undefined, "quick-actions")
                 .children(
-                    EventNote.CAN_EDIT && ElementFactory.p("edit_square")
+                    EventNote.CAN_UPDATE && ElementFactory.p("edit_square")
                         .id("edit-button")
                         .class("icon", "click-action")
                         .tooltip("Activiteit bewerken")

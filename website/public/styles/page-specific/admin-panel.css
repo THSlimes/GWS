@@ -63,9 +63,13 @@
 
 }
 
-#accounts-panel {
-    > #accounts-list {
+#users-panel {
+    > #users-list {
         row-gap: var(--in-section-gap);
+
+        > #users-search-options {
+            width: 100%;
+        }
 
         > .list {
             max-height: 100vh;

@@ -4,7 +4,7 @@ import "../common/custom-elements/EventCalendar";
 import { redirectIfMissingPermission } from "../common/firebase/authentication/permission-based-redirect";
 import Permission from "../common/firebase/database/Permission";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
-import { initAccountsPanel } from "../common/admin-panels/users-panel";
+import { initUsersPanel } from "../common/admin-panels/users-panel";
 import { initEventsPanel } from "../common/admin-panels/events-panel";
 import { initArticlesPanel } from "../common/admin-panels/articles-panel";
 
@@ -12,13 +12,14 @@ import { initArticlesPanel } from "../common/admin-panels/articles-panel";
 redirectIfMissingPermission("/", [Permission.VIEW_ADMIN_PANEL, Permission.READ_OTHER_USER_INFO], true, true);
 
 /** Union type of the IDs of all panels. */
-type PanelId = "accounts-panel" | "messages-panel" | "events-panel" | "links-panel";
+type PanelId = "users-panel" | "messages-panel" | "events-panel" | "links-panel";
 
 const PANEL_CONFIG:Record<PanelId, { icon:string, label:string, default?:true, selectCallback?:VoidFunction }> = {
-    "accounts-panel": {
+    "users-panel": {
         icon: "group",
         label: "Accounts",
-        selectCallback: initAccountsPanel
+        selectCallback: initUsersPanel,
+        default: true
     },
     "events-panel": {
         icon: "calendar_month",
@@ -29,7 +30,6 @@ const PANEL_CONFIG:Record<PanelId, { icon:string, label:string, default?:true, s
         icon: "mail",
         label: "Berichten",
         selectCallback: initArticlesPanel,
-        default: true
     },
     "links-panel": {
         icon: "account_tree",

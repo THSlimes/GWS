@@ -16,9 +16,11 @@ const NEW_ARTICLE_INFO = new ArticleInfo(DB, "", "", "", new Date(), "", true, f
 
 export function initArticlesPanel() {
     if (!articlesPanelInitialized) {
-        checkPermissions(Permission.READ_MEMBER_ARTICLES, hasPerms => { // list of recent articles
-            Placeholder.replaceWith("article-list", new ArticleList(new ArticlePaginator(DB, PAGE_SIZE, { forMembers: hasPerms ? undefined : false }), 'low'));
-        }, false);
+        checkPermissions(Permission.READ_MEMBER_ARTICLES, false)
+        .then(hasPerms => { // list of recent articles
+            const baseFilter = { forMembers: hasPerms.READ_MEMBER_ARTICLES ? undefined : false };
+            Placeholder.replaceWith("article-list", new ArticleList(new ArticlePaginator(DB, PAGE_SIZE, baseFilter), 'low'));
+        });
 
         const NEW_ARTICLE = new EditableSmartArticle(NEW_ARTICLE_INFO, "full", true);
         NEW_ARTICLE.onSave = newArticle => location.href = SmartArticle.getLinkTo(newArticle);

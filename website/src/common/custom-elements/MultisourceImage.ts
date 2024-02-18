@@ -1,5 +1,5 @@
 import { StorageError, getDownloadURL, getMetadata, ref } from "@firebase/storage";
-import { checkPermissions } from "../firebase/authentication/permission-based-redirect";
+import { checkPermissions, onPermissionCheck } from "../firebase/authentication/permission-based-redirect";
 import Permission from "../firebase/database/Permission";
 import { STORAGE } from "../firebase/init-firebase";
 import ElementUtil, { HasSections } from "../util/ElementUtil";
@@ -10,7 +10,7 @@ export default class MultisourceImage extends HTMLElement implements HasSections
 
     private static CAN_DOWNLOAD_PROTECTED_FILES = false;
     static {
-        checkPermissions(Permission.DOWNLOAD_PROTECTED_FILES, hasPerms => this.CAN_DOWNLOAD_PROTECTED_FILES = hasPerms, true, true);
+        onPermissionCheck(Permission.DOWNLOAD_PROTECTED_FILES, canDownload => this.CAN_DOWNLOAD_PROTECTED_FILES = canDownload, true, true);
     }
 
     private _origin:AttachmentOrigin;

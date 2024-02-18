@@ -1,46 +1,77 @@
-import { User } from "@firebase/auth";
 import Permission from "../database/Permission";
 import { onAuth } from "../init-firebase";
 import { FirestoreUserDatabase } from "../database/users/FirestoreUserDatabase";
 import UserDatabase from "../database/users/UserDatabase";
 import Cache from "../../Cache";
+import ObjectUtil from "../../util/ObjectUtil";
+
+function toArray<P extends Permission>(perm:P|P[]):P[] {
+    return Array.isArray(perm) ? perm : [perm];
+}
 
 const USER_DB: UserDatabase = new FirestoreUserDatabase();
-/**
- * Checks whether the given user has the given permissions.
- * @param user user to check permissions of
- * @param permissions permissions the user must have
- * @param useCache whether to use cached value if available
- * @returns promise that resolves with whether the user has the given permissions
- */
-function hasPermissions(user: User | null, permissions: Permission[], useCache = false):Promise<boolean> {
-    return new Promise((resolve, reject) => {
-        if (permissions.length === 0) resolve(true); // anyone has >= 0 permissions
-        else if (user === null) resolve(false); // non-user does not have permissions
-        else if (useCache && Cache.has(`permissions-${user.uid}`)) { // use cached value (if available)
-            const userPerms = Cache.get(`permissions-${user.uid}`) ?? [];
-            resolve(permissions.every(p => userPerms.includes(p)));
+
+type PermissionCheckResults<P extends Permission> = {[key in P]:boolean };
+function hasPermissions<P extends Permission>(perm:P[], userId:string, useCache:boolean):Promise<PermissionCheckResults<P>> {
+    const userPermsPromise = new Promise<Permission[]>((resolve,reject) => { // get user permissions
+        if (useCache) {
+            const cachedUserPerms = Cache.get(`permissions-${userId}`);
+            if (cachedUserPerms) resolve(cachedUserPerms);
+            else reject(new Error(`useCache is true, but permissions of user ${userId} are not in the cache`));
         }
-        else USER_DB.getById(user.uid) // use real value
-            .then(userInfo => resolve(userInfo === undefined || permissions.every(p => userInfo.permissions.includes(p))))
-            .catch(() => resolve(false));
+        else USER_DB.getById(userId)
+            .then(userInfo => resolve(userInfo?.permissions ?? []))
+            .catch(reject);
+    });
+
+    return new Promise((resolve, reject) => {
+        userPermsPromise.then(userPerms => {
+            resolve(ObjectUtil.mapToObject(perm, p => userPerms.includes(p)));
+        })
+        .catch(reject);
     });
 }
-/**
- * Checks whether the logged-in user has the given permissions.
- * @param permissions permissions to check for
- * @param useCache whether to cached values whenever possible
- * @param callAgain whether to use the callback again with the real value, even after using the cached value already
- */
 
-export function checkPermissions(permissions: Permission | Permission[], callback: (hasPerms: boolean) => void, useCache = false, callAgain = true):void {
-    if (!Array.isArray(permissions)) return checkPermissions([permissions], callback, useCache, callAgain);
-    else onAuth()
+export function checkPermissions<P extends Permission>(perms:P|P[], useCache=false):Promise<PermissionCheckResults<P>> {
+    const permArr = toArray(perms);
+
+    return new Promise((resolve, reject) => {
+        onAuth()
         .then(user => {
-            if (useCache) hasPermissions(user, permissions, true).then(callback);
-            if (!useCache || callAgain) hasPermissions(user, permissions, false).then(callback);
-        });
+            if (user) {
+                if (useCache) hasPermissions(permArr, user.uid, true) // try to use cache
+                    .then(resolve) // got from cache
+                    .catch(() => hasPermissions(permArr, user.uid, false).then(resolve).catch(reject)); // not in cache, get from DB
+                else hasPermissions(permArr, user.uid, false).then(resolve).catch(reject); // get from DB
+            }
+            else resolve(ObjectUtil.mapToObject(permArr, p => false));
+        })
+        .catch(reject);
+    });
 }
+
+type PermissionCheckMode = "all" | "any";
+export function onPermissionCheck<P extends Permission>(perms:P|P[], callback:(hasPerms:boolean, res:PermissionCheckResults<P>)=>void, useCache=false, callAgain=true, mode:PermissionCheckMode="all"):void {
+    const permArr = toArray(perms);
+
+    onAuth()
+    .then(user => {
+        if (Array.isArray(perms) && perms.length === 0) callback(true, ObjectUtil.mapToObject(perms, () => false));
+        else if (user) {
+            if (useCache) hasPermissions(permArr, user.uid, true) // try with cached value
+                .then(res => callback(mode === "all" ? ObjectUtil.every(res, (k, v) => v) : ObjectUtil.some(res, (k, v) => v), res))
+                .catch(() => {
+                    if (!callAgain) callback(false, ObjectUtil.mapToObject(permArr, () => false));
+                });
+            if (!useCache || callAgain) hasPermissions(permArr, user.uid, false) // use actual value
+                .then(res => callback(mode === "all" ? ObjectUtil.every(res, (k, v) => v) : ObjectUtil.some(res, (k, v) => v), res))
+                .catch(console.error);
+        }
+        else callback(false, ObjectUtil.mapToObject(permArr, () => false));
+    })
+    .catch(console.error);
+}
+
 /**
  * Redirects the user to the given URL in case they do not have all of the given permissions.
  * @param url url to redirect to
@@ -49,8 +80,8 @@ export function checkPermissions(permissions: Permission | Permission[], callbac
  * @param [callAgain=true] whether to check with the actual value, even after using the cached one
  */
 
-export function redirectIfMissingPermission(url = "/", permissions: Permission | Permission[], useCache = false, callAgain = true):void {
-    checkPermissions(permissions, res => {
+export function redirectIfMissingPermission(url='/', permissions: Permission | Permission[], useCache=false, callAgain=true, mode:PermissionCheckMode="all"):void {
+    onPermissionCheck(permissions, res => {
         if (!res) location.replace(url);
-    }, useCache, callAgain);
+    }, useCache, callAgain, mode);
 }

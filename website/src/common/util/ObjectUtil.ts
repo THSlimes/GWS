@@ -23,10 +23,30 @@ export default abstract class ObjectUtil {
         Object.freeze(obj);
     }
     
-    public static mapToObject<T extends string, U>(arr:T[], callbackfn: (value:T, index:number, array:T[]) => U):Record<T,U> {
+    public static mapToObject<T extends string, U>(arr:T[], callbackfn:(value:T, index:number, array:T[]) => U):Record<T,U> {
         const out:Record<T,U> = {} as Record<T,U>;
         arr.forEach((e,i,a) => out[e] = callbackfn(e,i,a));
         return out;
+    }
+
+    public static some<K extends string|number|symbol, V>(obj:Record<K,V>, callbackfn:(key:K, value:V, obj:Record<K,V>)=>boolean):boolean {
+        for (const key in obj) {
+            const k = key as K;
+            const v = obj[k] as V;
+            if (callbackfn(k, v, obj)) return true;
+        }
+
+        return false;
+    }
+
+    public static every<K extends string|number|symbol, V>(obj:Record<K,V>, callbackfn:(key:K, value:V, obj:Record<K,V>)=>boolean):boolean {
+        for (const key in obj) {
+            const k = key as K;
+            const v = obj[k] as V;
+            if (!callbackfn(k, v, obj)) return false;
+        }
+
+        return true;
     }
 
 }

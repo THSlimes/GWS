@@ -11,6 +11,7 @@ import ArrayUtil from "../util/ArrayUtil";
 import ColorUtil from "../util/ColorUtil";
 import DateUtil from "../util/DateUtil";
 import ObjectUtil from "../util/ObjectUtil";
+import NodeUtil from "../util/NodeUtil";
 
 function createPermissionLabel(perm:Permission, editable:boolean, onRemove:(label:HTMLDivElement)=>void):HTMLDivElement {
     return ElementFactory.div(undefined, "permission", "center-content")
@@ -56,7 +57,7 @@ function createUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, ca
         ElementFactory.h4(DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT(userEntry.get("joined_at")))
             .class("joined-at", "center-content")
             .make(),
-        ElementFactory.h4(userEntry.get("member_until") ? DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT(userEntry.get("member_until")!) : "Geen lid")
+        ElementFactory.h4(DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT(userEntry.get("member_until")!))
             .class("member-until", "center-content")
             .make()
         
@@ -105,24 +106,40 @@ function createUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, ca
     return out;
 }
 
-let initializedAccountsPanel = false;
-const USERS_DV = new DatabaseDataView(new FirestoreUserDatabase(), {}, true);
-export function initAccountsPanel() {
-    if (!initializedAccountsPanel) {
-        const usersList = document.querySelector("#accounts-list > .list") as HTMLDivElement;
+let USERS_LIST:HTMLDivElement;
 
-        Promise.all([
-            USERS_DV.onDataReady(),
-            onAuth(),
-            new Promise<boolean>((resolve,reject) => checkPermissions(Permission.EDIT_OWN_USER_INFO, resolve, false)),
-            new Promise<boolean>((resolve,reject) => checkPermissions(Permission.EDIT_OWN_PERMISSIONS, resolve, false)),
-            new Promise<boolean>((resolve,reject) => checkPermissions(Permission.EDIT_OTHER_USER_INFO, resolve, false)),
-            new Promise<boolean>((resolve,reject) => checkPermissions(Permission.EDIT_OTHER_USER_PERMISSIONS, resolve, false))
-        ])
-        .then(([_, user, canEditSelf, canEditOwnPerms, canEditOthers, canEditOthersPerms]) => { // get data
-            usersList.append(...USERS_DV.map((u,i) =>
-                createUserEntry(u, u.get("id") === user!.uid ? canEditSelf : canEditOthers, u.get("id") === user!.uid ? canEditOwnPerms : canEditOthersPerms)));
-        });
+let FILTER_FORM:HTMLDivElement;
+let NAME_FILTER_INPUT:HTMLInputElement;
+type MembershipFilterOption = "members-only" | "non-members-only" | "both";
+let MEMBERSHIP_FILTER_SELECT:HTMLSelectElement & { value:MembershipFilterOption };
+type PermissionFilterOption = Permission | "any";
+let PERMISSION_FILTER_SELECT:HTMLSelectElement & { value:PermissionFilterOption };
+type UserSortOption = "name-asc" | "name-desc" | "created-at-asc" | "created-at-desc" | "member-until-asc" | "member-until-desc" | "num-permissions-asc" | "num-permissions-desc";
+let USER_SORT_SELECT:HTMLSelectElement & { value:UserSortOption };
+
+let initializedUsersPanel = false;
+const USERS_DV = new DatabaseDataView(new FirestoreUserDatabase(), {}, true);
+export function initUsersPanel() {
+    if (!initializedUsersPanel) {
+
+        // user list filters
+        FILTER_FORM = document.getElementById("users-search-options") as HTMLDivElement;
+        NAME_FILTER_INPUT = document.getElementById("users-filter-name") as HTMLInputElement;
+        MEMBERSHIP_FILTER_SELECT = document.getElementById("users-filter-membership-status") as HTMLSelectElement & { value:MembershipFilterOption };
+        PERMISSION_FILTER_SELECT = document.getElementById("users-filter-permissions") as HTMLSelectElement & { value:PermissionFilterOption };
+        USER_SORT_SELECT = document.getElementById("users-filter-sort") as HTMLSelectElement & { value:UserSortOption };
+
+        FILTER_FORM.addEventListener("input", () => refreshUserEntries());
+        FILTER_FORM.addEventListener("change", () => refreshUserEntries());
+
+        PERMISSION_FILTER_SELECT.options.add(ElementFactory.option().value("any").text("").make());
+        for (const perm of ALL_PERMISSIONS) { // adding options to select
+            PERMISSION_FILTER_SELECT.options.add(ElementFactory.option().value(perm).text(toHumanReadable(perm)).make());
+        }
+
+        USERS_LIST = document.querySelector("#users-list > .list") as HTMLDivElement;
+
+        refreshUserEntries();
 
         const usersSaveButton = document.getElementById("users-save-button") as HTMLButtonElement;
         USERS_DV.onDataModified = () => usersSaveButton.disabled = false;
@@ -135,6 +152,74 @@ export function initAccountsPanel() {
             .catch(err => showError(getErrorMessage(err)));
         });
         
-        initializedAccountsPanel = true;
+        initializedUsersPanel = true;
+
     }
+}
+
+function refreshUserEntries() {
+    
+
+    Promise.all([onAuth(), USERS_DV.onDataReady()])
+    .then(([user, _]) => {
+        checkPermissions([
+            Permission.UPDATE_OWN_USER_INFO,
+            Permission.UPDATE_OWN_PERMISSIONS,
+            Permission.UPDATE_OTHER_USER_INFO,
+            Permission.UPDATE_OTHER_USER_PERMISSIONS
+        ])
+        .then(hasPerms => {
+            while (USERS_LIST.childElementCount > 1) USERS_LIST.lastElementChild!.remove();
+            
+            const filteredSubset = USERS_DV.filter(matchesFilter);
+            sortUsers(filteredSubset);
+
+            USERS_LIST.append(...filteredSubset.map((u,i) =>
+                createUserEntry(
+                    u,
+                    u.get("id") === user!.uid ? hasPerms.UPDATE_OWN_USER_INFO : hasPerms.UPDATE_OTHER_USER_INFO,
+                    u.get("id") === user!.uid ? hasPerms.UPDATE_OWN_PERMISSIONS : hasPerms.UPDATE_OTHER_USER_PERMISSIONS
+                ))
+            );
+        })
+        .catch(console.error)
+    })
+    .catch(console.error);
+}
+
+function matchesFilter(entry:DataView.Entry<UserInfo>):boolean {
+    const fullName = `${entry.get("first_name")} ${entry.get("family_name")}`.toLocaleLowerCase().trim();
+    if (!fullName.includes(NAME_FILTER_INPUT.value.toLocaleLowerCase().trim())) return false;
+
+    const membershipOption = MEMBERSHIP_FILTER_SELECT.value;
+    if (membershipOption === "members-only" && entry.get("member_until") < new Date()) return false;
+    else if (membershipOption === 'non-members-only' && entry.get("member_until") >= new Date()) return false;
+
+    const permissionOption = PERMISSION_FILTER_SELECT.value;
+    if (permissionOption !== "any" && !entry.get("permissions").includes(permissionOption)) return false;
+
+    return true;
+}
+
+function sortUsers(entries:DataView.Entry<UserInfo>[]):DataView.Entry<UserInfo>[] {
+    switch (USER_SORT_SELECT.value) {
+        case "name-asc": return entries.sort((a,b) => {
+            const aFullName = `${a.get("first_name")} ${a.get("family_name")}`;
+            const bFullName = `${b.get("first_name")} ${b.get("family_name")}`;
+            return aFullName.localeCompare(bFullName);
+        });
+        case "name-desc": return entries.sort((a,b) => {
+            const aFullName = `${a.get("first_name")} ${a.get("family_name")}`;
+            const bFullName = `${b.get("first_name")} ${b.get("family_name")}`;
+            return bFullName.localeCompare(aFullName);
+        });
+        case "created-at-asc": return entries.sort((a,b) => a.get("joined_at").getTime() - b.get("joined_at").getTime());
+        case "created-at-desc": return entries.sort((a,b) => b.get("joined_at").getTime() - a.get("joined_at").getTime());
+        case "member-until-asc": return entries.sort((a,b) => a.get("member_until").getTime() - b.get("member_until").getTime());
+        case "member-until-desc": return entries.sort((a,b) => b.get("member_until").getTime() - a.get("member_until").getTime());
+        case "num-permissions-asc": return entries.sort((a,b) => a.get("permissions").length - b.get("permissions").length);
+        case "num-permissions-desc": return entries.sort((a,b) => b.get("permissions").length - a.get("permissions").length);
+    }
+
+    throw new Error(`unknown sorting method: "${USER_SORT_SELECT.value}"`);
 }

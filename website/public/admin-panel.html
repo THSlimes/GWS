@@ -19,10 +19,40 @@
                 <!-- filled in by script -->
             </div>
 
-            <div id="accounts-panel" class="panel" hidden>
+            <div id="users-panel" class="panel" hidden>
                 <h1>Accounts</h1>
-                <div id="accounts-list" class="flex-rows center-content">
-                    <div class="search-options"></div>
+                <div id="users-list" class="flex-rows center-content">
+                    <div id="users-search-options" class="flex-columns main-axis-space-evenly cross-axis-center">
+                        <div class="flex-columns cross-axis-center in-section-gap" title="Zoeken op naam">
+                            <p class="icon">filter_list</p>
+                            <input type="text" id="users-filter-name" placeholder="Naam...">
+                        </div>
+                        <div class="flex-columns cross-axis-center in-section-gap" title="Zoeken op lidmaatschapsstatus">
+                            <p class="icon">credit_card_heart</p>
+                            <select id="users-filter-membership-status">
+                                <option value="both">Leden en niet-leden</option>
+                                <option value="members-only">Alleen leden</option>
+                                <option value="non-members-only">Alleen niet-leden</option>
+                            </select>
+                        </div>
+                        <div class="flex-columns cross-axis-center in-section-gap" title="Zoeken op machtigingen">
+                            <p class="icon">label</p>
+                            <select id="users-filter-permissions"></select>
+                        </div>
+                        <div class="flex-columns cross-axis-center in-section-gap" title="Sorteren">
+                            <p class="icon">swap_vert</p>
+                            <select id="users-filter-sort">
+                                <option value="name-asc">Naam (A→Z)</option>
+                                <option value="name-desc">Naam (Z→A)</option>
+                                <option value="created-at-asc">Toevoeging (oplopend)</option>
+                                <option value="created-at-desc">Toevoeging (aflopend)</option>
+                                <option value="member-until-asc">Lidmaatschap t/m (oplopend)</option>
+                                <option value="member-until-desc">Lidmaatschap t/m (aflopend)</option>
+                                <option value="num-permissions-asc">Aantal machtigingen (oplopend)</option>
+                                <option value="num-permissions-desc">Aantal machtigingen (aflopend)</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="list flex-rows">
                         <div class="entry column-labels">
                             <h4 class="center-content">ID</h4>
