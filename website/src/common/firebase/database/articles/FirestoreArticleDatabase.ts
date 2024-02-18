@@ -1,4 +1,4 @@
-import { FirestoreDataConverter, QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, doc, documentId, getCountFromServer, getDocs, limit, orderBy, query, where, writeBatch } from "@firebase/firestore";
+import { FirestoreDataConverter, QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, doc, documentId, getCountFromServer, getDoc, getDocs, limit, orderBy, query, where, writeBatch } from "@firebase/firestore";
 import ArticleDatabase, { ArticleQueryFilter, ArticleInfo } from "./ArticleDatabase";
 import { DB } from "../../init-firebase";
 
@@ -57,9 +57,13 @@ export class FirestoreArticleDatabase extends ArticleDatabase {
     }
 
     public getById(id:string) {
-        return new Promise<ArticleInfo | undefined>(async (resolve, reject) => {
-            this.getArticles({ id })
-            .then(articles => resolve(articles.length > 0 ? articles[0] : undefined))
+        return new Promise<ArticleInfo|undefined>((resolve, reject) => {
+            const docRef = doc(this.COLLECTION, id);
+            getDoc(docRef)
+            .then(snapshot => {
+                if (snapshot.exists()) resolve(snapshot.data());
+                else resolve(undefined);
+            })
             .catch(reject);
         });
     }

@@ -7,7 +7,7 @@ function opposite(order:SortingOrder):SortingOrder {
     return order === "ascending" ? "descending" : "ascending";
 }
 
-type NonTimedArticleQueryFilter = Omit<ArticleQueryFilter, "sortByCreatedAt"|"before"|"after">;
+type NonTimedArticleQueryFilter = Omit<ArticleQueryFilter, "sortByCreatedAt"|"before"|"after"|"limit">;
 
 interface PageInfo {
     index: number,

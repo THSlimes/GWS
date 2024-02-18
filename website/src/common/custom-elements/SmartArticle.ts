@@ -1,9 +1,9 @@
 import getErrorMessage from "../firebase/authentication/error-messages";
 import { checkPermissions } from "../firebase/authentication/permission-based-redirect";
 import Permission from "../firebase/database/Permission";
-import { ArticleInfo } from "../firebase/database/articles/ArticleDatabase";
+import ArticleDatabase, { ArticleInfo } from "../firebase/database/articles/ArticleDatabase";
 import ElementFactory from "../html-element-factory/ElementFactory";
-import { showError, showSuccess, showWarning } from "../ui/info-messages";
+import { showError, showMessage, showSuccess, showWarning } from "../ui/info-messages";
 import DateUtil from "../util/DateUtil";
 import { HasSections } from "../util/ElementUtil";
 import NodeUtil from "../util/NodeUtil";
@@ -32,7 +32,7 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
         "medium": 50,
         "low": 30
     };
-    public static LOD_HIDDEN_ELEMENT_TYPES:Record<ArticleLOD, string[]> = {
+    private static LOD_HIDDEN_ELEMENT_TYPES:Record<ArticleLOD, string[]> = {
         full: [],
         medium: ["IMG", "MULTISOURCE-IMAGE", "MULTISOURCE-ATTACHMENT", "UL", "OL"],
         low: ["H1", "H2", "H3", "H4", "H5", "H6", "IMG", "MULTISOURCE-IMAGE", "MULTISOURCE-ATTACHMENT", "UL", "OL"]
@@ -183,7 +183,7 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
         }
     }
 
-    private static getLinkTo(article:ArticleInfo|string, editMode=false):string {
+    public static getLinkTo(article:ArticleInfo|string, editMode=false):string {
         if (article instanceof ArticleInfo) article = article.id;
 
         let out = `${location.origin}/article.html?id=${article}`;
@@ -196,13 +196,26 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
 
 window.addEventListener("DOMContentLoaded", () => customElements.define("smart-article", SmartArticle, {extends: "article"}));
 
-export class EditableSmartArticle extends SmartArticle implements HasSections<"category"|"showOnHomepage"|"onlyForMembers"> {
+export class EditableSmartArticle extends SmartArticle implements HasSections<"category"|"showOnHomepage"|"onlyForMembers"|"saveButton"> {
     
     public heading!:HTMLInputElement;
     public body!:RichTextInput;
     public category!:HTMLInputElement;
     public showOnHomepage!:Switch;
     public onlyForMembers!:Switch;
+    public saveButton!:HTMLParagraphElement;
+
+    private readonly saveAsNew:boolean;
+    public onSave:(newArticle:ArticleInfo)=>void = () => {};
+
+    constructor(articleInfo:ArticleInfo, lod:ArticleLOD, saveAsNew=false) {
+        super(articleInfo, lod);
+
+        if (this.saveAsNew = saveAsNew) {
+            this.saveButton.textContent = "post_add";
+            this.saveButton.title = "Bericht plaatsen";
+        }
+    }
 
     initElement(): void {
         this.style.display = "flex";
@@ -247,17 +260,24 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
         this.quickActions = this.appendChild( // quick-actions
             ElementFactory.div(undefined, "quick-actions", "flex-columns", "cross-axis-center")
                 .children(
-                    ElementFactory.p("save_as")
+                    this.saveButton = ElementFactory.p("save_as")
                         .id("save-changes-button")
                         .class("icon", "click-action")
                         .tooltip("Wijzigingen opslaan")
                         .on("click", (ev, self) => {
-
                             if (!this.heading.value.trim()) showError("Koptitel is leeg.");
-                            else { // all valid, save to DB
+                            else {
+
+                            }
+                            const heading = this.heading.value.trim();
+                            const idPromise = this.saveAsNew ?
+                                EditableSmartArticle.findFreeId(this.article.sourceDB, heading) :
+                                new Promise<string>(resolve => resolve(this.article.id));
+
+                            idPromise.then(id => {
                                 const newArticle = new ArticleInfo(
                                     this.article.sourceDB,
-                                    this.article.id,
+                                    id,
                                     this.heading.value.trim(),
                                     this.body.value,
                                     this.article.created_at,
@@ -269,11 +289,15 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
                                 this.article.sourceDB.write(newArticle)
                                 .then(() => {
                                     showSuccess("Wijzigingen opgeslagen!");
+                                    this.onSave(newArticle);
                                     this.replaceWith(new SmartArticle(newArticle, this.lod));
                                 })
                                 .catch(err => showError(getErrorMessage(err)));
-                            }
-                        }),
+
+                            })
+                            .catch(err => showMessage(getErrorMessage(err)));
+                        })
+                        .make(),
                     ElementFactory.p("backspace")
                         .id("cancel-edit-button")
                         .class("icon", "click-action")
@@ -285,6 +309,42 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
                 .make()
         );
 
+    }
+
+    private static readonly ALPHANUMERIC_REGEX = /[a-zA-Z0-9]/;
+    private static findFreeId(db:ArticleDatabase, heading:string):Promise<string> {
+
+        const words:string[] = [];
+        let word = "";
+        for (let i = 0; i < heading.length; i ++) {
+            const c = heading[i];
+
+            if (this.ALPHANUMERIC_REGEX.test(c)) word += c;
+            else {
+                if (word.length) words.push(word);
+                word = "";
+            }
+        }
+        if (word.length) words.push(word);
+
+        const base = words.join('-');
+
+        /** Iterates over number articles with the same id to find a free one. */
+        function findN(base:string, n=0):Promise<string> {
+            return new Promise((resolve, reject) => {
+                const id = base + (n ? `-${n}` : "");
+                db.getById(id)
+                .then(res => {
+                    if (res) findN(base, n + 1) // id already exists, try next n
+                        .then(resolve)
+                        .catch(reject);
+                    else resolve(id);
+                })
+                .catch(reject);
+            });
+        }
+
+        return findN(base);
     }
 
 }
