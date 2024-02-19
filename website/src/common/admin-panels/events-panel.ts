@@ -82,6 +82,7 @@ let REGISTRATION_END_DATE_INPUT:HTMLInputElement;
 let REGISTRATION_END_TIME_INPUT:HTMLInputElement;
 
 let CAPACITY_INPUT:HTMLInputElement;
+let REQUIRES_PAYMENT_SWITCH:Switch;
 
 let REGISTRATION_FEEDBACK:HTMLDivElement;
 
@@ -128,6 +129,7 @@ function getNewEvent():EventInfo {
             USE_COLOR_SWITCH.value ? COLOR_INPUT.value as HexColor : undefined,
             [getStartDate(), getEndDate()],
             {},
+            REQUIRES_PAYMENT_SWITCH.value,
             CAPACITY_INPUT.valueAsNumber,
             [getRegistrationStartDate(), getRegistrationEndDate()]
         );
@@ -168,6 +170,7 @@ window.addEventListener("DOMContentLoaded", () => { // getting elements from pag
     REGISTRATION_END_DATE_INPUT = document.getElementById("new-event-registration-end-date") as HTMLInputElement;
     REGISTRATION_END_TIME_INPUT = document.getElementById("new-event-registration-end-time") as HTMLInputElement;
     CAPACITY_INPUT = document.getElementById("new-event-capacity") as HTMLInputElement;
+    REQUIRES_PAYMENT_SWITCH = document.getElementById("new-event-requires-payment") as Switch;
     REGISTRATION_FEEDBACK = document.getElementById("new-event-registration-feedback") as HTMLDivElement;
 
     ADD_NEW_EVENT_BUTTON = document.getElementById("add-new-event-button") as HTMLButtonElement;

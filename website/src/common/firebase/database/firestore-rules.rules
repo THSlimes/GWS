@@ -48,7 +48,7 @@ service cloud.firestore {
         }
 
         match /users/{userId} {
-            allow get : if request.auth.uid == userId ? hasPermissions(["READ_OWN_USER_INFO"]) : hasPermissions(["READ_OTHER_USER_INFO"]);
+            allow get : if request.auth != null && request.auth.uid == userId ? hasPermissions(["READ_OWN_USER_INFO"]) : hasPermissions(["READ_OTHER_USER_INFO"]);
             allow list : if hasPermissions(["READ_OWN_USER_INFO", "READ_OTHER_USER_INFO"]);
             allow update : if request.auth.uid == userId ?
                 (hasPermissions(["UPDATE_OWN_USER_INFO"]) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(["permissions"]) || hasPermissions(["UPDATE_OWN_PERMISSIONS"]))) :

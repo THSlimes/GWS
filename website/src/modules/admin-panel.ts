@@ -19,12 +19,12 @@ const PANEL_CONFIG:Record<PanelId, { icon:string, label:string, default?:true, s
         icon: "group",
         label: "Accounts",
         selectCallback: initUsersPanel,
-        default: true
     },
     "events-panel": {
         icon: "calendar_month",
         label: "Activiteiten",
         selectCallback: initEventsPanel,
+        default: true
     },
     "messages-panel": {
         icon: "mail",

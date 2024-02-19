@@ -74,6 +74,7 @@ export class RegisterableEventInfo extends EventInfo {
     public readonly capacity?:number;
     public readonly can_register_from?:Date;
     public readonly can_register_until?:Date;
+    public readonly requires_payment:boolean;
 
     constructor(
         sourceDB:EventDatabase,
@@ -85,12 +86,14 @@ export class RegisterableEventInfo extends EventInfo {
         timespan:TimeSpan,
 
         registrations:Record<string,string>,
+        requires_payment:boolean,
         capacity?:number,
-        registration_period?:OpenTimespan
+        registration_period?:OpenTimespan,
     ) {
-        super(sourceDB,id,name,description,category,color,timespan);
+        super(sourceDB, id, name, description, category, color, timespan);
 
         this.registrations = registrations;
+        this.requires_payment = requires_payment
         this.capacity = capacity;
         [this.can_register_from,this.can_register_until] = registration_period ?? [];
     }

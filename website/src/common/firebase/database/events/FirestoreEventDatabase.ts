@@ -1,6 +1,6 @@
-import { FirestoreDataConverter, QueryCompositeFilterConstraint, QueryConstraint, QueryDocumentSnapshot, QueryFilterConstraint, QueryNonFilterConstraint, Timestamp, and, collection, collectionGroup, deleteDoc, doc, documentId, getCountFromServer, getDoc, getDocs, limit, or, orderBy, query, setDoc, updateDoc, where, writeBatch } from "@firebase/firestore";
+import { FirestoreDataConverter, QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, doc, documentId, getCountFromServer, getDoc, getDocs, limit, query, updateDoc, where, writeBatch } from "@firebase/firestore";
 import EventDatabase, { EventQueryFilter, RegisterableEventInfo, EventInfo } from "./EventDatabase";
-import { AUTH, DB, onAuth } from "../../init-firebase";
+import { DB, onAuth } from "../../init-firebase";
 import { HexColor } from "../../../util/StyleUtil";
 import { FirebaseError } from "firebase/app";
 
@@ -18,7 +18,8 @@ type RegisterableDBEvent = NonRegisterableDBEvent & {
     capacity?:number,
     can_register_from?:Timestamp,
     can_register_until?:Timestamp,
-    registrations:Record<string,string>
+    registrations:Record<string,string>,
+    requires_payment:boolean
 };
 
 type DBEvent = NonRegisterableDBEvent | RegisterableDBEvent;
@@ -34,6 +35,7 @@ function toFirestore(event:EventInfo):DBEvent {
         category: event.category,
         ...(event.color && { color: event.color }),
         registrations: event.registrations,
+        requires_payment: event.requires_payment,
         capacity: event.capacity,
         starts_at: Timestamp.fromDate(event.starts_at),
         ends_at: Timestamp.fromDate(event.ends_at),
@@ -64,6 +66,7 @@ function createConverter(db:EventDatabase):FirestoreDataConverter<EventInfo|Regi
                 data.color,
                 [data.starts_at.toDate(), data.ends_at.toDate()],
                 data.registrations,
+                data.requires_payment,
                 data.capacity,
                 [data.can_register_from?.toDate(), data.can_register_until?.toDate()]
             );
@@ -104,11 +107,12 @@ export default class FirestoreEventDatebase extends EventDatabase {
     }
 
     getById(id: string): Promise<EventInfo | undefined> {
-        return new Promise((resolve, reject) => {
-            this.getEvents({id})
-            .then(e => {
-                if (e.length === 0) resolve(undefined); // not found
-                else resolve(e[0]); // found
+        return new Promise<EventInfo|undefined>((resolve, reject) => {
+            const docRef = doc(this.collection, id);
+            getDoc(docRef)
+            .then(snapshot => {
+                if (snapshot.exists()) resolve(snapshot.data());
+                else resolve(undefined);
             })
             .catch(reject);
         });

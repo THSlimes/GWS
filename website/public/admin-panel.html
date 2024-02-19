@@ -21,7 +21,7 @@
 
             <div id="users-panel" class="panel" hidden>
                 <h1>Accounts</h1>
-                <div id="users-list" class="flex-rows center-content">
+                <div id="users-list" class="flex-rows center-content section-gap">
                     <div id="users-search-options" class="flex-columns main-axis-space-evenly cross-axis-center">
                         <div class="flex-columns cross-axis-center in-section-gap" title="Zoeken op naam">
                             <p class="icon">filter_list</p>
@@ -162,6 +162,11 @@
                                 <div>
                                     <label for="new-event-capacity">Aantal plekken</label>
                                     <input type="number" name="new-event-capacity" id="new-event-capacity" value="20" min="0" step="0" placeholder="Aantal plekken">
+                                </div>
+
+                                <div class="flex-columns cross-axis-center in-section-gap">
+                                    <label for="new-event-requires-payment">Inschrijving kost geld</label>
+                                    <switch-input id="new-event-requires-payment"></switch-input>
                                 </div>
 
                             </div>

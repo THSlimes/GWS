@@ -13,6 +13,7 @@ const USER_DB: UserDatabase = new FirestoreUserDatabase();
 
 type PermissionCheckResults<P extends Permission> = {[key in P]:boolean };
 function hasPermissions<P extends Permission>(perm:P[], userId:string, useCache:boolean):Promise<PermissionCheckResults<P>> {
+    
     const userPermsPromise = new Promise<Permission[]>((resolve,reject) => { // get user permissions
         if (useCache) {
             const cachedUserPerms = Cache.get(`permissions-${userId}`);

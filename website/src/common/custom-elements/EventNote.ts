@@ -6,7 +6,7 @@ import getErrorMessage from "../firebase/authentication/error-messages";
 import { onAuth } from "../firebase/init-firebase";
 import ColorUtil from "../util/ColorUtil";
 import DateUtil from "../util/DateUtil";
-import { checkPermissions, onPermissionCheck } from "../firebase/authentication/permission-based-redirect";
+import { onPermissionCheck } from "../firebase/authentication/permission-based-redirect";
 import Permission from "../firebase/database/Permission";
 import EventCalendar from "./EventCalendar";
 import URLUtil from "../util/URLUtil";
@@ -18,12 +18,13 @@ import RichTextSerializer from "./rich-text/RichTextSerializer";
 
 /** Amount of detail present in an EventNote element. */
 export type DetailLevel = "full" | "high" | "normal" | "low";
-type EventNoteSection = "name" | "timespan" | "description" | "registerButton" | "quickActions";
-const VISIBILITY_AT_LOD:Record<DetailLevel, Record<EventNoteSection, boolean>> = {
-    full: { name: true, timespan: true, description: true, registerButton: true, quickActions: true },
-    high: { name: true, timespan: true, description: true, registerButton: false, quickActions: true },
-    normal: { name: true, timespan: true, description: false, registerButton: false, quickActions: false },
-    low: { name: true, timespan: false, description: false, registerButton: false, quickActions: false }
+type EventNoteSection = "name" | "timespan" | "description" | "paymentDisclaimer" | "allowsPaymentSwitch" | "registerButton" | "quickActions";
+const ALL_EVENT_NOTE_SECTIONS:EventNoteSection[] = ["name", "timespan", "description", "paymentDisclaimer", "allowsPaymentSwitch", "registerButton", "quickActions"];
+const VISIBLE_AT_LOD:Record<DetailLevel, EventNoteSection[]> = {
+    full: ["name", "timespan", "description", "paymentDisclaimer", "allowsPaymentSwitch", "registerButton", "quickActions"],
+    high: ["name", "timespan", "description", "quickActions"],
+    normal: ["name", "timespan"],
+    low: ["name"]
 };
 
 export class EventNote extends HTMLElement implements HasSections<EventNoteSection> {
@@ -43,24 +44,45 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
     }
 
     /** Gives a [text,icon,disabled] button state based on the events state. */
-    private static getRegisterButtonState(isLoggedIn:boolean, isRegistered:boolean, e:RegisterableEventInfo):[string,string,boolean] {
-        const now = new Date();
-        if (e.ends_at <= now) return ["Activiteit is al voorbij", "event_busy", true]; // already ended
-        else if (e.starts_at <= now) return ["Activiteit is al gestart", "calendar_today", true]; // already started
-        else if (e.can_register_from && now < e.can_register_from) { // before registration period
-            return [`Inschrijving start op ${DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(e.can_register_from)}`, "calendar_clock", true];
+    private refreshRegisterButton() {
+        if (this.event instanceof RegisterableEventInfo) {
+            const regEvent = this.event;
+            
+            onAuth()
+            .then(user => {
+                const isLoggedIn = user !== null;
+                const isRegistered = user !== null && regEvent.isRegistered(user.uid);
+                const allowsPayment = !regEvent.requires_payment || isRegistered || this.allowsPaymentSwitch!.value;
+
+                let state:[string,string,boolean];
+
+                const now = new Date();
+                if (regEvent.ends_at <= now) state = ["event_busy", "Activiteit is al voorbij", true]; // already ended
+                else if (regEvent.starts_at <= now) state = ["calendar_today", "Activiteit is al gestart", true]; // already started
+                else if (regEvent.can_register_from && now < regEvent.can_register_from) { // before registration period
+                    state = ["calendar_clock", `Inschrijving start op ${DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(regEvent.can_register_from)}`, true];
+                }
+                else if (regEvent.can_register_until && regEvent.can_register_until < now) { // after registration period
+                    state = ["event_upcoming", "Inschrijving is gesloten", true];
+                }
+                else if (isRegistered) state = EventNote.CAN_DEREGISTER ?
+                    ["free_cancellation", "Uitschrijven", !allowsPayment] :
+                    ["event_available", "Ingeschreven", true];
+                else if (regEvent.isFull()) state = ["event_busy", "Activiteit zit vol", true];
+                else if (!isLoggedIn) state = ["login", "Log in om je in te schrijven.", false];
+                else state = EventNote.CAN_REGISTER ?
+                    ["calendar_add_on", "Inschrijven", !allowsPayment] :
+                    ["event_busy", "Inschrijving niet mogelijk", true];
+
+                this.registerButton!.firstChild!.textContent = state[0];
+                this.registerButton!.children[1]!.textContent = state[1];
+                this.registerButton!.disabled = state[2];
+
+                if (this.paymentDisclaimer && VISIBLE_AT_LOD[this.lod].includes("paymentDisclaimer")) this.paymentDisclaimer.hidden = isRegistered;
+            })
+            .catch(console.error);
         }
-        else if (e.can_register_until && e.can_register_until < now) { // after registration period
-            return ["Inschrijving is gesloten", "event_upcoming", true];
-        }
-        else if (isRegistered) return EventNote.CAN_DEREGISTER ?
-            ["Uitschrijven", "free_cancellation", false] :
-            ["Ingeschreven", "event_available", true];
-        else if (e.isFull()) return ["Activiteit zit vol", "event_busy", true];
-        else if (!isLoggedIn) return ["Log in om je in te schrijven.", "login", false];
-        else return EventNote.CAN_REGISTER ?
-            ["Inschrijven", "calendar_add_on", false] :
-            ["Inschrijving niet mogelijk", "event_busy", true];
+
     }
 
     public readonly event:EventInfo;
@@ -68,12 +90,11 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
     public set lod(newLod:DetailLevel) {
         this._lod = newLod;
         this.setAttribute("detail", newLod);
-        const lod = VISIBILITY_AT_LOD[newLod];
+        const visibleSections = VISIBLE_AT_LOD[newLod];
         
-        for (const k in lod) {
-            const sectionName = k as EventNoteSection;
+        for (const sectionName of ALL_EVENT_NOTE_SECTIONS) {
             const elem = this[sectionName];
-            if (elem) elem.hidden = !lod[sectionName];
+            if (elem) elem.hidden = !visibleSections.includes(sectionName);
         }
     }
     public get lod() { return this._lod; }
@@ -82,7 +103,9 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
     public name:HTMLElement|null = null;
     public timespan:HTMLElement|null = null;
     public description:HTMLElement|null = null;
-    public registerButton:HTMLElement|null = null;
+    public paymentDisclaimer:HTMLDivElement|null = null;
+    public allowsPaymentSwitch:Switch|null = null;
+    public registerButton:HTMLButtonElement|null = null;
     public quickActions:HTMLDivElement|null = null;
 
     constructor(event: EventInfo, lod:DetailLevel="normal", expanded=false) {
@@ -132,41 +155,47 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
         if (this.event instanceof RegisterableEventInfo) { // only add if registerable
             const regEvent = this.event;
 
-            this.registerButton = this.appendChild(
-                ElementFactory.button()
-                    .class("register-button", "center-content", "main-axis-space-between")
-                    .children(
-                        ElementFactory.h4("person_add").class("icon"),
-                        ElementFactory.h4("Inschrijven")
-                    )
-                    .onMake(self => {
-                        self.disabled = true;
-                        onAuth()
-                        .then(user => {
-                            const buttonState = EventNote.getRegisterButtonState(user !== null, (user !== null) && regEvent.isRegistered(user.uid), regEvent);
-                            self.children[1].textContent = buttonState[0];
-                            self.children[0].textContent = buttonState[1];
-                            self.disabled = buttonState[2];
-                        });
-                    })
-                    .on("click", (ev,self) => {
-                        self.disabled = true;
-                        onAuth()
-                        .then(user => {
-                            if (user === null) location.href = URLUtil.createLinkBackURL("./login.html").toString();
-                            else regEvent.toggleRegistered(user.uid)
-                                .then(isReg => {
-                                    const buttonState = EventNote.getRegisterButtonState(true, isReg, regEvent);
-                                    self.children[1].textContent = buttonState[0];
-                                    self.children[0].textContent = buttonState[1];
-                                    self.disabled = buttonState[2];
+            this.allowsPaymentSwitch = new Switch(!regEvent.requires_payment);
+            this.allowsPaymentSwitch.addEventListener("input", () => this.refreshRegisterButton());
 
-                                })
-                                .catch(err => showError(getErrorMessage(err)));
-                        });
-                    })
-                    .make()
-            );
+            this.registerButton = ElementFactory.button()
+                .class("register-button", "center-content", "main-axis-space-between")
+                .children(
+                    ElementFactory.h4("calendar_add").class("icon"),
+                    ElementFactory.h4("Inschrijven")
+                )
+                .onMake(self => {
+                    self.disabled = true;
+                    this.refreshRegisterButton();
+                })
+                .on("click", (ev,self) => {
+                    self.disabled = true;
+                    onAuth()
+                    .then(user => {
+                        if (user === null) location.href = URLUtil.createLinkBackURL("./login.html").toString();
+                        else regEvent.toggleRegistered(user.uid)
+                            .then(isReg => this.refreshRegisterButton())
+                            .catch(err => showError(getErrorMessage(err)));
+                    });
+                })
+                .make();
+
+            if (regEvent.requires_payment) {
+                this.appendChild(
+                    ElementFactory.div(undefined, "flex-rows", "cross-axis-center")
+                        .children(
+                            this.paymentDisclaimer = ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
+                                .children(
+                                    ElementFactory.p("Ik ga akkoord met de kosten voor deze activiteit."),
+                                    this.allowsPaymentSwitch
+                                )
+                                .make(),
+                            this.registerButton
+                        )
+                        .make()
+                );
+            }
+            else this.appendChild(this.registerButton);
         }
         
         this.quickActions = this.appendChild(

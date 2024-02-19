@@ -1,4 +1,4 @@
-import { FirestoreDataConverter, QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, doc, documentId, getCountFromServer, getDocs, limit, query, where, writeBatch } from "@firebase/firestore";
+import { FirestoreDataConverter, QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, doc, documentId, getCountFromServer, getDoc, getDocs, limit, query, where, writeBatch } from "@firebase/firestore";
 import Permission from "../Permission";
 import UserDatabase, { UserQueryFilter, UserInfo } from "./UserDatabase";
 import { DB } from "../../init-firebase";
@@ -46,10 +46,14 @@ export class FirestoreUserDatabase extends UserDatabase {
         return FirestoreUserDatabase.getUsers({...options}, true);
     }
     
-    getById(id: string): Promise<UserInfo | undefined> {
-        return new Promise((resolve, reject) => {
-            FirestoreUserDatabase.getUsers({limit:1, id})
-            .then(users => resolve(users.length > 0 ? users[0] : undefined))
+    getById(id: string): Promise<UserInfo|undefined> {
+        return new Promise<UserInfo|undefined>((resolve, reject) => {
+            const docRef = doc(FirestoreUserDatabase.COLLECTION, id);
+            getDoc(docRef)
+            .then(snapshot => {
+                if (snapshot.exists()) resolve(snapshot.data());
+                else resolve(undefined);
+            })
             .catch(reject);
         });
     }
@@ -105,7 +109,10 @@ export class FirestoreUserDatabase extends UserDatabase {
                     out.forEach(user => Cache.set(`permissions-${user.id}`, user.permissions));
                     resolve(out);
                 })
-                .catch(reject);
+                .catch(err => {
+                    console.log("failed to get user", options, err);
+                    
+                });
         });
     }
 
