@@ -3,6 +3,7 @@ import DateUtil from "../../../util/DateUtil";
 import StringUtil from "../../../util/StringUtil";
 import { Opt } from "../../../util/UtilTypes";
 import Database, { Info, QueryFilter } from "../Database";
+import { UserInfo } from "../users/UserDatabase";
 
 type TimeSpan = [Date, Date];
 type OpenTimespan = [Date|undefined, Date|undefined];
@@ -118,11 +119,11 @@ export class RegisterableEventInfo extends EventInfo {
     }
 
     /** Registers the current user for this event. */
-    public register():Promise<void> {
+    public register(comment?:string):Promise<void> {
         return new Promise((resolve,reject) => {
-            this.sourceDB.registerFor(this.id)
-            .then(newRegistrations => {
-                for (const uid in newRegistrations) this.registrations[uid] = newRegistrations[uid];
+            this.sourceDB.registerFor(this, comment)
+            .then(([id, name]) => {
+                this.registrations[id] = name;
                 resolve();
             })
             .catch(reject);
@@ -132,27 +133,39 @@ export class RegisterableEventInfo extends EventInfo {
     /** De-registers the current user from this event. */
     public deregister():Promise<void> {
         return new Promise((resolve,reject) => {
-            this.sourceDB.deregisterFor(this.id)
-            .then(newRegistrations => {
-                for (const uid in this.registrations) delete this.registrations[uid];
-                for (const uid in newRegistrations) this.registrations[uid] = newRegistrations[uid];
+            this.sourceDB.deregisterFor(this)
+            .then(id => {
+                delete this.registrations[id];
                 resolve();
             })
             .catch(reject);
         });
     }
 
-    public toggleRegistered(userId:string):Promise<boolean> {
+    public toggleRegistered(userId:string, comment?:string):Promise<boolean> {
         return new Promise((resolve,reject) => {
             if (this.isRegistered(userId)) this.deregister()
                 .then(() => resolve(false))
                 .catch(reject);
-            else this.register()
+            else this.register(comment)
                 .then(() => resolve(true))
                 .catch(reject);
         });
     }
 
+    public getComments():Promise<EventComment[]> {
+        return new Promise((resolve, reject) => {
+            this.sourceDB.getCommentsFor(this)
+            .then(res => resolve(Object.values(res)))
+            .catch(reject);
+        });
+    }
+
+}
+
+export interface EventComment {
+    body:string,
+    created_at:Date
 }
 
 /** EventFilterOptions specify conditions which are supposed to be met by an event. */
@@ -173,7 +186,14 @@ export default abstract class EventDatabase extends Database<EventInfo> {
 
     abstract getByCategory(category: string, options?: Omit<EventQueryFilter, "category">): Promise<EventInfo[]>;
 
-    abstract registerFor(eventId:string):Promise<Record<string,string>>;
-    abstract deregisterFor(eventId:string):Promise<Record<string,string>>;
+    abstract registerFor(event:RegisterableEventInfo, comment?:string):Promise<[string,string]>;
+    abstract deregisterFor(event:RegisterableEventInfo):Promise<string>;
+
+    /**
+     * Retrieves the comments of an event.
+     * @param event event to fetch comments for
+     * @returns a Promise which resolves with a mapping from user ids to their comment
+     */
+    abstract getCommentsFor(event:RegisterableEventInfo):Promise<Record<string,EventComment>>;
 
 }

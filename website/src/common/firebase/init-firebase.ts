@@ -18,11 +18,14 @@ Object.freeze(FIREBASE_CONFIG);
 const FIREBASE_APP = initializeApp(FIREBASE_CONFIG);
 export default FIREBASE_APP;
 
-export const DB = getFirestore(FIREBASE_APP); // initialize Firebase Firestore
+export const FIRESTORE = getFirestore(FIREBASE_APP); // initialize Firebase Firestore
 
-export const AUTH = getAuth(FIREBASE_APP);
-AUTH.onAuthStateChanged(user => {
-    if (user === null) Cache.remove("is-logged-in");
+export const FIREBASE_AUTH = getAuth(FIREBASE_APP);
+FIREBASE_AUTH.onAuthStateChanged(user => {
+    if (user === null) {
+        Cache.remove("is-logged-in");
+        Cache.remove("own-id");
+    }
     else {
         Cache.set("is-logged-in", true);
         Cache.set("own-id", user.uid);
@@ -31,8 +34,8 @@ AUTH.onAuthStateChanged(user => {
 
 export function onAuth():Promise<User|null> {
     return new Promise((resolve,reject) => {
-        AUTH.authStateReady()
-        .then(() => resolve(AUTH.currentUser))
+        FIREBASE_AUTH.authStateReady()
+        .then(() => resolve(FIREBASE_AUTH.currentUser))
         .catch(reject);
     });
 }

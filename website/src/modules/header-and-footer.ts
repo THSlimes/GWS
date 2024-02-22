@@ -3,7 +3,7 @@ import $ from "jquery";
 import FolderElement from "../common/custom-elements/FolderElement";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
 import Responsive, { Viewport } from "../common/ui/Responsive";
-import { AUTH, onAuth, checkLoginState } from "../common/firebase/init-firebase";
+import { FIREBASE_AUTH, onAuth, checkLoginState } from "../common/firebase/init-firebase";
 import { showError } from "../common/ui/info-messages";
 import { checkPermissions, onPermissionCheck } from "../common/firebase/authentication/permission-based-redirect";
 import Permission from "../common/firebase/database/Permission";
@@ -161,19 +161,19 @@ function createHeader(config:NavbarConfig):HTMLElement {
                                 .on("click", () => location.href = "/login.html")
                                 .onMake(self => { // hide login button when already logged in
                                     checkLoginState(loggedIn => self.style.display = loggedIn ? "none" : "", true);
-                                    AUTH.onAuthStateChanged(user => self.style.display = user ? "none" : "");
+                                    FIREBASE_AUTH.onAuthStateChanged(user => self.style.display = user ? "none" : "");
                                 }),
                             ElementFactory.p("logout")
                                 .class("icon", "click-action")
                                 .tooltip("Uitloggen")
                                 .on("click", () => {
-                                    AUTH.signOut();
+                                    FIREBASE_AUTH.signOut();
                                     Cache.remove("is-logged-in");
                                     location.reload();
                                 })
                                 .onMake(self => { // hide account button when not logged in
                                     checkLoginState(loggedIn => self.style.display = loggedIn ? "" : "none", true);
-                                    AUTH.onAuthStateChanged(user => self.style.display = user ? "" : "none");
+                                    FIREBASE_AUTH.onAuthStateChanged(user => self.style.display = user ? "" : "none");
                                 }),
                             ElementFactory.p("menu")
                                 .id("open-menu-button")

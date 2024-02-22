@@ -1,6 +1,6 @@
 import { FirestoreDataConverter, QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, doc, documentId, getCountFromServer, getDoc, getDocs, limit, orderBy, query, where, writeBatch } from "@firebase/firestore";
 import ArticleDatabase, { ArticleQueryFilter, ArticleInfo } from "./ArticleDatabase";
-import { DB } from "../../init-firebase";
+import { FIRESTORE } from "../../init-firebase";
 
 /** An article as it appears in the database. */
 type DBArticle = {
@@ -46,7 +46,7 @@ export class FirestoreArticleDatabase extends ArticleDatabase {
 
     private readonly converter = getArticleConverter(this);
     /** Reference to the collection of articles. */
-    private readonly COLLECTION = collection(DB, "articles").withConverter(this.converter);
+    private readonly COLLECTION = collection(FIRESTORE, "articles").withConverter(this.converter);
 
     public get(options:ArticleQueryFilter = {}) {
         return this.getArticles({ sortByCreatedAt: "descending", ...options });
@@ -88,8 +88,8 @@ export class FirestoreArticleDatabase extends ArticleDatabase {
 
     public doWrite(...records: ArticleInfo[]): Promise<number> {
         return new Promise((resolve,reject) => {
-            const batch = writeBatch(DB);
-            for (const rec of records) batch.set(doc(DB, "articles", rec.id), this.converter.toFirestore(rec));
+            const batch = writeBatch(FIRESTORE);
+            for (const rec of records) batch.set(doc(FIRESTORE, "articles", rec.id), this.converter.toFirestore(rec));
 
             batch.commit()
             .then(() => resolve(records.length))
@@ -100,8 +100,8 @@ export class FirestoreArticleDatabase extends ArticleDatabase {
 
     public doDelete(...records:ArticleInfo[]): Promise<number> {
         return new Promise((resolve, reject) => {
-            const batch = writeBatch(DB);
-            for (const rec of records) batch.delete(doc(DB, "articles", rec.id));
+            const batch = writeBatch(FIRESTORE);
+            for (const rec of records) batch.delete(doc(FIRESTORE, "articles", rec.id));
 
             batch.commit()
             .then(() => resolve(records.length))

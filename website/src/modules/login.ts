@@ -4,7 +4,7 @@ import "./header-and-footer";
 import "./create-split-view";
 
 import { UserCredential, browserLocalPersistence, browserSessionPersistence, signInWithEmailAndPassword } from "@firebase/auth";
-import { AUTH } from "../common/firebase/init-firebase";
+import { FIREBASE_AUTH } from "../common/firebase/init-firebase";
 import { showError, showWarning } from "../common/ui/info-messages";
 import getErrorMessage from "../common/firebase/authentication/error-messages";
 import { redirectIfLoggedIn } from "../common/firebase/authentication/auth-based-redirect";
@@ -15,9 +15,9 @@ redirectIfLoggedIn("/", true); // can't log in when already logged in
 
 function login(email:string, password:string, stayLoggedIn:boolean=false) {
     return new Promise<UserCredential>(async (resolve, reject) => {
-        AUTH.setPersistence(stayLoggedIn ? browserLocalPersistence : browserSessionPersistence) // set login persistance
+        FIREBASE_AUTH.setPersistence(stayLoggedIn ? browserLocalPersistence : browserSessionPersistence) // set login persistance
         .then(() => { // login
-            signInWithEmailAndPassword(AUTH, email, password)
+            signInWithEmailAndPassword(FIREBASE_AUTH, email, password)
             .then(resolve)
             .catch(reject);
         })
@@ -44,7 +44,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
             login(email, password, STAY_LOGGED_IN_CHECKBOX.checked)
             .then(userCred => {
-                AUTH.updateCurrentUser(userCred.user)
+                FIREBASE_AUTH.updateCurrentUser(userCred.user)
                 .then(() => {
                     Cache.set("is-logged-in", true);
                     const returnUrl = new URLSearchParams(window.location.search).get("return-to");

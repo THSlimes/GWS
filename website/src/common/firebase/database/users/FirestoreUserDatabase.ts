@@ -1,8 +1,9 @@
 import { FirestoreDataConverter, QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, doc, documentId, getCountFromServer, getDoc, getDocs, limit, query, where, writeBatch } from "@firebase/firestore";
 import Permission from "../Permission";
 import UserDatabase, { UserQueryFilter, UserInfo } from "./UserDatabase";
-import { DB } from "../../init-firebase";
+import { FIRESTORE, onAuth } from "../../init-firebase";
 import Cache from "../../../Cache";
+import ArrayUtil from "../../../util/ArrayUtil";
 
 /** A user as they're stored in the database. */
 type DBUser = {
@@ -36,7 +37,7 @@ const USER_CONVERTER:FirestoreDataConverter<UserInfo, DBUser> = {
 
 export class FirestoreUserDatabase extends UserDatabase {
 
-    private static readonly COLLECTION = collection(DB, "users").withConverter(USER_CONVERTER);
+    private static readonly COLLECTION = collection(FIRESTORE, "users").withConverter(USER_CONVERTER);
 
     get(options:UserQueryFilter = {}): Promise<UserInfo[]> {
         return FirestoreUserDatabase.getUsers({...options});
@@ -58,10 +59,45 @@ export class FirestoreUserDatabase extends UserDatabase {
         });
     }
 
+    /** @see https://firebase.google.com/docs/firestore/query-data/queries#query_limitations */
+    private static MAX_BATCH_SIZE = 30;
+    getByIds<S extends string>(...ids: S[]): Promise<{[id in S]?: UserInfo}> {
+        if (ids.length === 1) return new Promise((resolve, reject) => {
+            this.getById(ids[0])
+            .then(userInfo => {
+                const out:{[id in S]?: UserInfo} = {};
+                if (userInfo) out[ids[0]] = userInfo;
+                resolve(out);
+            })
+            .catch(reject);
+        });
+        else {
+            const batches = ArrayUtil.batch(ids, FirestoreUserDatabase.MAX_BATCH_SIZE);
+            const queries = batches.map(batch => query(FirestoreUserDatabase.COLLECTION, where(documentId(), "in", batch)));
+
+            return new Promise((resolve, reject) => {
+                Promise.all(queries.map(q => getDocs(q)))
+                .then(snapshots => {
+                    const out:{[id in S]?: UserInfo} = {};
+
+                    for (const snapshot of snapshots) {
+                        snapshot.forEach(docSnapshot => {
+                            const userInfo = docSnapshot.data();
+                            out[userInfo.id as S] = userInfo;
+                        });
+                    }
+
+                    resolve(out);
+                })
+                .catch(reject);
+            });
+        }
+    }
+
     public doWrite(...records: UserInfo[]): Promise<number> {
         return new Promise((resolve,reject) => {
-            const batch = writeBatch(DB);
-            for (const rec of records) batch.set(doc(DB, "users", rec.id), USER_CONVERTER.toFirestore(rec));
+            const batch = writeBatch(FIRESTORE);
+            for (const rec of records) batch.set(doc(FIRESTORE, "users", rec.id), USER_CONVERTER.toFirestore(rec));
 
             batch.commit()
             .then(() => resolve(records.length))
@@ -71,8 +107,8 @@ export class FirestoreUserDatabase extends UserDatabase {
 
     public doDelete(...records:UserInfo[]): Promise<number> {
         return new Promise((resolve, reject) => {
-            const batch = writeBatch(DB);
-            for (const rec of records) batch.delete(doc(DB, "users", rec.id));
+            const batch = writeBatch(FIRESTORE);
+            for (const rec of records) batch.delete(doc(FIRESTORE, "users", rec.id));
 
             batch.commit()
             .then(() => resolve(records.length))

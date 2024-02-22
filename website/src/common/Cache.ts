@@ -1,9 +1,10 @@
 import Permission from "./firebase/database/Permission";
+import { UserInfo } from "./firebase/database/users/UserDatabase";
 
 type CacheKeyMap = {
     "is-logged-in": true,
     "own-id": string,
-    [key:`permissions-${string}`]: Permission[];
+    [key:`permissions-${string}`]: Permission[]
 };
 type CacheKey = keyof CacheKeyMap;
 

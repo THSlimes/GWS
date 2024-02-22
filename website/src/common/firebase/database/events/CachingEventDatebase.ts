@@ -1,5 +1,5 @@
 import DateUtil from "../../../util/DateUtil";
-import EventDatabase, { EventQueryFilter, EventInfo } from "./EventDatabase";
+import EventDatabase, { EventQueryFilter, EventInfo, RegisterableEventInfo, EventComment } from "./EventDatabase";
 
 /**
  * A CachingEventDatabase is a type of EventDatabase which
@@ -97,12 +97,16 @@ export default class CachingEventDatebase extends EventDatabase {
         });
     }
 
-    registerFor(eventId: string): Promise<Record<string, string>> {
-        return this.relay.registerFor(eventId);
+    registerFor(event:RegisterableEventInfo, comment?:string):Promise<[string,string]> {
+        return this.relay.registerFor(event, comment);
     }
 
-    deregisterFor(eventId: string): Promise<Record<string, string>> {
-        return this.deregisterFor(eventId);
+    deregisterFor(event:RegisterableEventInfo):Promise<string> {
+        return this.relay.deregisterFor(event);
+    }
+
+    getCommentsFor(event:RegisterableEventInfo):Promise<Record<string, EventComment>> {
+        return this.relay.getCommentsFor(event);
     }
 
     public override set onWrite(newHandler:(...newRecords:EventInfo[])=>void) {

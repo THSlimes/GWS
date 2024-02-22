@@ -19,6 +19,9 @@ export class UserInfo extends Info {
         this.permissions = permissions;
     }
 
+    /** Combination of `this.first_name` and `this.family_name`. */
+    public get fullName() { return `${this.first_name} ${this.family_name}`; }
+
     public satisfies(options:UserQueryFilter):boolean {
         if (!super.satisfies(options)) return false;
         else if (options.has_permission) {
@@ -48,6 +51,7 @@ export default abstract class UserDatabase extends Database<UserInfo> {
 
     abstract get(options?:UserQueryFilter): Promise<UserInfo[]>;
     abstract count(options?:UserQueryFilter): Promise<number>;
+    abstract getByIds<S extends string>(...ids:S[]): Promise<{[id in S]?: UserInfo}>;
     abstract doWrite(...records: UserInfo[]): Promise<number>;
     abstract doDelete(...records: UserInfo[]): Promise<number>;
 

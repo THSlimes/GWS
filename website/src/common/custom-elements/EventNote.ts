@@ -18,10 +18,10 @@ import RichTextSerializer from "./rich-text/RichTextSerializer";
 
 /** Amount of detail present in an EventNote element. */
 export type DetailLevel = "full" | "high" | "normal" | "low";
-type EventNoteSection = "name" | "timespan" | "description" | "paymentDisclaimer" | "allowsPaymentSwitch" | "registerButton" | "quickActions";
-const ALL_EVENT_NOTE_SECTIONS:EventNoteSection[] = ["name", "timespan", "description", "paymentDisclaimer", "allowsPaymentSwitch", "registerButton", "quickActions"];
+type EventNoteSection = "name" | "timespan" | "description" | "paymentDisclaimer" | "allowsPaymentSwitch"| "commentBox" | "registerButton" | "quickActions";
+const ALL_EVENT_NOTE_SECTIONS:EventNoteSection[] = ["name", "timespan", "description", "paymentDisclaimer", "allowsPaymentSwitch", "commentBox", "registerButton", "quickActions"];
 const VISIBLE_AT_LOD:Record<DetailLevel, EventNoteSection[]> = {
-    full: ["name", "timespan", "description", "paymentDisclaimer", "allowsPaymentSwitch", "registerButton", "quickActions"],
+    full: ["name", "timespan", "description", "paymentDisclaimer", "allowsPaymentSwitch", "commentBox", "registerButton", "quickActions"],
     high: ["name", "timespan", "description", "quickActions"],
     normal: ["name", "timespan"],
     low: ["name"]
@@ -79,6 +79,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
                 this.registerButton!.disabled = state[2];
 
                 if (this.paymentDisclaimer && VISIBLE_AT_LOD[this.lod].includes("paymentDisclaimer")) this.paymentDisclaimer.hidden = isRegistered;
+                if (this.commentBox && VISIBLE_AT_LOD[this.lod].includes("commentBox")) this.commentBox.hidden = isRegistered;
             })
             .catch(console.error);
         }
@@ -105,6 +106,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
     public description:HTMLElement|null = null;
     public paymentDisclaimer:HTMLDivElement|null = null;
     public allowsPaymentSwitch:Switch|null = null;
+    public commentBox:HTMLTextAreaElement|null = null;
     public registerButton:HTMLButtonElement|null = null;
     public quickActions:HTMLDivElement|null = null;
 
@@ -145,7 +147,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
 
         // description
         this.description = this.appendChild(
-            ElementFactory.div(undefined, "body", "rich-text", "flex-rows", "in-section-gap")
+            ElementFactory.div(undefined, "description", "rich-text", "flex-rows", "in-section-gap")
                 .children(...RichTextSerializer.deserialize(this.event.description))
                 .make()
         );
@@ -157,6 +159,16 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
 
             this.allowsPaymentSwitch = new Switch(!regEvent.requires_payment);
             this.allowsPaymentSwitch.addEventListener("input", () => this.refreshRegisterButton());
+
+            this.commentBox = this.appendChild(
+                ElementFactory.textarea()
+                    .class("comment-box")
+                    .placeholder("Opmerking...")
+                    .maxLength(512)
+                    .spellcheck(true)
+                    .attr("no-resize")
+                    .make()
+            );
 
             this.registerButton = ElementFactory.button()
                 .class("register-button", "center-content", "main-axis-space-between")
@@ -172,30 +184,30 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
                     self.disabled = true;
                     onAuth()
                     .then(user => {
+                        console.log(this.commentBox?.value);
+                        
                         if (user === null) location.href = URLUtil.createLinkBackURL("./login.html").toString();
-                        else regEvent.toggleRegistered(user.uid)
+                        else regEvent.toggleRegistered(user.uid, this.commentBox?.value)
                             .then(isReg => this.refreshRegisterButton())
                             .catch(err => showError(getErrorMessage(err)));
                     });
                 })
                 .make();
 
-            if (regEvent.requires_payment) {
-                this.appendChild(
-                    ElementFactory.div(undefined, "flex-rows", "cross-axis-center")
-                        .children(
-                            this.paymentDisclaimer = ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
-                                .children(
-                                    ElementFactory.p("Ik ga akkoord met de kosten voor deze activiteit."),
-                                    this.allowsPaymentSwitch
-                                )
-                                .make(),
-                            this.registerButton
-                        )
-                        .make()
-                );
-            }
-            else this.appendChild(this.registerButton);
+            this.appendChild(
+                ElementFactory.div(undefined, "flex-rows", "cross-axis-center")
+                    .children(
+                        regEvent.requires_payment && (this.paymentDisclaimer = ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
+                            .children(
+                                ElementFactory.p("Ik ga akkoord met de kosten voor deze activiteit."),
+                                this.allowsPaymentSwitch
+                            )
+                            .make()),
+                        this.commentBox,
+                        this.registerButton
+                    )
+                    .make()
+            );
         }
         
         this.quickActions = this.appendChild(

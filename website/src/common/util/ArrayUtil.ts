@@ -68,6 +68,15 @@ export default abstract class ArrayUtil {
 
         return out;
     }
+
+    public static batch<T>(arr:T[], batchSize:number):T[][] {
+        arr = [...arr];
+        const out:T[][] = [];
+
+        while (arr.length !== 0) out.push(arr.splice(0, batchSize));
+
+        return out;
+    }
     
     /**
      * Counts how many array elements match the predicate.

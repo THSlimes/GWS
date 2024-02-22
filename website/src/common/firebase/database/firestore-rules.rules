@@ -9,18 +9,21 @@ service cloud.firestore {
                 || (request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAll(requiredPerms));
         }
 
+        // Checks if timestamp t1 is before timestamp t2
         function isBefore(t1, t2) {
             return t1.toMillis() < t2.toMillis();
         }
 
-        match /articles/{id} {
+        // articles
+        match /articles/{articleId} {
             allow get, list : if !resource.data.only_for_members || hasPermissions(["READ_MEMBER_ARTICLES"]);
             allow update : if hasPermissions(["UPDATE_ARTICLES"]);
             allow delete : if hasPermissions(["DELETE_ARTICLES"]);
             allow create : if hasPermissions(["CREATE_ARTICLES"]);
         }
 
-        match /events/{id} {
+        // events
+        match /events/{eventId} {
             allow get, list; // anyone can see events
 
             allow update : if hasPermissions(["UPDATE_EVENTS"]); // has edit permissions
@@ -47,6 +50,13 @@ service cloud.firestore {
             allow delete : if hasPermissions(["DELETE_EVENTS"]);
         }
 
+        // event comments
+        match /events/{eventId}/comments/{authorId} {
+            allow read : if hasPermissions(["READ_EVENT_COMMENTS"]);
+            allow get, write : if request.auth != null && hasPermissions(["REGISTER_FOR_EVENTS"]) && request.auth.uid == authorId;
+        }
+
+        // users
         match /users/{userId} {
             allow get : if request.auth != null && request.auth.uid == userId ? hasPermissions(["READ_OWN_USER_INFO"]) : hasPermissions(["READ_OTHER_USER_INFO"]);
             allow list : if hasPermissions(["READ_OWN_USER_INFO", "READ_OTHER_USER_INFO"]);
