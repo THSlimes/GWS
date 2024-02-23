@@ -1,7 +1,7 @@
 @import url("../custom-elements/switch.css");
 @import url("../custom-elements/rich-text-input.css");
 
-event-note, editable-event-note {
+event-note, registerable-event-note, editable-event-note {
     display: block;
     position: relative;
     
@@ -17,12 +17,7 @@ event-note, editable-event-note {
     
     &[expanded] {
         padding: var(--section-gap-y) var(--section-gap-x);
-
         > .timespan { font-size: large; }
-    }
-
-    > * {
-        color: inherit;
     }
 
     & .name {
@@ -31,10 +26,12 @@ event-note, editable-event-note {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        color: inherit;
     }
 
     & .timespan {
         margin: 0px;
+        color: inherit;
     }
 
     & .description {
@@ -42,13 +39,7 @@ event-note, editable-event-note {
         overflow-y: scroll;
 
         text-align: justify;
-    }
-
-    & .register-button {}
-
-    & .comment-box {
-        width: 100%;
-        height: 10vh;
+        &, & * { color:inherit }
     }
     
     & .quick-actions {
@@ -56,10 +47,26 @@ event-note, editable-event-note {
         top: var(--in-section-gap);
         right: var(--in-section-gap);
         
-        & > * {
+        > * {
             color: inherit;
             border-radius: var(--in-section-gap);
         }
+
+        > .delete-button[awaiting-confirmation] { animation: pulsate-in 1000ms ease-in-out 0ms infinite; }
+    }
+}
+
+registerable-event-note {
+
+    & .register-button {}
+
+    & .payment-disclaimer > * { color:inherit; }
+
+    & .comment-box {
+        width: 100%;
+        height: 10vh;
+
+        color: var(--text-dark);
     }
 }
 
@@ -68,32 +75,49 @@ editable-event-note {
     transition: background-color 250ms ease-out;
 
     & * { transition: color 250ms ease-out; }
-    & textarea, & input { color: var(--text-dark); }
-    & p { color: var(--text-color); }
 
-    & .general {
-        display: grid;
-        grid-template-rows: repeat(3, 1fr);
-        grid-template-columns: repeat(2, 1fr);
-
-        > * { width: 100%; height: 100%; }
-
-        > .name { grid-area: 1 / 1 / 3 / 2; }
-        > .category { grid-area: 3 / 1 / 4 / 2; }
-        > .color {
-            grid-area: 1 / 2 / 4 / 3;
+    & .name {
+        flex-grow: 1;
+        &:empty::before {
+            content: "Naam";
+            color: var(--shadow-dark);
         }
     }
 
-    & .timespan { width: 100%; }
+    & .category { height: unset; }
 
-    & .description { min-height: 8em; }
+    & .timespan {
+        width: 100%;
+
+        &, & * { color: inherit; }
+        > .timespan-use-time {
+            transform-origin: left;
+            scale: .6;
+            padding: var(--in-section-gap) calc(2 * var(--in-section-gap));
+            outline: var(--std-border);
+            outline-color: var(--text-color);
+            border-radius: 100vw;
+        }
+    }
+
+    & .description { min-height: 30vh; }
+
+    & .use-color {
+        transform-origin: right;
+        scale: .7;
+        padding: var(--in-section-gap) calc(2 * var(--in-section-gap));
+        outline: var(--std-border);
+        outline-color: var(--text-color);
+        border-radius: 100vw;
+        > * { color: inherit; }
+    }
+
 }
 
 /* PHONE-VIEWPORT OVERRIDE */
 
 @media (max-aspect-ratio: 3 / 5) {
-    event-note[expanded] {
+    event-note[expanded], registerable-event-note[expanded] {
         display: flex;
         flex-direction: column;
         flex-wrap: nowrap;

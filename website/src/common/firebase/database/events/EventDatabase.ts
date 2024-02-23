@@ -3,7 +3,6 @@ import DateUtil from "../../../util/DateUtil";
 import StringUtil from "../../../util/StringUtil";
 import { Opt } from "../../../util/UtilTypes";
 import Database, { Info, QueryFilter } from "../Database";
-import { UserInfo } from "../users/UserDatabase";
 
 type TimeSpan = [Date, Date];
 type OpenTimespan = [Date|undefined, Date|undefined];

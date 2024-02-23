@@ -1,7 +1,8 @@
 import ArticlePaginator from "../firebase/database/articles/ArticlePaginator";
 import { FirestoreArticleDatabase } from "../firebase/database/articles/FirestoreArticleDatabase";
 import ElementFactory from "../html-element-factory/ElementFactory";
-import ElementUtil, { HasSections } from "../util/ElementUtil";
+import ElementUtil from "../util/ElementUtil";
+import { HasSections } from "../util/UtilTypes";
 import NodeUtil from "../util/NodeUtil";
 import SmartArticle, { ArticleLOD } from "./SmartArticle";
 

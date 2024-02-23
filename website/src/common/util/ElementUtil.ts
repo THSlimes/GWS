@@ -67,14 +67,3 @@ export default abstract class ElementUtil {
     }
 
 }
-
-/**
- * Type to be implemented by custom element types which have distinct sections.
- * @param S union type of section names
- */
-export type HasSections<S extends string> = {
-    [k in S]: HTMLElement|null;
-} & {
-    /** Method which initializes the element. */
-    initElement():void
-};

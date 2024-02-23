@@ -2,7 +2,8 @@ import { StorageError, getDownloadURL, getMetadata, ref } from "@firebase/storag
 import { checkPermissions, onPermissionCheck } from "../firebase/authentication/permission-based-redirect";
 import Permission from "../firebase/database/Permission";
 import { STORAGE } from "../firebase/init-firebase";
-import ElementUtil, { HasSections } from "../util/ElementUtil";
+import ElementUtil from "../util/ElementUtil";
+import { HasSections } from "../util/UtilTypes";
 import { AttachmentOrigin, isAttachmentOrigin } from "./MultisourceAttachment";
 import ElementFactory from "../html-element-factory/ElementFactory";
 

@@ -350,6 +350,12 @@ export class RichTextInputAssemblyLine extends AssemblyLine<"rich-text-input", R
         return this;
     }
 
+    private _placeholder?:string;
+    public placeholder(plc:string):this {
+        this._placeholder = plc;
+        return this;
+    }
+
     public compact(isCompact=true):this {
         if (isCompact) super.attr("compact");
         return this;
@@ -359,6 +365,7 @@ export class RichTextInputAssemblyLine extends AssemblyLine<"rich-text-input", R
         const out = super.make();
 
         if (this._value) out.value = this._value;
+        if (this._placeholder) out.placeholder = this._placeholder;
 
         return out;
     }

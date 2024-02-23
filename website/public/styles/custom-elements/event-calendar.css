@@ -38,7 +38,7 @@ event-calendar {
                 grid-template-rows: 100%;
                 grid-template-columns: max-content repeat(var(--max-overlap), 1fr);
 
-                > event-note {
+                > event-note, > registerable-event-note {
                     grid-row: 1 / 2;
                     grid-column: calc(var(--offset) + 2) / span 1;
 
@@ -110,7 +110,7 @@ event-calendar {
                 user-select: none;
             }
 
-            > event-note {
+            > event-note, > registerable-event-note {
                 grid-row: calc(var(--offset) + 2) / span 1;
                 width: calc(100% * var(--length) + (2 * var(--length) - 2) * var(--day-cell-padding));
                 min-width: 0px;

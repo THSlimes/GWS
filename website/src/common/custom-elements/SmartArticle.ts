@@ -5,7 +5,7 @@ import ArticleDatabase, { ArticleInfo } from "../firebase/database/articles/Arti
 import ElementFactory from "../html-element-factory/ElementFactory";
 import { showError, showMessage, showSuccess, showWarning } from "../ui/info-messages";
 import DateUtil from "../util/DateUtil";
-import { HasSections } from "../util/ElementUtil";
+import { HasSections } from "../util/UtilTypes";
 import NodeUtil from "../util/NodeUtil";
 import Switch from "./Switch";
 import RichTextInput from "./rich-text/RichTextInput";
@@ -255,6 +255,7 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
 
         this.body = this.appendChild(
             ElementFactory.input.richText(this.article.body)
+                .placeholder("Tekst")
                 .compact(true)
                 .make()
         );

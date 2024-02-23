@@ -1,7 +1,8 @@
 import $ from "jquery";
 import ElementFactory from "../html-element-factory/ElementFactory";
-import EventDatabase, { EventInfo } from "../firebase/database/events/EventDatabase";
-import { DetailLevel, EventNote } from "./EventNote";
+import EventDatabase, { EventInfo, RegisterableEventInfo } from "../firebase/database/events/EventDatabase";
+import { EventNote } from "./event-notes/EventNote";
+import { DetailLevel } from "../util/UtilTypes";
 import CachingEventDatebase from "../firebase/database/events/CachingEventDatebase";
 import IconSelector from "./IconSelector";
 import Responsive, { Viewport } from "../ui/Responsive";
@@ -11,6 +12,7 @@ import URLUtil from "../util/URLUtil";
 import { showError } from "../ui/info-messages";
 import getErrorMessage from "../firebase/authentication/error-messages";
 import NodeUtil from "../util/NodeUtil";
+import RegisterableEventNote from "./event-notes/RegisterableEventNote";
 
 const DAY_ABBREVIATIONS = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
 
@@ -51,9 +53,9 @@ const DEFAULT_VIEWMODE:Record<Viewport, calendarViewMode> = {
     "mobile-portrait": "week"
 };
 const VIEWMODE_LODS:Record<calendarViewMode, DetailLevel> = {
-    week: "normal",
-    month: "normal",
-    list: "normal"
+    week: DetailLevel.MEDIUM,
+    month: DetailLevel.MEDIUM,
+    list: DetailLevel.MEDIUM
 };
 
 type calendarEvent = {};
@@ -79,8 +81,16 @@ export default class EventCalendar extends HTMLElement {
         });
     }
 
+    private static createNote(event:EventInfo|EventNote, lod:DetailLevel, expanded=false):EventNote {
+        return event instanceof EventNote ?
+            event.copy(lod, expanded) :
+            event instanceof RegisterableEventInfo ?
+                new RegisterableEventNote(event, lod, expanded) :
+                new EventNote(event, lod, expanded);
+    }
+
     public static expandNote(event:EventInfo|EventNote) {
-        const fsNote = event instanceof EventNote ? event.copy("full", true) : new EventNote(event, "full", true);
+        const fsNote = this.createNote(event, DetailLevel.FULL, true);
         $(this.FULLSCREEN_EVENT_CONTAINER).empty().append(fsNote);
         this.FULLSCREEN_EVENT_CONTAINER.removeAttribute("hidden");
         document.body.classList.add("no-scroll");
@@ -243,7 +253,7 @@ export default class EventCalendar extends HTMLElement {
                                 dateCopy.setDate(dateCopy.getDate() - 7);
                                 this.populate(dateCopy, this._viewMode);
                             }).class("nav-button", "icon").make(),
-                            ElementFactory.input.date(dateCopy.getFullYear(), dateCopy.getMonth(), dateCopy.getDate())
+                            ElementFactory.input.date(dateCopy)
                                 .class("period-input")
                                 .onValueChanged(v => this.lookingAt = new Date(v))
                                 .make(),
@@ -385,7 +395,7 @@ export default class EventCalendar extends HTMLElement {
                         for (let w = 1; daysLeft >= 1 && cellInd < dayCells.length; w ++) {
                             dayCells[cellInd].events.push(e);
                             dayCells[cellInd].element.style.zIndex = (dayCells.length - cellInd + 1).toString();
-                            const note = dayCells[cellInd].element.appendChild(new EventNote(e, VIEWMODE_LODS[viewMode]));
+                            const note = dayCells[cellInd].element.appendChild(EventCalendar.createNote(e, VIEWMODE_LODS[viewMode]));
                             note.classList.add("click-action");
                             note.style.setProperty("--length", daysLeft.toString());
                             note.style.setProperty("--offset", offsets[e.id].toString());
@@ -413,7 +423,7 @@ export default class EventCalendar extends HTMLElement {
                         let daysLeft = DateUtil.Days.spanInDays(dayCells[cellInd].date, e.ends_at);
                         while (cellInd < dayCells.length && daysLeft >= 1) {
                             dayCells[cellInd].events.push(e);
-                            const note = dayCells[cellInd].element.appendChild(new EventNote(e, VIEWMODE_LODS[viewMode]));
+                            const note = dayCells[cellInd].element.appendChild(EventCalendar.createNote(e, VIEWMODE_LODS[viewMode]));
                             note.classList.add("click-action");
                             note.style.setProperty("--length", '1');
                             note.addEventListener("click", () => EventCalendar.expandNote(note) );

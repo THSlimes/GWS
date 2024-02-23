@@ -61,5 +61,3 @@ window.addEventListener("DOMContentLoaded", () => {
     });
     
 });
-
-console.log(new URLSearchParams(window.location.search).get("return-to"));

@@ -4,6 +4,7 @@ import AssemblyLine, { AnchorElementAssemblyLine, RichTextInputAssemblyLine, Sel
 import { HexColor } from "../util/StyleUtil";
 import FolderElementAssemblyLine from "./FolderElementAssemblyLine";
 import { ButtonLikeInputAssemblyLine, CheckableInputAssemblyLine, DateInputAssemblyLine, InputAssemblyLine, NumberInputAssemblyLine, RangedInputAssemblyLine, TextInputAssemblyLine } from "./InputAssemblyLine";
+import RichTextSerializer from "../custom-elements/rich-text/RichTextSerializer";
 
 /**
  * The ElementFactory helper-class provides static methods that allow
@@ -24,7 +25,9 @@ export default abstract class ElementFactory {
     /** A heading with the given size. */
     public static heading(size:number, text?:string) {
         size = NumberUtil.clamp(Math.floor(size), 1, 6);
-        return this[`h${size as 1|2|3|4|5|6}`]();
+        const out = this[`h${size as 1|2|3|4|5|6}`]();
+        if (text) out.text(text);
+        return out;
     }
 
     public static h1(text?:string) {
@@ -55,6 +58,9 @@ export default abstract class ElementFactory {
     public static p(text?:string) {
         const out = new AssemblyLine('p');
         return text ? out.text(text) : out;
+    }
+    public static richText(richText:string) {
+        return ElementFactory.div().class("rich-text").children(...RichTextSerializer.deserialize(richText));
     }
     public static text(text?:string) {
         return document.createTextNode(text ?? "");
@@ -88,15 +94,9 @@ export default abstract class ElementFactory {
             if (value) out.value(value);
             return out;
         },
-        date(year?:number, month?:number, date?:number) {
+        date(val?:Date) {
             const out = new DateInputAssemblyLine("date");
-            if (year !== undefined || month !== undefined || date !== undefined) {
-                const now = new Date();
-                year ??= now.getFullYear();
-                month ??= now.getMonth();
-                date ??= now.getDate();
-                out.value(year, month, date);
-            }
+            if (val) out.value(val.getFullYear(), val.getMonth(), val.getDate());
             return out;
         },
         dateTimeLocal(val?:Date) {
@@ -155,9 +155,10 @@ export default abstract class ElementFactory {
             else if (week !== undefined) out.value(new Date().getFullYear(), week);
             return out;
         },
-        richText(val?:string) {
+        richText(val?:string, compact?:boolean) {
             const out = new RichTextInputAssemblyLine();
             if (val) out.value(val);
+            if (compact !== undefined) out.compact(compact);
             return out;
         }
     };
@@ -173,6 +174,15 @@ export default abstract class ElementFactory {
         const out = new AssemblyLine("button");
         if (onClick) out.on("click", onClick);
         return out;
+    }
+
+    /** Creates a button based on an icon. */
+    public static iconButton(icon:string, onClick:(ev:MouseEvent, button:HTMLParagraphElement)=>void, tooltip?:string) {
+        return ElementFactory.p(icon)
+            .class("icon", "click-action", "no-margin")
+            .tooltip(tooltip ? tooltip : null)
+            .noFocus()
+            .on("click", onClick)
     }
 
     public static textarea(text?:string) {

@@ -1,5 +1,5 @@
 import ElementFactory from "../html-element-factory/ElementFactory";
-import { HasSections } from "../util/ElementUtil";
+import { HasSections } from "../util/UtilTypes";
 
 export default class Switch extends HTMLElement implements HasSections<"indicator"> {
 
@@ -20,7 +20,7 @@ export default class Switch extends HTMLElement implements HasSections<"indicato
         }
     }
 
-    private readonly dependants:Element[] = [];
+    public readonly dependants:Element[] = [];
     private readonly inverted:boolean;
 
     public indicator!:HTMLHeadingElement;

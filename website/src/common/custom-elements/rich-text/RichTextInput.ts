@@ -2,7 +2,8 @@ import TextStyling, { StyleTagClassName } from "./TextStyling";
 import { showError } from "../../ui/info-messages";
 import ArrayUtil from "../../util/ArrayUtil";
 import ColorUtil from "../../util/ColorUtil";
-import ElementUtil, { HasSections } from "../../util/ElementUtil";
+import ElementUtil from "../../util/ElementUtil";
+import { HasSections } from "../../util/UtilTypes";
 import FunctionUtil from "../../util/FunctionUtil";
 import NodeUtil from "../../util/NodeUtil";
 import NumberUtil from "../../util/NumberUtil";
@@ -81,7 +82,6 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
     public get value():string {
         return RichTextSerializer.serialize(this.body);
     }
-
     public set value(newVal:string) {
         this.selectedElement = null;
         NodeUtil.empty(this.body); // remove children
@@ -93,6 +93,9 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
             else this.body.appendChild(section);
         }
     }
+
+    public get placeholder() { return this.style.getPropertyValue("--placeholder"); }
+    public set placeholder(newPlc:string) { this.style.setProperty("--placeholder", `"${newPlc}"`); }
 
     /** Toolbar child element */
     public toolbar!:HTMLDivElement;
@@ -230,13 +233,13 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                 insElem,
                 ElementFactory.div(undefined, "controls", "flex-columns", "in-section-gap")
                 .children(
-                    RichTextInput.makeIconButton("move_up", () => {
+                    ElementFactory.iconButton("move_up", () => {
                             if (container.previousElementSibling) NodeUtil.swap(container, container.previousElementSibling)
                         }, "Naar boven"),
-                    RichTextInput.makeIconButton("move_down", () => {
+                    ElementFactory.iconButton("move_down", () => {
                             if (container.nextElementSibling) NodeUtil.swap(container, container.nextElementSibling)
                         }, "Naar beneden"),
-                    RichTextInput.makeIconButton("remove", () => container.remove(), "Verwijderen")
+                    ElementFactory.iconButton("remove", () => container.remove(), "Verwijderen")
                 )
             )
             .make();
@@ -299,18 +302,9 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
         if (value !== undefined) this.value = value;
     }
 
-    /** Creates a button based on an icon. */
-    private static makeIconButton(icon:string, onClick:(ev:MouseEvent, button:HTMLParagraphElement)=>void, tooltip?:string) {
-        return ElementFactory.p(icon)
-            .class("icon", "click-action", "no-margin")
-            .tooltip(tooltip ? tooltip : null)
-            .noFocus()
-            .on("click", onClick)
-    }
-
     /** Creates a button which toggles a style tag on/off. */
     private makeStyleTagToggle(tagName:StyleTagClassName, icon:string, tooltip:string) {
-        return RichTextInput.makeIconButton(icon, (ev, toggle) => {
+        return ElementFactory.iconButton(icon, (ev, toggle) => {
             if (!toggle.hasAttribute("disabled")) TextStyling.applyStyleTag(this.body, tagName);
         }, tooltip)
             .attr("can-unselect")
@@ -454,17 +448,17 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                                     ElementFactory.div(undefined, "flex-columns")
                                         .children(
                                             ...(alignOptions = [
-                                                RichTextInput.makeIconButton("format_align_left", () => {}, "Links uitlijnen")
+                                                ElementFactory.iconButton("format_align_left", () => {}, "Links uitlijnen")
                                                     .attr("selected")
                                                     .attr("value", "align-left")
                                                     .make(),
-                                                RichTextInput.makeIconButton("format_align_center", () => {}, "Centreren")
+                                                ElementFactory.iconButton("format_align_center", () => {}, "Centreren")
                                                     .attr("value", "align-center")
                                                     .make(),
-                                                RichTextInput.makeIconButton("format_align_right", () => {}, "Rechts uitlijnen")
+                                                ElementFactory.iconButton("format_align_right", () => {}, "Rechts uitlijnen")
                                                     .attr("value", "align-right")
                                                     .make(),
-                                                RichTextInput.makeIconButton("format_align_justify", () => {}, "Spreiden")
+                                                ElementFactory.iconButton("format_align_justify", () => {}, "Spreiden")
                                                     .attr("value", "align-justify")
                                                     .make()
                                             ])
@@ -546,7 +540,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
         return ElementFactory.div(undefined, "section-types", "flex-columns", "cross-axis-center", "in-section-gap", "no-bullet")
             .canSelect(false)
             .children(
-                !exclude.includes("shortcut") && RichTextInput.makeIconButton("add_link", () => { // add new shortcut
+                !exclude.includes("shortcut") && ElementFactory.iconButton("add_link", () => { // add new shortcut
                     this.insert(
                         "shortcut",
                         ElementFactory.a().class("align-left").style({ fontSize: "16px" }).make(),
@@ -554,7 +548,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                     );
                     
                 }, "Snelkoppeling toevoegen"),
-                !exclude.includes("attachment") && RichTextInput.makeIconButton("attach_file_add", () => {
+                !exclude.includes("attachment") && ElementFactory.iconButton("attach_file_add", () => {
                     const newElem = new MultisourceAttachment();
                     newElem.classList.add("align-left");
                     this.insert(
@@ -563,7 +557,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                         insPosCallback()
                     );
                 }, "Bijlage toevoegen"),
-                !exclude.includes("image") && RichTextInput.makeIconButton("add_photo_alternate", () => { // add new image
+                !exclude.includes("image") && ElementFactory.iconButton("add_photo_alternate", () => { // add new image
                     const newElem = new MultisourceImage();
                     newElem.classList.add("align-center");
                     this.insert(
@@ -579,7 +573,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                     .heading(
                         folder => exclude.includes("title") ?
                             folder.contents.firstElementChild! :
-                            RichTextInput.makeIconButton("title", () => { // add new title h1
+                            ElementFactory.iconButton("title", () => { // add new title h1
                                 this.insert(
                                     "title",
                                     ElementFactory.h1().class("title", "align-left").style({ fontSize: "40px" }).make(),
@@ -588,21 +582,21 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                             }, "Titel toevoegen")
                     )
                     .children(
-                        !exclude.includes("h1") && RichTextInput.makeIconButton("format_h1", () => { // add new normal h1
+                        !exclude.includes("h1") && ElementFactory.iconButton("format_h1", () => { // add new normal h1
                                 this.insert(
                                     "h1",
                                     ElementFactory.h1().class("align-left").style({ fontSize: "32px" }).make(),
                                     insPosCallback()
                                 );
                             }, "Nieuwe kop 1"),
-                        !exclude.includes("h2") && RichTextInput.makeIconButton("format_h2", () => { // add new normal h2
+                        !exclude.includes("h2") && ElementFactory.iconButton("format_h2", () => { // add new normal h2
                             this.insert(
                                 "h2",
                                 ElementFactory.h2().class("align-left").style({ fontSize: "24px" }).make(),
                                 insPosCallback()
                             );
                         }, "Nieuwe kop 2"),
-                        !exclude.includes("h3") && RichTextInput.makeIconButton("format_h3", () => { // add new normal h3
+                        !exclude.includes("h3") && ElementFactory.iconButton("format_h3", () => { // add new normal h3
                             this.insert(
                                 "h3",
                                 ElementFactory.h3().class("align-left").style({ fontSize: "18.5px" }).make(),
@@ -611,21 +605,21 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                         }, "Nieuwe kop 3")
                     )
                     .tooltip("Nieuwe kop/titel"),
-                !exclude.includes("paragraph") && RichTextInput.makeIconButton("subject", () => { // add new paragraph
+                !exclude.includes("paragraph") && ElementFactory.iconButton("subject", () => { // add new paragraph
                         this.insert(
                             "paragraph",
                             ElementFactory.p().class("align-left").style({ fontSize: "16px" }).make(),
                             insPosCallback()
                         );
                     }, "Nieuwe paragraaf"),
-                !exclude.includes("list") && RichTextInput.makeIconButton("format_list_bulleted", () => {
+                !exclude.includes("list") && ElementFactory.iconButton("format_list_bulleted", () => {
                         this.insert(
                             "list",
                             ElementFactory.ul().make(),
                             insPosCallback()
                         );
                     }, "Nieuwe lijst"),
-                !exclude.includes("numbered-list") && RichTextInput.makeIconButton("format_list_numbered", () => {
+                !exclude.includes("numbered-list") && ElementFactory.iconButton("format_list_numbered", () => {
                         this.insert(
                             "numbered-list",
                             ElementFactory.ol().make(),
@@ -640,10 +634,10 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                             .tooltip("Widgets")
                     )
                     .children(
-                        !exclude.includes("event-calendar") && RichTextInput.makeIconButton("calendar_month", () => {
+                        !exclude.includes("event-calendar") && ElementFactory.iconButton("calendar_month", () => {
                             showError("Niet geïmplementeerd.");
                         }, "Activiteiten-kalender toevoegen"),
-                        !exclude.includes("event-note") && RichTextInput.makeIconButton("sticky_note_2", () => {
+                        !exclude.includes("event-note") && ElementFactory.iconButton("sticky_note_2", () => {
                             showError("Niet geïmplementeerd.");
                         }, "Activiteit toevoegen")
                     )

@@ -70,6 +70,7 @@ export default abstract class URLUtil {
         try {
             link = this.toURL(link);
             link.origin === location.origin;
+            return true;
         }
         catch { return false; }
     }

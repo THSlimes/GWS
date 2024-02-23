@@ -3,7 +3,8 @@ import { checkPermissions, onPermissionCheck } from "../firebase/authentication/
 import Permission from "../firebase/database/Permission";
 import { STORAGE } from "../firebase/init-firebase";
 import URLUtil, { FileInfo, FileType, getFileType } from "../util/URLUtil";
-import ElementUtil, { HasSections } from "../util/ElementUtil";
+import ElementUtil from "../util/ElementUtil";
+import { HasSections } from "../util/UtilTypes";
 import ElementFactory from "../html-element-factory/ElementFactory";
 
 export type AttachmentOrigin = "firebase-storage-public" | "firebase-storage-protected" | "external";
