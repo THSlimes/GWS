@@ -1,29 +1,19 @@
 import ElementFactory from "../../html-element-factory/ElementFactory";
-import { EventInfo, RegisterableEventInfo } from "../../firebase/database/events/EventDatabase";
+import { EventInfo } from "../../firebase/database/events/EventDatabase";
 import { showError, showSuccess, showWarning } from "../../ui/info-messages";
-import { Class, HasSections } from "../../util/UtilTypes";
+import { HasSections } from "../../util/UtilTypes";
 import getErrorMessage from "../../firebase/authentication/error-messages";
-import { onAuth } from "../../firebase/init-firebase";
 import ColorUtil from "../../util/ColorUtil";
 import DateUtil from "../../util/DateUtil";
 import { onPermissionCheck } from "../../firebase/authentication/permission-based-redirect";
 import Permission from "../../firebase/database/Permission";
 import EventCalendar from "../EventCalendar";
-import URLUtil from "../../util/URLUtil";
 import Switch from "../Switch";
 import { HexColor } from "../../util/StyleUtil";
 import FunctionUtil from "../../util/FunctionUtil";
 import RichTextInput from "../rich-text/RichTextInput";
-import RichTextSerializer from "../rich-text/RichTextSerializer";
 import { DetailLevel } from "../../util/UtilTypes";
-
-// type EventNoteSection = "name" | "timespan" | "description" | "paymentDisclaimer" | "allowsPaymentSwitch"| "commentBox" | "registerButton" | "quickActions";
-// const SECTION_VISIBLE_FROM:Record<EventNoteSection,DetailLevel> = {
-//     paymentDisclaimer: DetailLevel.FULL,
-//     allowsPaymentSwitch: DetailLevel.FULL,
-//     commentBox: DetailLevel.FULL,
-//     registerButton: DetailLevel.FULL,
-// };
+import OptionCollection from "../../ui/OptionCollection";
 
 export type EventNoteSectionName = "name" | "timespan" | "description" | "quickActions";
 export class EventNote extends HTMLElement implements HasSections<EventNoteSectionName> {
@@ -72,6 +62,10 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
     }
 
     public readonly event:EventInfo;
+    /** Replaces the EventNote with its editable version. */
+    protected replaceWithEditable(event=this.event):void {
+        this.replaceWith(new EditableEventNote(event, this.lod, this.expanded));
+    }
 
     constructor(event:EventInfo, lod=DetailLevel.MEDIUM, expanded=false) {
         super();
@@ -81,6 +75,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
         this.initElement();
 
         this.lod = lod;
+
     }
 
     initElement():void {
@@ -132,9 +127,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
                             }
                         }, "Activiteit verwijderen")
                         .class("delete-button"),
-                    EventNote.CAN_UPDATE && ElementFactory.iconButton("edit_square", () => {
-                        this.replaceWith(new EditableEventNote(this.event, this.lod, this.expanded));
-                    }, "Activiteit bewerken"),
+                    EventNote.CAN_UPDATE && ElementFactory.iconButton("edit_square", () => this.replaceWithEditable(this.event), "Activiteit bewerken"),
                     ElementFactory.iconButton("share", () => {
                             const url = `${location.origin}/calendar.html#looking-at=${this.event.id}`;
                             const shareData:ShareData = { url, title: `GWS Activiteit - ${this.event.name}` };
@@ -159,7 +152,10 @@ window.addEventListener("DOMContentLoaded", () => customElements.define("event-n
 
 
 
-type EditableEventNoteSectionName = "name" | "category" | "useTime" | "startsAt" | "endsAt" | "useColor" | "color" | "description" | "quickActions";
+export type EditableEventNoteSectionName = "name" | "category" | "useTime" | "startsAt" | "endsAt" | "description" | "quickActions";
+export type EventNoteOptionMap = {
+    "color": HexColor
+};
 export class EditableEventNote extends HTMLElement implements HasSections<EditableEventNoteSectionName> {
 
     public name!:HTMLHeadingElement;
@@ -167,17 +163,40 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
     public useTime!:Switch;
     public startsAt!:HTMLInputElement;
     public endsAt!:HTMLInputElement;
-    public useColor!:Switch;
-    public color!:HTMLInputElement;
     public description!:RichTextInput;
     public quickActions!:HTMLDivElement;
 
+    private optionCollection:OptionCollection<string,{}> = new OptionCollection({});
+    protected addOptions(newOptions:OptionCollection<string,any>) {
+        const combined = this.optionCollection.combine(newOptions);
+        this.optionCollection.replaceWith(combined);
+        this.optionCollection = combined;
+    }
+
+    private noteOptions!:OptionCollection<keyof EventNoteOptionMap, EventNoteOptionMap>;
+
     protected readonly event:EventInfo;
+    /** Replaces the EditableEventNote with its non-editable version. */
+    protected replaceWithOriginal(event=this.event):void {
+        this.replaceWith(new EventNote(event, this.lod, this.expanded));
+    }
 
-    private readonly lod:DetailLevel;
-    private readonly expanded:boolean;
+    protected get savableEvent() {
+        return new EventInfo(
+            this.event.sourceDB,
+            this.event.id,
+            this.name.textContent ?? "Activiteit",
+            this.description.value,
+            this.category.value ? this.category.value : undefined,
+            this.noteOptions.has("color") ? this.noteOptions.get("color")! : undefined,
+            [this.startDate, this.endDate]
+        );
+    }
 
-    protected get startDate() {
+    protected readonly lod:DetailLevel;
+    protected readonly expanded:boolean;
+
+    private get startDate() {
         let out = new Date(this.startsAt.value);
         if (!DateUtil.Timestamps.isValid(out)) out = this.event.starts_at;
 
@@ -186,7 +205,7 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
         return out;
     }
 
-    protected get endDate() {
+    private get endDate() {
         let out = new Date(this.endsAt.value);
         if (!DateUtil.Timestamps.isValid(out)) out = this.event.ends_at;
         
@@ -197,7 +216,7 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
 
     private refreshColorPalette() {
         // apply color palette
-        const bgColor = this.useColor.value ? this.color.value as HexColor : ColorUtil.getStringColor(this.category.value);
+        const bgColor = this.noteOptions.has("color") ? this.noteOptions.get("color")! : ColorUtil.getStringColor(this.category.value);
         this.style.setProperty("--background-color", bgColor);
         this.style.setProperty("--text-color", ColorUtil.getMostContrasting(bgColor, "#111111", "#ffffff"));
     }
@@ -208,7 +227,9 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
         this.event = event;
         this.lod = lod;
         this.expanded = expanded;
+
         this.initElement();
+        
     }
 
     initElement():void {
@@ -247,7 +268,7 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
                     this.endsAt = areFullDays ?
                         ElementFactory.input.date(this.event.ends_at).make() :
                         ElementFactory.input.dateTimeLocal(this.event.ends_at).make(),
-                    ElementFactory.div(undefined, "timespan-use-time", "flex-columns", "cross-axis-center", "in-section-gap")
+                    ElementFactory.div(undefined, "icon-switch", "flex-columns", "cross-axis-center", "in-section-gap")
                         .children(
                             ElementFactory.p("more_time").class("icon", "no-margin"),
                             this.useTime = new Switch(!areFullDays)
@@ -258,6 +279,7 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
         );
 
         this.useTime.addEventListener("input", () => { // update on switch
+                                    
             const newSAInput = this.useTime.value ?
                 ElementFactory.input.dateTimeLocal(this.startsAt.valueAsDate ?? this.event.starts_at).make() :
                 ElementFactory.input.date(this.startsAt.valueAsDate ?? this.event.starts_at).make();
@@ -279,25 +301,27 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
                 .make()
         );
 
-        // custom color section
-        this.appendChild(
-            ElementFactory.div(undefined, "flex-columns", "main-axis-center", "cross-axis-center", "in-section-gap")
-                .children(
-                    ElementFactory.div(undefined, "use-color", "flex-columns", "cross-axis-center", "in-section-gap")
-                        .children(
-                            ElementFactory.p("palette").class("icon", "no-margin"),
-                            this.useColor = new Switch(this.event.color !== undefined)
-                        )
-                        .tooltip("Kleur instellen"),
-                    this.color = ElementFactory.input.color(this.event.color ? this.event.color : "#eeeeee")
-                        .disabled(!this.useColor.value)
-                        .onValueChanged(() => this.refreshColorPalette())
-                        .make()
-                )
-                .make()
-        );
-        this.useColor.dependants.push(this.color);
-        this.useColor.addEventListener("input", () => this.refreshColorPalette());
+        // options
+        this.appendChild(this.optionCollection);
+
+        this.noteOptions = new OptionCollection<keyof EventNoteOptionMap, EventNoteOptionMap>({
+            "color": [
+                "palette",
+                ElementFactory.div(undefined, "center-content", "in-section-gap")
+                    .children(
+                        ElementFactory.h4("Kleurenpalet instellen").class("no-margin"),
+                        ElementFactory.input.color(this.event.color ?? "#eeeeee")
+                        .onValueChanged(() => this.refreshColorPalette()),
+                    )
+                    .make(),
+                elem => (elem.lastChild as HTMLInputElement).value as HexColor
+            ]
+        }, { "color": "Kleurenpalet" });
+        if (this.event.color !== undefined) this.noteOptions.add("color");
+
+        this.optionCollection.onActiveOptionsChanged = () => this.refreshColorPalette();
+
+        this.addOptions(this.noteOptions);
 
         this.refreshColorPalette();
 
@@ -306,26 +330,16 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
             ElementFactory.div(undefined, "quick-actions", "flex-columns")
                 .children(
                     ElementFactory.iconButton("save_as", () => {
-                        const newEvent = new EventInfo(
-                            this.event.sourceDB,
-                            this.event.id,
-                            this.name.textContent ?? "Activiteit",
-                            this.description.value,
-                            this.category.value ? this.category.value : undefined,
-                            this.useColor.value ? this.color.value as HexColor : undefined,
-                            [this.startDate, this.endDate]
-                        );
+                        const newEvent = this.savableEvent;
 
                         this.event.sourceDB.write(newEvent)
                         .then(() => {
                             showSuccess("Activiteit is succesvol bijgewerkt.");
-                            this.replaceWith(new EventNote(newEvent, this.lod, this.expanded));
+                            this.replaceWithOriginal(newEvent);
                         })
                         .catch(err => showError(getErrorMessage(err)));
                     }, "Aanpassingen opslaan"),
-                    ElementFactory.iconButton("backspace", () => {
-                        this.replaceWith(new EventNote(this.event, this.lod, this.expanded));
-                    }, "Annuleren")
+                    ElementFactory.iconButton("backspace", () => this.replaceWithOriginal(), "Annuleren")
                 )
                 .make()
         );

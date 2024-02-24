@@ -168,8 +168,7 @@ event-calendar {
 
     > * {
         max-width: 80%;
-        max-height: 80%;
-        
+        box-shadow: var(--std-shadow);        
         animation: fade-in 200ms ease-out 0ms 1 both, slide-up 200ms ease-out 0ms 1 both;
     }
 }

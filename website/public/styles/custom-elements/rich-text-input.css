@@ -4,17 +4,19 @@
 @import url("../custom-elements/switch.css");
 
 rich-text-input {
-    display: block;
+    display: flex;
     position: relative;
 
     padding: var(--in-section-gap);
+    
     box-sizing: border-box;
     width: 100%;
     height: 100%;
-    max-height: 80vh;
 
     background-color: var(--secondary);
     text-align: unset !important;
+
+    overflow: hidden !important;
 
     &[compact] {
         > .toolbar > * { font-size: 80%; }
@@ -46,12 +48,14 @@ rich-text-input {
     > .toolbar {
         padding: calc(var(--in-section-gap) / 4);
 
+        width: 100%;
+
         background-color: var(--primary);
         border-radius: var(--in-section-gap);
 
         flex-wrap: wrap;
 
-        & * { color: var(--text-dark) !important; }
+        & *:not(.color-bulb) { color: var(--text-dark) !important; }
 
         & .click-action { border-radius: var(--in-section-gap); }
 

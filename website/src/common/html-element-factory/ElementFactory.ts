@@ -179,7 +179,7 @@ export default abstract class ElementFactory {
     /** Creates a button based on an icon. */
     public static iconButton(icon:string, onClick:(ev:MouseEvent, button:HTMLParagraphElement)=>void, tooltip?:string) {
         return ElementFactory.p(icon)
-            .class("icon", "click-action", "no-margin")
+            .class("icon", "icon-button", "click-action", "no-margin")
             .tooltip(tooltip ? tooltip : null)
             .noFocus()
             .on("click", onClick)

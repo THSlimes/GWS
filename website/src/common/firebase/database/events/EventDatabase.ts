@@ -88,7 +88,7 @@ export class RegisterableEventInfo extends EventInfo {
         registrations:Record<string,string>,
         requires_payment:boolean,
         capacity?:number,
-        registration_period?:OpenTimespan,
+        registration_period?:OpenTimespan
     ) {
         super(sourceDB, id, name, description, category, color, timespan);
 
@@ -158,6 +158,22 @@ export class RegisterableEventInfo extends EventInfo {
             .then(res => resolve(Object.values(res)))
             .catch(reject);
         });
+    }
+
+    public static fromSuper(event:EventInfo, registrations:Record<string,string>, requires_payment:boolean, capacity?:number, registration_period?:OpenTimespan) {
+        return new RegisterableEventInfo(
+            event.sourceDB,
+            event.id,
+            event.name,
+            event.description,
+            event.category,
+            event.color,
+            [event.starts_at, event.ends_at],
+            registrations,
+            requires_payment,
+            capacity,
+            registration_period
+        );
     }
 
 }

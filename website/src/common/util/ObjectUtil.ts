@@ -1,5 +1,19 @@
 export default abstract class ObjectUtil {
 
+    public static sizeOf(obj:object):number {
+        let out = 0;
+        for (const k in obj) out++;
+        return out;
+    }
+
+    public static keys<K extends string>(obj:Record<K,any>):K[] {
+        return Object.keys(obj) as K[];
+    }
+
+    public static values<V extends any>(obj:Record<any,V>):V[] {
+        return Object.values(obj) as V[];
+    }
+
     public static deepCopy<T>(arg: T): T {
         if (typeof arg === "object") {
             if (Array.isArray(arg)) return [...arg].map(this.deepCopy) as T; // is array

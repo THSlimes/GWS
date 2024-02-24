@@ -1,0 +1,33 @@
+option-collection {
+
+    > .option {
+        padding: calc((var(--in-section-gap) / 2)) var(--in-section-gap);
+        box-sizing: border-box;
+        width: 100%;
+
+        outline: 2px solid var(--secondary);
+        border-radius: var(--in-section-gap);
+
+        > :not(.icon) { flex-grow: 1; }
+    }
+
+    > select {
+        padding: 0px !important;
+        width: 2rem;
+        aspect-ratio: 1 / 1;
+
+        text-align: center;
+        font-weight: bold;
+        font-size: 1.25rem;
+        appearance: none;
+
+        > option {
+            background-color: var(--primary);
+            color: var(--text-dark);
+
+            text-align: center;
+            font-size: 1rem;
+        }
+    }
+
+}

@@ -9,7 +9,7 @@
     & h1 {
         --type: "kop 1";
 
-        color: var(--text-dark);
+        color: inherit;
 
         &.title {
             --type: "titel";
@@ -20,25 +20,25 @@
     & h2 {
         --type: "kop 2";
 
-        color: var(--text-dark);
+        color: inherit;
     }
 
     & h3 {
         --type: "kop 3";
 
-        color: var(--text-dark);
+        color: inherit;
     }
 
     & p {
         --type: "paragraaf";
 
-        color: var(--text-dark);
+        color: inherit;
     }
 
     & a {
         --type: "snelkoppeling";
 
-        color: var(--text-dark);
+        color: inherit;
 
         &[target="_blank"]:not(:empty)::after {
             content: "open_in_new";
@@ -53,7 +53,7 @@
 
         padding-left: 0px;
 
-        color: var(--text-dark);
+        color: inherit;
 
         > *:not(.no-bullet)::before { content: "● "; }
     }
@@ -65,7 +65,7 @@
 
         padding-left: 0px;
 
-        color: var(--text-dark);
+        color: inherit;
 
         counter-reset: index;
         > *:not(.no-bullet)::before {

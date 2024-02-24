@@ -1,4 +1,6 @@
 switch-input {
+    position: relative;
+
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -7,14 +9,16 @@ switch-input {
     padding: 2px;
 
     box-sizing: border-box;
-    width: 4em;
     height: 2em;
+    aspect-ratio: 2 / 1;
 
     background-color: var(--indicate-bad);
 
     border: var(--std-border);
     border-radius: var(--in-section-gap);
     box-shadow: var(--std-shadow);
+
+    container: switch-body / size;
 
     &[on] {
         flex-direction: row-reverse;
@@ -38,9 +42,12 @@ switch-input {
 
     > .indicator {
         flex-grow: 1;
-        font-size: 1.5em;
         text-align: center;
         color: var(--text-light);
         text-shadow: var(--std-shadow);
     }
+}
+
+@container switch-body (min-width: 0px)  {
+    .indicator { font-size: 100cqh; }
 }

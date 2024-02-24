@@ -1,7 +1,8 @@
-@import url("../custom-elements/switch.css");
-@import url("../custom-elements/rich-text-input.css");
+@import url("./switch.css");
+@import url("./rich-text-input.css");
+@import url("./option-collection.css");
 
-event-note, registerable-event-note, editable-event-note {
+event-note, registerable-event-note, editable-event-note, editable-registerable-event-note {
     display: block;
     position: relative;
     
@@ -18,6 +19,17 @@ event-note, registerable-event-note, editable-event-note {
     &[expanded] {
         padding: var(--section-gap-y) var(--section-gap-x);
         > .timespan { font-size: large; }
+    }
+
+    & .icon-switch {
+        padding: calc(var(--in-section-gap) / 2) var(--in-section-gap);
+        outline: 2px solid var(--text-color);
+        border-radius: 100vw;
+        > p {
+            font-size: 1.75rem;
+            color: inherit;
+        }
+        > switch-input { height: 1.5rem; }
     }
 
     & .name {
@@ -70,7 +82,7 @@ registerable-event-note {
     }
 }
 
-editable-event-note {
+editable-event-note, editable-registerable-event-note {
 
     transition: background-color 250ms ease-out;
 
@@ -90,26 +102,13 @@ editable-event-note {
         width: 100%;
 
         &, & * { color: inherit; }
-        > .timespan-use-time {
-            transform-origin: left;
-            scale: .6;
-            padding: var(--in-section-gap) calc(2 * var(--in-section-gap));
-            outline: var(--std-border);
-            outline-color: var(--text-color);
-            border-radius: 100vw;
-        }
     }
 
     & .description { min-height: 30vh; }
 
-    & .use-color {
-        transform-origin: right;
-        scale: .7;
-        padding: var(--in-section-gap) calc(2 * var(--in-section-gap));
-        outline: var(--std-border);
+    > option-collection > .option {
         outline-color: var(--text-color);
-        border-radius: 100vw;
-        > * { color: inherit; }
+        & * { color: var(--text-color); }
     }
 
 }

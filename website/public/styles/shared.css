@@ -274,7 +274,7 @@ button, input[type="button"], .button {
 
     --hover-bg-color: color-mix(in srgb, var(--secondary), white 12.5%);
     background-color: var(--secondary) !important;
-    &, & * { color: var(--text-light) !important; }
+    &, & *:not(option) { color: var(--text-light) !important; }
 
     border: 1px solid var(--tertiary);
     border-radius: var(--in-section-gap);

@@ -382,7 +382,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
     }
 
     initElement(): void {
-        this.classList.add("boxed", "flex-rows", "section-gap");
+        this.classList.add("boxed", "flex-rows", "cross-axis-center", "section-gap");
 
         let fontSizeInput:HTMLInputElement;
         let alignSelector:FolderElement;

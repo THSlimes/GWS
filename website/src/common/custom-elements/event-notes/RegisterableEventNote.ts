@@ -1,15 +1,17 @@
 import getErrorMessage from "../../firebase/authentication/error-messages";
 import { onPermissionCheck } from "../../firebase/authentication/permission-based-redirect";
 import Permission from "../../firebase/database/Permission";
-import { RegisterableEventInfo } from "../../firebase/database/events/EventDatabase";
+import { EventInfo, RegisterableEventInfo } from "../../firebase/database/events/EventDatabase";
 import { onAuth } from "../../firebase/init-firebase";
 import ElementFactory from "../../html-element-factory/ElementFactory";
+import OptionCollection from "../../ui/OptionCollection";
 import { showError, showSuccess } from "../../ui/info-messages";
 import DateUtil from "../../util/DateUtil";
+import ObjectUtil from "../../util/ObjectUtil";
 import URLUtil from "../../util/URLUtil";
 import { DetailLevel, HasSections } from "../../util/UtilTypes";
 import Switch from "../Switch";
-import { EventNote, EventNoteSectionName } from "./EventNote";
+import { EditableEventNote, EditableEventNoteSectionName, EventNote, EventNoteOptionMap, EventNoteSectionName } from "./EventNote";
 
 /** [icon, text, enabled] tuple */
 type RegisterButtonState = [string, string, boolean];
@@ -81,6 +83,9 @@ export default class RegisterableEventNote extends EventNote implements HasSecti
     }
 
     override event!:RegisterableEventInfo;
+    protected override replaceWithEditable(event=this.event):void {
+        this.replaceWith(new EditableRegisterableEventNote(event, this.lod, this.expanded));
+    }
 
     constructor(regEvent:RegisterableEventInfo, lod=DetailLevel.MEDIUM, expanded=false) {
         super(regEvent, lod, expanded);
@@ -95,7 +100,12 @@ export default class RegisterableEventNote extends EventNote implements HasSecti
             ElementFactory.div(undefined, "payment-disclaimer", "flex-columns", "cross-axis-center", "in-section-gap")
                 .children(
                     ElementFactory.p("Ik ga akkoord met de kosten van deze activiteit.").class("no-margin"),
-                    this.allowPaymentSwitch = new Switch(false)
+                    ElementFactory.div(undefined, "icon-switch", "flex-columns", "cross-axis-center", "in-section-gap")
+                        .children(
+                            ElementFactory.p("euro_symbol").class("icon", "no-margin"),
+                            this.allowPaymentSwitch = new Switch(false)
+                        )
+                        .tooltip("Kosten accepteren")
                 )
                 .make()
             );
@@ -143,3 +153,114 @@ export default class RegisterableEventNote extends EventNote implements HasSecti
 }
 
 customElements.define("registerable-event-note", RegisterableEventNote);
+
+type EditableRegisterableEventNoteSectionName = EditableEventNoteSectionName | "capacity" | "registrationStart" | "registrationEnd" | "requiresPayment";
+type RegisterableEventNoteOptionMap = {
+    capacity: number,
+    canRegisterFrom: Date,
+    canRegisterUntil: Date,
+    requiresPayment: boolean
+};
+export class EditableRegisterableEventNote extends EditableEventNote implements HasSections<EditableRegisterableEventNoteSectionName> {
+
+    public capacity!:HTMLInputElement;
+    public registrationStart!:HTMLInputElement;
+    public registrationEnd!:HTMLInputElement;
+    public requiresPayment!:Switch;
+
+    private registrationOptions!:OptionCollection<keyof RegisterableEventNoteOptionMap, RegisterableEventNoteOptionMap>;
+
+    protected override event!:RegisterableEventInfo;
+    protected override get savableEvent():RegisterableEventInfo {
+        return RegisterableEventInfo.fromSuper(
+            super.savableEvent,
+            this.event.registrations,
+            this.registrationOptions.get("requiresPayment") ?? false,
+            this.registrationOptions.get("capacity"),
+            [this.registrationOptions.get("canRegisterFrom"), this.registrationOptions.get("canRegisterUntil")]
+        );
+    }
+
+    protected override replaceWithOriginal(regEvent=this.event):void {
+        this.replaceWith(new RegisterableEventNote(regEvent, this.lod, this.expanded));
+    }
+
+    constructor(regEvent:RegisterableEventInfo, lod=DetailLevel.MEDIUM, expanded=false) {
+        super(regEvent, lod, expanded);
+    }
+
+    public override initElement():void {
+        super.initElement();
+
+        this.registrationOptions = new OptionCollection({
+            "capacity": [
+                "social_distance",
+                ElementFactory.div(undefined, "center-content", "in-section-gap")
+                    .children(
+                        ElementFactory.h4("Maximaal aantal inschrijvingen").class("no-margin"),
+                        ElementFactory.input.number(Math.max(1, this.event.capacity ?? 0, ObjectUtil.sizeOf(this.event.registrations)))
+                            .min(Math.max(1, ObjectUtil.sizeOf(this.event.registrations)))
+                            .step(1)
+                            .style({"width": "4em"})
+                    )
+                    .make(),
+                elem => {
+                    const input = elem.lastChild as HTMLInputElement;
+                    return input.value ? input.valueAsNumber : 0;
+                }
+            ],
+            "canRegisterFrom": [
+                "line_start_square",
+                ElementFactory.div(undefined, "center-content", "in-section-gap")
+                    .children(
+                        ElementFactory.h4("Inschrijving kan vanaf").class("no-margin"),
+                        ElementFactory.input.dateTimeLocal(this.event.can_register_from ?? new Date()).max(this.event.starts_at)
+                    )
+                    .make(),
+                elem => {
+                    const date = new Date((elem.lastChild as HTMLInputElement).value);
+                    return DateUtil.Timestamps.isValid(date) ? date : new Date();
+                }
+            ],
+            "canRegisterUntil": [
+                "line_end_square",
+                ElementFactory.div(undefined, "center-content", "in-section-gap")
+                    .children(
+                        ElementFactory.h4("Inschrijving kan t/m").class("no-margin"),
+                        ElementFactory.input.dateTimeLocal(this.event.can_register_until ?? this.event.starts_at).max(this.event.starts_at)
+                    )
+                    .make(),
+                    elem => {
+                        const date = new Date((elem.lastChild as HTMLInputElement).value);
+                        return DateUtil.Timestamps.isValid(date) ? date : this.event.starts_at;
+                    }
+            ],
+            "requiresPayment": ["euro_symbol", ElementFactory.h4("Activiteit kost geld").class("text-center", "no-margin").make(), () => true],
+        }, {
+            "capacity": "Maximaal aantal inschrijvingen",
+            "canRegisterFrom": "Startmoment voor inschrijving",
+            "canRegisterUntil": "Eindmoment voor inschrijving",
+            "requiresPayment": "Activiteit kost geld"
+        });
+
+        if (this.event.requires_payment) this.registrationOptions.add("requiresPayment");
+        if (this.event.can_register_from !== undefined) this.registrationOptions.add("canRegisterFrom");
+        if (this.event.can_register_until !== undefined) this.registrationOptions.add("canRegisterUntil");
+        if (this.event.capacity !== undefined) this.registrationOptions.add("capacity");
+
+        this.addOptions(this.registrationOptions);
+
+        this.querySelector("option-collection")!.prepend( // fake "registerable" option
+            ElementFactory.div(undefined, "option", "flex-columns", "cross-axis-center", "in-section-gap")
+                .children(
+                    ElementFactory.p("how_to_reg").class("icon"),
+                    ElementFactory.h4("Inschrijfbaar voor leden").class("no-margin").style({"textAlign": "center"}),
+                    ElementFactory.p("done").class("icon"),
+                )
+                .make()
+        );
+    }
+
+}
+
+window.addEventListener("DOMContentLoaded", () => customElements.define("editable-registerable-event-note", EditableRegisterableEventNote));

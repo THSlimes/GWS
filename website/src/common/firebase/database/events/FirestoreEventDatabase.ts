@@ -43,11 +43,11 @@ function toFirestore(event:EventInfo):DBEvent {
         ...(event.color && { color: event.color }),
         registrations: event.registrations,
         requires_payment: event.requires_payment,
-        capacity: event.capacity,
+        ...(event.capacity && { capacity: event.capacity }),
         starts_at: Timestamp.fromDate(event.starts_at),
         ends_at: Timestamp.fromDate(event.ends_at),
-        can_register_from: event.can_register_from ? Timestamp.fromDate(event.can_register_from) : undefined,
-        can_register_until: event.can_register_until ? Timestamp.fromDate(event.can_register_until) : undefined,
+        ...(event.can_register_from && { can_register_from: event.can_register_from }),
+        ...(event.can_register_until && { can_register_until: event.can_register_until })
     } : {
         name: event.name,
         description: event.description,
