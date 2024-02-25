@@ -43,6 +43,12 @@ export default abstract class ObjectUtil {
         return out;
     }
 
+    public static mapToArray<K extends string|number|symbol, V, O>(obj:Record<K,V>, callbackfn:(key:K, value:V, obj:Record<K,V>)=>O):O[] {
+        const out:O[] = [];
+        for (const k in obj) out.push(callbackfn(k, obj[k], obj));
+        return out;
+    }
+
     public static some<K extends string|number|symbol, V>(obj:Record<K,V>, callbackfn:(key:K, value:V, obj:Record<K,V>)=>boolean):boolean {
         for (const key in obj) {
             const k = key as K;

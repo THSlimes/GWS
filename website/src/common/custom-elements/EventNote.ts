@@ -17,7 +17,6 @@ import DateUtil from "../util/DateUtil";
 import ObjectUtil from "../util/ObjectUtil";
 import URLUtil from "../util/URLUtil";
 import Switch from "./Switch";
-import ArrayUtil from "../util/ArrayUtil";
 
 export type EventNoteSectionName = "name" | "timespan" | "description" | "quickActions";
 export class EventNote extends HTMLElement implements HasSections<EventNoteSectionName> {
@@ -412,7 +411,7 @@ window.addEventListener("DOMContentLoaded", () => customElements.define("editabl
 
 /** [icon, text, enabled] tuple */
 type RegisterButtonState = [string, string, boolean];
-type RegisterableEventNoteSectionName = EventNoteSectionName | "paymentDisclaimer" | "allowPaymentSwitch" | "commentBox" | "registerButton";
+type RegisterableEventNoteSectionName = EventNoteSectionName | "registrations" | "paymentDisclaimer" | "allowPaymentSwitch" | "registerButton" | "commentBox";
 export default class RegisterableEventNote extends EventNote implements HasSections<RegisterableEventNoteSectionName> {
 
     private static CAN_REGISTER = false;
@@ -427,6 +426,7 @@ export default class RegisterableEventNote extends EventNote implements HasSecti
 
     protected static override SECTIONS_VISIBLE_FROM: Record<RegisterableEventNoteSectionName, DetailLevel> = {
         ...super.SECTIONS_VISIBLE_FROM,
+        registrations: DetailLevel.HIGH,
         paymentDisclaimer: DetailLevel.FULL,
         allowPaymentSwitch: DetailLevel.FULL,
         commentBox: DetailLevel.FULL,
@@ -437,15 +437,16 @@ export default class RegisterableEventNote extends EventNote implements HasSecti
         return RegisterableEventNote.SECTIONS_VISIBLE_FROM[sectionName] <= this.lod;
     }
 
+    public registrations!: HTMLDivElement;
     public paymentDisclaimer!: HTMLDivElement | null;
     public allowPaymentSwitch!: Switch | null;
-    public commentBox!: HTMLTextAreaElement;
     public registerButton!: HTMLButtonElement;
+    public commentBox!: HTMLTextAreaElement;
 
     private refreshRegistrationDetails() {
         onAuth()
             .then(user => {
-                const allowsPayment = this.allowPaymentSwitch === null || this.allowPaymentSwitch?.value;
+                const allowsPayment = !this.allowPaymentSwitch || this.allowPaymentSwitch.value;
                 const isRegistered = user !== null && this.event.isRegistered(user.uid);
                 let state: RegisterButtonState;
                 const now = new Date();
@@ -474,6 +475,22 @@ export default class RegisterableEventNote extends EventNote implements HasSecti
 
                 if (this.paymentDisclaimer && this.isVisible("paymentDisclaimer")) this.paymentDisclaimer.hidden = user === null || isRegistered;
                 if (this.isVisible("commentBox")) this.commentBox.hidden = user === null || isRegistered;
+
+                const spacesLeft = (this.event.capacity ?? 0) - ObjectUtil.sizeOf(this.event.registrations);
+                const newRegistrations = ElementFactory.div(undefined, "registrations", "flex-rows", "in-section-gap")
+                    .children(
+                        ElementFactory.heading(this.expanded ? 3 : 4, "Ingeschreven geitjes")
+                            .children(spacesLeft > 0 && ElementFactory.span(` (${spacesLeft} plekken over)`).class("subtitle"))
+                            .class("no-margin"),
+                        ElementFactory.ul()
+                            .class("registrations-list", "no-margin")
+                            .children(...ObjectUtil.mapToArray(this.event.registrations, (k,v) => ElementFactory.li(v).class("no-margin")))
+                            .make()
+                    )
+                    .make();
+                newRegistrations.hidden = this.registrations.hidden;
+                this.registrations.replaceWith(newRegistrations);
+                this.registrations = newRegistrations;
             })
             .catch(console.error);
     }
@@ -490,55 +507,56 @@ export default class RegisterableEventNote extends EventNote implements HasSecti
     public override initElement(): void {
         super.initElement();
 
-        // payment disclaimer section
-        if (this.event.requires_payment) {
-            this.paymentDisclaimer = this.appendChild(
-                ElementFactory.div(undefined, "payment-disclaimer", "flex-columns", "cross-axis-center", "in-section-gap")
-                    .children(
-                        ElementFactory.p("Ik ga akkoord met de kosten van deze activiteit.").class("no-margin"),
-                        ElementFactory.div(undefined, "icon-switch")
+        // registrations
+        this.registrations = this.appendChild(ElementFactory.div().make());
+
+        this.appendChild( // registration info
+            ElementFactory.div(undefined, "flex-rows", "cross-axis-center", "in-section-gap")
+                .children(
+                    // payment disclaimer section
+                    (this.event.requires_payment === true) && (this.paymentDisclaimer = this.appendChild(
+                        ElementFactory.div(undefined, "payment-disclaimer", "flex-columns", "cross-axis-center", "in-section-gap")
                             .children(
-                                ElementFactory.p("euro_symbol").class("icon", "no-margin"),
-                                this.allowPaymentSwitch = new Switch(false)
+                                ElementFactory.p("Ik ga akkoord met de kosten van deze activiteit.").class("no-margin"),
+                                ElementFactory.div(undefined, "icon-switch")
+                                    .children(
+                                        ElementFactory.p("euro_symbol").class("icon", "no-margin"),
+                                        this.allowPaymentSwitch = new Switch(false)
+                                    )
+                                    .tooltip("Kosten accepteren")
                             )
-                            .tooltip("Kosten accepteren")
-                    )
-                    .make()
-            );
-
-            this.allowPaymentSwitch.addEventListener("input", () => this.refreshRegistrationDetails());
-        }
-
-        // comment box
-        this.commentBox = this.appendChild(
-            ElementFactory.textarea()
-                .class("comment-box")
-                .placeholder("Opmerking")
-                .attr("no-resize")
-                .spellcheck(true)
-                .maxLength(512)
-                .make()
-        );
-
-        // register button
-        this.registerButton = this.appendChild(
-            ElementFactory.button(() => onAuth()
-                .then(user => {
-                    if (!user) location.href = URLUtil.createLinkBackURL("./login.html").toString(); // must log in to register
-                    else this.event.toggleRegistered(user.uid, this.commentBox.value)
-                        .then(isReg => {
-                            showSuccess(`Je bent succesvol ${isReg ? "ingeschreven" : "uitgeschreven"}.`);
-                            this.refreshRegistrationDetails();
+                            .make()
+                    )),
+                    // comment box
+                    this.commentBox = ElementFactory.textarea()
+                        .class("comment-box")
+                        .placeholder("Opmerking")
+                        .attr("no-resize")
+                        .spellcheck(true)
+                        .maxLength(512)
+                        .make(),
+                    // register button
+                    this.registerButton = ElementFactory.button(() => onAuth()
+                        .then(user => {
+                            if (!user) location.href = URLUtil.createLinkBackURL("./login.html").toString(); // must log in to register
+                            else this.event.toggleRegistered(user.uid, this.commentBox.value)
+                                .then(isReg => {
+                                    showSuccess(`Je bent succesvol ${isReg ? "ingeschreven" : "uitgeschreven"}.`);
+                                    this.refreshRegistrationDetails();
+                                })
+                                .catch(err => showError(getErrorMessage(err)));
                         })
-                        .catch(err => showError(getErrorMessage(err)));
-                })
-                .catch(err => showError(getErrorMessage(err)))
-            )
-                .class("register-button")
-                .attr("no-select")
-                .children(ElementFactory.h4("event").class("icon"), ElementFactory.h4("Inschrijven"))
+                        .catch(err => showError(getErrorMessage(err)))
+                    )
+                    .class("register-button")
+                    .attr("no-select")
+                    .children(ElementFactory.h4("event").class("icon"), ElementFactory.h4("Inschrijven"))
+                    .make()
+                )
                 .make()
         );
+
+        if (this.allowPaymentSwitch) this.allowPaymentSwitch.addEventListener("input", () => this.refreshRegistrationDetails());
         this.refreshRegistrationDetails();
     }
 
@@ -550,7 +568,7 @@ export default class RegisterableEventNote extends EventNote implements HasSecti
 
 customElements.define("registerable-event-note", RegisterableEventNote);
 
-type EditableRegisterableEventNoteSectionName = EditableEventNoteSectionName | "capacity" | "registrationStart" | "registrationEnd" | "requiresPayment";
+type EditableRegisterableEventNoteSectionName = EditableEventNoteSectionName;
 type RegisterableEventNoteOptionMap = {
     capacity: number;
     canRegisterFrom: Date;
@@ -558,11 +576,6 @@ type RegisterableEventNoteOptionMap = {
     requiresPayment: boolean;
 };
 export class EditableRegisterableEventNote extends EditableEventNote implements HasSections<EditableRegisterableEventNoteSectionName> {
-
-    public capacity!: HTMLInputElement;
-    public registrationStart!: HTMLInputElement;
-    public registrationEnd!: HTMLInputElement;
-    public requiresPayment!: Switch;
 
     private registrationOptions!: OptionCollection<keyof RegisterableEventNoteOptionMap, RegisterableEventNoteOptionMap>;
 
@@ -578,7 +591,7 @@ export class EditableRegisterableEventNote extends EditableEventNote implements 
             super.savableEvent,
             this.event.registrations,
             this.registrationOptions.get("requiresPayment") ?? false,
-            this.registrationOptions.get("capacity"),
+            this.registrationOptions.has("capacity") ? Math.max(ObjectUtil.sizeOf(this.event.registrations), this.registrationOptions.get("capacity")!) : undefined,
             [canRegisterFrom, canRegisterUntil]
         );
     }

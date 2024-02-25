@@ -127,7 +127,10 @@ input, textarea, select, *[contenteditable="plaintext-only"], *[contenteditable=
     &:disabled { filter: contrast(.75); }
 }
 
-.subtitle { font-size: 80% }
+.subtitle {
+    font-size: 75%;
+    font-style: italic;
+}
 
 div#split-view {
     display: grid;
