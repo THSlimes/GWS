@@ -17,8 +17,9 @@ option-collection {
         aspect-ratio: 1 / 1;
 
         text-align: center;
+        font-family: "icon";
         font-weight: bold;
-        font-size: 1.25rem;
+        font-size: 1.5rem;
         appearance: none;
 
         > option {
@@ -26,6 +27,7 @@ option-collection {
             color: var(--text-dark);
 
             text-align: center;
+            font-family: var(--std-font);
             font-size: 1rem;
         }
     }

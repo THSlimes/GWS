@@ -37,8 +37,9 @@ export default class OptionCollection<Option extends string, OptionTypeMap exten
 
         this.selector = this.appendChild(
             ElementFactory.select(this.optionNames)
-            .option('+', undefined, true).value('+')
+            .option('+', "variable_add", true).value('+')
                 .class("button")
+                .attr("no-select")
                 .onValueChanged(val => {
                     if (val !== '+') {
                         this.add(val);

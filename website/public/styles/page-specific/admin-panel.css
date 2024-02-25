@@ -111,12 +111,14 @@
         width: 2em;
         height: min-content;
         text-align: center;
+        font-weight: bold;
         appearance: none;
 
         > option {
-            text-align: center;
             background-color: var(--primary);
             color: var(--text-dark);
+            text-align: center;
+            font-weight: normal;
         }
     }
 }
