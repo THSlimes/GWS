@@ -1,4 +1,4 @@
-import { EventInfo, RegisterableEventInfo } from "../firebase/database/events/EventDatabase";
+import { EventComment, EventInfo, RegisterableEventInfo } from "../firebase/database/events/EventDatabase";
 import { showError, showSuccess, showWarning } from "../ui/info-messages";
 import { HasSections } from "../util/UtilTypes";
 import ColorUtil from "../util/ColorUtil";
@@ -416,11 +416,13 @@ export default class RegisterableEventNote extends EventNote implements HasSecti
 
     private static CAN_REGISTER = false;
     private static CAN_DEREGISTER = false;
+    private static CAN_READ_COMMENTS = false;
 
     static {
-        onPermissionCheck([Permission.REGISTER_FOR_EVENTS, Permission.DEREGISTER_FOR_EVENTS], (_, res) => {
+        onPermissionCheck([Permission.REGISTER_FOR_EVENTS, Permission.DEREGISTER_FOR_EVENTS, Permission.READ_EVENT_COMMENTS], (_, res) => {
             this.CAN_REGISTER = res.REGISTER_FOR_EVENTS;
             this.CAN_DEREGISTER = res.DEREGISTER_FOR_EVENTS;
+            this.CAN_READ_COMMENTS = res.READ_EVENT_COMMENTS;
         }, true, true);
     }
 
@@ -476,21 +478,40 @@ export default class RegisterableEventNote extends EventNote implements HasSecti
                 if (this.paymentDisclaimer && this.isVisible("paymentDisclaimer")) this.paymentDisclaimer.hidden = user === null || isRegistered;
                 if (this.isVisible("commentBox")) this.commentBox.hidden = user === null || isRegistered;
 
+
                 const spacesLeft = (this.event.capacity ?? 0) - ObjectUtil.sizeOf(this.event.registrations);
-                const newRegistrations = ElementFactory.div(undefined, "registrations", "flex-rows", "in-section-gap")
-                    .children(
-                        ElementFactory.heading(this.expanded ? 3 : 4, "Ingeschreven geitjes")
-                            .children(spacesLeft > 0 && ElementFactory.span(` (${spacesLeft} plekken over)`).class("subtitle"))
-                            .class("no-margin"),
-                        ElementFactory.ul()
-                            .class("registrations-list", "no-margin")
-                            .children(...ObjectUtil.mapToArray(this.event.registrations, (k,v) => ElementFactory.li(v).class("no-margin")))
-                            .make()
-                    )
-                    .make();
-                newRegistrations.hidden = this.registrations.hidden;
-                this.registrations.replaceWith(newRegistrations);
-                this.registrations = newRegistrations;
+                const commentsPromise = RegisterableEventNote.CAN_READ_COMMENTS ? this.event.getComments() : new Promise<Record<string,EventComment>>(resolve => resolve({}));
+                
+                commentsPromise.then(comments => {
+                    const newRegistrations = ElementFactory.div(undefined, "registrations", "flex-rows", "in-section-gap")
+                        .children(
+                            ElementFactory.heading(this.expanded ? 3 : 4, "Ingeschreven geitjes")
+                                .children(spacesLeft > 0 && ElementFactory.span(` (${spacesLeft} plekken over)`).class("subtitle"))
+                                .class("no-margin"),
+                            ElementFactory.ul()
+                                .class("registrations-list", "no-margin")
+                                .children(
+                                    ...ObjectUtil.mapToArray(this.event.registrations, (id, name) => ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
+                                        .children(
+                                            ElementFactory.li(name).class("no-margin"),
+                                            (id in comments) && ElementFactory.iconButton("comment", () => navigator.clipboard.writeText(comments[id].body)
+                                                .then(() => showSuccess("Opmerking gekopieerd."))
+                                                .catch(() => showError("Kon opmerking niet kopiëren, probeer het later opnieuw."))
+                                            )
+                                            .class("comment")
+                                            .tooltip(comments[id].body)
+                                        )
+                                    )
+                                )
+                                .make()
+                        )
+                        .make();
+                    newRegistrations.hidden = this.registrations.hidden;
+                    this.registrations.replaceWith(newRegistrations);
+                    this.registrations = newRegistrations;
+
+                })
+                .catch(console.error);
             })
             .catch(console.error);
     }

@@ -76,6 +76,7 @@ registerable-event-note {
             max-height: 20vh;
             overflow-y: scroll;
 
+            & .comment { font-size: 1.75em; }
             > *::marker { content: ""; }
         }
     }

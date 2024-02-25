@@ -186,16 +186,18 @@ export default class FirestoreEventDatebase extends EventDatabase {
         });
     }
 
-    getCommentsFor(event: RegisterableEventInfo): Promise<Record<string, EventComment>> {
+    getCommentsFor(event: RegisterableEventInfo): Promise<Record<string,EventComment>> {
         return new Promise((resolve, reject) => {
             const commentCollection = collection(FIRESTORE, "events", event.id, "comments");
             getDocs(commentCollection)
             .then(snapshot => {
-                const out:EventComment[] = [];
+                const out:Record<string,EventComment> = {};
                 snapshot.forEach(docSnapshot => {
                     const data = docSnapshot.data() as DBEventComment;
-                    out.push({ created_at: data.created_at.toDate(), body: data.body });
+                    out[docSnapshot.id] = { id:docSnapshot.id, created_at: data.created_at.toDate(), body: data.body };
                 });
+
+                resolve(out);
             })
             .catch(reject);
         });

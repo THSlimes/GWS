@@ -105,8 +105,15 @@ export default class CachingEventDatebase extends EventDatabase {
         return this.relay.deregisterFor(event);
     }
 
+    /** Mapping of event IDs to their comment collection. */
+    private readonly commentCache:Record<string,Record<string,EventComment>> = {};
     getCommentsFor(event:RegisterableEventInfo):Promise<Record<string, EventComment>> {
-        return this.relay.getCommentsFor(event);
+        return new Promise((resolve,reject) => {
+            if (event.id in this.commentCache) resolve(this.commentCache[event.id]);
+            else this.relay.getCommentsFor(event)
+                .then(comments => resolve(this.commentCache[event.id] = comments))
+                .catch(reject);
+        });
     }
 
     public override set onWrite(newHandler:(...newRecords:EventInfo[])=>void) {
@@ -155,6 +162,9 @@ export default class CachingEventDatebase extends EventDatabase {
 
         // remove from categoryCache
         for (const cat in this.categoryCache) this.categoryCache[cat] = this.categoryCache[cat].filter(e => !ids.includes(e.id));
+
+        // remove from commentCache
+        for (const rec of records) delete this.commentCache[rec.id];
     }
 
     doDelete(...records:EventInfo[]):Promise<number> {

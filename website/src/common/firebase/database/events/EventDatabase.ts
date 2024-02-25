@@ -123,6 +123,7 @@ export class RegisterableEventInfo extends EventInfo {
             this.sourceDB.registerFor(this, comment)
             .then(([id, name]) => {
                 this.registrations[id] = name;
+                if (this.cachedComments && comment) this.cachedComments[id] = { id, created_at: new Date(), body: comment }; // cache comment
                 resolve();
             })
             .catch(reject);
@@ -135,6 +136,7 @@ export class RegisterableEventInfo extends EventInfo {
             this.sourceDB.deregisterFor(this)
             .then(id => {
                 delete this.registrations[id];
+                if (this.cachedComments) delete this.cachedComments[id];
                 resolve();
             })
             .catch(reject);
@@ -152,11 +154,13 @@ export class RegisterableEventInfo extends EventInfo {
         });
     }
 
-    public getComments():Promise<EventComment[]> {
+    private cachedComments?:Record<string,EventComment>;
+    public getComments():Promise<Record<string,EventComment>> {
         return new Promise((resolve, reject) => {
-            this.sourceDB.getCommentsFor(this)
-            .then(res => resolve(Object.values(res)))
-            .catch(reject);
+            if (this.cachedComments !== undefined) resolve(this.cachedComments);
+            else this.sourceDB.getCommentsFor(this)
+                .then(comments => resolve(this.cachedComments = comments))
+                .catch(reject);
         });
     }
 
@@ -179,6 +183,7 @@ export class RegisterableEventInfo extends EventInfo {
 }
 
 export interface EventComment {
+    id:string,
     body:string,
     created_at:Date
 }
