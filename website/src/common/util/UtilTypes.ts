@@ -9,6 +9,7 @@ export enum DetailLevel {
     HIGH,
     FULL
 }
+
 /**
  * Type to be implemented by custom element types which have distinct sections.
  * @param S union type of section names
@@ -20,3 +21,5 @@ export type HasSections<S extends string> = {
     /** Method which initializes the element. */
     initElement(): void;
 };
+
+export type ElementOf<A extends any[]> = A extends (infer E)[] ? E : never;

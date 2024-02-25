@@ -22,14 +22,7 @@ event-note, registerable-event-note, editable-event-note, editable-registerable-
     }
 
     & .icon-switch {
-        padding: calc(var(--in-section-gap) / 2) var(--in-section-gap);
-        outline: 2px solid var(--text-color);
-        border-radius: 100vw;
-        > p {
-            font-size: 1.75rem;
-            color: inherit;
-        }
-        > switch-input { height: 1.5rem; }
+        outline-color: var(--text-color);
     }
 
     & .name {

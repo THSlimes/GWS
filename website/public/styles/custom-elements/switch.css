@@ -51,3 +51,23 @@ switch-input {
 @container switch-body (min-width: 0px)  {
     .indicator { font-size: 100cqh; }
 }
+
+
+
+.icon-switch {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: var(--in-section-gap);
+
+    padding: calc(var(--in-section-gap) / 2) var(--in-section-gap);
+    outline: 2px solid var(--text-dark);
+    border-radius: 100vw;
+
+    > *:first-child {
+        font-size: 1.75rem;
+        color: inherit;
+    }
+    > switch-input { height: 1.5rem; }
+}

@@ -1,3 +1,4 @@
+import { ElementOf } from "./UtilTypes";
 
 /**
  * The ArrayUtil helper-class provides some standard method to manipulate and process arrays.
@@ -76,6 +77,14 @@ export default abstract class ArrayUtil {
         while (arr.length !== 0) out.push(arr.splice(0, batchSize));
 
         return out;
+    }
+
+    public static sorted<A extends any[]>(arr:A, compareFn?: ((a:ElementOf<A>, b: ElementOf<A>) => number)):A {
+        return arr.sort(compareFn);
+    }
+
+    public static toSorted<A extends any[]>(arr:A, compareFn?: ((a:ElementOf<A>, b: ElementOf<A>) => number)):A {
+        return arr.toSorted(compareFn) as A;
     }
     
     /**

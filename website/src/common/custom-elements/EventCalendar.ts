@@ -1,7 +1,7 @@
 import $ from "jquery";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import EventDatabase, { EventInfo, RegisterableEventInfo } from "../firebase/database/events/EventDatabase";
-import { EventNote } from "./event-notes/EventNote";
+import { EventNote } from "./EventNote";
 import { DetailLevel } from "../util/UtilTypes";
 import CachingEventDatebase from "../firebase/database/events/CachingEventDatebase";
 import IconSelector from "./IconSelector";
@@ -12,7 +12,7 @@ import URLUtil from "../util/URLUtil";
 import { showError } from "../ui/info-messages";
 import getErrorMessage from "../firebase/authentication/error-messages";
 import NodeUtil from "../util/NodeUtil";
-import RegisterableEventNote from "./event-notes/RegisterableEventNote";
+import RegisterableEventNote from "./EventNote";
 
 const DAY_ABBREVIATIONS = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
 

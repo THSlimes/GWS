@@ -302,8 +302,7 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
                         })
                         .make(),
                     ElementFactory.p("backspace")
-                        .id("cancel-edit-button")
-                        .class("icon", "click-action")
+                        .class("cancel-edit-button", "icon", "click-action")
                         .tooltip("Wijzigingen annuleren")
                         .on("click", () => {
                             this.replaceWith(new SmartArticle(this.article, this.lod));

@@ -23,6 +23,7 @@ export function initArticlesPanel() {
         });
 
         const NEW_ARTICLE = new EditableSmartArticle(NEW_ARTICLE_INFO, "full", true);
+        NEW_ARTICLE.id = "new-article";
         NEW_ARTICLE.onSave = newArticle => location.href = SmartArticle.getLinkTo(newArticle);
         Placeholder.replaceWith("new-article", NEW_ARTICLE);
 

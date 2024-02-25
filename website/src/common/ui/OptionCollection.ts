@@ -9,11 +9,12 @@ export default class OptionCollection<Option extends string, OptionTypeMap exten
     private readonly optionInputs;
     private readonly optionNames:Record<Option,string>;
     private readonly activeOptions = new Set<Option>();
+    private readonly hiddenOptions = new Set<Option>();
 
     public selector!:HTMLSelectElement & { value:Option|'+' };
     private refreshSelector() {
         const options = Array.from(this.selector.options);
-        options.forEach(option => option.hidden = option.value === '+' || this.has(option.value as Option));
+        options.forEach(option => option.hidden = option.value === '+' || this.hiddenOptions.has(option.value as Option) || this.has(option.value as Option));
         this.selector.hidden = options.every(option => option.hidden);
     }
 
@@ -80,6 +81,13 @@ export default class OptionCollection<Option extends string, OptionTypeMap exten
         else return false;
     }
 
+    public hide(optionName:Option) {
+        if (!this.hiddenOptions.has(optionName)) {
+            this.hiddenOptions.add(optionName);
+            this.refreshSelector();
+        }
+    }
+
     public has(optionName:Option) {
         return this.activeOptions.has(optionName);
     }
@@ -110,6 +118,10 @@ export default class OptionCollection<Option extends string, OptionTypeMap exten
         // set active options
         for (const optName of this.activeOptions) out.add(optName);
         for (const optName of other.activeOptions) out.add(optName);
+        
+        // set hidden options
+        for (const optName of this.hiddenOptions) out.hide(optName);
+        for (const optName of other.hiddenOptions) out.hide(optName);
 
         // copy event handler
         out.onActiveOptionsChanged = () => {
@@ -123,6 +135,7 @@ export default class OptionCollection<Option extends string, OptionTypeMap exten
             }
         };
         for (const handler of this.activeOptionsChangeHandlers) out.onActiveOptionsChanged = handler;
+        for (const handler of other.activeOptionsChangeHandlers) out.onActiveOptionsChanged = handler;
 
         return out;
     }

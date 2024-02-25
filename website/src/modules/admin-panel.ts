@@ -12,7 +12,7 @@ import { initArticlesPanel } from "../common/admin-panels/articles-panel";
 redirectIfMissingPermission("/", [Permission.VIEW_ADMIN_PANEL, Permission.READ_OTHER_USER_INFO], true, true);
 
 /** Union type of the IDs of all panels. */
-type PanelId = "users-panel" | "messages-panel" | "events-panel" | "links-panel";
+type PanelId = "users-panel" | "articles-panel" | "events-panel" | "links-panel";
 
 const PANEL_CONFIG:Record<PanelId, { icon:string, label:string, default?:true, selectCallback?:VoidFunction }> = {
     "users-panel": {
@@ -26,7 +26,7 @@ const PANEL_CONFIG:Record<PanelId, { icon:string, label:string, default?:true, s
         selectCallback: initEventsPanel,
         default: true
     },
-    "messages-panel": {
+    "articles-panel": {
         icon: "mail",
         label: "Berichten",
         selectCallback: initArticlesPanel,
