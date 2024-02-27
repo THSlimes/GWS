@@ -126,6 +126,18 @@ editable-event-note, editable-registerable-event-note {
 
 }
 
+
+
+/* TABLET-VIEWPORT OVERRIDE */
+
+@media (max-aspect-ratio: 3 / 4) {
+    editable-event-note, editable-registerable-event-note {
+        &[expanded] {
+            gap: var(--in-section-gap);
+        }
+    }
+}
+
 /* PHONE-VIEWPORT OVERRIDE */
 
 @media (max-aspect-ratio: 3 / 5) {
@@ -135,8 +147,15 @@ editable-event-note, editable-registerable-event-note {
         flex-wrap: nowrap;
         align-items: center;
 
-        > * { margin: 2em 1em 2em 1em; }
         > .name { margin: 0px; }
         > .timespan { margin: 0px; }
+    }
+
+    editable-event-note, editable-registerable-event-note {
+        > .timespan {
+            flex-wrap: wrap;
+            justify-content: center;
+            > *:first-child { width: 100%; }
+        }
     }
 }

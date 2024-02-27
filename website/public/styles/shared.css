@@ -64,6 +64,8 @@ span.icon { font-size: inherit; }
 }
 
 body {
+    justify-content: space-between;
+
     padding:0px;
     margin:0px;
 
@@ -72,7 +74,10 @@ body {
     background-color: var(--primary);
     font-family: var(--std-font);
 
-    overflow-x: hidden;
+    box-sizing: border-box;
+    min-height: 100vh;
+
+    /* overflow-x: hidden; */
 
     /* Scrollbar */
     scrollbar-color: var(--shadow-dark) transparent;
@@ -155,13 +160,6 @@ div#split-view {
         text-decoration: underline;
     }
 
-    > .content {
-        grid-area: c;
-        row-gap: 1em;
-
-        > .section-name { text-align: left; }
-    }
-
     > #news-letters {
         grid-area: n;
         padding: var(--in-section-gap);
@@ -185,6 +183,13 @@ div#split-view {
             }
         }
     }
+}
+
+.content {
+    grid-area: c;
+    row-gap: 1em;
+
+    > .section-name { text-align: left; }
 }
 
 /* UTILITY CLASSES */

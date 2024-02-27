@@ -6,24 +6,27 @@ import { FirestoreUserDatabase } from "../firebase/database/users/FirestoreUserD
 import { UserInfo } from "../firebase/database/users/UserDatabase";
 import { onAuth } from "../firebase/init-firebase";
 import ElementFactory from "../html-element-factory/ElementFactory";
+import Responsive from "../ui/Responsive";
 import { showError, showMessage, showSuccess } from "../ui/info-messages";
 import ArrayUtil from "../util/ArrayUtil";
 import ColorUtil from "../util/ColorUtil";
 import DateUtil from "../util/DateUtil";
 import ObjectUtil from "../util/ObjectUtil";
-import NodeUtil from "../util/NodeUtil";
 
 function createPermissionLabel(perm:Permission, editable:boolean, onRemove:(label:HTMLDivElement)=>void):HTMLDivElement {
+    const backgroundColor = ColorUtil.getStringColor(perm);
+    const color = ColorUtil.getMostContrasting(backgroundColor, "#000000", "#ffffff");
     return ElementFactory.div(undefined, "permission", "center-content")
         .children(
-            ElementFactory.p(toHumanReadable(perm)),
+            ElementFactory.p(toHumanReadable(perm)).style({ color }),
             label => editable ?
                 ElementFactory.p("close")
                     .class("icon", "click-action")
+                    .style({ color })
                     .on("click", () => onRemove(label)) :
                 null,
         )
-        .style({"backgroundColor": ColorUtil.getStringColor(perm)})
+        .style({ backgroundColor })
         .make();
 }
 
@@ -32,6 +35,9 @@ function createUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, ca
 
     const out = ElementFactory.div(undefined, "entry").make();
 
+    const joinedAtText = Responsive.isAnyOf("mobile-portrait") ? // don't show join time on mobile
+        DateUtil.DATE_FORMATS.DAY.SHORT(userEntry.get("joined_at")) :
+        DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT(userEntry.get("joined_at"));
     if (canEdit) out.append( // add editable versions
         ElementFactory.div(undefined, "name")
             .children(
@@ -43,10 +49,11 @@ function createUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, ca
                     .onValueChanged(val => userEntry.set("family_name", val)),
             )
             .make(),
-        ElementFactory.h4(DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT(userEntry.get("joined_at")))
+        ElementFactory.h4(joinedAtText)
             .class("joined-at", "center-content")
             .make(),
         ElementFactory.input.dateTimeLocal(userEntry.get("member_until"))
+            .class("member-until")
             .onValueChanged(val => userEntry.set("member_until", new Date(val)))
             .make()
     );
@@ -54,7 +61,7 @@ function createUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, ca
         ElementFactory.h4(`${userEntry.get("first_name")} ${userEntry.get("family_name")}`)
             .class("name", "center-content")
             .make(),
-        ElementFactory.h4(DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT(userEntry.get("joined_at")))
+        ElementFactory.h4(joinedAtText)
             .class("joined-at", "center-content")
             .make(),
         ElementFactory.h4(DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT(userEntry.get("member_until")!))
@@ -62,45 +69,43 @@ function createUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, ca
             .make()
         
     );
+    
 
     out.prepend( // id copier
-        ElementFactory.h4("content_copy")
-            .class("id", "icon", "click-action", "center-content")
-            .tooltip("Kopieer account-ID")
-            .on("click", () => {
-                navigator.clipboard.writeText(userEntry.get("id"))
-                .then(() => showMessage("Account ID gekopieerd."))
-                .catch(err => {
-                    console.log(err);
-                    showError("Kopiëren mislukt.");
-                });
-            })
-            .make()
+        ElementFactory.iconButton("content_copy", () => {
+            navigator.clipboard.writeText(userEntry.get("id"))
+            .then(() => showSuccess("Account ID gekopieerd."))
+            .catch(err => {
+                console.log(err);
+                showError("Kopiëren mislukt, probeer het later opnieuw.");
+            });
+        }, "Kopieer account-ID").class("id", "text-center").make()
     );
-    out.appendChild( // permissions list
-        ElementFactory.div(undefined, "permissions")
-            .children(
-                ...userEntry.get("permissions").sort((a,b) => toHumanReadable(a).localeCompare(toHumanReadable(b)))
-                    .map(perm => createPermissionLabel(perm, canEditPerms, label => {
+
+
+    out.appendChild(ElementFactory.div(undefined, "permissions", "permissions-list") // permissions list
+        .children(
+            ...userEntry.get("permissions").sort((a, b) => toHumanReadable(a).localeCompare(toHumanReadable(b)))
+                .map(perm => createPermissionLabel(perm, canEditPerms, label => {
+                    const userPerms = userEntry.get("permissions");
+                    userPerms.splice(userPerms.indexOf(perm), 1);
+                    userEntry.set("permissions", userPerms);
+                    out.replaceWith(createUserEntry(userEntry, canEdit, canEditPerms));
+                })),
+            canEditPerms && userEntry.get("permissions").length < ALL_PERMISSIONS.length ?
+                ElementFactory.select(ObjectUtil.mapToObject(ArrayUtil.difference(ALL_PERMISSIONS, userEntry.get("permissions")), p => toHumanReadable(p)))
+                    .option("null", "+", true).value("null")
+                    .class("new-permission", "button")
+                    .onValueChanged(v => {
+                        const perm = v as Permission;
                         const userPerms = userEntry.get("permissions");
-                        userPerms.splice(userPerms.indexOf(perm), 1);
+                        userPerms.push(perm);
                         userEntry.set("permissions", userPerms);
                         out.replaceWith(createUserEntry(userEntry, canEdit, canEditPerms));
-                    })),
-                canEditPerms && userEntry.get("permissions").length < ALL_PERMISSIONS.length ?
-                    ElementFactory.select(ObjectUtil.mapToObject(ArrayUtil.difference(ALL_PERMISSIONS, userEntry.get("permissions")), p => toHumanReadable(p)))
-                        .option("null", "+", true).value("null")
-                        .class("new-permission", "button")
-                        .onValueChanged(v => {
-                            const perm = v as Permission;
-                            const userPerms = userEntry.get("permissions");
-                            userPerms.push(perm);
-                            userEntry.set("permissions", userPerms);
-                            out.replaceWith(createUserEntry(userEntry, canEdit, canEditPerms));
-                        }) :
-                    null // non-editable or all permissions granted
-            )
-            .make()
+                    }) :
+                null // non-editable or all permissions granted
+        )
+        .make()
     );
     
     return out;

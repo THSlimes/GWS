@@ -328,7 +328,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
             .attr("value", color)
             .children(
                 ElementFactory.p('⬤')
-                    .class("no-margin")
+                    .class("color-bulb-indicator", "no-margin")
                     .style({"color": color})
             )
             .on("click", () => onSelect(color))

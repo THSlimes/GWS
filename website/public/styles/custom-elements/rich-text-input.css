@@ -55,7 +55,7 @@ rich-text-input {
 
         flex-wrap: wrap;
 
-        & *:not(.color-bulb) { color: var(--text-dark) !important; }
+        & *:not(.color-bulb):not(.color-bulb-indicator) { color: var(--text-dark) !important; }
 
         & .click-action { border-radius: var(--in-section-gap); }
 
@@ -151,4 +151,20 @@ rich-text-input {
         }
     }
 
+}
+
+/* TABLET-VIEWPORT OVERRIDE */
+
+@media (max-aspect-ratio: 3 / 4) {
+    rich-text-input {
+        > .toolbar {
+            gap: var(--in-section-gap);
+            > * { font-size: .75em !important; }
+        }
+    }
+}
+
+/* PHONE-VIEWPORT OVERRIDE */
+
+@media (max-aspect-ratio: 3 / 5) {
 }

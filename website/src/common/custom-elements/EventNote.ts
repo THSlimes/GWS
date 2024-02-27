@@ -17,6 +17,7 @@ import DateUtil from "../util/DateUtil";
 import ObjectUtil from "../util/ObjectUtil";
 import URLUtil from "../util/URLUtil";
 import Switch from "./Switch";
+import Responsive from "../ui/Responsive";
 
 export type EventNoteSectionName = "name" | "timespan" | "description" | "quickActions";
 export class EventNote extends HTMLElement implements HasSections<EventNoteSectionName> {
@@ -296,13 +297,16 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
         this.appendChild(
             ElementFactory.div(undefined, "timespan", "flex-columns", "cross-axis-center", "in-section-gap")
                 .children(
-                    this.startsAt = areFullDays ?
-                        ElementFactory.input.date(this.event.starts_at).make() :
-                        ElementFactory.input.dateTimeLocal(this.event.starts_at).make(),
-                    ElementFactory.p("t/m").class("no-margin"),
-                    this.endsAt = areFullDays ?
-                        ElementFactory.input.date(this.event.ends_at).make() :
-                        ElementFactory.input.dateTimeLocal(this.event.ends_at).make(),
+                    ElementFactory.div(undefined, "flex-columns", "main-axis-space-around", "cross-axis-center", "in-section-gap")
+                        .children(
+                            this.startsAt = areFullDays ?
+                                ElementFactory.input.date(this.event.starts_at).make() :
+                                ElementFactory.input.dateTimeLocal(this.event.starts_at).make(),
+                            ElementFactory.p(Responsive.isAnyOf("mobile-portrait") ? '→' : "t/m").class("no-margin"),
+                            this.endsAt = areFullDays ?
+                                ElementFactory.input.date(this.event.ends_at).make() :
+                                ElementFactory.input.dateTimeLocal(this.event.ends_at).make()
+                        ),
                     ElementFactory.div(undefined, "icon-switch")
                         .children(
                             ElementFactory.p("more_time").class("icon", "no-margin"),

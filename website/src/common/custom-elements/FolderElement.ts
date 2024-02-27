@@ -46,6 +46,10 @@ export default class FolderElement extends HTMLElement {
     
     private readonly _contents:HTMLDivElement;
     public get contents() { return this._contents; }
+    public set contentPosition(pos:ContentPosition) {
+        this._contents.classList.remove("absolute", "static");
+        this._contents.classList.add(pos);
+    }
 
     /** Whether the folder is currently open. */
     public get isOpen() { return this.hasAttribute("open"); }

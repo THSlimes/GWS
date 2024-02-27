@@ -232,19 +232,19 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
         );
 
         this.append(
-            ElementFactory.div(undefined, "flex-columns", "main-axis-space-evenly", "cross-axis-center", "in-section-gap")
+            ElementFactory.div(undefined, "category-and-switches", "flex-columns", "main-axis-space-evenly", "cross-axis-center", "in-section-gap")
                 .children(
                     this.category = ElementFactory.input.text(this.article.category)
                         .placeholder("Categorie")
                         .class("category")
                         .make(),
-                    ElementFactory.div(undefined, "flex-columns", "main-axis-space-between", "cross-axis-center", "in-section-gap")
+                    ElementFactory.div(undefined, "show-on-homepage", "flex-columns", "main-axis-space-between", "cross-axis-center", "in-section-gap")
                         .children(
                             ElementFactory.label("Zichtbaar op homepagina?"),
                             this.showOnHomepage = new Switch(this.article.show_on_homepage)
                         ),
                         
-                    ElementFactory.div(undefined, "flex-columns", "main-axis-space-between", "cross-axis-center", "in-section-gap")
+                    ElementFactory.div(undefined, "only-for-members", "flex-columns", "main-axis-space-between", "cross-axis-center", "in-section-gap")
                         .children(
                             ElementFactory.label("Alleen te lezen door leden?"),
                             this.onlyForMembers = new Switch(this.article.only_for_members)
@@ -298,7 +298,7 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
                                 .catch(err => showError(getErrorMessage(err)));
 
                             })
-                            .catch(err => showMessage(getErrorMessage(err)));
+                            .catch(err => showError(getErrorMessage(err)));
                         })
                         .make(),
                     ElementFactory.p("backspace")

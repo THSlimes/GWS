@@ -4,7 +4,9 @@
 
 header.page-header {
 
+    box-sizing: border-box;
     width: 100%;
+    max-width: 100vw;
 
     & * { color: var(--text-light); }
 
@@ -39,7 +41,7 @@ header.page-header {
         column-gap: var(--section-gap-x);
         
         box-sizing: border-box;
-        width: 100vw;
+        width: 100%;
         height: 4em;
     
         background-color: var(--secondary);
@@ -121,6 +123,9 @@ footer {
     padding-top: var(--in-section-gap);
     row-gap: var(--in-section-gap);
 
+    box-sizing: border-box;
+    max-width: 100vw;
+
     background-color: var(--secondary);
     & * {
         margin: 0px;
@@ -149,6 +154,7 @@ footer {
 
     box-sizing: border-box;
     width:100%;
+    max-width: 100vw;
 
     background-color: var(--tertiary);
     color: var(--text-light);

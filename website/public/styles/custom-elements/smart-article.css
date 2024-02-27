@@ -73,10 +73,21 @@ editable-smart-article {
 
 @media (max-aspect-ratio: 3 / 4) {
     article[lod="full"] .heading { font-size: 150%; }
+
+    editable-smart-article {
+        > .category-and-switches {
+            flex-wrap: wrap;
+            > .category { width: 100%; }
+        }
+    }
 }
 
 /* PHONE-VIEWPORT OVERRIDE */
 
 @media (max-aspect-ratio: 3 / 5) {
     article[lod="full"] .heading { font-size: 125%; }
+
+    editable-smart-article {
+        gap: var(--in-section-gap) !important;
+    }
 }

@@ -15,7 +15,7 @@ export default abstract class ElementFactory {
     public static header() { return new AssemblyLine("header"); }
     public static footer() { return new AssemblyLine("footer"); }
 
-    public static div(id?:string, ...classes:string[]) {
+    public static div(id?:string, ...classes:(string|null|false)[]) {
         const out = new AssemblyLine("div");
         if (typeof id === "string") out.id(id);
         out.class(...classes);

@@ -1,4 +1,4 @@
-import FolderElement, { FoldingDirection } from "../custom-elements/FolderElement";
+import FolderElement, { ContentPosition, FoldingDirection } from "../custom-elements/FolderElement";
 import AssemblyLine from "./AssemblyLine";
 
 export default class FolderElementAssemblyLine extends AssemblyLine<"folder-element", FolderElement> {
@@ -31,12 +31,19 @@ export default class FolderElementAssemblyLine extends AssemblyLine<"folder-elem
         return this;
     }
 
+    protected _contentPosition?:ContentPosition;
+    public contentPosition(pos:ContentPosition):this {
+        this._contentPosition = pos;
+        return this;
+    }
+
     public make():FolderElement {
         const out = super.make() as FolderElement;
 
         if (this._foldDir) out.foldDir = this._foldDir;
         out.arrowHidden = this._arrowHidden ?? false;
         if (this._closingDelay) out.closingDelay = this._closingDelay;
+        if (this._contentPosition) out.contentPosition = this._contentPosition;
         if (this._heading) {
             if (!(this._heading instanceof Element || this._heading instanceof AssemblyLine)) this._heading = this._heading(out);
             out.heading = this._heading instanceof AssemblyLine ? this._heading.make() : this._heading;
