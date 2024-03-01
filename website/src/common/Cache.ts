@@ -1,7 +1,8 @@
 import Permission from "./firebase/database/Permission";
-import { UserInfo } from "./firebase/database/users/UserDatabase";
+import { LinkTree } from "./firebase/database/settings/SettingsDatabase";
 
 type CacheKeyMap = {
+    "navbar-links": LinkTree,
     "is-logged-in": true,
     "own-id": string,
     [key:`permissions-${string}`]: Permission[]
@@ -27,18 +28,19 @@ export default abstract class Cache {
 
     /**
      * Retrieves the value associated with the given key
-     * @param key
+     * @param key key associated with the cached value
+     * @param [returnIfInvalidated=false] whether to still return the cached value, even if it is expired
+     * (the cached value is still removed afterwards)
      * @returns value in cache, or null if no value is stored for given key
      */
-    public static get<K extends CacheKey>(key:K):CacheKeyMap[K] | null {
-        if (localStorage.getItem(key) === null) return null;
+    public static get<K extends CacheKey>(key:K, returnIfInvalidated=false):CacheKeyMap[K] | null {
+        if (localStorage.getItem(key) === null) return null; // object not in cache
         else {
             const entry = JSON.parse(localStorage.getItem(key)!) as CacheEntry<K>;
-            if (Date.now() > entry[1]) { // expired
-                localStorage.removeItem(key);
-                return null;
-            }
-            else return entry[0]; // not yet expired
+            const isExpired = Date.now() > entry[1];            
+            if (isExpired) localStorage.removeItem(key); // expired, remove from cache
+
+            return !isExpired || returnIfInvalidated ? entry[0] : null;
         }
     };
 

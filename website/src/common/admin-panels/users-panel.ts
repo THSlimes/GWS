@@ -152,7 +152,7 @@ export function initUsersPanel() {
             USERS_DV.save()
             .then(() => {
                 usersSaveButton.disabled = true;
-                showSuccess("Aanpassingen opgeslagen.");
+                showSuccess("Wijzigingen opgeslagen!");
             })
             .catch(err => showError(getErrorMessage(err)));
         });

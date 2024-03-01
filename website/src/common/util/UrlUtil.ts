@@ -32,7 +32,7 @@ export interface FileInfo {
 }
 
 export default abstract class URLUtil {
-    private static toURL(link:string|URL):URL {
+    public static toURL(link:string|URL):URL {
         if (link instanceof URL) return link;
         try {
             return new URL(link); // is normal url
@@ -69,8 +69,7 @@ export default abstract class URLUtil {
     public static isLocal(link:string|URL) {
         try {
             link = this.toURL(link);
-            link.origin === location.origin;
-            return true;
+            return link.origin === location.origin;
         }
         catch { return false; }
     }
@@ -148,6 +147,22 @@ export default abstract class URLUtil {
         history.replaceState(null, "", hash);
 
         return out;
+    }
+
+    public static getLinkIcon(link:URL|string):string {
+        try {
+            const url = URLUtil.toURL(link);
+            
+            if (!URLUtil.isLocal(url)) return "open_in_new";
+            else if (['/', "", "/index"].includes(url.pathname)) return "home";
+            else if (url.pathname.startsWith("/login")) return "login";
+            else if (url.pathname.startsWith("/article")) return "newsmode";
+            else if (url.pathname.startsWith("/calendar")) return url.searchParams.has("looking-at") ? "event_note" : "calendar_month";
+            else if (url.pathname.startsWith("/admin-panel")) return "admin_panel_settings";
+            else return "link";
+
+        }
+        catch { return "error"; }
     }
 
 }

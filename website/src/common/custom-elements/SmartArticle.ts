@@ -200,8 +200,8 @@ window.addEventListener("DOMContentLoaded", () => customElements.define("smart-a
 
 export class EditableSmartArticle extends SmartArticle implements HasSections<"category"|"showOnHomepage"|"onlyForMembers"|"saveButton"> {
     
-    public heading!:HTMLInputElement;
-    public body!:RichTextInput;
+    public override heading!:HTMLInputElement;
+    public override body!:RichTextInput;
     public category!:HTMLInputElement;
     public showOnHomepage!:Switch;
     public onlyForMembers!:Switch;
@@ -219,7 +219,7 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
         }
     }
 
-    initElement(): void {
+    override initElement(): void {
         this.style.display = "flex";
         this.classList.add("flex-rows", "section-gap");
         this.setAttribute("lod", this.lod);

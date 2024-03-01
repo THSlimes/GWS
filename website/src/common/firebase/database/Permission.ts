@@ -3,6 +3,10 @@
  * certain actions or to have access to protected data.
  */
 enum Permission {
+
+    // settings related
+    UPDATE_SETTINGS = "UPDATE_SETTINGS", // whether the user can update settings
+
     // article related
     READ_MEMBER_ARTICLES = "READ_MEMBER_ARTICLES", // whether the user can read articles exclusive to members
     CREATE_ARTICLES = "CREATE_ARTICLES", // whether the user can create new articles
@@ -37,6 +41,8 @@ export const ALL_PERMISSIONS = Object.values(Permission);
 Object.freeze(ALL_PERMISSIONS);
 
 const PERMISSION_TRANSLATIONS:Record<Permission,string> = {
+    [Permission.UPDATE_SETTINGS]: "Site-instellingen aanpassen",
+
     [Permission.READ_MEMBER_ARTICLES]: "Berichten voor leden lezen",
     [Permission.CREATE_ARTICLES]: "Berichten plaatsen",
     [Permission.DELETE_ARTICLES]: "Berichten verwijderen",

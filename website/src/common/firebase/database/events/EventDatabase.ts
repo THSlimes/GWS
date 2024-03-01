@@ -55,7 +55,7 @@ export class EventInfo extends Info {
     }
 
     /** Whether this event matches the given filter. */
-    public satisfies(options:EventQueryFilter):boolean {
+    public override satisfies(options:EventQueryFilter):boolean {
         if (!super.satisfies(options)) return false;
         if (options.range) {
             if (options.range.from && this.starts_at < options.range.from && this.ends_at < options.range.from) return false;
@@ -197,10 +197,10 @@ export type EventQueryFilter = QueryFilter & {
 /** An EventDatabase provides a way to interface with a collection of event data. */
 export default abstract class EventDatabase extends Database<EventInfo> {
 
-    abstract get(options?:EventQueryFilter): Promise<EventInfo[]>;
-    abstract count(options?:EventQueryFilter): Promise<number>;
-    protected abstract doWrite(...records: EventInfo[]): Promise<number>;
-    protected abstract doDelete(...records: EventInfo[]): Promise<number>;
+    abstract override get(options?:EventQueryFilter): Promise<EventInfo[]>;
+    abstract override count(options?:EventQueryFilter): Promise<number>;
+    protected abstract override doWrite(...records: EventInfo[]): Promise<number>;
+    protected abstract override doDelete(...records: EventInfo[]): Promise<number>;
 
     abstract getRange(from?: Date, to?: Date, options?: Omit<EventQueryFilter, "range">): Promise<EventInfo[]>;
 

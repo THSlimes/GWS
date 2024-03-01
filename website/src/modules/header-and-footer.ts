@@ -3,95 +3,19 @@ import $ from "jquery";
 import FolderElement from "../common/custom-elements/FolderElement";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
 import Responsive, { Viewport } from "../common/ui/Responsive";
-import { FIREBASE_AUTH, onAuth, checkLoginState } from "../common/firebase/init-firebase";
+import { FIREBASE_AUTH, checkLoginState } from "../common/firebase/init-firebase";
 import { showError } from "../common/ui/info-messages";
-import { checkPermissions, onPermissionCheck } from "../common/firebase/authentication/permission-based-redirect";
+import { onPermissionCheck } from "../common/firebase/authentication/permission-based-redirect";
 import Permission from "../common/firebase/database/Permission";
 import Cache from "../common/Cache";
+import FirestoreSettingsDatabase from "../common/firebase/database/settings/FirestoreSettingsDatabase";
+import { LinkTree } from "../common/firebase/database/settings/SettingsDatabase";
 
-/** Creates the link to an article given its ID. */
-export function articleLink(id: string) { return `/article.html?id=${id}`; }
+const SETTINGS_DB = new FirestoreSettingsDatabase();
 
 // HEADER / NAVBAR
 
-const DEFAULT_LINK = "/";
-type NavbarConfig = { [name:string]: NavbarConfig | string }
-const NAVBAR_CONFIG:NavbarConfig = {
-    "Vereniging": {
-        "Algemeen": articleLink("vereniging-algemeen"),
-        "Verenigingsblad 't blaatje": articleLink("vereniging-verenigingsblad-t-blaatje"),
-        "Lidmaatschap": articleLink("vereniging-lidmaatschap"),
-        "Huidig bestuur": {
-            "Voorzitter": DEFAULT_LINK,
-            "Penningmeester en Commissaris Interne Betrekkingen": DEFAULT_LINK,
-            "Secretaris": DEFAULT_LINK,
-            "Commissaris Algemene Zaken": DEFAULT_LINK
-        },
-        "Oud-besturen": DEFAULT_LINK,
-        "Commissies": {
-            "’t Blaatje": DEFAULT_LINK,
-            "Contentcommissie": DEFAULT_LINK,
-            "Carrièrecommissie": DEFAULT_LINK,
-            "Den Geitenwollen Soccer": DEFAULT_LINK,
-            "Dinercommissie": DEFAULT_LINK,
-            "Feestcommissie": DEFAULT_LINK,
-            "Formele Activiteitencommissie": DEFAULT_LINK,
-            "Introductiecommissie": DEFAULT_LINK,
-            "Jaarboekcommissie": DEFAULT_LINK,
-            "Kascontrolecommissie": DEFAULT_LINK,
-            "Lustrumcommissie": DEFAULT_LINK,
-            "Sportcommissie": DEFAULT_LINK,
-            "Studiereiscommissie": DEFAULT_LINK,
-            "Weekendcommissie": DEFAULT_LINK
-        },
-        "GWS-kamer": DEFAULT_LINK
-    },
-    "Agenda": "/calendar.html",
-    "Onderwijs": {
-        "Aankomende studenten": DEFAULT_LINK,
-        "Sociologie": DEFAULT_LINK,
-        "Studieadviseur": DEFAULT_LINK,
-        "Medezeggenschap": DEFAULT_LINK,
-        "Boekenverkoop": DEFAULT_LINK
-    },
-    "Carrière": {
-        "Bedrijfsprofielen": DEFAULT_LINK,
-        "Alumni aan het woord": {
-            "Acht vragen aan Anna Reith": DEFAULT_LINK,
-            "Acht vragen aan Sanne van der Drift": DEFAULT_LINK,
-            "Tien vragen aan Sander Sloot": DEFAULT_LINK,
-            "Elf vragen aan Hakim Bouali": DEFAULT_LINK,
-            "Twaalf vragen aan Joris Blaauw": DEFAULT_LINK,
-            "Tien vragen aan Roza Meuleman": DEFAULT_LINK,
-            "Twaalf vragen aan Camiel Margry": DEFAULT_LINK,
-            "Elf vragen aan Gideon van der Hulst": DEFAULT_LINK
-        },
-        "Vacatures": DEFAULT_LINK
-    },
-    "Samenwerkingen": {
-        "Wat bieden wij?": DEFAULT_LINK,
-        "Onze sponsoren": DEFAULT_LINK,
-        "GWS-sticker": DEFAULT_LINK
-    },
-    "Leden": {
-        "Bestuurswerving": DEFAULT_LINK,
-        "Declaratieformulier": DEFAULT_LINK,
-        "Documenten": DEFAULT_LINK,
-        "Huidige dealtjes": DEFAULT_LINK,
-        "Foto's": DEFAULT_LINK,
-        "Ideeënbox": DEFAULT_LINK,
-        "Inschrijvingen activiteiten": DEFAULT_LINK,
-        "Inzendingen nieuwsbrief": DEFAULT_LINK,
-        "Samenvattingen": DEFAULT_LINK,
-        "Vertrouwenspersonen": DEFAULT_LINK,
-    },
-    "Contact": {
-        "Contactgegevens": DEFAULT_LINK
-    },
-    "Inschrijven": DEFAULT_LINK
-};
-
-function createLink(text:string, url:string):HTMLAnchorElement {
+function makeLink(text:string, url:string):HTMLAnchorElement {
     let isExternal = false;
     try {
         const parsed = new URL(url);
@@ -107,12 +31,12 @@ function createLink(text:string, url:string):HTMLAnchorElement {
         ).make();
 }
 
-function createFolderContents(config:NavbarConfig, nestingLvl=0):(FolderElement|HTMLAnchorElement)[] {
+function createFolderContents(config:LinkTree, nestingLvl=0):(FolderElement|HTMLAnchorElement)[] {
     const out:(FolderElement|HTMLAnchorElement)[] = [];
 
     for (const heading in config) {
         const v = config[heading];
-        if (typeof v === "string") out.push(createLink(heading, v));
+        if (typeof v === "string") out.push(makeLink(heading, v));
         else {
             const folder = new FolderElement(heading, nestingLvl === 0 ? "down" : "right", "absolute", 200);
             folder.append(...createFolderContents(v, nestingLvl+1));
@@ -124,7 +48,7 @@ function createFolderContents(config:NavbarConfig, nestingLvl=0):(FolderElement|
 }
 
 const USES_SIDEBAR:Viewport[] = ["mobile-portrait", "tablet-portrait"];
-function createHeader(config:NavbarConfig):HTMLElement {
+function createHeader(config:LinkTree):HTMLElement {
     const out = ElementFactory.header()
         .class("page-header")
         .children(
@@ -242,6 +166,24 @@ function createHeader(config:NavbarConfig):HTMLElement {
     return out;
 }
 
+/** Number of hours to wait between querying the navbar links. */
+const NAVBAR_QUERY_FREQUENCY = 6;
+const NAVBAR_LINKS_PROMISE = new Promise<LinkTree>((resolve, reject) => {
+    const cached = Cache.get("navbar-links", true);
+    if (cached) { // got from cache
+        
+        resolve(cached);
+        if (!Cache.has("navbar-links")) SETTINGS_DB.getNavbarLinks('/') // invalidated after getting, get from DB
+            .then(navbarLinks => Cache.set("navbar-links", navbarLinks,  Date.now() + NAVBAR_QUERY_FREQUENCY))
+            .catch(console.error);
+    }
+    else SETTINGS_DB.getNavbarLinks('/') // no cached version
+        .then(navbarLinks => {
+            Cache.set("navbar-links", navbarLinks, Date.now() + NAVBAR_QUERY_FREQUENCY*60*60*1000);
+            resolve(navbarLinks);
+        })
+        .catch(reject);
+});
 
 
 // FOOTER + COPYRIGHT NOTICE
@@ -278,11 +220,10 @@ function createFooter():Node {
 
 
 // create header and footer before page-load
-const HEADER = createHeader(NAVBAR_CONFIG);
 const FOOTER = createFooter();
 
 // insert both after page-load
 window.addEventListener("DOMContentLoaded", () => {
-    document.body.prepend(HEADER);
+    NAVBAR_LINKS_PROMISE.then(navbarLinks => document.body.prepend(createHeader(navbarLinks))).catch(console.error);
     document.body.appendChild(FOOTER);
 });

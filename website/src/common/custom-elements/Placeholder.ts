@@ -36,6 +36,14 @@ export default class Placeholder extends HTMLElement {
         else throw new Error(`no placeholder with id "${id}"`);
     }
 
+    static replaceWithMultiple(id:string, ...replacements:Node[]):void {
+        const placeholder = Placeholder.ALL_BY_ID[id];
+        if (placeholder) {
+            placeholder.replaceWith(...replacements);
+        }
+        else throw new Error(`no placeholder with id "${id}"`);
+    }
+
 }
 
 window.addEventListener("DOMContentLoaded", () => customElements.define("place-holder", Placeholder));

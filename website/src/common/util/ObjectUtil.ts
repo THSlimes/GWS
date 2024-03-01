@@ -69,4 +69,12 @@ export default abstract class ObjectUtil {
         return true;
     }
 
+    public static forEach<K extends string|number|symbol, V>(obj:Record<K,V>, callbackfn:(key:K, value:V, index:number, obj:Record<K,V>)=>void):void {
+        let i = 0;
+        for (const k in obj) {
+            callbackfn(k, obj[k], i, obj);
+            i++;
+        }
+    }
+
 }

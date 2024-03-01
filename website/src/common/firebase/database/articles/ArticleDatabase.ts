@@ -24,7 +24,7 @@ export class ArticleInfo extends Info {
         this.only_for_members = only_for_members;
     }
 
-    public satisfies(options:ArticleQueryFilter):boolean {
+    public override satisfies(options:ArticleQueryFilter):boolean {
         if (!super.satisfies(options)) return false;
         else if (options.after && options.after >= this.created_at) return false;
         else if (options.before && options.before <= this.created_at) return false;
@@ -52,10 +52,10 @@ export type ArticleQueryFilter = QueryFilter<Info> & {
 
 export default abstract class ArticleDatabase extends Database<ArticleInfo> {
 
-    abstract get(options?:ArticleQueryFilter): Promise<ArticleInfo[]>;
-    abstract count(options?:ArticleQueryFilter): Promise<number>;
-    abstract doWrite(...records: ArticleInfo[]): Promise<number>;
-    abstract doDelete(...records: ArticleInfo[]): Promise<number>;
+    abstract override get(options?:ArticleQueryFilter): Promise<ArticleInfo[]>;
+    abstract override count(options?:ArticleQueryFilter): Promise<number>;
+    abstract override doWrite(...records: ArticleInfo[]): Promise<number>;
+    abstract override doDelete(...records: ArticleInfo[]): Promise<number>;
 
     /** Gets articles with the given category. */
     abstract getByCategory(category: string, options?: Omit<ArticleQueryFilter, "category">): Promise<ArticleInfo[]>;

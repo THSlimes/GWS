@@ -7,6 +7,7 @@ import ElementFactory from "../common/html-element-factory/ElementFactory";
 import { initUsersPanel } from "../common/admin-panels/users-panel";
 import { initEventsPanel } from "../common/admin-panels/events-panel";
 import { initArticlesPanel } from "../common/admin-panels/articles-panel";
+import { initLinksPanel } from "../common/admin-panels/links-panel";
 
 // only permitted users can view page
 redirectIfMissingPermission("/", [Permission.VIEW_ADMIN_PANEL, Permission.READ_OTHER_USER_INFO], true, true);
@@ -24,7 +25,6 @@ const PANEL_CONFIG:Record<PanelId, { icon:string, label:string, default?:true, s
         icon: "calendar_month",
         label: "Activiteiten",
         selectCallback: initEventsPanel,
-        default: true
     },
     "articles-panel": {
         icon: "mail",
@@ -33,7 +33,9 @@ const PANEL_CONFIG:Record<PanelId, { icon:string, label:string, default?:true, s
     },
     "links-panel": {
         icon: "account_tree",
-        label: "Koppelingen"
+        label: "Koppelingen",
+        selectCallback: initLinksPanel,
+        default: true
     }
 };
 Object.freeze(PANEL_CONFIG);

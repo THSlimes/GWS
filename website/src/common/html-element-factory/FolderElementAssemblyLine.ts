@@ -37,7 +37,7 @@ export default class FolderElementAssemblyLine extends AssemblyLine<"folder-elem
         return this;
     }
 
-    public make():FolderElement {
+    public override make():FolderElement {
         const out = super.make() as FolderElement;
 
         if (this._foldDir) out.foldDir = this._foldDir;

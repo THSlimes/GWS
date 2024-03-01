@@ -1,0 +1,74 @@
+{
+    "Vereniging": {
+        "Algemeen": "/article.html?id=vereniging-algemeen",
+        "Verenigingsblad 't blaatje": "/article.html?id=vereniging-verenigingsblad-t-blaatje",
+        "Lidmaatschap": "/article.html?id=vereniging-lidmaatschap",
+        "Huidig bestuur": {
+            "Voorzitter": "/",
+            "Penningmeester en Commissaris Interne Betrekkingen": "/",
+            "Secretaris": "/",
+            "Commissaris Algemene Zaken": "/"
+        },
+        "Oud-besturen": "/",
+        "Commissies": {
+            "’t Blaatje": "/",
+            "Contentcommissie": "/",
+            "Carrièrecommissie": "/",
+            "Den Geitenwollen Soccer": "/",
+            "Dinercommissie": "/",
+            "Feestcommissie": "/",
+            "Formele Activiteitencommissie": "/",
+            "Introductiecommissie": "/",
+            "Jaarboekcommissie": "/",
+            "Kascontrolecommissie": "/",
+            "Lustrumcommissie": "/",
+            "Sportcommissie": "/",
+            "Studiereiscommissie": "/",
+            "Weekendcommissie": "/"
+        },
+        "GWS-kamer": "/"
+    },
+    "Agenda": "/calendar.html",
+    "Onderwijs": {
+        "Aankomende studenten": "/",
+        "Sociologie": "/",
+        "Studieadviseur": "/",
+        "Medezeggenschap": "/",
+        "Boekenverkoop": "/"
+    },
+    "Carrière": {
+        "Bedrijfsprofielen": "/",
+        "Alumni aan het woord": {
+            "Acht vragen aan Anna Reith": "/",
+            "Acht vragen aan Sanne van der Drift": "/",
+            "Tien vragen aan Sander Sloot": "/",
+            "Elf vragen aan Hakim Bouali": "/",
+            "Twaalf vragen aan Joris Blaauw": "/",
+            "Tien vragen aan Roza Meuleman": "/",
+            "Twaalf vragen aan Camiel Margry": "/",
+            "Elf vragen aan Gideon van der Hulst": "/"
+        },
+        "Vacatures": "/"
+    },
+    "Samenwerkingen": {
+        "Wat bieden wij?": "/",
+        "Onze sponsoren": "/",
+        "GWS-sticker": "/"
+    },
+    "Leden": {
+        "Bestuurswerving": "/",
+        "Declaratieformulier": "/",
+        "Documenten": "/",
+        "Huidige dealtjes": "/",
+        "Foto's": "/",
+        "Ideeënbox": "/",
+        "Inschrijvingen activiteiten": "/",
+        "Inzendingen nieuwsbrief": "/",
+        "Samenvattingen": "/",
+        "Vertrouwenspersonen": "/"
+    },
+    "Contact": {
+        "Contactgegevens": "/"
+    },
+    "Inschrijven": "/"
+}

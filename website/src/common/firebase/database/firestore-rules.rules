@@ -14,6 +14,12 @@ service cloud.firestore {
             return t1.toMillis() < t2.toMillis();
         }
 
+        // settings
+        match /settings/{settingName} {
+            allow get;
+            allow update : if hasPermissions(["UPDATE_SETTINGS"])
+        }
+
         // articles
         match /articles/{articleId} {
             allow get, list : if !resource.data.only_for_members || hasPermissions(["READ_MEMBER_ARTICLES"]);
