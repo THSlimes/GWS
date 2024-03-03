@@ -9,7 +9,8 @@ import { onPermissionCheck } from "../common/firebase/authentication/permission-
 import Permission from "../common/firebase/database/Permission";
 import Cache from "../common/Cache";
 import FirestoreSettingsDatabase from "../common/firebase/database/settings/FirestoreSettingsDatabase";
-import { LinkTree } from "../common/firebase/database/settings/SettingsDatabase";
+import { ImagedLink, LinkTree } from "../common/firebase/database/settings/SettingsDatabase";
+import MultisourceImage from "../common/custom-elements/MultisourceImage";
 
 const SETTINGS_DB = new FirestoreSettingsDatabase();
 
@@ -31,7 +32,7 @@ function makeLink(text:string, url:string):HTMLAnchorElement {
         ).make();
 }
 
-function createFolderContents(config:LinkTree, nestingLvl=0):(FolderElement|HTMLAnchorElement)[] {
+function makeFolderContents(config:LinkTree, nestingLvl=0):(FolderElement|HTMLAnchorElement)[] {
     const out:(FolderElement|HTMLAnchorElement)[] = [];
 
     for (const heading in config) {
@@ -39,7 +40,7 @@ function createFolderContents(config:LinkTree, nestingLvl=0):(FolderElement|HTML
         if (typeof v === "string") out.push(makeLink(heading, v));
         else {
             const folder = new FolderElement(heading, nestingLvl === 0 ? "down" : "right", "absolute", 200);
-            folder.append(...createFolderContents(v, nestingLvl+1));
+            folder.append(...makeFolderContents(v, nestingLvl+1));
             out.push(folder);
         }
     }
@@ -48,7 +49,7 @@ function createFolderContents(config:LinkTree, nestingLvl=0):(FolderElement|HTML
 }
 
 const USES_SIDEBAR:Viewport[] = ["mobile-portrait", "tablet-portrait"];
-function createHeader(config:LinkTree):HTMLElement {
+function makeHeader(config:LinkTree):HTMLElement {
     const out = ElementFactory.header()
         .class("page-header")
         .children(
@@ -63,7 +64,7 @@ function createHeader(config:LinkTree):HTMLElement {
                     ElementFactory.div()
                         .class("links", "flex-columns", "main-axis-center", "cross-axis-baseline")
                         .children(
-                            ...createFolderContents(config)
+                            ...makeFolderContents(config)
                         ),
                     ElementFactory.div()
                         .class("quick-actions", "center-content", "main-axis-space-between", "cross-axis-center")
@@ -187,7 +188,7 @@ const NAVBAR_LINKS_PROMISE = new Promise<LinkTree>((resolve, reject) => {
 
 
 // FOOTER + COPYRIGHT NOTICE
-function createFooter():Node {
+function makeFooter(socialMediaLinks:ImagedLink[]):Node {
     return ElementFactory.footer()
         .class("page-footer", "flex-rows", "cross-axis-center")
         .children(
@@ -195,22 +196,15 @@ function createFooter():Node {
             ElementFactory.div()
                 .class("social-media-links", "flex-columns", "main-axis-space-between")
                 .children(
-                    ElementFactory.a("https://www.instagram.com/svdengeitenwollensoc/")
-                        .children(
-                            ElementFactory.img("./images/logos/Instagram_Glyph_Gradient.png", "Instagram")
-                                .class("click-action")
-                        ),
-                    ElementFactory.a("https://nl.linkedin.com/in/s-v-den-geitenwollen-soc-496145163")
-                        .id("linked-in-link")
-                        .children(
-                            ElementFactory.img("./images/logos/LI-In-Bug.png", "Linked-In")
-                                .class("click-action")
-                        ),
-                    ElementFactory.a("https://www.facebook.com/dengeitenwollensoc/")
-                        .children(
-                            ElementFactory.img("./images/logos/Facebook_Logo_Primary.png", "Facebook")
-                                .class("click-action")
-                        ),
+                    ...socialMediaLinks.map(link => ElementFactory.a(link.href)
+                        .openInNewTab(true)
+                        .children(new MultisourceImage(link.origin, link.src))
+                        .onMake(self => {
+                            const img = self.firstElementChild as MultisourceImage;
+                            img.alt = link.name;
+                            img.classList.add("click-action");
+                        })
+                    )
                 ),
             ElementFactory.h5(`© ${new Date().getFullYear()} Den Geitenwollen Soc.`)
                 .class("copyright-notice")
@@ -218,12 +212,28 @@ function createFooter():Node {
         .make();
 }
 
+/** Number of hours to wait between querying the social media links. */
+const SOCIAL_MEDIA_QUERY_FREQUENCY = 6;
+const SOCIAL_MEDIA_LINKS_PROMISE = new Promise<ImagedLink[]>((resolve, reject) => {
+    const cached = Cache.get("social-media-links", true);
+    if (cached) { // got from cache
+        
+        resolve(cached);
+        if (!Cache.has("social-media-links")) SETTINGS_DB.getSocialMediaLinks() // invalidated after getting, get from DB
+            .then(socialMediaLinks => Cache.set("social-media-links", socialMediaLinks,  Date.now() + SOCIAL_MEDIA_QUERY_FREQUENCY*60*60*1000))
+            .catch(console.error);
+    }
+    else SETTINGS_DB.getSocialMediaLinks() // no cached version
+        .then(socialMediaLinks => {
+            Cache.set("social-media-links", socialMediaLinks, Date.now() + SOCIAL_MEDIA_QUERY_FREQUENCY*60*60*1000);
+            resolve(socialMediaLinks);
+        })
+        .catch(reject);
+});
 
-// create header and footer before page-load
-const FOOTER = createFooter();
 
 // insert both after page-load
 window.addEventListener("DOMContentLoaded", () => {
-    NAVBAR_LINKS_PROMISE.then(navbarLinks => document.body.prepend(createHeader(navbarLinks))).catch(console.error);
-    document.body.appendChild(FOOTER);
+    NAVBAR_LINKS_PROMISE.then(navbarLinks => document.body.prepend(makeHeader(navbarLinks))).catch(console.error);
+    SOCIAL_MEDIA_LINKS_PROMISE.then(socialMediaLinks => document.body.appendChild(makeFooter(socialMediaLinks))).catch(console.error);
 });

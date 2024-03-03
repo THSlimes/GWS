@@ -13,11 +13,11 @@ const SPONSOR_LINKS_PROMISE = new Promise<ImagedLink[]>((resolve, reject) => {
     const cached = Cache.get("sponsor-links", true);
     if (cached) { // got from cache
         resolve(cached);
-        if (!Cache.has("sponsor-links")) SETTINGS_DB.getSponsors() // invalidated after getting, get from DB
+        if (!Cache.has("sponsor-links")) SETTINGS_DB.getSponsorLinks() // invalidated after getting, get from DB
             .then(sponsorLinks => Cache.set("sponsor-links", sponsorLinks,  Date.now() + SPONSOR_LINKS_QUERY_FREQUENCY))
             .catch(console.error);
     }
-    else SETTINGS_DB.getSponsors() // no cached version
+    else SETTINGS_DB.getSponsorLinks() // no cached version
         .then(sponsorLinks => {
             Cache.set("sponsor-links", sponsorLinks, Date.now() + SPONSOR_LINKS_QUERY_FREQUENCY*60*60*1000);
             resolve(sponsorLinks);

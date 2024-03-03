@@ -15,6 +15,9 @@ let NAVBAR_LINKS_SAVE_BUTTON:HTMLButtonElement;
 let SPONSOR_LINKS_EDITOR:ImagedLinksEditor;
 let SPONSOR_LINKS_SAVE_BUTTON:HTMLButtonElement;
 
+let SOCIAL_MEDIA_LINKS_EDITOR:ImagedLinksEditor;
+let SOCIAL_MEDIA_LINKS_SAVE_BUTTON:HTMLButtonElement;
+
 export function initLinksPanel() {
     if (!initializedLinksPanel) {
         // Navbar links
@@ -43,7 +46,7 @@ export function initLinksPanel() {
         });
 
         // Sponsor links
-        SETTINGS_DB.getSponsors()
+        SETTINGS_DB.getSponsorLinks()
         .then(links => {
             SPONSOR_LINKS_EDITOR = Placeholder.replaceWith("sponsor-links", new ImagedLinksEditor(links));
         })
@@ -54,10 +57,35 @@ export function initLinksPanel() {
             try {
                 const newLinks = SPONSOR_LINKS_EDITOR.value;
 
-                SETTINGS_DB.setSponsors(newLinks)
+                SETTINGS_DB.setSponsorLinks(newLinks)
                 .then(() => {
                     showSuccess("Wijzigingen opgeslagen! Het kan even duren voordat anderen de wijzigingen zien.");
                     Cache.remove("sponsor-links"); // clear own cache
+                })
+                .catch(err => showError(err));
+            }
+            catch (err) {
+                if (err instanceof Error) showError(err.message);
+                else showError(getErrorMessage(err));
+            }
+        });
+
+        // Social media links
+        SETTINGS_DB.getSocialMediaLinks()
+        .then(links => {
+            SOCIAL_MEDIA_LINKS_EDITOR = Placeholder.replaceWith("social-media-links", new ImagedLinksEditor(links));
+        })
+        .catch(err => showError(getErrorMessage(err)));
+
+        SOCIAL_MEDIA_LINKS_SAVE_BUTTON = document.getElementById("social-media-links-save-button") as HTMLButtonElement;
+        SOCIAL_MEDIA_LINKS_SAVE_BUTTON.addEventListener("click", () => {
+            try {
+                const newLinks = SOCIAL_MEDIA_LINKS_EDITOR.value;
+
+                SETTINGS_DB.setSocialMediaLinks(newLinks)
+                .then(() => {
+                    showSuccess("Wijzigingen opgeslagen! Het kan even duren voordat anderen de wijzigingen zien.");
+                    Cache.remove("social-media-links"); // clear own cache
                 })
                 .catch(err => showError(err));
             }

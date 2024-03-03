@@ -64,7 +64,7 @@ export default class FirestoreSettingsDatabase extends SettingsDatabase {
         fromFirestore: (snapshot) => DBImagedLinks.from(snapshot.data())
     });
 
-    override getSponsors(): Promise<ImagedLink[]> {
+    override getSponsorLinks(): Promise<ImagedLink[]> {
         return new Promise((resolve, reject) => {
             getDoc(FirestoreSettingsDatabase.SPONSOR_LINKS_DOC)
             .then(docSnapshot => {
@@ -74,9 +74,34 @@ export default class FirestoreSettingsDatabase extends SettingsDatabase {
         });
     }
 
-    override setSponsors(links: ImagedLink[]):Promise<void> {
+    override setSponsorLinks(links: ImagedLink[]):Promise<void> {
         return new Promise((resolve, reject) => {
             setDoc(FirestoreSettingsDatabase.SPONSOR_LINKS_DOC, links)
+            .then(resolve)
+            .catch(reject);
+        });
+    }
+
+
+    private static SOCIAL_MEDIA_LINKS_DOC = doc(this.COLLECTION, "social-media-links")
+    .withConverter({
+        toFirestore: DBImagedLinks.to,
+        fromFirestore: (snapshot) => DBImagedLinks.from(snapshot.data())
+    });
+
+    override getSocialMediaLinks(): Promise<ImagedLink[]> {
+        return new Promise((resolve, reject) => {
+            getDoc(FirestoreSettingsDatabase.SOCIAL_MEDIA_LINKS_DOC)
+            .then(docSnapshot => {
+                if (!docSnapshot.exists()) reject(new MissingSettingError("social-media-links"));
+                else resolve(docSnapshot.data());
+            })
+        });
+    }
+
+    override setSocialMediaLinks(links: ImagedLink[]):Promise<void> {
+        return new Promise((resolve, reject) => {
+            setDoc(FirestoreSettingsDatabase.SOCIAL_MEDIA_LINKS_DOC, links)
             .then(resolve)
             .catch(reject);
         });

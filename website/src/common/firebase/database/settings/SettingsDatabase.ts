@@ -13,7 +13,10 @@ export default abstract class SettingsDatabase {
     abstract getNavbarLinks():Promise<LinkTree>;
     abstract setNavbarLinks(newLinks:LinkTree):Promise<void>;
 
-    abstract getSponsors():Promise<ImagedLink[]>;
-    abstract setSponsors(links:ImagedLink[]):Promise<void>;
+    abstract getSponsorLinks():Promise<ImagedLink[]>;
+    abstract setSponsorLinks(links:ImagedLink[]):Promise<void>;
+
+    abstract getSocialMediaLinks():Promise<ImagedLink[]>;
+    abstract setSocialMediaLinks(links:ImagedLink[]):Promise<void>;
 
 }

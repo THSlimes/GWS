@@ -13,9 +13,9 @@ export default class ImagedLinksEditor extends HTMLElement implements HasSection
         for (let i = 0; i < this.links.length; i ++) {
             const link = this.links[i];
 
-            if (!link.name.trim()) throw new Error(`Sponsor #${i+1} heeft geen naam.`);
+            if (!link.name.trim()) throw new Error(`Item #${i+1} heeft geen naam.`);
             else if (ArrayUtil.count(this.links, l => l.name === link.name) > 1) {
-                throw new Error(`Meerdere sponsoren hebben de naam "${link.name}".`);
+                throw new Error(`Meerdere items hebben de naam "${link.name}".`);
             }
         }
 
@@ -36,10 +36,10 @@ export default class ImagedLinksEditor extends HTMLElement implements HasSection
         this.append(
             ...this.links.map(link => new ImagedLinkEntry(this, link)),
             this.addButton = ElementFactory.iconButton("add", () => {
-                const newEntry:ImagedLink = { name: "", origin: "firebase-storage-public", src: "sponsor-logos/placeholder.svg", href: "" };
+                const newEntry:ImagedLink = { name: "", origin: "firebase-storage-public", src: "placeholder.svg", href: "" };
                 this.links.push(newEntry);
                 this.lastElementChild!.before(new ImagedLinkEntry(this, newEntry));
-            }, "Sponsor toevoegen").make()
+            }, "Item toevoegen").make()
         );
     }
 
@@ -82,7 +82,7 @@ class ImagedLinkEntry extends HTMLElement implements HasSections<"image"|"nameIn
         this.nameInput = this.appendChild(
             ElementFactory.input.text(this.link.name)
                 .onValueChanged(newName => this.link.name = newName)
-                .placeholder("Naam van sponsor...")
+                .placeholder("Naam van item...")
                 .class("name-input")
                 .make()
         );
@@ -116,13 +116,13 @@ class ImagedLinkEntry extends HTMLElement implements HasSections<"image"|"nameIn
         this.hrefInput = this.appendChild(
             ElementFactory.input.text(this.link.href)
                 .onValueChanged(newHref => this.link.href = newHref)
-                .placeholder("Link naar sponsor...")
+                .placeholder("Link naar item...")
                 .class("href-input")
                 .make()
         );
 
         this.removeButton = this.appendChild(
-            ElementFactory.iconButton("delete", () => this.editor.removeEntry(this.link), "Sponsor weghalen")
+            ElementFactory.iconButton("delete", () => this.editor.removeEntry(this.link), "Item weghalen")
                 .class("remove-button")
                 .make()
         );

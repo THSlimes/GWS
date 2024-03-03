@@ -143,8 +143,6 @@ footer {
             border-radius: var(--in-section-gap);
             --hover-bg-color: color-mix(in srgb, var(--secondary), white 12.5%);
         }
-
-        #linked-in-link { margin-left: .5em; }
     }
 }
 

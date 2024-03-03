@@ -1,10 +1,10 @@
 import Permission from "./firebase/database/Permission";
 import { ImagedLink, LinkTree } from "./firebase/database/settings/SettingsDatabase";
-import { FileInfo } from "./util/URLUtil";
 
 type CacheKeyMap = {
     "navbar-links": LinkTree,
     "sponsor-links": ImagedLink[],
+    "social-media-links": ImagedLink[],
     "is-logged-in": true,
     "own-id": string,
     [key:`permissions-${string}`]: Permission[]
