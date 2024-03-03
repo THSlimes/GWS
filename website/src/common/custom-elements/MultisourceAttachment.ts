@@ -1,5 +1,5 @@
 import { StorageError, getDownloadURL, getMetadata, ref } from "@firebase/storage";
-import { checkPermissions, onPermissionCheck } from "../firebase/authentication/permission-based-redirect";
+import { onPermissionCheck } from "../firebase/authentication/permission-based-redirect";
 import Permission from "../firebase/database/Permission";
 import { STORAGE } from "../firebase/init-firebase";
 import URLUtil, { FileInfo, FileType, getFileType } from "../util/URLUtil";
@@ -108,13 +108,13 @@ export default class MultisourceAttachment extends HTMLElement implements HasSec
     public fileSizeLabel!:HTMLParagraphElement;
     public downloadButton!:HTMLAnchorElement;
 
-    constructor(source?:AttachmentOrigin, href?:string) {
+    constructor(origin?:AttachmentOrigin, src?:string) {
         super();
 
         this.initElement();
 
-        this._origin = source ?? ElementUtil.getAttrAs(this, "src", isAttachmentOrigin) ?? "firebase-storage-public";
-        this._src = source ?? this.getAttribute("href") ?? "";
+        this._origin = origin ?? ElementUtil.getAttrAs(this, "origin", isAttachmentOrigin) ?? "firebase-storage-public";
+        this._src = src ?? this.getAttribute("src") ?? "";
         this.refresh();
     }
 
@@ -172,7 +172,6 @@ export default class MultisourceAttachment extends HTMLElement implements HasSec
                     });
                 })
                 .catch(err => {
-
                     if (err instanceof StorageError) switch(err.code) {
                         case "storage/object-not-found":
                             reject(new Error("Kan bestand niet vinden", { cause: "not found" }));
@@ -185,7 +184,6 @@ export default class MultisourceAttachment extends HTMLElement implements HasSec
                             break;
                     }
                     else reject(err);
-
                 });
             }
         });

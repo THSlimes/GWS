@@ -3,11 +3,14 @@ multisource-image {
     max-width: 100%;
 
     > img {
-        width: 100%;
+        max-width: 100%;
+        max-height: 100%;
         object-fit: contain;
+        &:not([hidden]) { animation: fade-in 500ms ease-out 0ms 1 normal forwards; }
     }
 
     > .error-message {
+        box-sizing: border-box;
         min-width: 0px;
         width: 100%;
 
@@ -22,4 +25,9 @@ multisource-image {
         > * { color: var(--text-light) !important; }
     }
 
+}
+
+@keyframes fade-in {
+    0% { opacity: 0; }
+    1000% { opacity: 1; }
 }

@@ -1,8 +1,10 @@
 import Permission from "./firebase/database/Permission";
-import { LinkTree } from "./firebase/database/settings/SettingsDatabase";
+import { ImagedLink, LinkTree } from "./firebase/database/settings/SettingsDatabase";
+import { FileInfo } from "./util/URLUtil";
 
 type CacheKeyMap = {
     "navbar-links": LinkTree,
+    "sponsor-links": ImagedLink[],
     "is-logged-in": true,
     "own-id": string,
     [key:`permissions-${string}`]: Permission[]
@@ -37,7 +39,7 @@ export default abstract class Cache {
         if (localStorage.getItem(key) === null) return null; // object not in cache
         else {
             const entry = JSON.parse(localStorage.getItem(key)!) as CacheEntry<K>;
-            const isExpired = Date.now() > entry[1];            
+            const isExpired = Date.now() > entry[1];
             if (isExpired) localStorage.removeItem(key); // expired, remove from cache
 
             return !isExpired || returnIfInvalidated ? entry[0] : null;

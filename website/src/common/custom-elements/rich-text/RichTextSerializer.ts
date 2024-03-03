@@ -52,8 +52,8 @@ export default abstract class RichTextSerializer {
                     switch (type) {
                         case "attachment":
                         case "image":
-                            out.setAttribute("src", node.getAttribute("src") ?? "firebase-storage-public");
-                            out.setAttribute("href", node.getAttribute("href") ?? "");
+                            out.setAttribute("origin", node.getAttribute("origin") ?? "firebase-storage-public");
+                            out.setAttribute("src", node.getAttribute("src") ?? "");
                             out.style.width = node.style.width;
                             return [out];
                         case "title":

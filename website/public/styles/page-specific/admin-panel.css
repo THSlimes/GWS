@@ -4,6 +4,7 @@
 @import url("../custom-elements/switch.css");
 @import url("../custom-elements/smart-article.css");
 @import url("../custom-elements/link-tree-editor.css");
+@import url("../custom-elements/imaged-links-editor.css");
 
 .content {
     display: grid;
@@ -36,7 +37,10 @@
         width: 100%;
 
         > h1:first-child { text-decoration: underline; }
-        > .subpanel { width: 100%; }
+        > .subpanel {
+            width: 100%;
+            > .subpanel-heading { width: 100%; }
+        }
     }
 
 }

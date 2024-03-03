@@ -5,6 +5,7 @@ import { HexColor } from "../util/StyleUtil";
 import FolderElementAssemblyLine from "./FolderElementAssemblyLine";
 import { ButtonLikeInputAssemblyLine, CheckableInputAssemblyLine, DateInputAssemblyLine, InputAssemblyLine, NumberInputAssemblyLine, RangedInputAssemblyLine, TextInputAssemblyLine } from "./InputAssemblyLine";
 import RichTextSerializer from "../custom-elements/rich-text/RichTextSerializer";
+import { AttachmentOrigin } from "../custom-elements/MultisourceAttachment";
 
 /**
  * The ElementFactory helper-class provides static methods that allow

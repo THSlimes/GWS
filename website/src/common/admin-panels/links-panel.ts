@@ -1,4 +1,5 @@
 import Cache from "../Cache";
+import ImagedLinksEditor from "../custom-elements/ImagedLinksEditor";
 import LinkTreeEditor from "../custom-elements/LinkTreeEditor";
 import Placeholder from "../custom-elements/Placeholder";
 import getErrorMessage from "../firebase/authentication/error-messages";
@@ -8,19 +9,23 @@ import { showError, showSuccess } from "../ui/info-messages";
 let initializedLinksPanel = false;
 const SETTINGS_DB = new FirestoreSettingsDatabase();
 
-let LINKS_SAVE_BUTTON:HTMLInputElement;
 let NAVBAR_LINKS_EDITOR:LinkTreeEditor;
+let NAVBAR_LINKS_SAVE_BUTTON:HTMLButtonElement;
+
+let SPONSOR_LINKS_EDITOR:ImagedLinksEditor;
+let SPONSOR_LINKS_SAVE_BUTTON:HTMLButtonElement;
 
 export function initLinksPanel() {
     if (!initializedLinksPanel) {
+        // Navbar links
         SETTINGS_DB.getNavbarLinks()
         .then(links => {
             NAVBAR_LINKS_EDITOR = Placeholder.replaceWith("navbar-links", LinkTreeEditor.fromLinkTree(links));
         })
         .catch(err => showError(getErrorMessage(err)));
 
-        LINKS_SAVE_BUTTON = document.getElementById("links-save-button") as HTMLInputElement;
-        LINKS_SAVE_BUTTON.addEventListener("click", () => {
+        NAVBAR_LINKS_SAVE_BUTTON = document.getElementById("navbar-links-save-button") as HTMLButtonElement;
+        NAVBAR_LINKS_SAVE_BUTTON.addEventListener("click", () => {
             try {
                 const newLinks = NAVBAR_LINKS_EDITOR.value;
 
@@ -28,6 +33,31 @@ export function initLinksPanel() {
                 .then(() => {
                     showSuccess("Wijzigingen opgeslagen! Het kan even duren voordat anderen de wijzigingen zien.");
                     Cache.remove("navbar-links"); // clear own cache
+                })
+                .catch(err => showError(err));
+            }
+            catch (err) {
+                if (err instanceof Error) showError(err.message);
+                else showError(getErrorMessage(err));
+            }
+        });
+
+        // Sponsor links
+        SETTINGS_DB.getSponsors()
+        .then(links => {
+            SPONSOR_LINKS_EDITOR = Placeholder.replaceWith("sponsor-links", new ImagedLinksEditor(links));
+        })
+        .catch(err => showError(getErrorMessage(err)));
+
+        SPONSOR_LINKS_SAVE_BUTTON = document.getElementById("sponsor-links-save-button") as HTMLButtonElement;
+        SPONSOR_LINKS_SAVE_BUTTON.addEventListener("click", () => {
+            try {
+                const newLinks = SPONSOR_LINKS_EDITOR.value;
+
+                SETTINGS_DB.setSponsors(newLinks)
+                .then(() => {
+                    showSuccess("Wijzigingen opgeslagen! Het kan even duren voordat anderen de wijzigingen zien.");
+                    Cache.remove("sponsor-links"); // clear own cache
                 })
                 .catch(err => showError(err));
             }

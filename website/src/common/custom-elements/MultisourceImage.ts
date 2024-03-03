@@ -1,5 +1,5 @@
 import { StorageError, getDownloadURL, getMetadata, ref } from "@firebase/storage";
-import { checkPermissions, onPermissionCheck } from "../firebase/authentication/permission-based-redirect";
+import { onPermissionCheck } from "../firebase/authentication/permission-based-redirect";
 import Permission from "../firebase/database/Permission";
 import { STORAGE } from "../firebase/init-firebase";
 import ElementUtil from "../util/ElementUtil";
@@ -36,6 +36,10 @@ export default class MultisourceImage extends HTMLElement implements HasSections
         }
     }
 
+    public set alt(newAlt:string) {
+        this.image.alt = newAlt;
+    }
+
     private refresh() {
         const infoPromise = this.origin === "external" ?
             new Promise<string>((resolve) => resolve(this.src)) :
@@ -46,38 +50,40 @@ export default class MultisourceImage extends HTMLElement implements HasSections
         infoPromise.then(url => { // got image url
             this.classList.remove("error");
             this.image.src = url;
-            this.image.style.display = "block";
-            this.errorMessage.style.display = "none";
+            this.image.removeAttribute("hidden");
+            this.errorMessage.toggleAttribute("hidden", true);
         })
         .catch(err => { // couldn't get image url
             this.classList.add("error");
             this.image.removeAttribute("src");
-            this.image.style.display = "none";
+            this.image.toggleAttribute("hidden", true);
             this.errorMessage.lastChild!.textContent = err instanceof Error ? err.message : "Er ging iets mis.";
-            this.errorMessage.style.display = "flex";
+            this.errorMessage.removeAttribute("hidden");
         });
     }
 
     public image!:HTMLImageElement;
     public errorMessage!:HTMLDivElement;
 
-    constructor(source?:AttachmentOrigin, href?:string) {
+    constructor(origin?:AttachmentOrigin, src?:string) {
         super();
 
         this.initElement();
 
-        this._origin = source ?? ElementUtil.getAttrAs(this, "src", isAttachmentOrigin) ?? "firebase-storage-public";
-        this._src = source ?? this.getAttribute("href") ?? "";
+        this._origin = origin ?? ElementUtil.getAttrAs(this, "origin", isAttachmentOrigin) ?? "firebase-storage-public";
+        this._src = src ?? this.getAttribute("src") ?? "";
+
         this.refresh();
     }
 
     initElement(): void {
         this.style.display = "flex";
-        this.classList.add("center-content");
+        this.classList.add("flex-rows", "main-axis-center", "cross-axis-center");
 
-        this.image = this.appendChild(ElementFactory.img().make());
+        this.image = this.appendChild(ElementFactory.img().attr("hidden").make());
         this.errorMessage = this.appendChild(
             ElementFactory.div(undefined, "error-message", "no-margin", "flex-columns", "main-axis-center", "cross-axis-center", "in-section-gap")
+                .attr("hidden")
                 .children(
                     ElementFactory.p("broken_image").class("icon"),
                     ElementFactory.p().class("no-margin").make()
