@@ -64,6 +64,24 @@ export default class CachingEventDatebase extends EventDatabase {
                 .catch(reject);
         });
     }
+    public get earliest():EventInfo|null {
+        let earliest:EventInfo|null = null;
+        for (const id in this.idCache) {
+            const event = this.idCache[id]!;
+            if (earliest === null || event.starts_at < earliest.starts_at) earliest = event;
+        }
+
+        return earliest;
+    }
+    public get latest():EventInfo|null {
+        let latest:EventInfo|null = null;
+        for (const id in this.idCache) {
+            const event = this.idCache[id]!;
+            if (latest === null || event.ends_at > latest.ends_at) latest = event;
+        }
+
+        return latest;
+    }
 
     private readonly idCache:Record<string, EventInfo|undefined> = {}
     getById(id: string, invalidateCache=false): Promise<EventInfo | undefined> {

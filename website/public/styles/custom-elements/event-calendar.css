@@ -60,12 +60,13 @@ event-calendar {
 
         border: var(--std-border);
         flex-grow: 1;
+        width: 100%;
 
         border-radius: var(--in-section-gap);
 
         background-color: var(--secondary);
 
-        overflow: hidden;
+        /* overflow: hidden; */
 
         > .day-name {
             margin: var(--in-section-gap);
@@ -86,7 +87,7 @@ event-calendar {
             gap: calc(var(--in-section-gap) / 2);
 
             --day-cell-padding: calc(.5 * var(--in-section-gap));
-            padding: var(--day-cell-padding);;
+            padding: var(--day-cell-padding);
 
             background-color: var(--primary);
             outline: var(--std-border);
@@ -147,6 +148,10 @@ event-calendar {
                 row-gap: var(--in-section-gap);
 
                 > .day-number { width: 100%; }
+                > .no-activities {
+                    margin: 0px var(--in-section-gap) var(--in-section-gap) var(--in-section-gap);
+                    color: var(--shadow-dark);
+                }
             }
         }
     }
@@ -168,7 +173,7 @@ event-calendar {
 
     > * {
         max-width: 80%;
-        box-shadow: var(--std-shadow);        
+        box-shadow: var(--std-shadow);
         animation: fade-in 200ms ease-out 0ms 1 both, slide-up 200ms ease-out 0ms 1 both;
     }
 }
@@ -193,7 +198,7 @@ event-calendar {
 
 @media (max-aspect-ratio: 3 / 5) {
     event-calendar {
-        max-height: unset;
+        max-height: 100vh;
 
         > .controls {
             flex-direction: column;
@@ -214,6 +219,6 @@ event-calendar {
             > .viewmode-controls { justify-content: space-evenly; }
         }
 
-        > .day-cell-container > .day-cell { min-height: 6rem; }
+        &:not([display="list"]) > .day-cell-container > .day-cell { min-height: 6rem; }
     }
 }

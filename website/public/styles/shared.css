@@ -80,13 +80,13 @@ body {
     /* overflow-x: hidden; */
 
     /* Scrollbar */
-    scrollbar-color: var(--shadow-dark) transparent;
+    /* scrollbar-color: var(--shadow-dark) transparent;
     &::-webkit-scrollbar { width: 1em; height: 1em; }
     &::-webkit-scrollbar-thumb {
         background: var(--shadow-dark);
         border-radius: .25em;
     }
-    &::-webkit-scrollbar-track { background: transparent; }
+    &::-webkit-scrollbar-track { background: transparent; } */
 
 
     & * {

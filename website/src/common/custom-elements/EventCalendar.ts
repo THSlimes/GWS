@@ -328,18 +328,19 @@ export default class EventCalendar extends HTMLElement {
                         
                         if (scrollDelta > 0 && ElementUtil.isAtScrollTop(this.dayCellContainer, EventCalendar.LOAD_MORE_SCROLL_TOLERANCE)) {
                             if (!loadingBefore) {
+                                // load more events before
                                 loadingBefore = true;
                                 const prevFirstDate = new Date(firstDate);
                                 firstDate.setDate(firstDate.getDate() - EventCalendar.LOAD_MORE_TIMESPAN_DAYS);
                                 this.extendDayCells(newDays, firstDate, prevFirstDate, "before")
                                 .then(([extensionCells, numLeft]) => {
-                                    this.dayCellContainer.prepend(...extensionCells.filter(ec => ec.events.length !== 0).map(ec => ec.element));
+                                    this.dayCellContainer.prepend(...extensionCells.map(ec => ec.element));
                                     this.dayCellContainer.prepend(loadBefore);
                                     const scrollY = extensionCells.map(dc => dc.element).filter(e => this.dayCellContainer.contains(e)).reduce((prev,curr) => prev + curr.clientHeight, 0);
                                     this.dayCellContainer.scrollTo(0, scrollY - 2);
                                     
                                     if (numLeft === 0) {
-                                        loadBefore.textContent = `Geen activiteiten voor ${DateUtil.DATE_FORMATS.DAY.LONG(newDays.find(ec => ec.events.length !== 0)!.date)}`;
+                                        loadBefore.textContent = `Geen activiteiten voor ${DateUtil.DATE_FORMATS.DAY.LONG(extensionCells[0].date)}`;
                                         loadBefore.classList.add("no-more");
                                     }
                                     else loadingBefore = false;
@@ -349,17 +350,18 @@ export default class EventCalendar extends HTMLElement {
                         }
                         else if (scrollDelta < 0 && ElementUtil.isAtScrollBottom(this.dayCellContainer, EventCalendar.LOAD_MORE_SCROLL_TOLERANCE)) {
                             if (!loadingAfter) {
+                                // load more events after
                                 loadingAfter = true;
                                 const prevLastDate = new Date(lastDate);
                                 lastDate.setDate(lastDate.getDate() + EventCalendar.LOAD_MORE_TIMESPAN_DAYS);
                                 this.extendDayCells(newDays, prevLastDate, lastDate, "after")
                                 .then(([extensionCells, numLeft]) => {
-                                    this.dayCellContainer.append(...extensionCells.filter(ec => ec.events.length !== 0).map(ec => ec.element));
+                                    this.dayCellContainer.append(...extensionCells.map(ec => ec.element));
                                     this.dayCellContainer.append(loadAfter);
                                     const scrollY = extensionCells.map(dc => dc.element).filter(e => this.dayCellContainer.contains(e)).reduce((prev,curr) => prev + curr.clientHeight, 0);
                                     
                                     if (numLeft === 0) {
-                                        loadAfter.textContent = `Geen activiteiten na ${DateUtil.DATE_FORMATS.DAY.LONG(newDays.findLast(ec => ec.events.length !== 0)!.date)}`;
+                                        loadAfter.textContent = `Geen activiteiten na ${DateUtil.DATE_FORMATS.DAY.LONG(extensionCells.at(-1)!.date)}`;
                                         loadAfter.classList.add("no-more");
                                     }
                                     else loadingAfter = false;
@@ -435,10 +437,8 @@ export default class EventCalendar extends HTMLElement {
                 });
 
                 dayCells.forEach(dc => {
-                    if (dc.events.length === 0) dc.element.parentElement?.removeChild(dc.element);
+                    if (dc.events.length === 0) dc.element.appendChild(ElementFactory.p("Geen activiteiten").class("no-activities", "subtitle", "text-center").make());
                 });
-
-                const loadersHeight = this.dayCellContainer.scrollHeight - dayCells.reduce((prev,curr) => prev + curr.element.scrollHeight, 0);
                 
 
                 break;
