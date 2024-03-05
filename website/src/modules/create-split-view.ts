@@ -32,7 +32,7 @@ function makeSplitView(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                     ElementFactory.div("sponsors", "boxed", "flex-rows")
                         .children(
                             ElementFactory.h2("Onze sponsoren").class("section-name"),
-                            ElementFactory.div(undefined, "logos", "flex-rows", "main-axis-center", "cross-axis-center")
+                            ElementFactory.div(undefined, "logos", "flex-rows", "main-axis-space-between", "cross-axis-center")
                                 .children(
                                     ...sponsorLinks.map(link => ElementFactory.a(link.href)
                                         .openInNewTab(true)

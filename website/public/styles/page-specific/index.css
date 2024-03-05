@@ -16,6 +16,7 @@
         text-align: center;
         text-decoration: underline 2px var(--accent);
         text-underline-offset: .125em;
+        text-shadow: var(--std-shadow);
 
         opacity: 0;
     }

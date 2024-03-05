@@ -41,8 +41,8 @@ span.icon { font-size: inherit; }
     --tertiary: #111111;
     --accent: rgb(214, 80, 80);
 
-    --text-light: #FFFFFF;
-    --text-dark: #000000;
+    --text-light: #ffffff;
+    --text-dark: rgb(0, 16, 46);
 
     --shadow-light: rgba(255, 255, 255, .25);
     --shadow-dark: rgba(0, 0, 0, .25);
@@ -61,7 +61,7 @@ span.icon { font-size: inherit; }
     --max-section-gap: max(var(--section-gap-x), var(--section-gap-y));
 
     --in-section-gap: .5rem;
-    --sides-gap: 4rem;
+    --sides-gap: calc(var(--section-gap-x) * 2);
 }
 
 * { /* custom scrollbar */
@@ -167,7 +167,7 @@ div#split-view {
     grid-template-columns: repeat(12, 1fr);
     gap: var(--section-gap-y) var(--section-gap-x);
 
-    padding: 0px var(--sides-gap);
+    padding: calc(var(--section-gap-y) * 2) var(--sides-gap);
 
     box-sizing: border-box;
     width: 100%;
@@ -189,6 +189,7 @@ div#split-view {
         > .logos {
             width: 100%;
             gap: var(--section-gap-y) var(--section-gap-x);
+            flex-grow: 1;
 
             > a {
                 > multisource-image {
@@ -370,6 +371,8 @@ a[href], .link:not(:disabled) {
     :root { --sides-gap: 2em; }
 
     div#split-view {
+        padding: 0px var(--section-gap-x);
+
         grid-template-areas:
             "c c c c c"
             "n s s s s" !important;
