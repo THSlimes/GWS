@@ -1,4 +1,4 @@
-import FolderElement, { ContentPosition, FoldingDirection } from "../custom-elements/FolderElement";
+import FolderElement, { ContentsPosition, FoldingDirection } from "../custom-elements/FolderElement";
 import AssemblyLine from "./AssemblyLine";
 
 export default class FolderElementAssemblyLine extends AssemblyLine<"folder-element", FolderElement> {
@@ -31,8 +31,8 @@ export default class FolderElementAssemblyLine extends AssemblyLine<"folder-elem
         return this;
     }
 
-    protected _contentPosition?:ContentPosition;
-    public contentPosition(pos:ContentPosition):this {
+    protected _contentPosition?:ContentsPosition;
+    public contentPosition(pos:ContentsPosition):this {
         this._contentPosition = pos;
         return this;
     }
@@ -43,7 +43,7 @@ export default class FolderElementAssemblyLine extends AssemblyLine<"folder-elem
         if (this._foldDir) out.foldDir = this._foldDir;
         out.arrowHidden = this._arrowHidden ?? false;
         if (this._closingDelay) out.closingDelay = this._closingDelay;
-        if (this._contentPosition) out.contentPosition = this._contentPosition;
+        if (this._contentPosition) out.contentsPosition = this._contentPosition;
         if (this._heading) {
             if (!(this._heading instanceof Element || this._heading instanceof AssemblyLine)) this._heading = this._heading(out);
             out.heading = this._heading instanceof AssemblyLine ? this._heading.make() : this._heading;

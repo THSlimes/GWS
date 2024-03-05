@@ -4,7 +4,7 @@ import Responsive, { Viewport } from "../ui/Responsive";
 import ElementUtil from "../util/ElementUtil";
 
 export type FoldingDirection = "down" | "right";
-export type ContentPosition = "absolute" | "static";
+export type ContentsPosition = "absolute" | "static";
 
 /** Viewport-types which open/close using clicking instead of hovering. */
 const USES_CLICK_INTERACTION:Viewport[] = ["mobile-portrait", "tablet-portrait"];
@@ -14,6 +14,8 @@ const USES_CLICK_INTERACTION:Viewport[] = ["mobile-portrait", "tablet-portrait"]
  * to only be shown when hovering over its name.
  */
 export default class FolderElement extends HTMLElement {
+
+    private static topFolderContentZIndex = 100;
 
     private _foldDir:FoldingDirection;
     public set foldDir(newDir:FoldingDirection) {
@@ -46,9 +48,13 @@ export default class FolderElement extends HTMLElement {
     
     private readonly _contents:HTMLDivElement;
     public get contents() { return this._contents; }
-    public set contentPosition(pos:ContentPosition) {
+
+    private _contentsPosition!:ContentsPosition;
+    public get contentsPosition() { return this._contentsPosition; }
+    public set contentsPosition(pos:ContentsPosition) {
         this._contents.classList.remove("absolute", "static");
         this._contents.classList.add(pos);
+        this._contentsPosition = pos;
     }
 
     /** Whether the folder is currently open. */
@@ -60,7 +66,7 @@ export default class FolderElement extends HTMLElement {
      * @param foldDir what direction it folds out
      * @param closingDelay time from the mouse leaving to when it closes
      */
-    constructor(heading?:string, foldDir?:FoldingDirection, contentPosition?:ContentPosition, closingDelay?:number, openOn?:keyof HTMLElementEventMap, closeOn?:keyof HTMLElementEventMap) {
+    constructor(heading?:string, foldDir?:FoldingDirection, contentsPosition?:ContentsPosition, closingDelay?:number, openOn?:keyof HTMLElementEventMap, closeOn?:keyof HTMLElementEventMap) {
         super();
         this.style.position = "relative";
         this.style.display = "block";
@@ -82,13 +88,14 @@ export default class FolderElement extends HTMLElement {
                 .make()
         );
 
-        contentPosition ??= ElementUtil.getAttrAs<ContentPosition>(this, "content-position", v => v === "absolute" || v === "static") ?? "absolute";
+        contentsPosition ??= ElementUtil.getAttrAs<ContentsPosition>(this, "contents-position", v => v === "absolute" || v === "static") ?? "absolute";
         this._contents = super.appendChild(
             ElementFactory.div()
-                .class("contents", contentPosition)
+                .class("contents", contentsPosition)
                 .children(...originalContents)
                 .make()
         );
+        this.contentsPosition = contentsPosition;
 
         // initializing interactivity
         openOn ??= ElementUtil.getAttrAs<keyof HTMLElementEventMap>(this, "open-on") ?? "mouseenter";
@@ -158,6 +165,8 @@ export default class FolderElement extends HTMLElement {
             }
             this._contents.style.setProperty("--top", this._contents.style.top??"0px");
 
+            if (this.contentsPosition === "absolute") this.contents.style.zIndex = (FolderElement.topFolderContentZIndex++).toString();
+            
             $(this._contents).stop().slideDown(200);
             this.setAttribute("open", "");
         }

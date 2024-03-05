@@ -24,8 +24,6 @@ folder-element {
     }
 
     > .contents {
-        z-index: 99;
-
         display: grid;
         grid-auto-flow: column;
         grid-template-rows: repeat(15, min-content);
