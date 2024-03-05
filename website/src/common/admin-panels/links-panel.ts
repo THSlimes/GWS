@@ -1,4 +1,5 @@
 import Cache from "../Cache";
+import Loading from "../Loading";
 import ImagedLinksEditor from "../custom-elements/ImagedLinksEditor";
 import LinkTreeEditor from "../custom-elements/LinkTreeEditor";
 import Placeholder from "../custom-elements/Placeholder";
@@ -20,6 +21,8 @@ let SOCIAL_MEDIA_LINKS_SAVE_BUTTON:HTMLButtonElement;
 
 export function initLinksPanel() {
     if (!initializedLinksPanel) {
+        Loading.markLoadStart(initLinksPanel);
+
         // Navbar links
         SETTINGS_DB.getNavbarLinks()
         .then(links => {
@@ -96,5 +99,6 @@ export function initLinksPanel() {
         });
 
         initializedLinksPanel = true;
+        Loading.markLoadEnd(initLinksPanel);
     }
 }

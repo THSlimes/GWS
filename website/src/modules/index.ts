@@ -6,7 +6,7 @@ import "../common/custom-elements/ElementCarousel";
 import "../common/custom-elements/ArticleList";
 
 import SmartArticle from "../common/custom-elements/SmartArticle";
-import ArticleDatabase from "../common/firebase/database/articles/ArticleDatabase";
+import ArticleDatabase, { ArticleQueryFilter } from "../common/firebase/database/articles/ArticleDatabase";
 import { FirestoreArticleDatabase } from "../common/firebase/database/articles/FirestoreArticleDatabase";
 import { STORAGE } from "../common/firebase/init-firebase";
 import { getDownloadURL, listAll, ref } from "@firebase/storage";
@@ -18,6 +18,7 @@ import NodeUtil from "../common/util/NodeUtil";
 import { checkPermissions, onPermissionCheck } from "../common/firebase/authentication/permission-based-redirect";
 import Permission from "../common/firebase/database/Permission";
 import ArticleList from "../common/custom-elements/ArticleList";
+import Loading from "../common/Loading";
 
 // INSERTING CAROUSEL IMAGES
 
@@ -28,9 +29,13 @@ const CAROUSEL_IMAGES:Record<number,HTMLImageElement> = {};
 function createCarouselImg(url:string, priority:"high"|"low"|"auto"="auto"):HTMLImageElement {
     return ElementFactory.img(url, "Afbeelding")
         .attrs({ "parallax-factor": .75, "fetchPriority": priority })
-        .on("load", (e, self) => self.setAttribute("loaded",""))
+        .on("load", (e, self) => {
+            self.setAttribute("loaded", "");
+            Loading.markLoadEnd(self);
+        })
         .onMake(self => {
             if (self.complete) self.setAttribute("loaded","");
+            else Loading.markLoadStart(self);
         })
         .make();
 }
@@ -66,16 +71,14 @@ CAROUSEL.append(
 CAROUSEL.id = "photo-carousel";
 
 
+
 // list of recent articles
 const DB = new FirestoreArticleDatabase();
 const PAGE_SIZE = 6;
 
+window.addEventListener("DOMContentLoaded", () => Placeholder.replaceWith("photo-carousel", CAROUSEL)); // insert carousel
 
-window.addEventListener("DOMContentLoaded", () => { // inserting after page load
-    Placeholder.replaceWith("photo-carousel", CAROUSEL);
-
-    onPermissionCheck(Permission.READ_MEMBER_ARTICLES, canReadMemberArticles => {
-        const baseFilter = { forHomepage:true, forMembers: canReadMemberArticles ? undefined : false };
-        Placeholder.replaceWith("article-list", new ArticleList(new ArticlePaginator(DB, PAGE_SIZE, baseFilter)));
-    }, false);
+Loading.useDynamicContent(checkPermissions(Permission.READ_MEMBER_ARTICLES, true), res => {
+    const baseFilter:ArticleQueryFilter = { forHomepage: true, forMembers: res[Permission.READ_MEMBER_ARTICLES] ? undefined : false };
+    Placeholder.replaceWith("article-list", new ArticleList(new ArticlePaginator(DB, PAGE_SIZE, baseFilter)));
 });

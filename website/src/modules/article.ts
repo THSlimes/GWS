@@ -6,6 +6,8 @@ import SmartArticle, { EditableSmartArticle } from "../common/custom-elements/Sm
 import { FirestoreArticleDatabase } from "../common/firebase/database/articles/FirestoreArticleDatabase";
 import { runOnErrorCode } from "../common/firebase/authentication/error-messages";
 import URLUtil from "../common/util/URLUtil";
+import ElementFactory from "../common/html-element-factory/ElementFactory";
+import Loading from "../common/Loading";
 
 /** Creates the link to an article given its ID. */
 export function articleLink(id: string) { return `/article.html?id=${id}`; }
@@ -17,9 +19,9 @@ const isEditMode = urlSearchParams.get("mode") === "edit";
 if (!articleId) window.location.replace('/'); // no article provided, go to homepage
 else window.addEventListener("DOMContentLoaded", () => {
     const ARTICLE_DIV = document.getElementById("article")!;
-    const NEXT_ARTICLE_BUTTON = document.getElementById("next-article-button") as HTMLButtonElement;
-    const PREV_ARTICLE_BUTTON = document.getElementById("prev-article-button") as HTMLButtonElement;
+    const NAVIGATION_BUTTONS_DIV = document.getElementById("navigation-buttons")!;
 
+    Loading.markLoadStart(window);
     DB.getById(articleId)
     .then(articleInfo => {
         if (articleInfo) {
@@ -29,23 +31,32 @@ else window.addEventListener("DOMContentLoaded", () => {
             if (articleInfo.show_on_homepage) {
                 DB.getNext(articleInfo, { forHomepage:true, forMembers:false })
                 .then(nextArticle => {
-                    if (nextArticle) {
-                        NEXT_ARTICLE_BUTTON.querySelector(".article-title")!.innerHTML = nextArticle.heading;
-                        NEXT_ARTICLE_BUTTON.addEventListener("click", () => location.href = articleLink(nextArticle.id));
-                    }
-                    else NEXT_ARTICLE_BUTTON.disabled = true;
-                });
+                    if (nextArticle) NAVIGATION_BUTTONS_DIV.appendChild(
+                        ElementFactory.button(() => location.href = articleLink(nextArticle.id))
+                            .class("flex-columns", "main-axis-space-between", "cross-axis-center", "text-right")
+                            .children(
+                                ElementFactory.p("chevron_left").class("icon"),
+                                ElementFactory.p(nextArticle.heading)
+                            )
+                            .make()
+                    )
+            });
                 DB.getPrevious(articleInfo, { forHomepage:true, forMembers:false })
                 .then(prevArticle => {
-                    if (prevArticle) {
-                        PREV_ARTICLE_BUTTON.querySelector(".article-title")!.innerHTML = prevArticle.heading;
-                        PREV_ARTICLE_BUTTON.addEventListener("click", () => location.href = articleLink(prevArticle.id));
-                    }
-                    else PREV_ARTICLE_BUTTON.disabled = true;
+                    if (prevArticle) NAVIGATION_BUTTONS_DIV.appendChild(
+                        ElementFactory.button(() => location.href = articleLink(prevArticle.id))
+                            .class("flex-columns", "main-axis-space-between", "cross-axis-center", "text-left")
+                            .children(
+                                ElementFactory.p(prevArticle.heading),
+                                ElementFactory.p("chevron_right").class("icon")
+                            )
+                            .make()
+                    )
                 });
             }
         }
         else window.location.replace('/'); // no such article found, go to homepage
     })
-    .catch(runOnErrorCode("permission-denied", () => location.replace(URLUtil.createLinkBackURL("/login.html", location.href))));
+    .catch(runOnErrorCode("permission-denied", () => location.replace(URLUtil.createLinkBackURL("/login.html", location.href))))
+    .finally(() => Loading.markLoadEnd(window));
 });

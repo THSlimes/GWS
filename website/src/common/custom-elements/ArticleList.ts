@@ -5,6 +5,7 @@ import ElementUtil from "../util/ElementUtil";
 import { HasSections } from "../util/UtilTypes";
 import NodeUtil from "../util/NodeUtil";
 import SmartArticle, { ArticleLOD } from "./SmartArticle";
+import Loading from "../Loading";
 
 type ArticleListSection = "currentPage"|"pageNavigator"|"firstPageButton"|"previousPageButton"|"nextPageButton"|"lastPageButton"|"pageNumber";
 export default class ArticleList extends HTMLElement implements HasSections<ArticleListSection> {
@@ -84,8 +85,9 @@ export default class ArticleList extends HTMLElement implements HasSections<Arti
     }
 
     private loadPage(pageIndex:number, scrollToTop=false):Promise<void> {
+        Loading.markLoadStart(this);
+
         NodeUtil.empty(this.currentPage); // clear old articles
-        
         return new Promise((resolve, reject) => {
             this.paginator.getPage(pageIndex)
             .then(info => {
@@ -102,6 +104,8 @@ export default class ArticleList extends HTMLElement implements HasSections<Arti
                 .catch(console.error);
             })
             .catch(reject);
+
+            Loading.markLoadEnd(this);
         });
     }
 

@@ -47,6 +47,32 @@ export default abstract class Cache {
     };
 
     /**
+     * Gets the value associated with the given key. If the value is not cached, the given Promise is used to query it.
+     * In case the value was invalidated after getting, the Promise is used to get its new value.
+     * @param key cache key
+     * @param refreshPromise Promise to query the current, actual value
+     * @param refreshFrequency how long to the refreshed value is valid (ms, default is 6 hours)
+     * @returns Promise that resolves with the cached value associated with the given key
+     */
+    public static getAndRefresh<K extends CacheKey>(key:K, refreshPromise:Promise<CacheKeyMap[K]>, refreshFrequency=6*60*60*1000):Promise<CacheKeyMap[K]> {
+        return new Promise((resolve, reject) => {
+            const cachedValue = this.get(key, true);
+            if (cachedValue === null) refreshPromise
+                .then(realValue => { // not in cache, use Promise
+                    this.set(key, realValue, Date.now() + refreshFrequency);
+                    resolve(realValue);
+                })
+                .catch(reject);
+            else { // has cached value, use it
+                resolve(cachedValue);
+                if (!this.has(key)) refreshPromise // value invalidated after getting, get new value
+                    .then(newValue => this.set(key, newValue, Date.now() + refreshFrequency))
+                    .catch(console.error);
+            }
+        });
+    }
+
+    /**
      * Assigns a new value to be associated with the given key.
      * @param key
      * @param value new value

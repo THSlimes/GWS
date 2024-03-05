@@ -34,8 +34,7 @@ const PANEL_CONFIG:Record<PanelId, { icon:string, label:string, default?:true, s
     "links-panel": {
         icon: "account_tree",
         label: "Koppelingen",
-        selectCallback: initLinksPanel,
-        default: true
+        selectCallback: initLinksPanel
     }
 };
 Object.freeze(PANEL_CONFIG);

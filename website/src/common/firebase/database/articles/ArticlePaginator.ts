@@ -91,7 +91,7 @@ export default class ArticlePaginator {
                         .then(articles => resolve(this.addToPageCache(pageIndex, articles)))
                         .catch(reject);
                     }
-                    else { // neither first nor last page, get from DB                        
+                    else { // neither first nor last page, get from DB
                         const cachedPageIndices = Object.keys(this.pageCache).map(n => parseInt(n));
                         const closestCachedPageIndex = NumberUtil.closest(pageIndex, cachedPageIndices);
                         const supportPageIndex = closestCachedPageIndex < pageIndex ? pageIndex - 1 : pageIndex + 1;

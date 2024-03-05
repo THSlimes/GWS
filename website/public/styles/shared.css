@@ -1,5 +1,6 @@
 @import url("./header-and-footer.css");
 @import url("./info-messages.css");
+@import url("./custom-elements/multisource-image.css");
 
 /* Google ICONS IMPORT */
 @font-face {
@@ -146,7 +147,7 @@ div#split-view {
         "c c c c c c c c c c c s"
         "c c c c c c c c c c c s"
         "c c c c c c c c c c c s";
-    grid-template-rows: repeat(6, 1fr);
+    /* grid-template-rows: repeat(6, 1fr); */
     grid-template-columns: repeat(12, 1fr);
     gap: var(--section-gap-y) var(--section-gap-x);
 
@@ -156,14 +157,13 @@ div#split-view {
     width: 100%;
     height: min-content;
 
-    > * > .section-name {
-        text-align: center;
-        text-decoration: underline;
-    }
-
     > #news-letters {
         grid-area: n;
         padding: var(--in-section-gap);
+        > .section-name {
+            text-align: center;
+            text-decoration: underline;
+        }
     }
 
     > #sponsors {
@@ -183,6 +183,11 @@ div#split-view {
                 }
             }
         }
+
+        > .section-name {
+            text-align: center;
+            text-decoration: underline;
+        }
     }
 }
 
@@ -190,7 +195,7 @@ div#split-view {
     grid-area: c;
     row-gap: 1em;
 
-    > .section-name { text-align: left; }
+    > .section-name { text-decoration: underline; }
 }
 
 /* UTILITY CLASSES */

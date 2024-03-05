@@ -3,12 +3,11 @@
 @import url("../custom-elements/smart-article.css");
 
 #navigation-buttons {
+    gap: var(--in-section-gap);
+    
     > * {
-        width: 50%;
-
+        flex-grow: 1;
         > .article-title { flex-grow: 1; }
-        > #next-article-title { text-align:left; }
-        > #prev-article-title { text-align:right; }
     }
 }
 

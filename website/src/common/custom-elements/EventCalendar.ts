@@ -13,6 +13,7 @@ import { showError } from "../ui/info-messages";
 import getErrorMessage from "../firebase/authentication/error-messages";
 import NodeUtil from "../util/NodeUtil";
 import RegisterableEventNote from "./EventNote";
+import Loading from "../Loading";
 
 const DAY_ABBREVIATIONS = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
 
@@ -219,6 +220,8 @@ export default class EventCalendar extends HTMLElement {
     }
 
     private populate(date:Date, viewMode:calendarViewMode) {
+        Loading.markLoadStart(this);
+
         date = new Date(date); // use copy instead
         const dateCopy = new Date(date); // make copy for controls
 
@@ -380,7 +383,8 @@ export default class EventCalendar extends HTMLElement {
         // insert event-notes
         this.db.getRange(firstDate, lastDate)
         .then(events => this.insertEventNotes(events, newDays, viewMode))
-        .catch(console.error);
+        .catch(console.error)
+        .finally(() => Loading.markLoadEnd(this));
     }
 
     private insertEventNotes(events:EventInfo[], dayCells:DayCell[], viewMode:calendarViewMode) {

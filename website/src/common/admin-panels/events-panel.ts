@@ -8,6 +8,7 @@ import { EventInfo } from "../firebase/database/events/EventDatabase";
 import StringUtil from "../util/StringUtil";
 import { EditableEventNote } from "../custom-elements/EventNote";
 import { DetailLevel } from "../util/UtilTypes";
+import Loading from "../Loading";
 
 const DB = new CachingEventDatebase(new FirestoreEventDatebase());
 
@@ -27,11 +28,15 @@ function getEmptyNote():EditableEventNote {
 let initializedEventsPanel = false;
 export function initEventsPanel() {
     if (!initializedEventsPanel) {
-        const eventCalendar = Placeholder.replaceWith("event-calendar", new EventCalendar(DB, new Date(), "month"));
+        Loading.markLoadStart(initEventsPanel);
         
+
+        const eventCalendar = Placeholder.replaceWith("event-calendar", new EventCalendar(DB, new Date(), "month"));
         
         Placeholder.replaceWith("new-event", getEmptyNote());
 
         initializedEventsPanel = true;
+
+        Loading.markLoadEnd(initEventsPanel);
     }
 }

@@ -46,7 +46,7 @@ export default class Placeholder extends HTMLElement {
 
 }
 
-window.addEventListener("DOMContentLoaded", () => customElements.define("place-holder", Placeholder));
+customElements.define("place-holder", Placeholder);
 
 class DuplicateIdError extends Error {
 

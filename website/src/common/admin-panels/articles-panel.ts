@@ -1,3 +1,4 @@
+import Loading from "../Loading";
 import ArticleList from "../custom-elements/ArticleList";
 import Placeholder from "../custom-elements/Placeholder";
 import SmartArticle, { EditableSmartArticle } from "../custom-elements/SmartArticle";
@@ -16,6 +17,8 @@ const NEW_ARTICLE_INFO = new ArticleInfo(DB, "", "", "", new Date(), "", true, f
 
 export function initArticlesPanel() {
     if (!articlesPanelInitialized) {
+        Loading.markLoadStart(initArticlesPanel);
+
         checkPermissions(Permission.READ_MEMBER_ARTICLES, false)
         .then(hasPerms => { // list of recent articles
             const baseFilter = { forMembers: hasPerms.READ_MEMBER_ARTICLES ? undefined : false };
@@ -28,5 +31,7 @@ export function initArticlesPanel() {
         Placeholder.replaceWith("new-article", NEW_ARTICLE);
 
         articlesPanelInitialized = true;
+
+        Loading.markLoadEnd(initArticlesPanel);
     }
 }

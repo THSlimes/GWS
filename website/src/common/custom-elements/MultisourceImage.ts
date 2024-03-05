@@ -6,6 +6,7 @@ import ElementUtil from "../util/ElementUtil";
 import { HasSections } from "../util/UtilTypes";
 import { AttachmentOrigin, isAttachmentOrigin } from "./MultisourceAttachment";
 import ElementFactory from "../html-element-factory/ElementFactory";
+import Loading from "../Loading";
 
 export default class MultisourceImage extends HTMLElement implements HasSections<"image"|"errorMessage"> {
 
@@ -41,6 +42,8 @@ export default class MultisourceImage extends HTMLElement implements HasSections
     }
 
     private refresh() {
+        Loading.markLoadStart(this);
+
         const infoPromise = this.origin === "external" ?
             new Promise<string>((resolve) => resolve(this.src)) :
             this.origin === "firebase-storage-protected" ?
@@ -59,7 +62,8 @@ export default class MultisourceImage extends HTMLElement implements HasSections
             this.image.toggleAttribute("hidden", true);
             this.errorMessage.lastChild!.textContent = err instanceof Error ? err.message : "Er ging iets mis.";
             this.errorMessage.removeAttribute("hidden");
-        });
+        })
+        .finally(() => Loading.markLoadEnd(this));
     }
 
     public image!:HTMLImageElement;
@@ -128,4 +132,4 @@ export default class MultisourceImage extends HTMLElement implements HasSections
 
 }
 
-window.addEventListener("DOMContentLoaded", () => customElements.define("multisource-image", MultisourceImage));
+customElements.define("multisource-image", MultisourceImage);
