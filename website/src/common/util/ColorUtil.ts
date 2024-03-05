@@ -28,16 +28,16 @@ export default abstract class ColorUtil {
 
     private static DEFAULT_COLOR:HexColor = "#aaaaaa";
     private static STRING_COLORS:HexColor[] = [
-        "#ff8700", // orange
-        "#580aff", // purple
-        "#ff0000", // red
-        "#deff0a", // yellow
-        "#a1ff0a", // lime
-        "#0aefff", // light blue
-        "#147df5", // blue
-        "#ffd300", // gold
-        "#be0aff", // magenta
-        "#0aff99", // mint
+        "#FF0000",
+        "#FF8700",
+        "#FFD300",
+        "#DEFF0A",
+        "#A1FF0A",
+        "#0AFF99",
+        "#0AEFFF",
+        "#147DF5",
+        "#580AFF",
+        "#BE0AFF"
     ];
 
     private static isHex(c:Color): c is HexColor {
