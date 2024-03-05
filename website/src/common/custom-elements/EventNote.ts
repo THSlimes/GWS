@@ -413,8 +413,8 @@ window.addEventListener("DOMContentLoaded", () => customElements.define("editabl
 
 
 
-/** [icon, text, enabled] tuple */
-type RegisterButtonState = [string, string, boolean];
+/** [icon, text, enabled, show extra options] tuple */
+type RegisterButtonState = [string, string, boolean, boolean];
 type RegisterableEventNoteSectionName = EventNoteSectionName | "registrations" | "paymentDisclaimer" | "allowPaymentSwitch" | "registerButton" | "commentBox";
 export default class RegisterableEventNote extends EventNote implements HasSections<RegisterableEventNoteSectionName> {
 
@@ -457,30 +457,30 @@ export default class RegisterableEventNote extends EventNote implements HasSecti
                 let state: RegisterButtonState;
                 const now = new Date();
 
-                if (!user) state = ["login", "Log in om je in te schrijven", true];
+                if (!user) state = ["login", "Log in om je in te schrijven", true, false];
                 else {
-                    if (this.event.ends_at <= now) state = ["event_busy", "Activiteit is al voorbij", false];
-                    else if (this.event.starts_at <= now) state = ["calendar_today", "Activiteit is al gestart", false];
+                    if (this.event.ends_at <= now) state = ["event_busy", "Activiteit is al voorbij", false, false];
+                    else if (this.event.starts_at <= now) state = ["calendar_today", "Activiteit is al gestart", false, false];
                     else if (this.event.can_register_until && this.event.can_register_until <= now) {
-                        state = ["event_upcoming", "Inschrijving is al gesloten", false];
+                        state = ["event_upcoming", "Inschrijving is al gesloten", false, false];
                     }
                     else if (this.event.can_register_from && now <= this.event.can_register_from) {
-                        state = ["calendar_clock", `Inschrijven kan pas vanaf ${DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(this.event.can_register_from)}`, false];
+                        state = ["calendar_clock", `Inschrijven kan pas vanaf ${DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(this.event.can_register_from)}`, false, false];
                     }
                     else if (isRegistered) state = RegisterableEventNote.CAN_DEREGISTER ?
-                        ["free_cancellation", "Uitschrijven", true] :
-                        ["event_available", "Ingeschreven", false];
-                    else if (this.event.isFull()) state = ["event_busy", "Activiteit zit vol", false];
+                        ["free_cancellation", "Uitschrijven", true, false] :
+                        ["event_available", "Ingeschreven", false, false];
+                    else if (this.event.isFull()) state = ["event_busy", "Activiteit zit vol", false, false];
                     else state = RegisterableEventNote.CAN_REGISTER ?
-                        ["calendar_add_on", "Inschrijven", allowsPayment] :
-                        ["event_busy", "Inschrijving niet mogelijk", false];
+                        ["calendar_add_on", "Inschrijven", allowsPayment, true] :
+                        ["event_busy", "Inschrijving niet mogelijk", false, false];
                 }
 
                 [this.registerButton.firstElementChild!.textContent, this.registerButton.children[1].textContent] = state;
                 this.registerButton.disabled = !state[2];
 
-                if (this.paymentDisclaimer && this.isVisible("paymentDisclaimer")) this.paymentDisclaimer.hidden = user === null || isRegistered;
-                if (this.isVisible("commentBox")) this.commentBox.hidden = user === null || isRegistered;
+                if (this.paymentDisclaimer && this.isVisible("paymentDisclaimer")) this.paymentDisclaimer.hidden = !state[3];
+                if (this.isVisible("commentBox")) this.commentBox.hidden = !state[3];
 
 
                 const spacesLeft = (this.event.capacity ?? 0) - ObjectUtil.sizeOf(this.event.registrations);
@@ -490,14 +490,14 @@ export default class RegisterableEventNote extends EventNote implements HasSecti
                     const newRegistrations = ElementFactory.div(undefined, "registrations", "flex-rows", "in-section-gap")
                         .children(
                             ElementFactory.heading(this.expanded ? 3 : 4, "Ingeschreven geitjes")
-                                .children(spacesLeft > 0 && ElementFactory.span(` (${spacesLeft} plekken over)`).class("subtitle"))
+                                .children((spacesLeft > 0 && state[3]) && ElementFactory.span(` (${spacesLeft} plekken over)`).class("subtitle"))
                                 .class("no-margin"),
-                            ElementFactory.ul()
+                            ElementFactory.div()
                                 .class("registrations-list", "no-margin")
                                 .children(
                                     ...ObjectUtil.mapToArray(this.event.registrations, (id, name) => ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
                                         .children(
-                                            ElementFactory.li(name).class("no-margin"),
+                                            ElementFactory.p(name).class("no-margin"),
                                             (id in comments) && ElementFactory.iconButton("comment", () => navigator.clipboard.writeText(comments[id].body)
                                                 .then(() => showSuccess("Opmerking gekopieerd."))
                                                 .catch(() => showError("Kon opmerking niet kopiëren, probeer het later opnieuw."))

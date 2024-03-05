@@ -183,7 +183,7 @@ function makeFooter(settingsDB:SettingsDatabase):Promise<HTMLElement> {
             ElementFactory.footer()
                 .class("page-footer", "flex-rows", "cross-axis-center")
                 .children(
-                    ElementFactory.h4("Je vindt ons ook op ...").id("link-text"),
+                    ElementFactory.h4("Je vindt ons ook op").id("link-text"),
                     ElementFactory.div()
                         .class("social-media-links", "flex-columns", "main-axis-space-between")
                         .children(

@@ -388,6 +388,8 @@ export default class EventCalendar extends HTMLElement {
     }
 
     private insertEventNotes(events:EventInfo[], dayCells:DayCell[], viewMode:calendarViewMode) {
+        Loading.markLoadStart(this);
+
         switch (viewMode) {
             case "week":
             case "month":
@@ -447,6 +449,8 @@ export default class EventCalendar extends HTMLElement {
 
                 break;
         }
+
+        Loading.markLoadEnd(this);
     }
 
 }

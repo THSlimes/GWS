@@ -7,7 +7,7 @@ export default abstract class Loading {
     static { // create loading animation overlay (optimized for speed)
         this.loadingScreen.id = "loading-screen";
         document.body.appendChild(this.loadingScreen);
-        window.addEventListener("DOMContentLoaded", () => document.body.classList.add("no-scroll"));
+        window.addEventListener("DOMContentLoaded", () => document.body.toggleAttribute("loading", true));
 
         for (const emoji of ['🐐', '🧶', '🧦']) {
             const p = document.createElement("p");
@@ -17,7 +17,7 @@ export default abstract class Loading {
 
         this.checkLoadedInterval = setInterval(() => { // periodically check if loaded
             if (this.numLoading === 0) {
-                document.body.classList.remove("no-scroll");
+                document.body.removeAttribute("loading");
                 this.loadingScreen.classList.add("fading")
                 clearInterval(this.checkLoadedInterval);
             }

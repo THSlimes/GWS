@@ -8,6 +8,7 @@ event-note, registerable-event-note, editable-event-note, editable-registerable-
     
     padding: var(--in-section-gap);
 
+    max-height: 90vh;
     box-sizing: border-box;
 
     background-color: var(--background-color);
@@ -40,8 +41,8 @@ event-note, registerable-event-note, editable-event-note, editable-registerable-
     }
 
     & .description {
-        max-height: 50vh;
-        overflow-y: scroll;
+        max-height: 30vh;
+        overflow-y: auto;
 
         text-align: justify;
         &, & * { color:inherit }
@@ -66,18 +67,26 @@ registerable-event-note {
     & .registrations {
         > .registrations-list {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             grid-auto-rows: auto;
             justify-content: center;
+            gap: calc(var(--in-section-gap) / 2);
 
-            padding: 0px;
+            padding: 0px var(--in-section-gap);
+
             box-sizing: border-box;
             width: 100%;
-            max-height: 20vh;
-            overflow-y: scroll;
+            min-height: 5vh;
+            max-height: 10vh;
 
+            overflow: hidden auto;
+
+            > * {
+                box-sizing: border-box;
+                height: 100%;
+                justify-self: center;
+            }
             & .comment { font-size: 1.75em; }
-            > *::marker { content: ""; }
         }
     }
 
@@ -131,6 +140,10 @@ editable-event-note, editable-registerable-event-note {
 /* TABLET-VIEWPORT OVERRIDE */
 
 @media (max-aspect-ratio: 3 / 4) {
+    registerable-event-note {
+        > .registrations > .registrations-list { grid-template-columns: repeat(3, 1fr); }
+    }
+
     editable-event-note, editable-registerable-event-note {
         &[expanded] {
             gap: var(--in-section-gap);
@@ -149,6 +162,11 @@ editable-event-note, editable-registerable-event-note {
 
         > .name { margin: 0px; }
         > .timespan { margin: 0px; }
+        > .registrations > .registrations-list {
+            max-height: 10vh;
+            font-size: 90%;
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
 
     editable-event-note, editable-registerable-event-note {
