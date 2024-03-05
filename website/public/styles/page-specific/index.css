@@ -11,7 +11,8 @@
         color: var(--text-light);
 
         translate: 0px -50%;
-        font-size: 350%;
+        font-size: 3.5rem;
+        font-weight: 700;
         text-align: center;
         text-decoration: underline 2px var(--accent);
         text-underline-offset: .125em;

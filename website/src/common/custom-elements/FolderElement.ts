@@ -71,8 +71,8 @@ export default class FolderElement extends HTMLElement {
         // initializing element
         const originalContents = Array.from(this.children);
 
-        this._heading = ElementFactory.h5(heading ?? this.getAttribute("heading") ?? "").class("heading").make();
-        this.arrow = ElementFactory.h5("chevron_right")
+        this._heading = ElementFactory.h4(heading ?? this.getAttribute("heading") ?? "").class("heading").make();
+        this.arrow = ElementFactory.h4("chevron_right")
             .class("arrow", "light-weight", "icon")
             .make();
         this.topper = super.appendChild(

@@ -108,8 +108,17 @@ h1, h2, h3, h4, h5, h6 {
     color: var(--text-dark);
 }
 
+h1 { font-size: 2rem; font-weight: 600; }
+h2 { font-size: 1.375rem; font-weight: 600; }
+h3 { font-size: 17px; font-weight: 600; }
+h4 { font-size: 14px; font-weight: 500; }
+h5 {  }
+h6 {  }
+
 p, input, label {
     font-family: var(--std-font);
+    font-size: 1rem;
+    font-weight: 400;
     color: var(--text-dark);
 }
 
@@ -216,9 +225,9 @@ div#split-view {
 .italic { font-style: italic; }
 
 .boxed {
-    border: var(--std-border);
-    border-radius: var(--in-section-gap);
-    box-shadow: var(--std-shadow);
+    outline: var(--std-border);
+    outline-color: var(--shadow-dark);
+    border-radius: calc(var(--in-section-gap) / 2);
 }
 
 .flex-rows {

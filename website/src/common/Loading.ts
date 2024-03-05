@@ -21,7 +21,7 @@ export default abstract class Loading {
                 this.loadingScreen.classList.add("fading")
                 clearInterval(this.checkLoadedInterval);
             }
-        }, 25);
+        }, 50);
     }
 
     private static currentlyLoading:object[] = [];

@@ -1,4 +1,4 @@
-html[loading] { overflow: hidden !important; }
+body[loading] { overflow: hidden !important; }
 
 #loading-screen {
     position: fixed;
@@ -21,6 +21,7 @@ html[loading] { overflow: hidden !important; }
     user-select: none;
     z-index: 999;
 
+    > * { font-size: 4rem; }
     > *:nth-child(3n-2) { animation: jiggle 1s linear 0ms infinite normal forwards; }
     > *:nth-child(3n-1) { animation: jiggle 1s linear -333ms infinite normal forwards; }
     > *:nth-child(3n) { animation: jiggle 1s linear -666ms infinite normal forwards; }

@@ -63,7 +63,7 @@ function makeNavbar(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                             ElementFactory.div()
                                 .class("desc", "flex-rows", "main-axis-center")
                                 .children(
-                                    ElementFactory.a('/').children(ElementFactory.h4("Den Geitenwollen Soc.")),
+                                    ElementFactory.a('/').children(ElementFactory.h3("Den Geitenwollen Soc.")),
                                     ElementFactory.p("Studievereniging Sociologie Nijmegen").class("subtitle")
                                 ),
                             ElementFactory.div()

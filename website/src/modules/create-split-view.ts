@@ -19,7 +19,7 @@ function makeSplitView(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                     new Placeholder("split-view-content"),
                     ElementFactory.div("news-letters", "boxed")
                         .children(
-                            ElementFactory.h3("Nieuwsbrieven").class("section-name"),
+                            ElementFactory.h2("Nieuwsbrieven").class("section-name"),
                             ElementFactory.div("news-letters-list", "flex-rows", "main-axis-start")
                                 .children(
                                     ElementFactory.p("Nieuwsbrief juni 2023"),
@@ -31,7 +31,7 @@ function makeSplitView(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                         ),
                     ElementFactory.div("sponsors", "boxed", "flex-rows")
                         .children(
-                            ElementFactory.h3("Onze sponsoren").class("section-name"),
+                            ElementFactory.h2("Onze sponsoren").class("section-name"),
                             ElementFactory.div(undefined, "logos", "flex-rows", "main-axis-center", "cross-axis-center")
                                 .children(
                                     ...sponsorLinks.map(link => ElementFactory.a(link.href)
