@@ -93,7 +93,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
         this.style.setProperty("--text-color", ColorUtil.getMostContrasting(bgColor, "#111111", "#ffffff"));
 
         // name section
-        this.name = this.appendChild(ElementFactory.heading(this.expanded ? 1 : 5, this.event.name).class("name", "no-margin").make());
+        this.name = ElementFactory.heading(this.expanded ? 1 : 5, this.event.name).class("name", "no-margin").make();
 
         // timespan section
         let timespanText:string;
@@ -116,7 +116,12 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
             else timespanText = `${DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(this.event.starts_at)} t/m ${DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(this.event.ends_at)}`;
         }
 
-        this.timespan = this.appendChild(ElementFactory.p(timespanText).class("timespan", "subtitle", "italic", "no-margin").make());
+        this.timespan = ElementFactory.p(timespanText).class("timespan", "subtitle", "no-margin").make();
+        this.appendChild(
+            ElementFactory.div()
+                .children(this.name, this.timespan)
+                .make()
+        );
 
         // description section
         this.description = this.appendChild(ElementFactory.richText(this.event.description).class("description").make());
@@ -481,7 +486,7 @@ export default class RegisterableEventNote extends EventNote implements HasSecti
 
                 if (this.paymentDisclaimer && this.isVisible("paymentDisclaimer")) this.paymentDisclaimer.hidden = !state[3];
                 if (this.isVisible("commentBox")) this.commentBox.hidden = !state[3];
-
+                this.registrations.hidden = ObjectUtil.sizeOf(this.event.registrations) === 0;
 
                 const spacesLeft = (this.event.capacity ?? 0) - ObjectUtil.sizeOf(this.event.registrations);
                 const commentsPromise = RegisterableEventNote.CAN_READ_COMMENTS ? this.event.getComments() : new Promise<Record<string,EventComment>>(resolve => resolve({}));

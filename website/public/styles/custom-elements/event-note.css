@@ -8,7 +8,6 @@ event-note, registerable-event-note, editable-event-note, editable-registerable-
     
     padding: var(--in-section-gap);
 
-    max-height: 90vh;
     box-sizing: border-box;
 
     background-color: var(--background-color);
@@ -18,8 +17,9 @@ event-note, registerable-event-note, editable-event-note, editable-registerable-
     border-radius: var(--in-section-gap);
     
     &[expanded] {
+        max-height: 90vh;
         padding: var(--section-gap-y) var(--section-gap-x);
-        > .timespan { font-size: large; }
+        & .timespan { font-size: medium; }
     }
 
     & .icon-switch {
@@ -142,7 +142,7 @@ editable-event-note, editable-registerable-event-note {
 
 @media (max-aspect-ratio: 3 / 4) {
     registerable-event-note {
-        > .registrations > .registrations-list { grid-template-columns: repeat(3, 1fr); }
+        & .registrations > .registrations-list { grid-template-columns: repeat(3, 1fr); }
     }
 
     editable-event-note, editable-registerable-event-note {
@@ -161,9 +161,9 @@ editable-event-note, editable-registerable-event-note {
         flex-wrap: nowrap;
         align-items: center;
 
-        > .name { margin: 0px; }
-        > .timespan { margin: 0px; }
-        > .registrations > .registrations-list {
+        & .name { text-align: center; }
+        & .timespan { text-align: center; font-size: 75%; }
+        & .registrations > .registrations-list {
             max-height: 10vh;
             font-size: 90%;
             grid-template-columns: repeat(2, 1fr);
@@ -171,7 +171,7 @@ editable-event-note, editable-registerable-event-note {
     }
 
     editable-event-note, editable-registerable-event-note {
-        > .timespan {
+        & .timespan {
             flex-wrap: wrap;
             justify-content: center;
             > *:first-child { width: 100%; }

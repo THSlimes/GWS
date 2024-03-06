@@ -43,7 +43,8 @@ event-calendar {
                     grid-column: calc(var(--offset) + 2) / span 1;
 
                     width: 100% !important;
-                    height: calc(100% * var(--length) + (2 * var(--length) - 3) * var(--day-cell-padding));
+                    height: calc(100% * var(--length) + (2 * var(--length) - 2) * var(--day-cell-padding));
+                    /* height: calc(100% * var(--length)); */
 
                     min-width: 0px;
                     min-height: 0px;
@@ -158,7 +159,7 @@ event-calendar {
 }
 
 #fullscreen-event-container {
-    z-index: 50;
+    z-index: 100;
     position: fixed;
     top:0px;
     left:0px;
@@ -198,7 +199,7 @@ event-calendar {
 
 @media (max-aspect-ratio: 3 / 5) {
     event-calendar {
-        max-height: 100vh;
+        max-height: unset;
 
         > .controls {
             flex-direction: column;
