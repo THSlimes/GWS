@@ -532,6 +532,14 @@ export default class RegisterableEventNote extends EventNote implements HasSecti
 
     constructor(regEvent: RegisterableEventInfo, lod = DetailLevel.MEDIUM, expanded = false) {
         super(regEvent, lod, expanded);
+
+        // refresh at registration start
+        if (this.event.can_register_from && this.event.can_register_from.getTime() > Date.now()) setTimeout(() => {
+            this.refreshRegistrationDetails();
+        }, this.event.can_register_from.getTime() - Date.now());
+        // refresh at registration end
+        const regEnd = this.event.can_register_until ?? this.event.starts_at;
+        if (regEnd.getTime() > Date.now()) setTimeout(() => this.refreshRegistrationDetails(), regEnd.getTime() - Date.now());
     }
 
     public override initElement(): void {

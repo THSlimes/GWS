@@ -36,7 +36,7 @@ header.page-header {
     }
     
     #header-container {
-        padding: var(--in-section-gap) calc(1em + var(--sides-gap)) var(--in-section-gap) var(--sides-gap);
+        padding: var(--in-section-gap) var(--section-gap-x);
         column-gap: var(--section-gap-x);
         
         box-sizing: border-box;
