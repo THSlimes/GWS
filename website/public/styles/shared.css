@@ -1,6 +1,7 @@
 @import url("./header-and-footer.css");
 @import url("./info-messages.css");
 @import url("./custom-elements/multisource-image.css");
+@import url("./custom-elements/rss-feed.css");
 
 /* Google ICONS IMPORT */
 @font-face {
@@ -158,7 +159,7 @@ div#split-view {
     display: grid;
     grid-template-areas:
         "c c c c c c c c c c c n"
-        "c c c c c c c c c c c n"
+        "c c c c c c c c c c c s"
         "c c c c c c c c c c c s"
         "c c c c c c c c c c c s"
         "c c c c c c c c c c c s"

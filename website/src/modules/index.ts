@@ -5,8 +5,7 @@ import "../common/ui/parallax-scrolling";
 import "../common/custom-elements/ElementCarousel";
 import "../common/custom-elements/ArticleList";
 
-import SmartArticle from "../common/custom-elements/SmartArticle";
-import ArticleDatabase, { ArticleQueryFilter } from "../common/firebase/database/articles/ArticleDatabase";
+import { ArticleQueryFilter } from "../common/firebase/database/articles/ArticleDatabase";
 import { FirestoreArticleDatabase } from "../common/firebase/database/articles/FirestoreArticleDatabase";
 import { STORAGE } from "../common/firebase/init-firebase";
 import { getDownloadURL, listAll, ref } from "@firebase/storage";
@@ -14,8 +13,7 @@ import ElementCarousel from "../common/custom-elements/ElementCarousel";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
 import Placeholder from "../common/custom-elements/Placeholder";
 import ArticlePaginator from "../common/firebase/database/articles/ArticlePaginator";
-import NodeUtil from "../common/util/NodeUtil";
-import { checkPermissions, onPermissionCheck } from "../common/firebase/authentication/permission-based-redirect";
+import { checkPermissions } from "../common/firebase/authentication/permission-based-redirect";
 import Permission from "../common/firebase/database/Permission";
 import ArticleList from "../common/custom-elements/ArticleList";
 import Loading from "../common/Loading";
@@ -74,7 +72,7 @@ CAROUSEL.id = "photo-carousel";
 
 // list of recent articles
 const DB = new FirestoreArticleDatabase();
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 5;
 
 window.addEventListener("DOMContentLoaded", () => Placeholder.replaceWith("photo-carousel", CAROUSEL)); // insert carousel
 

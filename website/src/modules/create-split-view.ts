@@ -4,11 +4,13 @@ import Cache from "../common/Cache";
 import Loading from "../common/Loading";
 import MultisourceImage from "../common/custom-elements/MultisourceImage";
 import Placeholder from "../common/custom-elements/Placeholder";
+import RSSFeed from "../common/custom-elements/RSSFeed";
 import FirestoreSettingsDatabase from "../common/firebase/database/settings/FirestoreSettingsDatabase";
 import SettingsDatabase, { ImagedLink } from "../common/firebase/database/settings/SettingsDatabase";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
 
 const SETTINGS_DB:SettingsDatabase = new FirestoreSettingsDatabase();
+const NEWS_LETTER_RSS_SOURCE = `${location.origin}/test.xml`;
 
 function makeSplitView(settingsDB:SettingsDatabase):Promise<HTMLElement> {
     return new Promise((resolve, reject) => {
@@ -20,14 +22,7 @@ function makeSplitView(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                     ElementFactory.div("news-letters", "boxed")
                         .children(
                             ElementFactory.h2("Nieuwsbrieven").class("section-name"),
-                            ElementFactory.div("news-letters-list", "flex-rows", "main-axis-start")
-                                .children(
-                                    ElementFactory.p("Nieuwsbrief juni 2023"),
-                                    ElementFactory.p("Nieuwsbrief april 🐥🌻"),
-                                    ElementFactory.p("Nieuwsbrief maart🌹"),
-                                    ElementFactory.p("Nieuwsbrief februari💚💛"),
-                                    ElementFactory.p("Nieuwsbrief December")
-                                )
+                            new RSSFeed(NEWS_LETTER_RSS_SOURCE)
                         ),
                     ElementFactory.div("sponsors", "boxed", "flex-rows")
                         .children(

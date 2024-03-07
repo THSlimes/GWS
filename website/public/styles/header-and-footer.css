@@ -89,6 +89,7 @@ header.page-header {
             > .results {
                 padding: var(--in-section-gap) var(--section-gap-x);
                 overflow-x: scroll;
+                user-select: none;
 
                 > * {
                     text-wrap: nowrap;

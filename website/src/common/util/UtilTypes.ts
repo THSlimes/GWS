@@ -15,7 +15,7 @@ export enum DetailLevel {
  * @param S union type of section names
  */
 
-export type HasSections<S extends string> = {
+export type HasSections<S extends string = never> = {
     [k in S]: HTMLElement | null;
 } & {
     /** Method which initializes the element. */
