@@ -61,6 +61,8 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 
 document.addEventListener("scroll", () => {
-    document.body.style.setProperty("--scroll-x", window.scrollX + "px");
-    document.body.style.setProperty("--scroll-y", window.scrollY + "px");
+    requestAnimationFrame(() => { // prevent jitter
+        document.body.style.setProperty("--scroll-x", window.scrollX + "px");
+        document.body.style.setProperty("--scroll-y", window.scrollY + "px");
+    });
 });

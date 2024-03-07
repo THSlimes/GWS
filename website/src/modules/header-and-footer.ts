@@ -9,9 +9,11 @@ import { onPermissionCheck } from "../common/firebase/authentication/permission-
 import Permission from "../common/firebase/database/Permission";
 import Cache from "../common/Cache";
 import FirestoreSettingsDatabase from "../common/firebase/database/settings/FirestoreSettingsDatabase";
-import SettingsDatabase, { ImagedLink, LinkTree } from "../common/firebase/database/settings/SettingsDatabase";
+import SettingsDatabase, { LinkTree } from "../common/firebase/database/settings/SettingsDatabase";
 import MultisourceImage from "../common/custom-elements/MultisourceImage";
 import Loading from "../common/Loading";
+import NodeUtil from "../common/util/NodeUtil";
+import ArrayUtil from "../common/util/ArrayUtil";
 
 const SETTINGS_DB = new FirestoreSettingsDatabase();
 
@@ -55,6 +57,10 @@ function makeNavbar(settingsDB:SettingsDatabase):Promise<HTMLElement> {
     return new Promise((resolve, reject) => {
         Cache.getAndRefresh("navbar-links", settingsDB.getNavbarLinks())
         .then(navbarLinks => {
+            let searchButton:HTMLElement;
+            let searchBox:HTMLDivElement;
+            let searchResults:HTMLDivElement;
+
             const out = ElementFactory.header()
                 .class("page-header")
                 .children(
@@ -74,10 +80,22 @@ function makeNavbar(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                             ElementFactory.div()
                                 .class("quick-actions", "center-content", "main-axis-space-between", "cross-axis-center")
                                 .children(
-                                    ElementFactory.p("search")
+                                    searchButton = ElementFactory.p("search")
                                         .id("search-button",)
                                         .class("icon", "click-action")
-                                        .on("click", () => showError("Not yet implemented.")),
+                                        .on("click", (_, self) => {
+                                            self.textContent = searchBox.style.display === "none" ? "search_off" : "search";
+                                            $(searchBox).stop().slideToggle(200);
+                                        })
+                                        .onMake(self => {
+                                            document.body.addEventListener("click", ev => {                                                
+                                                if (ev.target instanceof Node && !searchBox.contains(ev.target) && ev.target !== self) {
+                                                    self.textContent = "search";
+                                                    $(searchBox).stop().slideUp(200);
+                                                }
+                                            });
+                                        })
+                                        .make(),
                                     ElementFactory.p("admin_panel_settings")
                                         .class("icon", "click-action")
                                         .tooltip("Administratie-paneel")
@@ -112,7 +130,30 @@ function makeNavbar(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                                         .on("click", () => {
                                             sidebar.hasAttribute("shown") ? closeSidebar() : openSidebar()
                                         })
+                                ),
+                            searchBox = ElementFactory.div(undefined, "search-box", "flex-columns", "main-axis-space-between", "cross-axis-center", "section-gap")
+                                .style({ display: "none" })
+                                .children(
+                                    searchResults = ElementFactory.div(undefined, "results", "flex-columns", "cross-axis-center", "in-section-gap")
+                                        .children(document.createElement("p"))
+                                        .make(),
+                                    ElementFactory.input.text()
+                                        .placeholder("Zoeken...")
+                                        .class("query-input")
+                                        .onValueChanged(query => {
+                                            NodeUtil.empty(searchResults);
+                                            query = query.trim();
+                                            if (query) {
+                                                const matches = LinkTree.search(navbarLinks, query);
+                                                searchResults.append(...ArrayUtil.interlace(
+                                                    matches.map(([name, link]) => ElementFactory.a(link, name).class("subtitle").make()),
+                                                    '•'
+                                                ));
+                                            }
+                                            searchResults.appendChild(document.createElement("p"));
+                                        })
                                 )
+                                .make()
                         ),
                         ElementFactory.div("sidebar-container")
                             .children(

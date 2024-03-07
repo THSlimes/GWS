@@ -368,7 +368,10 @@ a[href], .link:not(:disabled) {
 @media (max-aspect-ratio: 3 / 4) {
     /* body { box-shadow: inset 0px 0px 0px 2px blue !important; } */
 
-    :root { --sides-gap: 2em; }
+    :root {
+        --sides-gap: 2rem;
+        --section-gap-y: 4rem;
+    }
 
     div#split-view {
         padding: 0px var(--section-gap-x);

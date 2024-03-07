@@ -103,4 +103,15 @@ export default abstract class ArrayUtil {
         return searchElements.every(e => arr.includes(e));
     }
 
+    public static interlace<A,B>(arr:A[], separator:B):(A|B)[] {
+        const out:(A|B)[] = [];
+
+        for (const elem of arr) {
+            if (out.length !== 0) out.push(separator);
+            out.push(elem);
+        }
+
+        return out;
+    }
+
 }
