@@ -16,9 +16,14 @@ export default abstract class Loading {
         }
 
         this.checkLoadedInterval = setInterval(() => { // periodically check if loaded
-            if (this.numLoading === 0) {
+            if (this.numLoading === 0) { // loading finished
                 document.body.removeAttribute("loading");
-                this.loadingScreen.classList.add("fading")
+                const splitView = document.getElementById("split-view");
+                if (splitView) splitView.style.opacity = '1';
+                Array.from(document.getElementsByClassName("content")).forEach(c => {
+                    if (c instanceof HTMLElement) c.style.opacity = '1';
+                });
+                this.loadingScreen.classList.add("fading");
                 clearInterval(this.checkLoadedInterval);
             }
         }, 50);

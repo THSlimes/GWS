@@ -60,6 +60,8 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
             for (const k in ownClass.SECTIONS_VISIBLE_FROM) { // apply lod
                 const sectionName = k as EventNoteSectionName;
                 const elem = this[sectionName];
+                console.log(k, "hide?", this.lod < ownClass.SECTIONS_VISIBLE_FROM[sectionName], elem);
+                
                 if (elem) elem.hidden = this.lod < ownClass.SECTIONS_VISIBLE_FROM[sectionName];
             }
         }
@@ -486,7 +488,7 @@ export default class RegisterableEventNote extends EventNote implements HasSecti
 
                 if (this.paymentDisclaimer && this.isVisible("paymentDisclaimer")) this.paymentDisclaimer.hidden = !state[3];
                 if (this.isVisible("commentBox")) this.commentBox.hidden = !state[3];
-                this.registrations.hidden = ObjectUtil.sizeOf(this.event.registrations) === 0;
+                this.registrations.hidden ||= ObjectUtil.sizeOf(this.event.registrations) === 0;
 
                 const spacesLeft = (this.event.capacity ?? 0) - ObjectUtil.sizeOf(this.event.registrations);
                 const commentsPromise = RegisterableEventNote.CAN_READ_COMMENTS ? this.event.getComments() : new Promise<Record<string,EventComment>>(resolve => resolve({}));
@@ -500,23 +502,28 @@ export default class RegisterableEventNote extends EventNote implements HasSecti
                             ElementFactory.div()
                                 .class("registrations-list", "no-margin")
                                 .children(
-                                    ...ObjectUtil.mapToArray(this.event.registrations, (id, name) => ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
-                                        .children(
-                                            ElementFactory.p(name).class("no-margin"),
-                                            (id in comments) && ElementFactory.iconButton("comment", () => navigator.clipboard.writeText(comments[id].body)
-                                                .then(() => showSuccess("Opmerking gekopieerd."))
-                                                .catch(() => showError("Kon opmerking niet kopiëren, probeer het later opnieuw."))
+                                    ...ObjectUtil.mapToArray(this.event.registrations, (id, name) => {
+                                        const comment = id in comments ? comments[id] : undefined;
+                                        const commentText = id in comments ? `${name}:\n${comments[id].body} \n\n${DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(comments[id].created_at)}` : "";
+                                        return ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
+                                            .children(
+                                                ElementFactory.p(name).class("no-margin"),
+                                                (id in comments) && ElementFactory.iconButton("comment", () => navigator.clipboard.writeText(commentText)
+                                                    .then(() => showSuccess("Opmerking gekopieerd."))
+                                                    .catch(() => showError("Kon opmerking niet kopiëren, probeer het later opnieuw."))
+                                                )
+                                                .class("comment")
+                                                .tooltip(commentText)
                                             )
-                                            .class("comment")
-                                            .tooltip(comments[id].body)
-                                        )
+                                        }
                                     )
                                 )
                                 .make()
                         )
                         .make();
-                    newRegistrations.hidden = this.registrations.hidden;
+                    
                     this.registrations.replaceWith(newRegistrations);
+                    newRegistrations.hidden = this.registrations.hidden;
                     this.registrations = newRegistrations;
 
                 })
