@@ -2,7 +2,7 @@ import "./header-and-footer";
 import "../common/custom-elements/EventCalendar";
 
 import { redirectIfMissingPermission } from "../common/firebase/authentication/permission-based-redirect";
-import Permission from "../common/firebase/database/Permission";
+import Permissions from "../common/firebase/database/Permissions";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
 import { initUsersPanel } from "../common/admin-panels/users-panel";
 import { initEventsPanel } from "../common/admin-panels/events-panel";
@@ -10,7 +10,7 @@ import { initArticlesPanel } from "../common/admin-panels/articles-panel";
 import { initLinksPanel } from "../common/admin-panels/links-panel";
 
 // only permitted users can view page
-redirectIfMissingPermission("/", [Permission.VIEW_ADMIN_PANEL, Permission.READ_OTHER_USER_INFO], true, true);
+redirectIfMissingPermission("/", [Permissions.Permission.VIEW_ADMIN_PANEL, Permissions.Permission.READ_OTHER_USER_INFO], true, true);
 
 /** Union type of the IDs of all panels. */
 type PanelId = "users-panel" | "articles-panel" | "events-panel" | "links-panel";

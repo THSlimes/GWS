@@ -41,7 +41,7 @@ imaged-link-entry {
 
 /* PHONE-VIEWPORT OVERRIDE */
 
-@media (max-aspect-ratio: 3 / 5) {
+@media (max-aspect-ratio: 10 / 16) {
     imaged-links-editor {
         grid-template-columns: repeat(2, 1fr);
     }

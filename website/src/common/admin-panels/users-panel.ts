@@ -1,24 +1,24 @@
 import DataView, { DatabaseDataView } from "../DataView";
 import getErrorMessage from "../firebase/authentication/error-messages";
 import { checkPermissions } from "../firebase/authentication/permission-based-redirect";
-import Permission, { ALL_PERMISSIONS, toHumanReadable } from "../firebase/database/Permission";
+import Permissions from "../firebase/database/Permissions";
 import { FirestoreUserDatabase } from "../firebase/database/users/FirestoreUserDatabase";
 import { UserInfo } from "../firebase/database/users/UserDatabase";
 import { onAuth } from "../firebase/init-firebase";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import Responsive from "../ui/Responsive";
-import { showError, showMessage, showSuccess } from "../ui/info-messages";
+import { showError, showSuccess } from "../ui/info-messages";
 import ArrayUtil from "../util/ArrayUtil";
 import ColorUtil from "../util/ColorUtil";
 import DateUtil from "../util/DateUtil";
 import ObjectUtil from "../util/ObjectUtil";
 
-function createPermissionLabel(perm:Permission, editable:boolean, onRemove:(label:HTMLDivElement)=>void):HTMLDivElement {
+function createPermissionLabel(perm:Permissions.Permission, editable:boolean, onRemove:(label:HTMLDivElement)=>void):HTMLDivElement {
     const backgroundColor = ColorUtil.getStringColor(perm);
     const color = ColorUtil.getMostContrasting(backgroundColor, "#000000", "#ffffff");
     return ElementFactory.div(undefined, "permission", "center-content")
         .children(
-            ElementFactory.p(toHumanReadable(perm)).style({ color }),
+            ElementFactory.p(Permissions.translate(perm)).style({ color }),
             label => editable ?
                 ElementFactory.p("close")
                     .class("icon", "click-action")
@@ -35,7 +35,7 @@ function createUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, ca
 
     const out = ElementFactory.div(undefined, "entry").make();
 
-    const joinedAtText = Responsive.isAnyOf("mobile-portrait") ? // don't show join time on mobile
+    const joinedAtText = Responsive.isSlimmerOrEq(Responsive.Viewport.MOBILE_PORTRAIT) ? // don't show join time on mobile
         DateUtil.DATE_FORMATS.DAY.SHORT(userEntry.get("joined_at")) :
         DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT(userEntry.get("joined_at"));
     if (canEdit) out.append( // add editable versions
@@ -85,19 +85,19 @@ function createUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, ca
 
     out.appendChild(ElementFactory.div(undefined, "permissions", "permissions-list") // permissions list
         .children(
-            ...userEntry.get("permissions").sort((a, b) => toHumanReadable(a).localeCompare(toHumanReadable(b)))
+            ...userEntry.get("permissions").sort((a, b) => Permissions.translate(a).localeCompare(Permissions.translate(b)))
                 .map(perm => createPermissionLabel(perm, canEditPerms, label => {
                     const userPerms = userEntry.get("permissions");
                     userPerms.splice(userPerms.indexOf(perm), 1);
                     userEntry.set("permissions", userPerms);
                     out.replaceWith(createUserEntry(userEntry, canEdit, canEditPerms));
                 })),
-            canEditPerms && userEntry.get("permissions").length < ALL_PERMISSIONS.length ?
-                ElementFactory.select(ObjectUtil.mapToObject(ArrayUtil.difference(ALL_PERMISSIONS, userEntry.get("permissions")), p => toHumanReadable(p)))
+            canEditPerms && userEntry.get("permissions").length < Permissions.ALL.length ?
+                ElementFactory.select(ObjectUtil.mapToObject(ArrayUtil.difference(Permissions.ALL, userEntry.get("permissions")), p => Permissions.translate(p)))
                     .option("null", "+", true).value("null")
                     .class("new-permission", "button")
                     .onValueChanged(v => {
-                        const perm = v as Permission;
+                        const perm = v as Permissions.Permission;
                         const userPerms = userEntry.get("permissions");
                         userPerms.push(perm);
                         userEntry.set("permissions", userPerms);
@@ -117,7 +117,7 @@ let FILTER_FORM:HTMLDivElement;
 let NAME_FILTER_INPUT:HTMLInputElement;
 type MembershipFilterOption = "members-only" | "non-members-only" | "both";
 let MEMBERSHIP_FILTER_SELECT:HTMLSelectElement & { value:MembershipFilterOption };
-type PermissionFilterOption = Permission | "any";
+type PermissionFilterOption = Permissions.Permission | "any";
 let PERMISSION_FILTER_SELECT:HTMLSelectElement & { value:PermissionFilterOption };
 type UserSortOption = "name-asc" | "name-desc" | "created-at-asc" | "created-at-desc" | "member-until-asc" | "member-until-desc" | "num-permissions-asc" | "num-permissions-desc";
 let USER_SORT_SELECT:HTMLSelectElement & { value:UserSortOption };
@@ -138,8 +138,8 @@ export function initUsersPanel() {
         FILTER_FORM.addEventListener("change", () => refreshUserEntries());
 
         PERMISSION_FILTER_SELECT.options.add(ElementFactory.option().value("any").text("").make());
-        for (const perm of ALL_PERMISSIONS) { // adding options to select
-            PERMISSION_FILTER_SELECT.options.add(ElementFactory.option().value(perm).text(toHumanReadable(perm)).make());
+        for (const perm of Permissions.ALL) { // adding options to select
+            PERMISSION_FILTER_SELECT.options.add(ElementFactory.option().value(perm).text(Permissions.translate(perm)).make());
         }
 
         USERS_LIST = document.querySelector("#users-list > .list") as HTMLDivElement;
@@ -168,10 +168,10 @@ function refreshUserEntries() {
     Promise.all([onAuth(), USERS_DV.onDataReady()])
     .then(([user, _]) => {
         checkPermissions([
-            Permission.UPDATE_OWN_USER_INFO,
-            Permission.UPDATE_OWN_PERMISSIONS,
-            Permission.UPDATE_OTHER_USER_INFO,
-            Permission.UPDATE_OTHER_USER_PERMISSIONS
+            Permissions.Permission.UPDATE_OWN_USER_INFO,
+            Permissions.Permission.UPDATE_OWN_PERMISSIONS,
+            Permissions.Permission.UPDATE_OTHER_USER_INFO,
+            Permissions.Permission.UPDATE_OTHER_USER_PERMISSIONS
         ])
         .then(hasPerms => {
             while (USERS_LIST.childElementCount > 1) USERS_LIST.lastElementChild!.remove();

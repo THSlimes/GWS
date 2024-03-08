@@ -8,7 +8,7 @@ import { HexColor } from "../util/StyleUtil";
 import FunctionUtil from "../util/FunctionUtil";
 import RichTextInput from "./rich-text/RichTextInput";
 import { DetailLevel } from "../util/UtilTypes";
-import Permission from "../firebase/database/Permission";
+import Permissions from "../firebase/database/Permissions";
 import getErrorMessage from "../firebase/authentication/error-messages";
 import { onAuth } from "../firebase/init-firebase";
 import ElementFactory from "../html-element-factory/ElementFactory";
@@ -26,7 +26,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
     protected static CAN_UPDATE = false;
 
     static {
-        onPermissionCheck([Permission.DELETE_EVENTS, Permission.UPDATE_EVENTS], (_, res) => {
+        onPermissionCheck([Permissions.Permission.DELETE_EVENTS, Permissions.Permission.UPDATE_EVENTS], (_, res) => {
             this.CAN_DELETE = res.DELETE_EVENTS;
             this.CAN_UPDATE = res.UPDATE_EVENTS;
         }, true, true);
@@ -60,7 +60,6 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
             for (const k in ownClass.SECTIONS_VISIBLE_FROM) { // apply lod
                 const sectionName = k as EventNoteSectionName;
                 const elem = this[sectionName];
-                console.log(k, "hide?", this.lod < ownClass.SECTIONS_VISIBLE_FROM[sectionName], elem);
                 
                 if (elem) elem.hidden = this.lod < ownClass.SECTIONS_VISIBLE_FROM[sectionName];
             }
@@ -86,7 +85,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
 
     initElement():void {
         this.classList.add("flex-rows");
-        this.classList.toggle("section-gap", this.expanded);
+        this.classList.toggle("min-section-gap", this.expanded);
         this.toggleAttribute("expanded", this.expanded);
 
         // apply color palette
@@ -277,7 +276,7 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
 
     initElement():void {
         this.classList.add("flex-rows");
-        this.classList.toggle("section-gap", this.expanded);
+        this.classList.toggle("min-section-gap", this.expanded);
         this.toggleAttribute("expanded", this.expanded);
 
         const refreshColorCallback = () => this.refreshColorPalette();
@@ -309,7 +308,11 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
                             this.startsAt = areFullDays ?
                                 ElementFactory.input.date(this.event.starts_at).make() :
                                 ElementFactory.input.dateTimeLocal(this.event.starts_at).make(),
-                            ElementFactory.p(Responsive.isAnyOf("mobile-portrait") ? '→' : "t/m").class("no-margin"),
+                            ElementFactory.p()
+                                .class("no-margin")
+                                .onMake(self => {
+                                    Responsive.onChange(vp => self.textContent = Responsive.isSlimmerOrEq(Responsive.Viewport.SQUARE) ? '→' : "t/m", true);
+                                }),
                             this.endsAt = areFullDays ?
                                 ElementFactory.input.date(this.event.ends_at).make() :
                                 ElementFactory.input.dateTimeLocal(this.event.ends_at).make()
@@ -430,7 +433,7 @@ export default class RegisterableEventNote extends EventNote implements HasSecti
     private static CAN_READ_COMMENTS = false;
 
     static {
-        onPermissionCheck([Permission.REGISTER_FOR_EVENTS, Permission.DEREGISTER_FOR_EVENTS, Permission.READ_EVENT_COMMENTS], (_, res) => {
+        onPermissionCheck([Permissions.Permission.REGISTER_FOR_EVENTS, Permissions.Permission.DEREGISTER_FOR_EVENTS, Permissions.Permission.READ_EVENT_COMMENTS], (_, res) => {
             this.CAN_REGISTER = res.REGISTER_FOR_EVENTS;
             this.CAN_DEREGISTER = res.DEREGISTER_FOR_EVENTS;
             this.CAN_READ_COMMENTS = res.READ_EVENT_COMMENTS;

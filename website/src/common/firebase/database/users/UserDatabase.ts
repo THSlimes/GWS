@@ -1,5 +1,5 @@
 import Database, { Info, QueryFilter } from "../Database";
-import Permission from "../Permission";
+import Permissions from "../Permissions";
 
 export class UserInfo extends Info {
     
@@ -7,9 +7,9 @@ export class UserInfo extends Info {
     public readonly member_until:Date;
     public readonly first_name:string;
     public readonly family_name:string;
-    public readonly permissions:Permission[];
+    public readonly permissions:Permissions.Permission[];
 
-    constructor(id:string, joined_at:Date, member_until:Date, first_name:string, family_name:string, permissions:Permission[]) {
+    constructor(id:string, joined_at:Date, member_until:Date, first_name:string, family_name:string, permissions:Permissions.Permission[]) {
         super(id);
 
         this.joined_at = joined_at;
@@ -43,7 +43,7 @@ export type UserQueryFilter = QueryFilter & {
     joined_before?: Date;
     joined_after?: Date;
     is_member?: boolean;
-    has_permission?: Permission|Permission[];
+    has_permission?: Permissions.Permission|Permissions.Permission[];
 };
 
 

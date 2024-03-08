@@ -2,11 +2,10 @@ import $ from "jquery";
 
 import FolderElement from "../common/custom-elements/FolderElement";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
-import Responsive, { Viewport } from "../common/ui/Responsive";
+import Responsive from "../common/ui/Responsive";
 import { FIREBASE_AUTH, checkLoginState } from "../common/firebase/init-firebase";
-import { showError } from "../common/ui/info-messages";
 import { onPermissionCheck } from "../common/firebase/authentication/permission-based-redirect";
-import Permission from "../common/firebase/database/Permission";
+import Permissions from "../common/firebase/database/Permissions";
 import Cache from "../common/Cache";
 import FirestoreSettingsDatabase from "../common/firebase/database/settings/FirestoreSettingsDatabase";
 import SettingsDatabase, { LinkTree } from "../common/firebase/database/settings/SettingsDatabase";
@@ -51,7 +50,8 @@ function makeFolderContents(config:LinkTree, nestingLvl=0):(FolderElement|HTMLAn
     return out;
 }
 
-const USES_SIDEBAR:Viewport[] = ["mobile-portrait", "tablet-portrait"];
+/** Whether to use a sidebar for navigation, instead of a navbar. */
+function useSidebar() { return Responsive.isSlimmerOrEq(Responsive.Viewport.DESKTOP_SLIM); }
 
 function makeNavbar(settingsDB:SettingsDatabase):Promise<HTMLElement> {
     return new Promise((resolve, reject) => {
@@ -88,7 +88,7 @@ function makeNavbar(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                                             $(searchBox).stop().slideToggle(200);
                                         })
                                         .onMake(self => {
-                                            document.body.addEventListener("click", ev => {                                                
+                                            document.body.addEventListener("click", ev => {
                                                 if (ev.target instanceof Node && !searchBox.contains(ev.target) && ev.target !== self) {
                                                     self.textContent = "search";
                                                     $(searchBox).stop().slideUp(200);
@@ -101,7 +101,7 @@ function makeNavbar(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                                         .tooltip("Administratie-paneel")
                                         .on("click", () => location.href = "/admin-panel.html")
                                         .onMake(self => {
-                                            onPermissionCheck(Permission.VIEW_ADMIN_PANEL, hasPerms => self.style.display = hasPerms ? "" : "none", true, true);
+                                            onPermissionCheck(Permissions.Permission.VIEW_ADMIN_PANEL, hasPerms => self.style.display = hasPerms ? "" : "none", true, true);
                                         }),
                                     ElementFactory.p("login")
                                         .class("icon", "click-action")
@@ -189,9 +189,9 @@ function makeNavbar(settingsDB:SettingsDatabase):Promise<HTMLElement> {
             const linksDiv = out.querySelector(".links")!;
             const sidebarDiv = out.querySelector("#sidebar")!;
             const linksTree = Array.from(out.querySelectorAll(".links > *"));
-        
-            function checkMoveLinks() {
-                if (Responsive.isAnyOf(...USES_SIDEBAR)) {
+
+            Responsive.onChange(() => {
+                if (useSidebar()) {
                     sidebarDiv.prepend(...linksTree); // move links to sidebar
                     linksTree.forEach(e => {
                         if (e instanceof FolderElement) e.foldDir = "right";
@@ -200,17 +200,12 @@ function makeNavbar(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                 else { // move links to navbar
                     linksDiv.prepend(...linksTree);
                     // force-close sidebar
-                    $(sidebarContainer).hide();
-                    sidebar.removeAttribute("shown");
-                    document.body.classList.remove("no-scroll");
-                    (out.querySelector("#open-menu-button") as HTMLInputElement).value = "menu";
+                    closeSidebar();
                     linksTree.forEach(e => {
                         if (e instanceof FolderElement) e.foldDir = "down";
                     });
                 }
-            }
-            Responsive.onChange = () => checkMoveLinks();
-            checkMoveLinks(); // initial check
+            }, true);
         })
         .catch(reject);
     });

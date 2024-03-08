@@ -14,7 +14,7 @@ import ElementFactory from "../common/html-element-factory/ElementFactory";
 import Placeholder from "../common/custom-elements/Placeholder";
 import ArticlePaginator from "../common/firebase/database/articles/ArticlePaginator";
 import { checkPermissions } from "../common/firebase/authentication/permission-based-redirect";
-import Permission from "../common/firebase/database/Permission";
+import Permissions from "../common/firebase/database/Permissions";
 import ArticleList from "../common/custom-elements/ArticleList";
 import Loading from "../common/Loading";
 
@@ -76,7 +76,7 @@ const PAGE_SIZE = 5;
 
 window.addEventListener("DOMContentLoaded", () => Placeholder.replaceWith("photo-carousel", CAROUSEL)); // insert carousel
 
-Loading.useDynamicContent(checkPermissions(Permission.READ_MEMBER_ARTICLES, true), res => {
-    const baseFilter:ArticleQueryFilter = { forHomepage: true, forMembers: res[Permission.READ_MEMBER_ARTICLES] ? undefined : false };
+Loading.useDynamicContent(checkPermissions(Permissions.Permission.READ_MEMBER_ARTICLES, true), res => {
+    const baseFilter:ArticleQueryFilter = { forHomepage: true, forMembers: res[Permissions.Permission.READ_MEMBER_ARTICLES] ? undefined : false };
     Placeholder.replaceWith("article-list", new ArticleList(new ArticlePaginator(DB, PAGE_SIZE, baseFilter)));
 });

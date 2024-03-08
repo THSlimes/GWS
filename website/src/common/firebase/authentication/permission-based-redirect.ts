@@ -1,20 +1,21 @@
-import Permission from "../database/Permission";
+import Permissions from "../database/Permissions";
 import { onAuth } from "../init-firebase";
 import { FirestoreUserDatabase } from "../database/users/FirestoreUserDatabase";
 import UserDatabase from "../database/users/UserDatabase";
 import Cache from "../../Cache";
 import ObjectUtil from "../../util/ObjectUtil";
+import Loading from "../../Loading";
 
-function toArray<P extends Permission>(perm:P|P[]):P[] {
+function toArray<P extends Permissions.Permission>(perm:P|P[]):P[] {
     return Array.isArray(perm) ? perm : [perm];
 }
 
 const USER_DB: UserDatabase = new FirestoreUserDatabase();
 
-type PermissionCheckResults<P extends Permission> = {[key in P]:boolean };
-function hasPermissions<P extends Permission>(perm:P[], userId:string, useCache:boolean):Promise<PermissionCheckResults<P>> {
+type PermissionCheckResults<P extends Permissions.Permission> = { [key in P]:boolean };
+function hasPermissions<P extends Permissions.Permission>(perm:P[], userId:string, useCache:boolean):Promise<PermissionCheckResults<P>> {
     
-    const userPermsPromise = new Promise<Permission[]>((resolve,reject) => { // get user permissions
+    const userPermsPromise = new Promise<Permissions.Permission[]>((resolve,reject) => { // get user permissions
         if (useCache) {
             const cachedUserPerms = Cache.get(`permissions-${userId}`);
             if (cachedUserPerms) resolve(cachedUserPerms);
@@ -33,7 +34,7 @@ function hasPermissions<P extends Permission>(perm:P[], userId:string, useCache:
     });
 }
 
-export function checkPermissions<P extends Permission>(perms:P|P[], useCache=false):Promise<PermissionCheckResults<P>> {
+export function checkPermissions<P extends Permissions.Permission>(perms:P|P[], useCache=false):Promise<PermissionCheckResults<P>> {
     const permArr = toArray(perms);
 
     return new Promise((resolve, reject) => {
@@ -52,7 +53,7 @@ export function checkPermissions<P extends Permission>(perms:P|P[], useCache=fal
 }
 
 type PermissionCheckMode = "all" | "any";
-export function onPermissionCheck<P extends Permission>(perms:P|P[], callback:(hasPerms:boolean, res:PermissionCheckResults<P>)=>void, useCache=false, callAgain=true, mode:PermissionCheckMode="all"):void {
+export function onPermissionCheck<P extends Permissions.Permission>(perms:P|P[], callback:(hasPerms:boolean, res:PermissionCheckResults<P>)=>void, useCache=false, callAgain=true, mode:PermissionCheckMode="all"):void {
     const permArr = toArray(perms);
 
     onAuth()
@@ -81,8 +82,10 @@ export function onPermissionCheck<P extends Permission>(perms:P|P[], callback:(h
  * @param [callAgain=true] whether to check with the actual value, even after using the cached one
  */
 
-export function redirectIfMissingPermission(url='/', permissions: Permission | Permission[], useCache=false, callAgain=true, mode:PermissionCheckMode="all"):void {
+export function redirectIfMissingPermission(url='/', permissions: Permissions.Permission|Permissions.Permission[], useCache=false, callAgain=true, mode:PermissionCheckMode="all"):void {
+    Loading.markLoadStart(redirectIfMissingPermission);
     onPermissionCheck(permissions, res => {
         if (!res) location.replace(url);
+        Loading.markLoadEnd(redirectIfMissingPermission);
     }, useCache, callAgain, mode);
 }

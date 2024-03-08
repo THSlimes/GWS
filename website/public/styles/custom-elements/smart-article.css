@@ -72,7 +72,9 @@ editable-smart-article {
 /* TABLET-VIEWPORT OVERRIDE */
 
 @media (max-aspect-ratio: 3 / 4) {
-    article[lod="full"] .heading { font-size: 150%; }
+    article[lod="full"], article[lod="medium"] {
+        & .heading > * { font-size: 150%; }
+    }
 
     editable-smart-article {
         > .category-and-switches {
@@ -84,8 +86,9 @@ editable-smart-article {
 
 /* PHONE-VIEWPORT OVERRIDE */
 
-@media (max-aspect-ratio: 3 / 5) {
-    article[lod="full"] .heading { font-size: 125%; }
+@media (max-aspect-ratio: 10 / 16) {
+    article[lod="medium"] .heading > * { font-size: 125%; }
+    article[lod="full"] .heading > * { font-size: 100%; }
 
     editable-smart-article {
         gap: var(--in-section-gap) !important;

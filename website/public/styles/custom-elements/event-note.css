@@ -138,23 +138,36 @@ editable-event-note, editable-registerable-event-note {
 
 
 
-/* TABLET-VIEWPORT OVERRIDE */
+/* make note more compact */
 
-@media (max-aspect-ratio: 3 / 4) {
+@media (max-aspect-ratio: 4 / 3) {
     registerable-event-note {
         & .registrations > .registrations-list { grid-template-columns: repeat(3, 1fr); }
     }
 
     editable-event-note, editable-registerable-event-note {
-        &[expanded] {
-            gap: var(--in-section-gap);
+        & .timespan {
+            flex-wrap: wrap;
+            justify-content: center;
+            > *:first-child { flex-wrap: wrap; }
         }
+
+        &[expanded] { gap: var(--in-section-gap); }
     }
+}
+
+/* even more compact note */
+
+@media (max-aspect-ratio: 1 / 1) {
+    registerable-event-note {
+        & .registrations > .registrations-list { grid-template-columns: repeat(2, 1fr); }
+    }
+    
 }
 
 /* PHONE-VIEWPORT OVERRIDE */
 
-@media (max-aspect-ratio: 3 / 5) {
+@media (max-aspect-ratio: 10 / 16) {
     event-note[expanded], registerable-event-note[expanded] {
         display: flex;
         flex-direction: column;
@@ -166,7 +179,6 @@ editable-event-note, editable-registerable-event-note {
         & .registrations > .registrations-list {
             max-height: 10vh;
             font-size: 90%;
-            grid-template-columns: repeat(2, 1fr);
         }
     }
 
@@ -174,7 +186,10 @@ editable-event-note, editable-registerable-event-note {
         & .timespan {
             flex-wrap: wrap;
             justify-content: center;
-            > *:first-child { width: 100%; }
+            > *:first-child {
+                justify-content: start;
+                > input { font-size: 75%; }
+            }
         }
     }
 }

@@ -1,6 +1,6 @@
 import getErrorMessage from "../firebase/authentication/error-messages";
 import { checkPermissions, onPermissionCheck } from "../firebase/authentication/permission-based-redirect";
-import Permission from "../firebase/database/Permission";
+import Permissions from "../firebase/database/Permissions";
 import ArticleDatabase, { ArticleInfo } from "../firebase/database/articles/ArticleDatabase";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import { showError, showMessage, showSuccess, showWarning } from "../ui/info-messages";
@@ -23,7 +23,7 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
     protected static CAN_UPDATE = false;
 
     static {
-        onPermissionCheck([Permission.DELETE_ARTICLES, Permission.UPDATE_ARTICLES], (_, res) => {
+        onPermissionCheck([Permissions.Permission.DELETE_ARTICLES, Permissions.Permission.UPDATE_ARTICLES], (_, res) => {
             this.CAN_DELETE = res.DELETE_ARTICLES;
             this.CAN_UPDATE = res.UPDATE_ARTICLES;
         }, true, true);
@@ -62,7 +62,6 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
     initElement(): void {
         this.style.display = "flex";
         this.setAttribute("lod", this.lod);
-
 
         // heading element
         this.heading = ElementFactory.a(this.lod !== "full" ? SmartArticle.getLinkTo(this.article) : undefined)
@@ -174,7 +173,7 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
             );
         }
         else {
-            this.classList.add("flex-rows", this.lod === "full" ? "section-gap" : "in-section-gap");
+            this.classList.add("flex-rows", this.lod === "full" ? "min-section-gap" : "in-section-gap");
             this.append(
                 this.heading,
                 this.body,
@@ -221,7 +220,7 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
 
     override initElement(): void {
         this.style.display = "flex";
-        this.classList.add("flex-rows", "section-gap");
+        this.classList.add("flex-rows", "min-section-gap");
         this.setAttribute("lod", this.lod);
         
         this.heading = this.appendChild(

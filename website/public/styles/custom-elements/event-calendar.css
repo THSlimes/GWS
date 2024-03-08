@@ -67,7 +67,11 @@ event-calendar {
 
         background-color: var(--secondary);
 
-        /* overflow: hidden; */
+        overflow: hidden auto;
+        &::-webkit-scrollbar-track {
+            background-color: var(--primary);
+            border-radius: 0px 100em 100em 0px;
+        }
 
         > .day-name {
             margin: var(--in-section-gap);
@@ -197,7 +201,7 @@ event-calendar {
 
 /* PHONE-VIEWPORT OVERRIDE */
 
-@media (max-aspect-ratio: 3 / 5) {
+@media (max-aspect-ratio: 10 / 16) {
     event-calendar {
         max-height: unset;
 

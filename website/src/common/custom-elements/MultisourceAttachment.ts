@@ -1,6 +1,6 @@
 import { StorageError, getDownloadURL, getMetadata, ref } from "@firebase/storage";
 import { onPermissionCheck } from "../firebase/authentication/permission-based-redirect";
-import Permission from "../firebase/database/Permission";
+import Permissions from "../firebase/database/Permissions";
 import { STORAGE } from "../firebase/init-firebase";
 import URLUtil, { FileInfo, FileType, getFileType } from "../util/URLUtil";
 import ElementUtil from "../util/ElementUtil";
@@ -18,7 +18,7 @@ export default class MultisourceAttachment extends HTMLElement implements HasSec
 
     private static CAN_DOWNLOAD_PROTECTED_ATTACHMENTS = false;
     static {
-        onPermissionCheck(Permission.DOWNLOAD_PROTECTED_FILES, canDownload => this.CAN_DOWNLOAD_PROTECTED_ATTACHMENTS = canDownload, true, true);
+        onPermissionCheck(Permissions.Permission.DOWNLOAD_PROTECTED_FILES, canDownload => this.CAN_DOWNLOAD_PROTECTED_ATTACHMENTS = canDownload, true, true);
     }
 
     private static readonly FILE_SIZE_UNITS = ['B', "kB", "MB", "GB", "TB", "PB", "YB"];

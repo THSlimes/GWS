@@ -1,4 +1,4 @@
-import Permission from "./firebase/database/Permission";
+import Permissions from "./firebase/database/Permissions";
 import { ImagedLink, LinkTree } from "./firebase/database/settings/SettingsDatabase";
 
 type CacheKeyMap = {
@@ -7,7 +7,7 @@ type CacheKeyMap = {
     "social-media-links": ImagedLink[],
     "is-logged-in": true,
     "own-id": string,
-    [key:`permissions-${string}`]: Permission[]
+    [key:`permissions-${string}`]: Permissions.Permission[]
 };
 type CacheKey = keyof CacheKeyMap;
 

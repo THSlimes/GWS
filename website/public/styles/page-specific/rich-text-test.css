@@ -1,8 +1,0 @@
-@import url("../shared.css");
-
-@import url("../custom-elements/rich-text-input.css");
-
-.content {
-    width: 100vw;
-    height: 100vh;
-}

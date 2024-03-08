@@ -47,7 +47,7 @@ header.page-header {
     
         background-color: var(--secondary);
         
-        & > .desc * { margin: 0px; }
+        & > .desc * { margin: 0px; text-wrap: nowrap; }
 
         > .quick-actions {
             height:100%;
@@ -127,14 +127,11 @@ header.page-header {
             > * {
                 display: block;
                 margin-bottom: var(--in-section-gap);
-                font-size: 125%;
+                /* font-size: 125%; */
             }
 
             & folder-element {
-                > .topper {
-                    align-items: end;
-                    width: max-content;
-                }
+                > .topper { width: max-content; }
                 > .contents {
                     position: static;
                     &[open] { display: block; }
@@ -192,9 +189,9 @@ footer {
 }
 
 
-/* TABLET-VIEWPORT OVERRIDE */
 
-@media (max-aspect-ratio: 3 / 4) {
+/* Use sidebar instead of navbar */
+@media (max-aspect-ratio: 4 / 3) {
     body { padding-top: calc(4rem + var(--in-section-gap)) !important; }
 
     header.page-header {
@@ -214,7 +211,7 @@ footer {
 
 /* PHONE-VIEWPORT OVERRIDE */
 
-@media (max-aspect-ratio: 3 / 5) {
+@media (max-aspect-ratio: 10 / 16) {
 
     header.page-header > #header-container {
         padding: var(--in-section-gap) var(--sides-gap);

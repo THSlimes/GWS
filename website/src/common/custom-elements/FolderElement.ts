@@ -1,19 +1,19 @@
 import $ from "jquery";
 import ElementFactory from "../html-element-factory/ElementFactory";
-import Responsive, { Viewport } from "../ui/Responsive";
+import Responsive from "../ui/Responsive";
 import ElementUtil from "../util/ElementUtil";
 
 export type FoldingDirection = "down" | "right";
 export type ContentsPosition = "absolute" | "static";
-
-/** Viewport-types which open/close using clicking instead of hovering. */
-const USES_CLICK_INTERACTION:Viewport[] = ["mobile-portrait", "tablet-portrait"];
 
 /**
  * A FolderElement is a custom type of HTMLElement. It allows other elements
  * to only be shown when hovering over its name.
  */
 export default class FolderElement extends HTMLElement {
+
+    /** Maximum Viewport that uses click-interaction to open/close a folder. */
+    private static useClickInteraction() { return Responsive.isSlimmerOrEq(Responsive.Viewport.DESKTOP_SLIM); }
 
     private static topFolderContentZIndex = 100;
 
@@ -102,26 +102,32 @@ export default class FolderElement extends HTMLElement {
         closeOn ??= ElementUtil.getAttrAs<keyof HTMLElementEventMap>(this, "close-on") ?? "mouseleave";
 
         $(this._contents).hide(); // start closed
-        if (openOn === closeOn) {
+        if (openOn === closeOn) { // simple toggle interaction
             this.topper.addEventListener(openOn, () => this.isOpen ? this.close() : this.open());
         }
         else {
-            this.topper.addEventListener(openOn, () => { // only for hover-interactions
-                if (!Responsive.isAnyOf(...USES_CLICK_INTERACTION)) this.open();
+            this.topper.addEventListener(openOn, () => { // only for normal interactions
+                if (!FolderElement.useClickInteraction()) this.open();
             });
-            this.topper.addEventListener("click", e => { // only for click-interactions
-                if (Responsive.isAnyOf(...USES_CLICK_INTERACTION)) this.isOpen ? this.close() : this.open();
+            this.topper.addEventListener("click", e => { // only for click interaction override
+                if (FolderElement.useClickInteraction()) this.isOpen ? this.close() : this.open();
                 e.preventDefault();
             });
     
             this.addEventListener(openOn, () => clearTimeout(this.closingTimeout));
             this.addEventListener(closeOn, () => {
-                this.closingTimeout = setTimeout(
-                    () => this.close(),
-                    Responsive.isAnyOf(...USES_CLICK_INTERACTION) ? 0 : this.closingDelay
-                );
+                if (!FolderElement.useClickInteraction()) { // only for normal interactions
+                    this.closingTimeout = setTimeout(() => this.close(), FolderElement.useClickInteraction() ? 0 : this.closingDelay);
+                }
+            });
+            document.body.addEventListener("click", ev => {
+                if (FolderElement.useClickInteraction() && ev.target instanceof Node && !this.contains(ev.target)) { // only for click interaction override
+                    this.close();
+                }
             });
         }
+
+        Responsive.onChange(() => this.topper.classList.toggle("click-action", FolderElement.useClickInteraction()), true);
     }
 
     /**
@@ -167,7 +173,7 @@ export default class FolderElement extends HTMLElement {
 
             if (this.contentsPosition === "absolute") this.contents.style.zIndex = (FolderElement.topFolderContentZIndex++).toString();
             
-            $(this._contents).stop().slideDown(200);
+            $(this._contents).stop().slideDown(200, () => this._contents.style.height = "");
             this.setAttribute("open", "");
         }
     }

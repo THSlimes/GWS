@@ -5,7 +5,7 @@ import { EventNote } from "./EventNote";
 import { DetailLevel } from "../util/UtilTypes";
 import CachingEventDatebase from "../firebase/database/events/CachingEventDatebase";
 import IconSelector from "./IconSelector";
-import Responsive, { Viewport } from "../ui/Responsive";
+import Responsive from "../ui/Responsive";
 import DateUtil from "../util/DateUtil";
 import ElementUtil from "../util/ElementUtil";
 import URLUtil from "../util/URLUtil";
@@ -44,14 +44,17 @@ function findMaxOverlap(date: Date, events: EventInfo[], offsets: Record<string,
 }
 
 function doTranspose(viewMode:calendarViewMode) {
-    return viewMode === "week" && Responsive.isAnyOf("mobile-portrait");
+    return viewMode === "week" && Responsive.isSlimmerOrEq(Responsive.Viewport.DESKTOP_SLIM);
 }
 
 type calendarViewMode = "week" | "month" | "list";
-const DEFAULT_VIEWMODE:Record<Viewport, calendarViewMode> = {
-    desktop: "month",
-    "tablet-portrait": "month",
-    "mobile-portrait": "week"
+const DEFAULT_VIEWMODE:Record<Responsive.Viewport, calendarViewMode> = {
+    [Responsive.Viewport.DESKTOP]: "month",
+    [Responsive.Viewport.DESKTOP_SLIM]: "month",
+    [Responsive.Viewport.SQUARE]: "month",
+    [Responsive.Viewport.TABLET_PORTRAIT]: "week",
+    [Responsive.Viewport.MOBILE_PORTRAIT]: "week",
+    [Responsive.Viewport.VERY_THIN]: "list"
 };
 const VIEWMODE_LODS:Record<calendarViewMode, DetailLevel> = {
     week: DetailLevel.MEDIUM,
@@ -109,12 +112,13 @@ export default class EventCalendar extends HTMLElement {
 
     private static readonly LIST_VIEW_INITIAL_TIMESPAN_DAYS = 30;
     private _viewMode:calendarViewMode;
-    set viewMode(newViewMode:calendarViewMode) {
+    public set viewMode(newViewMode:calendarViewMode) {
         if (this._viewMode !== newViewMode) {
             this._viewMode = newViewMode;
             this.redraw();
         }
     }
+    public get viewMode() { return this._viewMode; }
     protected redraw() { this.populate(this._lookingAt, this._viewMode); }
 
     private controls:HTMLDivElement = this.appendChild(ElementFactory.div().class("controls", "center-content", "main-axis-space-between").make());
@@ -134,7 +138,7 @@ export default class EventCalendar extends HTMLElement {
     private static readonly LOAD_MORE_TIMESPAN_DAYS = 15;
     private scrollEventListener?:(e:Event)=>void;
 
-    constructor(db:EventDatabase, date=new Date(), viewMode:calendarViewMode=DEFAULT_VIEWMODE[Responsive.current]) {
+    constructor(db:EventDatabase, date=new Date(), viewMode:calendarViewMode=DEFAULT_VIEWMODE[Responsive.getCurrent()]) {
         super();
 
         this.db = db instanceof CachingEventDatebase ? db : new CachingEventDatebase(db);
@@ -147,6 +151,11 @@ export default class EventCalendar extends HTMLElement {
         this._lookingAt = date;
         this._viewMode = viewMode;
         this.populate(this._lookingAt, this._viewMode);
+
+        Responsive.onChange(() => { // check if Viewport change should cause redraw            
+            if (this.dayCellContainer.hasAttribute("transpose") !== doTranspose(this.viewMode)) this.redraw();
+        })
+
 
         const hashObj = URLUtil.getHashProperties();
         if ("looking-at" in hashObj) this.db.getById(hashObj["looking-at"])
@@ -254,7 +263,7 @@ export default class EventCalendar extends HTMLElement {
                         .children(
                             ElementFactory.input.button("navigate_before", () => {
                                 dateCopy.setDate(dateCopy.getDate() - 7);
-                                this.populate(dateCopy, this._viewMode);
+                                this.lookingAt = dateCopy;
                             }).class("nav-button", "icon").make(),
                             ElementFactory.input.date(dateCopy)
                                 .class("period-input")
@@ -262,7 +271,7 @@ export default class EventCalendar extends HTMLElement {
                                 .make(),
                             ElementFactory.input.button("navigate_next", () => {
                                 dateCopy.setDate(dateCopy.getDate() + 7);
-                                this.populate(dateCopy, this._viewMode);
+                                this.lookingAt = dateCopy;
                             }).class("nav-button", "icon").make()
                         )
                         .make()
@@ -285,7 +294,7 @@ export default class EventCalendar extends HTMLElement {
                         .children(
                             ElementFactory.input.button("navigate_before", () => {
                                 dateCopy.setMonth(dateCopy.getMonth() - 1, 1);
-                                this.populate(dateCopy, this._viewMode);
+                                this.lookingAt = dateCopy;
                             }).class("nav-button", "icon").make(),
                             ElementFactory.input.month(dateCopy.getFullYear(), dateCopy.getMonth())
                                 .class("period-input")
@@ -293,7 +302,7 @@ export default class EventCalendar extends HTMLElement {
                                 .make(),
                             ElementFactory.input.button("navigate_next", () => {
                                 dateCopy.setMonth(dateCopy.getMonth()+1, 1);
-                                this.populate(dateCopy, this._viewMode);
+                                this.lookingAt = dateCopy;
                             }).class("nav-button", "icon").make()
                         )
                         .make()
@@ -311,12 +320,12 @@ export default class EventCalendar extends HTMLElement {
                 );
 
                 // adding load before/after triggers
-                const loadBefore = ElementFactory.div(undefined, "center-content", "load-more", "load-before").make();
+                const loadBefore = ElementFactory.div(undefined, "subtitle", "center-content", "load-more", "load-before").make();
                 this.dayCellContainer.prepend(loadBefore);
 
                 this.dayCellContainer.append(...newDays.map(d=>d.element)); // append new day-cells
 
-                const loadAfter = this.dayCellContainer.appendChild(ElementFactory.div(undefined, "center-content", "load-more", "load-after").make());
+                const loadAfter = this.dayCellContainer.appendChild(ElementFactory.div(undefined, "subtitle", "center-content", "load-more", "load-after").make());
 
                 NodeUtil.whenInsertedIn(this.dayCellContainer, document.body)
                 .then(() => {

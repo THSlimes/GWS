@@ -3,7 +3,7 @@ import ArticleList from "../custom-elements/ArticleList";
 import Placeholder from "../custom-elements/Placeholder";
 import SmartArticle, { EditableSmartArticle } from "../custom-elements/SmartArticle";
 import { checkPermissions } from "../firebase/authentication/permission-based-redirect";
-import Permission from "../firebase/database/Permission";
+import Permissions from "../firebase/database/Permissions";
 import { ArticleInfo } from "../firebase/database/articles/ArticleDatabase";
 import ArticlePaginator from "../firebase/database/articles/ArticlePaginator";
 import { FirestoreArticleDatabase } from "../firebase/database/articles/FirestoreArticleDatabase";
@@ -19,7 +19,7 @@ export function initArticlesPanel() {
     if (!articlesPanelInitialized) {
         Loading.markLoadStart(initArticlesPanel);
 
-        checkPermissions(Permission.READ_MEMBER_ARTICLES, false)
+        checkPermissions(Permissions.Permission.READ_MEMBER_ARTICLES, false)
         .then(hasPerms => { // list of recent articles
             const baseFilter = { forMembers: hasPerms.READ_MEMBER_ARTICLES ? undefined : false };
             Placeholder.replaceWith("article-list", new ArticleList(new ArticlePaginator(DB, PAGE_SIZE, baseFilter), 'low'));

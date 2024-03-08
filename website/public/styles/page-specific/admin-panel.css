@@ -179,9 +179,9 @@
     &.invalid > * { color: var(--indicate-bad); }
 }
 
-/* TABLET-VIEWPORT OVERRIDE */
+/* SQUARE-VIEWPORT OVERRIDE */
 
-@media (max-aspect-ratio: 3 / 4) {
+@media (max-aspect-ratio: 4 / 3) {
 
     .content {
         grid-template-rows: repeat(2, max-content);
@@ -233,9 +233,9 @@
 
 }
 
-/* PHONE-VIEWPORT OVERRIDE */
+/* TABLET-VIEWPORT OVERRIDE */
 
-@media (max-aspect-ratio: 3 / 5) {
+@media (max-aspect-ratio: 3 / 4) {
     .content {
         gap: var(--in-section-gap);
         padding-bottom: 0px;
@@ -278,7 +278,7 @@
                         }
 
                         > .joined-at {
-                            font-size: .9em;
+                            font-size: 75%;
                             
                             &::before {
                                 margin: 0px var(--in-section-gap);
@@ -289,7 +289,10 @@
                         }
 
                         > .member-until {
-                            font-size: .9em;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            font-size: 75%;
                             
                             &::before {
                                 margin: 0px var(--in-section-gap);

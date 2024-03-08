@@ -1,7 +1,7 @@
 import { FirestoreDataConverter, QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, doc, documentId, getCountFromServer, getDoc, getDocs, limit, query, where, writeBatch } from "@firebase/firestore";
-import Permission from "../Permission";
+import Permissions from "../Permissions";
 import UserDatabase, { UserQueryFilter, UserInfo } from "./UserDatabase";
-import { FIRESTORE, onAuth } from "../../init-firebase";
+import { FIRESTORE } from "../../init-firebase";
 import Cache from "../../../Cache";
 import ArrayUtil from "../../../util/ArrayUtil";
 
@@ -11,7 +11,7 @@ type DBUser = {
     member_until:Timestamp,
     first_name:string,
     family_name:string,
-    permissions:Permission[]
+    permissions:Permissions.Permission[]
 };
 
 const USER_CONVERTER:FirestoreDataConverter<UserInfo, DBUser> = {
