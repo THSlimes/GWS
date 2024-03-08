@@ -116,7 +116,10 @@
 
     max-width: 100%;
 
-    > .preset-selector { width: 100%; }
+    > .preset-selector {
+        width: 100%;
+        > select { flex-grow: 1; }
+    }
 
     > .permission {
         padding: calc(var(--in-section-gap) / 2) var(--in-section-gap);

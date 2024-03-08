@@ -84,20 +84,24 @@ function createUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, ca
 
     const permissionsList = out.appendChild(ElementFactory.div(undefined, "permissions", "permissions-list") // permissions list
         .children(
-            canEditPerms && ElementFactory.select(ObjectUtil.keys(Permissions.PRESETS))
-                .option("Andere", "Andere", true).value(Permissions.getPreset(userEntry.get("permissions")) ?? "Andere")
-                .class("preset-selector")
-                .onValueChanged(val => {
-                    if (val !== "Andere") {
-                        const preset = Permissions.PRESETS[val];
-                        const userPerms = userEntry.get("permissions");
-                        userPerms.splice(0, Infinity, ...preset);
-                        userEntry.set("permissions", userPerms);
-                        Array.from(permissionsList.getElementsByClassName("permission-label")).forEach(label => label.remove());
-                        out.replaceWith(createUserEntry(userEntry, canEdit, canEditPerms));
-                    }
-                })
-                .make(),
+            canEditPerms && ElementFactory.div(undefined, "preset-selector", "flex-columns", "cross-axis-center", "in-section-gap")
+                .children(
+                    ElementFactory.p("interests").class("icon", "no-margin"),
+                    ElementFactory.select(ObjectUtil.keys(Permissions.PRESETS))
+                        .option("Andere", "Andere", true).value(Permissions.getPreset(userEntry.get("permissions")) ?? "Andere")
+                        .onValueChanged(val => {
+                            if (val !== "Andere") {
+                                const preset = Permissions.PRESETS[val];
+                                const userPerms = userEntry.get("permissions");
+                                userPerms.splice(0, Infinity, ...preset);
+                                userEntry.set("permissions", userPerms);
+                                Array.from(permissionsList.getElementsByClassName("permission-label")).forEach(label => label.remove());
+                                out.replaceWith(createUserEntry(userEntry, canEdit, canEditPerms));
+                            }
+                        })
+                        .make(),
+                )
+                .tooltip("Groep"),
             ...userEntry.get("permissions").sort((a, b) => Permissions.translate(a).localeCompare(Permissions.translate(b)))
                 .map(perm => createPermissionLabel(perm, canEditPerms, label => {
                     const userPerms = userEntry.get("permissions");

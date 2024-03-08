@@ -5,22 +5,6 @@ export type RGBColor = [number, number, number];
 export type RGBString = `rgb(${number}, ${number}, ${number})`;
 export type Color = HexColor | RGBColor | RGBString;
 
-/** Functions to compute different kinds of distance */
-const DISTANCE_METRICS = {
-    euclidean(a:number[], b:number[]) {
-        const len = Math.max(a.length, b.length);
-        let out = 0;
-        for (let i = 0; i < len; i ++) out += ((a[i]??0) - (b[i]??0)) ** 2;
-        return Math.sqrt(out);
-    },
-    manhattan(a:number[], b:number[]) {
-        const len = Math.max(a.length, b.length);
-        let out = 0;
-        for (let i = 0; i < len; i ++) out += Math.abs((a[i]??0) - (b[i]??0));
-        return out;
-    }
-};
-
 /**
  * The ColorUtil helper-class provides standard functions to manipulate and process colors.
  */
@@ -86,9 +70,14 @@ export default abstract class ColorUtil {
      * @param metric distance metric to use
      * @returns non-normalized contrast between ```a``` and ```b```
      */
-    public static getContrast(a:Color, b:Color, metric:(keyof typeof DISTANCE_METRICS)="euclidean") {
+    public static getContrast(a:Color, b:Color):number {
         [a, b] = [this.toRGB(a), this.toRGB(b)];
-        return DISTANCE_METRICS[metric](a,b);
+
+        // scale according to RBG visibility
+        a = [a[0]*.299, a[1]*.587, a[2]*.114];
+        b = [b[0]*.299, b[1]*.587, b[2]*.114];
+
+        return ((a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2)**.5;
     }
     
     /**
@@ -102,7 +91,7 @@ export default abstract class ColorUtil {
         let bestContrast = -Infinity;
     
         options.forEach((c,i) => {
-            const contrast = this.getContrast(color, c, "euclidean");
+            const contrast = this.getContrast(color, c);
     
             if (contrast > bestContrast) [bestInd, bestContrast] = [i, contrast];
         });
