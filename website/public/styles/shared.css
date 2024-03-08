@@ -302,7 +302,7 @@ button, input[type="button"], .button {
     justify-content: center;
     align-items: center;
 
-    padding: var(--in-section-gap) var(--min-section-gap);
+    padding: calc(var(--in-section-gap) / 2) var(--in-section-gap);
     gap: var(--in-section-gap);
 
     --hover-bg-color: color-mix(in srgb, var(--secondary), white 12.5%);
@@ -385,7 +385,7 @@ a[href], .link:not(:disabled) {
             gap:var(--in-section-gap);
 
             > * {
-                > multisource-image { width: 18vw !important; }
+                > multisource-image { width: 22.5vw !important; }
             }
         }
     }

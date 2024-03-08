@@ -5,6 +5,17 @@ import { ElementOf } from "./UtilTypes";
  */
 export default abstract class ArrayUtil {
 
+    /** Check whether two arrays have the same elements at the same positions. */
+    public static equal<T>(a:T[], b:T[]):boolean {
+        return a.length === b.length && a.every((e,i) => e === b[i]);
+    }
+
+    /** Checks whether two arrays contain the same elements. (set equality) */
+    public static containSame<T>(a:T[], b:T[]):boolean {
+        // ((a subset b) and (b subset a)) <=> a is b
+        return a.every(e => b.includes(e)) && b.every(e => a.includes(e));
+    }
+
     /** Gives the array with overlapping entries between a and b. */
     public static intersection<T>(a:T[], b:T[]) {
         return a.filter(e => b.includes(e));

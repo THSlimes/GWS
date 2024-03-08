@@ -1,3 +1,5 @@
+import ArrayUtil from "../../util/ArrayUtil";
+
 export namespace Permissions {
     /**
      * A Permission represents the ability for a user to perform
@@ -40,7 +42,7 @@ export namespace Permissions {
     export const ALL:Permission[] = Object.values(Permission);
     Object.freeze(ALL);
 
-    const PERMISSION_TRANSLATIONS:Record<Permission,string> = {
+    const TRANSLATIONS:Record<Permission,string> = {
         [Permission.UPDATE_SETTINGS]: "Site-instellingen aanpassen",
     
         [Permission.READ_MEMBER_ARTICLES]: "Berichten voor leden lezen",
@@ -68,11 +70,49 @@ export namespace Permissions {
     
         [Permission.VIEW_ADMIN_PANEL]: "Administratie-paneel zien",
     };
+    Object.freeze(TRANSLATIONS)
 
     export function translate(perm:Permission) {
-        const out = PERMISSION_TRANSLATIONS[perm];
+        const out = TRANSLATIONS[perm];
         if (out === undefined) throw new Error(`unknown permission: "${perm}"`);
         else return out;
+    }
+
+    export const PRESETS = {
+        "Lid": [
+            Permission.READ_MEMBER_ARTICLES,
+            Permission.DOWNLOAD_PROTECTED_FILES,
+            Permission.REGISTER_FOR_EVENTS,
+            Permission.DEREGISTER_FOR_EVENTS,
+            Permission.READ_OWN_USER_INFO,
+        ],
+        "Administrateur": [
+            Permission.UPDATE_SETTINGS,
+            Permission.READ_MEMBER_ARTICLES,
+            Permission.CREATE_ARTICLES,
+            Permission.UPDATE_ARTICLES,
+            Permission.DELETE_ARTICLES,
+            Permission.UPLOAD_FILES,
+            Permission.DOWNLOAD_PROTECTED_FILES,
+            Permission.CREATE_EVENTS,
+            Permission.UPDATE_EVENTS,
+            Permission.DELETE_EVENTS,
+            Permission.READ_EVENT_COMMENTS,
+            Permission.READ_OWN_USER_INFO,
+            Permission.UPDATE_OWN_USER_INFO,
+            Permission.READ_OTHER_USER_INFO,
+            Permission.UPDATE_OTHER_USER_INFO,
+            Permission.UPDATE_OTHER_USER_PERMISSIONS,
+            Permission.VIEW_ADMIN_PANEL
+        ]
+    };
+    export type PresetName = keyof typeof PRESETS;
+
+    export function getPreset(perms:Permission[]):PresetName|undefined {
+        for (const k in PRESETS) {
+            const name = k as PresetName;
+            if (ArrayUtil.containSame(perms, PRESETS[name])) return name;
+        }
     }
     
 }

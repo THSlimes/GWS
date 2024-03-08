@@ -16,7 +16,7 @@ import ObjectUtil from "../util/ObjectUtil";
 function createPermissionLabel(perm:Permissions.Permission, editable:boolean, onRemove:(label:HTMLDivElement)=>void):HTMLDivElement {
     const backgroundColor = ColorUtil.getStringColor(perm);
     const color = ColorUtil.getMostContrasting(backgroundColor, "#000000", "#ffffff");
-    return ElementFactory.div(undefined, "permission", "center-content")
+    return ElementFactory.div(undefined, "permission", "permission-label", "center-content")
         .children(
             ElementFactory.p(Permissions.translate(perm)).style({ color }),
             label => editable ?
@@ -82,9 +82,22 @@ function createUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, ca
         }, "Kopieer account-ID").class("id", "text-center").make()
     );
 
-
-    out.appendChild(ElementFactory.div(undefined, "permissions", "permissions-list") // permissions list
+    const permissionsList = out.appendChild(ElementFactory.div(undefined, "permissions", "permissions-list") // permissions list
         .children(
+            canEditPerms && ElementFactory.select(ObjectUtil.keys(Permissions.PRESETS))
+                .option("Andere", "Andere", true).value(Permissions.getPreset(userEntry.get("permissions")) ?? "Andere")
+                .class("preset-selector")
+                .onValueChanged(val => {
+                    if (val !== "Andere") {
+                        const preset = Permissions.PRESETS[val];
+                        const userPerms = userEntry.get("permissions");
+                        userPerms.splice(0, Infinity, ...preset);
+                        userEntry.set("permissions", userPerms);
+                        Array.from(permissionsList.getElementsByClassName("permission-label")).forEach(label => label.remove());
+                        out.replaceWith(createUserEntry(userEntry, canEdit, canEditPerms));
+                    }
+                })
+                .make(),
             ...userEntry.get("permissions").sort((a, b) => Permissions.translate(a).localeCompare(Permissions.translate(b)))
                 .map(perm => createPermissionLabel(perm, canEditPerms, label => {
                     const userPerms = userEntry.get("permissions");
@@ -96,12 +109,13 @@ function createUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, ca
                 ElementFactory.select(ObjectUtil.mapToObject(ArrayUtil.difference(Permissions.ALL, userEntry.get("permissions")), p => Permissions.translate(p)))
                     .option("null", "+", true).value("null")
                     .class("new-permission", "button")
-                    .onValueChanged(v => {
-                        const perm = v as Permissions.Permission;
-                        const userPerms = userEntry.get("permissions");
-                        userPerms.push(perm);
-                        userEntry.set("permissions", userPerms);
-                        out.replaceWith(createUserEntry(userEntry, canEdit, canEditPerms));
+                    .onValueChanged(perm => {
+                        if (perm !== "null") {
+                            const userPerms = userEntry.get("permissions");
+                            userPerms.push(perm);
+                            userEntry.set("permissions", userPerms);
+                            out.replaceWith(createUserEntry(userEntry, canEdit, canEditPerms));
+                        }
                     }) :
                 null // non-editable or all permissions granted
         )
