@@ -45,6 +45,9 @@ export default class ElementCarousel extends HTMLElement {
             this.revolvingElements[prev]?.setAttribute("hide", "");
             this.revolvingElements[this.current]?.removeAttribute("hide");
 
+            console.log("now showing", this.current);
+            
+
         }, this.delay);
     }
 
@@ -54,6 +57,13 @@ export default class ElementCarousel extends HTMLElement {
         }
         
         return super.appendChild(node);
+    }
+
+    public override append(...nodes: (string | Node)[]): void {
+        for (const node of nodes) {
+            if (typeof node === "string") this.appendChild(document.createTextNode(node));
+            else this.appendChild(node);
+        }
     }
 
 }

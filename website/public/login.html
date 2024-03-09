@@ -15,18 +15,40 @@
     </head>
 <body class="flex-rows">
 
-    <form id="login-form" class="content" style="opacity: 0;">
-        <h1>Inloggen</h1>
-        <p>Email-adres</p>
-        <input type="email" name="login-email" id="login-email">
-        <p>Wachtwoord</p>
-        <input type="password" name="login-password" id="login-password">
-        <input type="checkbox" name="stay-logged-in" id="stay-logged-in"><label for="stay-logged-in">Ingelogd blijven?</label>
-        <button type="button" id="login-button" class="center-content">
-            <h3>Log in</h3>
-            <h3 class="icon">chevron_right</h3>
-        </button>
-    </form>
+    <div class="content flex-columns main-axis-space-between">
+        <div id="login-form-container" class="center-content">
+            <form id="login-form" class="flex-rows section-gap">
+                <h1 class="no-margin">Inloggen bij GWS</h1>
+
+                <div id="email" class="flex-rows in-section-gap">
+                    <p class="no-margin">Email-adres</p>
+                    <input type="email" name="login-email" id="login-email">
+                </div>
+
+                <div id="password" class="flex-rows in-section-gap">
+                    <p class="no-margin">Wachtwoord</p>
+                    <input type="password" name="login-password" id="login-password">
+                </div>
+
+                <div class="flex-rows in-section-gap">
+                    <div class="flex-columns main-axis-space-between cross-axis-center section-gap">
+                        <div>
+                            <input type="checkbox" name="stay-logged-in" id="stay-logged-in">
+                            <label for="stay-logged-in">Ingelogd blijven?</label>
+                        </div>
+                        <p class="no-margin">Wachtwoord vergeten</p>
+                    </div>
+
+                    <button id="login-button" class="flex-columns cross-axis-center in-section-gap">
+                        <h4>Log in</h4>
+                        <h4 class="icon">chevron_right</h4>
+                    </button>
+                </div>
+            </form>
+        </div>
+    
+        <place-holder id="photo-carousel"></place-holder>
+    </div>
     
 </body>
 </html>

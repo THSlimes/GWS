@@ -275,6 +275,7 @@ div#split-view {
 .section-gap { gap: var(--section-gap-y) var(--section-gap-x); }
 .in-section-gap { gap: var(--in-section-gap); }
 .min-section-gap { gap: var(--min-section-gap); }
+.max-section-gap { gap: var(--max-section-gap); }
 .in-section-padding { padding: var(--in-section-gap); }
 
 .no-scroll { overflow: hidden; }

@@ -1,7 +1,4 @@
-// Code for the login page
-
 import "./header-and-footer";
-import "./create-split-view";
 
 import { UserCredential, browserLocalPersistence, browserSessionPersistence, signInWithEmailAndPassword } from "@firebase/auth";
 import { FIREBASE_AUTH } from "../common/firebase/init-firebase";
@@ -10,8 +7,15 @@ import getErrorMessage from "../common/firebase/authentication/error-messages";
 import { redirectIfLoggedIn } from "../common/firebase/authentication/auth-based-redirect";
 import Cache from "../common/Cache";
 import URLUtil from "../common/util/URLUtil";
+import Loading from "../common/Loading";
+import Placeholder from "../common/custom-elements/Placeholder";
+import makePhotoCarousel from "../common/ui/photo-carousel";
 
 redirectIfLoggedIn("/", true); // can't log in when already logged in
+
+Loading.useDynamicContent(makePhotoCarousel("Studievereniging Den Geitenwollen Soc."), carousel => {
+    Placeholder.replaceWith("photo-carousel", carousel);
+});
 
 function login(email:string, password:string, stayLoggedIn:boolean=false) {
     return new Promise<UserCredential>(async (resolve, reject) => {
