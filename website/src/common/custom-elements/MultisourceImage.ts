@@ -52,6 +52,8 @@ export default class MultisourceImage extends HTMLElement implements HasSections
         
         infoPromise.then(url => { // got image url
             this.classList.remove("error");
+            Loading.markLoadStart(this.image); // wait for image load
+            this.image.addEventListener("load", () => Loading.markLoadEnd(this.image), { once: true });
             this.image.src = url;
             this.image.removeAttribute("hidden");
             this.errorMessage.toggleAttribute("hidden", true);

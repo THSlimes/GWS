@@ -6,7 +6,7 @@ import Responsive from "./Responsive";
 let MESSAGE_AREA:HTMLDivElement;
 
 function messageLimit() {
-    return Responsive.isSlimmerOrEq(Responsive.Viewport.TABLET_PORTRAIT) ? 3 : 1;
+    return Responsive.isSlimmerOrEq(Responsive.Viewport.TABLET_PORTRAIT) ? 1 : 3;
 }
 
 window.addEventListener("DOMContentLoaded", () => {

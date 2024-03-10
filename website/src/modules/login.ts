@@ -13,6 +13,7 @@ import makePhotoCarousel from "../common/ui/photo-carousel";
 
 redirectIfLoggedIn("/", true); // can't log in when already logged in
 
+// photo carousel
 Loading.useDynamicContent(makePhotoCarousel("Studievereniging Den Geitenwollen Soc."), carousel => {
     Placeholder.replaceWith("photo-carousel", carousel);
 });
@@ -29,12 +30,21 @@ function login(email:string, password:string, stayLoggedIn:boolean=false) {
     });
 }
 
-window.addEventListener("DOMContentLoaded", () => {
+Loading.onDOMContentLoaded()
+.then(() => {
+    // login functionality
     const EMAIL_INPUT = document.getElementById("login-email") as HTMLInputElement;
     const PASSWORD_INPUT = document.getElementById("login-password") as HTMLInputElement;
+    const SHOW_PASSWORD_BUTTON = document.getElementById("show-password-button") as HTMLElement;
     const STAY_LOGGED_IN_CHECKBOX = document.getElementById("stay-logged-in") as HTMLInputElement;
 
     const LOGIN_BUTTON = document.getElementById("login-button") as HTMLButtonElement;
+
+    SHOW_PASSWORD_BUTTON.addEventListener("click", () => {
+        SHOW_PASSWORD_BUTTON.toggleAttribute("selected");
+        if (SHOW_PASSWORD_BUTTON.toggleAttribute("active")) PASSWORD_INPUT.type = "text";
+        else PASSWORD_INPUT.type = "password";
+    });
 
     LOGIN_BUTTON.addEventListener("click", () => { // attempt login
         const email = EMAIL_INPUT.value.trim();
@@ -63,5 +73,5 @@ window.addEventListener("DOMContentLoaded", () => {
             });
         }
     });
-    
+
 });

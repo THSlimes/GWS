@@ -7,6 +7,8 @@
     width: 100%;
     height: 90vh;
 
+    border-bottom: var(--std-border);
+
     > h1[cover] {
         color: var(--text-light);
 

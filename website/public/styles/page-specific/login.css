@@ -18,9 +18,12 @@ body { gap: 0px; }
 }
 
 #login-form {
+    padding: var(--section-gap-y) var(--section-gap-x);
+
     > * { width: 100%; }
     > #email, > #password {
         > * { width: 100%; }
+        > .input-container > *:first-child { flex-grow: 1; }
     }
     & #login-button { width: 100%; }
 }
@@ -28,6 +31,8 @@ body { gap: 0px; }
 #photo-carousel {
     width: 50vw;
     height: 90vh;
+
+    border-left: var(--std-border);
 
     > h1[cover] {
         color: var(--text-light);
@@ -67,5 +72,8 @@ body { gap: 0px; }
 
 @media (max-aspect-ratio: 1 / 1) {
     #photo-carousel { display: none; }
-    #login-form { gap: var(--min-section-gap); }
+    #login-form {
+        h1 { text-align: center; }
+        gap: var(--min-section-gap);
+    }
 }

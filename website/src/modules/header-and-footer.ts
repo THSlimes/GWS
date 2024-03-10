@@ -214,6 +214,8 @@ function makeNavbar(settingsDB:SettingsDatabase):Promise<HTMLElement> {
 // FOOTER + COPYRIGHT NOTICE
 function makeFooter(settingsDB:SettingsDatabase):Promise<HTMLElement> {
     return new Promise((resolve, reject) => {
+        Loading.markLoadStart(makeFooter);
+
         Cache.getAndRefresh("social-media-links", settingsDB.getSocialMediaLinks())
         .then(socialMediaLinks => resolve(
             ElementFactory.footer()
@@ -238,7 +240,8 @@ function makeFooter(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                 )
                 .make()
         ))
-        .catch(reject);
+        .catch(reject)
+        .finally(() => Loading.markLoadEnd(makeFooter));
     });
 }
 

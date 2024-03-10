@@ -43,10 +43,7 @@ export default class ElementCarousel extends HTMLElement {
             this.current = (this.current + 1) % this.revolvingElements.length;
 
             this.revolvingElements[prev]?.setAttribute("hide", "");
-            this.revolvingElements[this.current]?.removeAttribute("hide");
-
-            console.log("now showing", this.current);
-            
+            this.revolvingElements[this.current]?.removeAttribute("hide");            
 
         }, this.delay);
     }

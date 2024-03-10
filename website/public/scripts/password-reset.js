@@ -184,6 +184,28 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpac
 
 /***/ }),
 
+/***/ "./src/common/firebase/authentication/auth-based-redirect.ts":
+/*!*******************************************************************!*\
+  !*** ./src/common/firebase/authentication/auth-based-redirect.ts ***!
+  \*******************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   redirectIfLoggedIn: () => (/* binding */ redirectIfLoggedIn),\n/* harmony export */   redirectIfLoggedOut: () => (/* binding */ redirectIfLoggedOut)\n/* harmony export */ });\n/* harmony import */ var _Cache__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../Cache */ \"./src/common/Cache.ts\");\n/* harmony import */ var _Loading__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../Loading */ \"./src/common/Loading.ts\");\n/* harmony import */ var _init_firebase__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../init-firebase */ \"./src/common/firebase/init-firebase.ts\");\n\n\n\n/**\n * Redirects the user to the given URL in the case they are logged in.\n * @param url url to direct to\n * @param useCachedValue whether to use the cached login-state\n */\nfunction redirectIfLoggedIn(url = \"/\", useCachedValue = false) {\n    if (_init_firebase__WEBPACK_IMPORTED_MODULE_2__.FIREBASE_AUTH.currentUser !== null || (useCachedValue && _Cache__WEBPACK_IMPORTED_MODULE_0__[\"default\"].get(\"is-logged-in\") === true))\n        location.href = url; // redirect now\n    else {\n        _Loading__WEBPACK_IMPORTED_MODULE_1__[\"default\"].markLoadStart(redirectIfLoggedIn);\n        (0,_init_firebase__WEBPACK_IMPORTED_MODULE_2__.onAuth)()\n            .then(user => {\n            if (user !== null)\n                location.replace(url);\n        })\n            .finally(() => _Loading__WEBPACK_IMPORTED_MODULE_1__[\"default\"].markLoadEnd(redirectIfLoggedIn));\n    }\n}\n/**\n * Redirects the user to the given URL in the case they are NOT logged in.\n * @param url url to direct to\n * @param useCachedValue whether to use the cached login-state\n */\nfunction redirectIfLoggedOut(url = \"/\", useCachedValue = false) {\n    if (_init_firebase__WEBPACK_IMPORTED_MODULE_2__.FIREBASE_AUTH.currentUser === null && (useCachedValue && _Cache__WEBPACK_IMPORTED_MODULE_0__[\"default\"].get(\"is-logged-in\") !== true))\n        location.href = url; // redirect now\n    else {\n        _Loading__WEBPACK_IMPORTED_MODULE_1__[\"default\"].markLoadStart(redirectIfLoggedIn);\n        (0,_init_firebase__WEBPACK_IMPORTED_MODULE_2__.onAuth)()\n            .then(user => {\n            if (user === null)\n                location.replace(url);\n        })\n            .finally(() => _Loading__WEBPACK_IMPORTED_MODULE_1__[\"default\"].markLoadEnd(redirectIfLoggedOut));\n    }\n}\n\n\n//# sourceURL=webpack://gws-website/./src/common/firebase/authentication/auth-based-redirect.ts?");
+
+/***/ }),
+
+/***/ "./src/common/firebase/authentication/error-messages.ts":
+/*!**************************************************************!*\
+  !*** ./src/common/firebase/authentication/error-messages.ts ***!
+  \**************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ getErrorMessage),\n/* harmony export */   runOnErrorCode: () => (/* binding */ runOnErrorCode)\n/* harmony export */ });\n/* harmony import */ var firebase_app__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! firebase/app */ \"./node_modules/firebase/app/dist/esm/index.esm.js\");\n\nconst DEFAULT_ERROR_MESSAGE = \"Er ging iets mis, probeer het later opnieuw.\";\nconst ERROR_MESSAGES = {\n    \"auth/invalid-credential\": \"Onjuiste inloggegevens, check je email-adres en/of wachtwoord.\",\n    \"auth/email-already-exists\": \"Er is al een account geregistreerd met dat email-adres, gebruik a.u.b. een andere.\",\n    \"auth/insufficient-permission\": \"Je hebt geen toestemming om dit te doen.\",\n    \"auth/invalid-email\": \"Het gegeven email-adres is ongeldig.\",\n    \"auth/too-many-requests\": \"Te veel inlogpogingen, probeer het later opnieuw.\",\n    \"already-exists\": \"Bestand bestaat al.\",\n    \"cancelled\": \"Geannuleerd.\",\n    \"not-found\": \"Het opgevraagde bestand bestaat niet (meer).\",\n    \"permission-denied\": \"Je bent niet gemachtigd om dit uit te voeren.\",\n    \"unauthenticated\": \"Je identiteit kon niet geverifieerd worden. Probeer (opnieuw) in te loggen.\",\n    \"unavailable\": \"Onze database is momenteel niet beschikbaar, probeer het later opnieuw.\",\n    \"unknown\": DEFAULT_ERROR_MESSAGE,\n};\n/** Translates an error-code into a user-friendly error message. */\nfunction getErrorMessage(err) {\n    if (!err || !(err instanceof firebase_app__WEBPACK_IMPORTED_MODULE_0__.FirebaseError))\n        return DEFAULT_ERROR_MESSAGE;\n    console.log(err.code);\n    return err.code in ERROR_MESSAGES ? ERROR_MESSAGES[err.code] : DEFAULT_ERROR_MESSAGE;\n}\nfunction runOnErrorCode(expectedCode, funct) {\n    return (err) => {\n        if (err && err instanceof firebase_app__WEBPACK_IMPORTED_MODULE_0__.FirebaseError && err.code === expectedCode)\n            funct(err);\n    };\n}\n\n\n//# sourceURL=webpack://gws-website/./src/common/firebase/authentication/error-messages.ts?");
+
+/***/ }),
+
 /***/ "./src/common/firebase/authentication/permission-based-redirect.ts":
 /*!*************************************************************************!*\
   !*** ./src/common/firebase/authentication/permission-based-redirect.ts ***!
@@ -459,6 +481,17 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var jque
 
 /***/ }),
 
+/***/ "./src/modules/password-reset.ts":
+/*!***************************************!*\
+  !*** ./src/modules/password-reset.ts ***!
+  \***************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var _firebase_auth__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @firebase/auth */ \"./node_modules/@firebase/auth/dist/esm2017/index.js\");\n/* harmony import */ var _common_Loading__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../common/Loading */ \"./src/common/Loading.ts\");\n/* harmony import */ var _common_ui_info_messages__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../common/ui/info-messages */ \"./src/common/ui/info-messages.ts\");\n/* harmony import */ var _header_and_footer__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./header-and-footer */ \"./src/modules/header-and-footer.ts\");\n/* harmony import */ var _common_firebase_authentication_error_messages__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../common/firebase/authentication/error-messages */ \"./src/common/firebase/authentication/error-messages.ts\");\n/* harmony import */ var _common_firebase_authentication_auth_based_redirect__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../common/firebase/authentication/auth-based-redirect */ \"./src/common/firebase/authentication/auth-based-redirect.ts\");\n\n\n\n\n\n\n(0,_common_firebase_authentication_auth_based_redirect__WEBPACK_IMPORTED_MODULE_5__.redirectIfLoggedIn)(\"/\", true); // can't log in when already logged in\n/** @see https://stackoverflow.com/questions/46155/how-can-i-validate-an-email-address-in-javascript */\nconst EMAIL_REGEX = /^(([^<>()\\[\\]\\\\.,;:\\s@\"]+(\\.[^<>()\\[\\]\\\\.,;:\\s@\"]+)*)|(\".+\"))@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,}))$/;\n_common_Loading__WEBPACK_IMPORTED_MODULE_1__[\"default\"].onDOMContentLoaded()\n    .then(() => {\n    const SEND_EMAIL_BUTTON = document.getElementById(\"send-email-button\");\n    const EMAIL_INPUT = document.getElementById(\"email-input\");\n    SEND_EMAIL_BUTTON.addEventListener(\"click\", ev => {\n        ev.preventDefault();\n        const email = EMAIL_INPUT.value.trim();\n        if (email) {\n            if (EMAIL_REGEX.test(email)) {\n                SEND_EMAIL_BUTTON.disabled = true;\n                (0,_firebase_auth__WEBPACK_IMPORTED_MODULE_0__.sendPasswordResetEmail)((0,_firebase_auth__WEBPACK_IMPORTED_MODULE_0__.getAuth)(), email)\n                    .then(() => {\n                    (0,_common_ui_info_messages__WEBPACK_IMPORTED_MODULE_2__.showSuccess)(\"De email is verstuurd. Check voor de zekerheid ook je spam-box.\", 5000);\n                    setTimeout(() => location.href = \"./login.html\", 5000);\n                })\n                    .catch(err => {\n                    (0,_common_ui_info_messages__WEBPACK_IMPORTED_MODULE_2__.showError)((0,_common_firebase_authentication_error_messages__WEBPACK_IMPORTED_MODULE_4__[\"default\"])(err));\n                    SEND_EMAIL_BUTTON.disabled = false;\n                });\n            }\n            else\n                (0,_common_ui_info_messages__WEBPACK_IMPORTED_MODULE_2__.showError)(\"Opgegeven email-adres is ongeldig.\"); // email invalid\n        }\n        else\n            (0,_common_ui_info_messages__WEBPACK_IMPORTED_MODULE_2__.showError)(\"Vul eerst je email-adres in.\"); // email empty\n    });\n});\n\n\n//# sourceURL=webpack://gws-website/./src/modules/password-reset.ts?");
+
+/***/ }),
+
 /***/ "./node_modules/@firebase/app/dist/esm/index.esm2017.js":
 /*!**************************************************************!*\
   !*** ./node_modules/@firebase/app/dist/esm/index.esm2017.js ***!
@@ -642,7 +675,7 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpac
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module can't be inlined because the eval devtool is used.
-/******/ 	var __webpack_exports__ = __webpack_require__("./src/modules/header-and-footer.ts");
+/******/ 	var __webpack_exports__ = __webpack_require__("./src/modules/password-reset.ts");
 /******/ 	
 /******/ })()
 ;

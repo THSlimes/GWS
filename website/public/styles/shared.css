@@ -314,6 +314,8 @@ button, input[type="button"], .button {
     border-radius: var(--in-section-gap);
     box-shadow: var(--std-shadow);
 
+    &, & * { user-select: none; }
+
     &:not(:disabled):not([selected]:not([can-unselect])) {
         cursor: pointer;
         transition: background-color 100ms ease-in, color 50ms ease-in;
@@ -356,6 +358,13 @@ button, input[type="button"], .button {
         background-color: var(--accent);
     }
 
+}
+
+h1, h2, h3, h4, h5, h6, p, label {
+    &.click-action {
+        padding: calc(var(--in-section-gap) / 4) calc(var(--in-section-gap) / 2);
+        user-select: none;
+    }
 }
 
 /* standard indication of being a link */
