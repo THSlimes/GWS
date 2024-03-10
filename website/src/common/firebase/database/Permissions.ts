@@ -27,7 +27,6 @@ export namespace Permissions {
         READ_EVENT_COMMENTS = "READ_EVENT_COMMENTS", // whether the user has the ability to retrieve event comments
 
         // user related
-        READ_OWN_USER_INFO = "READ_OWN_USER_INFO", // whether the user has access to their own info
         UPDATE_OWN_USER_INFO = "UPDATE_OWN_USER_INFO", // whether the user can edit their own info
         UPDATE_OWN_PERMISSIONS = "UPDATE_OWN_PERMISSIONS", // whether the user can edit their own permissions
 
@@ -60,7 +59,6 @@ export namespace Permissions {
         [Permission.DEREGISTER_FOR_EVENTS]: "Uitschrijven van activiteiten",
         [Permission.READ_EVENT_COMMENTS]: "Activiteit-opmerkingen lezen",
     
-        [Permission.READ_OWN_USER_INFO]: "Account-info van henzelf lezen",
         [Permission.UPDATE_OWN_USER_INFO]: "Account-info van henzelf bewerken",
         [Permission.UPDATE_OWN_PERMISSIONS]: "Account-machtigingen van henzelf bewerken",
     
@@ -84,7 +82,6 @@ export namespace Permissions {
             Permission.DOWNLOAD_PROTECTED_FILES,
             Permission.REGISTER_FOR_EVENTS,
             Permission.DEREGISTER_FOR_EVENTS,
-            Permission.READ_OWN_USER_INFO,
         ],
         "Administrateur": [
             Permission.UPDATE_SETTINGS,
@@ -98,7 +95,6 @@ export namespace Permissions {
             Permission.UPDATE_EVENTS,
             Permission.DELETE_EVENTS,
             Permission.READ_EVENT_COMMENTS,
-            Permission.READ_OWN_USER_INFO,
             Permission.UPDATE_OWN_USER_INFO,
             Permission.READ_OTHER_USER_INFO,
             Permission.UPDATE_OTHER_USER_INFO,

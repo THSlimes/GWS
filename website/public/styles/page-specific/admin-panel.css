@@ -123,11 +123,12 @@
 
     > .permission {
         padding: calc(var(--in-section-gap) / 2) var(--in-section-gap);
-        column-gap: var(--in-section-gap);
+        column-gap: calc(var(--in-section-gap) / 2);
         height: min-content;
         border-radius: var(--in-section-gap);
         
         > * {
+            padding: 0px;
             margin: 0px;
             font-size: 70%;
             font-weight: 600;
