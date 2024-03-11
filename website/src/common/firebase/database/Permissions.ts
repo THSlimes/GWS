@@ -1,4 +1,5 @@
 import ArrayUtil from "../../util/ArrayUtil";
+import ObjectUtil from "../../util/ObjectUtil";
 
 export namespace Permissions {
     /**
@@ -103,6 +104,7 @@ export namespace Permissions {
         ]
     };
     export type PresetName = keyof typeof PRESETS;
+    ObjectUtil.deepFreeze(PRESETS);
 
     export function getPreset(perms:Permission[]):PresetName|undefined {
         for (const k in PRESETS) {

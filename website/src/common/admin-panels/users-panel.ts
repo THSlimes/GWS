@@ -13,7 +13,7 @@ import ColorUtil from "../util/ColorUtil";
 import DateUtil from "../util/DateUtil";
 import ObjectUtil from "../util/ObjectUtil";
 
-function createPermissionLabel(perm:Permissions.Permission, editable:boolean, onRemove:(label:HTMLDivElement)=>void):HTMLDivElement {
+function makePermissionLabel(perm:Permissions.Permission, editable:boolean, onRemove:(label:HTMLDivElement)=>void):HTMLDivElement {
     const backgroundColor = ColorUtil.getStringColor(perm);
     const color = ColorUtil.getMostContrasting(backgroundColor, "#000000", "#ffffff");
     return ElementFactory.div(undefined, "permission", "permission-label", "center-content")
@@ -30,7 +30,21 @@ function createPermissionLabel(perm:Permissions.Permission, editable:boolean, on
         .make();
 }
 
-function createUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, canEditPerms:boolean):HTMLElement {
+const NOW = new Date();
+/** The Date after which registration is for the next year. */
+const REGISTRATION_CUTOFF = new Date(`8-1-${NOW.getFullYear()}`);
+/** The date at which membership starts/ends. */
+const MEMBERSHIP_EXPIRY_DATE = "10-1";
+function getMembershipExtensionDate():Date {
+    if (NOW < REGISTRATION_CUTOFF) return new Date(`${MEMBERSHIP_EXPIRY_DATE}-${NOW.getFullYear()}`); // is for this year
+    else return new Date(`${MEMBERSHIP_EXPIRY_DATE}-${NOW.getFullYear() + 1}`); // is for next year
+}
+
+namespace getMembershipExtensionDate {
+    
+}
+
+function makeUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, canEditPerms:boolean):HTMLElement {
     canEditPerms &&= canEdit; // can only edit permissions with edit permissions
 
     const out = ElementFactory.div(undefined, "entry").make();
@@ -52,10 +66,20 @@ function createUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, ca
         ElementFactory.h4(joinedAtText)
             .class("joined-at", "center-content")
             .make(),
-        ElementFactory.input.dateTimeLocal(userEntry.get("member_until"))
-            .class("member-until")
-            .onValueChanged(val => userEntry.set("member_until", new Date(val)))
-            .make()
+        (userEntry.get("member_until").getTime() <= Date.now()) ?
+            ElementFactory.iconButton(
+                "add_card",
+                () => {
+                    userEntry.set("member_until", getMembershipExtensionDate()); // edit membership date
+                    userEntry.set("permissions", [...Permissions.PRESETS.Lid]); // add member permissions
+                    out.replaceWith(makeUserEntry(userEntry, canEdit, canEditPerms));
+                }, "Maak lid")
+                .class("text-center")
+                .make() :
+            ElementFactory.input.dateTimeLocal(userEntry.get("member_until"))
+                .class("member-until")
+                .onValueChanged(val => userEntry.set("member_until", new Date(val)))
+                .make()
     );
     else out.append( // add non-editable versions
         ElementFactory.h4(`${userEntry.get("first_name")} ${userEntry.get("family_name")}`)
@@ -67,7 +91,6 @@ function createUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, ca
         ElementFactory.h4(DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT(userEntry.get("member_until")!))
             .class("member-until", "center-content")
             .make()
-        
     );
     
 
@@ -92,22 +115,20 @@ function createUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, ca
                         .onValueChanged(val => {
                             if (val !== "Andere") {
                                 const preset = Permissions.PRESETS[val];
-                                const userPerms = userEntry.get("permissions");
-                                userPerms.splice(0, Infinity, ...preset);
-                                userEntry.set("permissions", userPerms);
+                                const userPerms = userEntry.set("permissions", [...preset]);
                                 Array.from(permissionsList.getElementsByClassName("permission-label")).forEach(label => label.remove());
-                                out.replaceWith(createUserEntry(userEntry, canEdit, canEditPerms));
+                                out.replaceWith(makeUserEntry(userEntry, canEdit, canEditPerms));
                             }
                         })
                         .make(),
                 )
                 .tooltip("Groep"),
             ...userEntry.get("permissions").sort((a, b) => Permissions.translate(a).localeCompare(Permissions.translate(b)))
-                .map(perm => createPermissionLabel(perm, canEditPerms, label => {
+                .map(perm => makePermissionLabel(perm, canEditPerms, label => {
                     const userPerms = userEntry.get("permissions");
                     userPerms.splice(userPerms.indexOf(perm), 1);
                     userEntry.set("permissions", userPerms);
-                    out.replaceWith(createUserEntry(userEntry, canEdit, canEditPerms));
+                    out.replaceWith(makeUserEntry(userEntry, canEdit, canEditPerms));
                 })),
             canEditPerms && userEntry.get("permissions").length < Permissions.ALL.length ?
                 ElementFactory.select(ObjectUtil.mapToObject(ArrayUtil.difference(Permissions.ALL, userEntry.get("permissions")), p => Permissions.translate(p)))
@@ -118,7 +139,7 @@ function createUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, ca
                             const userPerms = userEntry.get("permissions");
                             userPerms.push(perm);
                             userEntry.set("permissions", userPerms);
-                            out.replaceWith(createUserEntry(userEntry, canEdit, canEditPerms));
+                            out.replaceWith(makeUserEntry(userEntry, canEdit, canEditPerms));
                         }
                     }) :
                 null // non-editable or all permissions granted
@@ -198,7 +219,7 @@ function refreshUserEntries() {
             sortUsers(filteredSubset);
 
             USERS_LIST.append(...filteredSubset.map((u,i) =>
-                createUserEntry(
+                makeUserEntry(
                     u,
                     u.get("id") === user!.uid ? hasPerms.UPDATE_OWN_USER_INFO : hasPerms.UPDATE_OTHER_USER_INFO,
                     u.get("id") === user!.uid ? hasPerms.UPDATE_OWN_PERMISSIONS : hasPerms.UPDATE_OTHER_USER_PERMISSIONS
