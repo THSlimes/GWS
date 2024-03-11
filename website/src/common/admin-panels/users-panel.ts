@@ -74,11 +74,20 @@ function makeUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, canE
                     userEntry.set("permissions", [...Permissions.PRESETS.Lid]); // add member permissions
                     out.replaceWith(makeUserEntry(userEntry, canEdit, canEditPerms));
                 }, "Maak lid")
-                .class("text-center")
+                .class("member-until", "text-center")
                 .make() :
-            ElementFactory.input.dateTimeLocal(userEntry.get("member_until"))
-                .class("member-until")
-                .onValueChanged(val => userEntry.set("member_until", new Date(val)))
+            ElementFactory.div(undefined, "member-until", "flex-columns", "cross-axis-center", "in-section-gap")
+                .children(
+                    ElementFactory.input.dateTimeLocal(userEntry.get("member_until"))
+                        .onValueChanged(val => userEntry.set("member_until", new Date(val)))
+                        .make(),
+                    ElementFactory.iconButton("more_time", () => {
+                        const memberUntil = userEntry.get("member_until");
+                        memberUntil.setFullYear(memberUntil.getFullYear() + 1, 9, 1);
+                        userEntry.set("member_until", memberUntil);
+                        out.replaceWith(makeUserEntry(userEntry, canEdit, canEditPerms));
+                    }, "Lidmaatschap verlengen")
+                )
                 .make()
     );
     else out.append( // add non-editable versions

@@ -102,7 +102,11 @@
                 }
 
                 > .name > * { font-size: 75% }
-                > .member-until { font-size: 75% }
+                > .member-until {
+                    > * { padding: calc(var(--in-section-gap) / 2) var(--in-section-gap); }
+                    > input { font-size: 75%; }
+                    > .icon { font-size: 150%; }
+                }
             }
         }
     }
@@ -225,6 +229,7 @@
                         grid-template-areas:
                             "i n n n n n n j j j j j m m m m m m"
                             "p p p p p p p p p p p p p p p p p p";
+                        > * { justify-self: center; }
                     }
 
                     > .id { grid-area: i; }
@@ -297,11 +302,11 @@
                             }
                         }
 
-                        > .member-until {
+                        > .member-until:not(.icon) {
                             display: flex;
                             justify-content: center;
                             align-items: center;
-                            font-size: 75%;
+                            flex-direction: row;
                             
                             &::before {
                                 margin: 0px var(--in-section-gap);
