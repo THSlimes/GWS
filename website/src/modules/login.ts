@@ -50,7 +50,7 @@ Loading.onDOMContentLoaded()
         const email = EMAIL_INPUT.value.trim();
         const password = PASSWORD_INPUT.value.trim();
 
-        if (!email) showWarning("Vul een email-adres in.");
+        if (!email) showWarning("Vul een e-mailadres in.");
         else if (!password) showWarning("Vul een wachtwoord in.")
         else {
             // prevent login spam

@@ -1,4 +1,5 @@
 import ElementFactory from "../html-element-factory/ElementFactory";
+import ElementUtil from "../util/ElementUtil";
 import { HasSections } from "../util/UtilTypes";
 
 export default class Switch extends HTMLElement implements HasSections<"indicator"> {
@@ -11,13 +12,25 @@ export default class Switch extends HTMLElement implements HasSections<"indicato
             newVal ? this.setAttribute("on", "") : this.removeAttribute("on");
             if (this.indicator) this.indicator.textContent = newVal ? "check" : "close";
             for (const dep of this.dependants) {
-                if (newVal !== this.inverted) dep.removeAttribute("disabled");
-                else dep.setAttribute("disabled","");
+                if (newVal !== this.inverted) Switch.removeDisabler(dep);
+                else Switch.addDisabler(dep);
             }
 
             this.dispatchEvent(new InputEvent("input", { bubbles: true }));
             this.dispatchEvent(new Event("change", { bubbles: true }));
         }
+    }
+
+    private static addDisabler(elem:Element) {
+        const oldLevel = elem.hasAttribute("disabled") ? ElementUtil.getAttrAsNumber(elem, "disabled", false) ?? 1 : 0;
+        elem.setAttribute("disabled", (oldLevel + 1).toString());
+    }
+    private static removeDisabler(elem:Element) {
+        const oldLevel = elem.hasAttribute("disabled") ? ElementUtil.getAttrAsNumber(elem, "disabled", false) ?? 1 : 0;
+        const newLevel = oldLevel - 1;
+        if (newLevel <= 0) elem.removeAttribute("disabled");
+        else elem.setAttribute("disabled", newLevel.toString());
+        console.trace(elem);
     }
 
     public readonly dependants:Element[] = [];

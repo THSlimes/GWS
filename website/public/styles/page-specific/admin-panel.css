@@ -36,7 +36,10 @@
         min-width: 0px;
         width: 100%;
 
-        > h1:first-child { text-decoration: underline; }
+        > h1:first-child {
+            text-decoration: underline;
+            width: 100%;
+        }
         > .subpanel {
             width: 100%;
             > .subpanel-heading { width: 100%; }

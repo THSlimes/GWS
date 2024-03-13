@@ -1,0 +1,36 @@
+@import url("../shared.css");
+@import url("../custom-elements/smart-article.css");
+
+article .post-date { display: none; }
+
+#form {
+    > h2 { width: 100%; }
+
+    & .section {
+        width: 100%;
+
+        & p { margin: 0px; }
+        > .section-name { font-weight: 600; }
+
+        > switch-input {
+            min-width: 3.5rem;
+            max-height: 1.75rem;
+        }
+
+        & .subsection {
+            width: 100%;
+            > switch-input {
+                min-width: 3rem;
+                max-height: 1.5rem;
+            }
+        }
+
+        & *[invalid] {
+            outline-color: var(--indicate-bad);
+            border-color: var(--indicate-bad) !important;
+        }
+    }
+
+    & #first-name, & #family-name { flex-grow: 1; }
+    & #privacy-statement-link { color: var(--accent); }
+}

@@ -37,5 +37,6 @@ nested-link-tree-editor {
 link-entry {
     display: block;
 
+    & .type-icon { padding: calc(var(--in-section-gap) / 4) calc(var(--in-section-gap) / 2); }
     & .name-input { min-width: 20vw; }
 }

@@ -2,10 +2,10 @@ import { FirebaseError } from "firebase/app";
 
 const DEFAULT_ERROR_MESSAGE = "Er ging iets mis, probeer het later opnieuw.";
 const ERROR_MESSAGES = {
-    "auth/invalid-credential": "Onjuiste inloggegevens, check je email-adres en/of wachtwoord.",
-    "auth/email-already-exists": "Er is al een account geregistreerd met dat email-adres, gebruik a.u.b. een andere.",
+    "auth/invalid-credential": "Onjuiste inloggegevens, check je e-mailadres en/of wachtwoord.",
+    "auth/email-already-exists": "Er is al een account geregistreerd met dat e-mailadres, gebruik a.u.b. een andere.",
     "auth/insufficient-permission": "Je hebt geen toestemming om dit te doen.",
-    "auth/invalid-email": "Het gegeven email-adres is ongeldig.",
+    "auth/invalid-email": "Het gegeven e-mailadres is ongeldig.",
     "auth/too-many-requests": "Te veel inlogpogingen, probeer het later opnieuw.",
 
     "already-exists": "Bestand bestaat al.",

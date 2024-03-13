@@ -107,7 +107,7 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
                     .class("icon", "click-action")
                     .tooltip("Bericht bewerken")
                     .on("click", (ev, self) => {
-                        if (this.lod === "full") { // only allow editing in full LOD
+                        if (this.lod === "full") {
                             // upgrade to editable version
                             this.replaceWith(new EditableSmartArticle(this.article, this.lod));
                         }

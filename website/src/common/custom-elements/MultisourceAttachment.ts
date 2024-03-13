@@ -151,7 +151,7 @@ export default class MultisourceAttachment extends HTMLElement implements HasSec
 
     }
 
-    private static getInfoFromFirebase(base:"openbaar"|"beveiligd", ...segments:string[]):Promise<FileInfo> {
+    public static getInfoFromFirebase(base:"openbaar"|"beveiligd", ...segments:string[]):Promise<FileInfo> {
         return new Promise((resolve, reject) => {
             if (base === "beveiligd" && !this.CAN_DOWNLOAD_PROTECTED_ATTACHMENTS) {
                 reject(new Error("Geen toegang tot bestand", { cause: "missing permissions" }));

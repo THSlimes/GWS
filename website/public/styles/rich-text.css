@@ -51,11 +51,21 @@
         flex-direction: column;
         row-gap: var(--in-section-gap);
 
-        padding-left: 0px;
+        padding-left: 2rem;
 
         color: inherit;
 
-        > *:not(.no-bullet)::before { content: "● "; }
+        > * { margin-top: 0px; margin-bottom: 0px; }
+        > *:not(.no-bullet) {
+            display: flex;
+            flex-direction: row;
+            column-gap: 1rem;
+
+            &::before {
+                display: block;
+                content: "● ";
+            }
+        }
     }
 
     & ol {
@@ -63,14 +73,23 @@
         flex-direction: column;
         row-gap: var(--in-section-gap);
 
-        padding-left: 0px;
+        padding-left: 2rem;
 
         color: inherit;
 
+        > * { margin-top: 0px; margin-bottom: 0px; }
+
         counter-reset: index;
-        > *:not(.no-bullet)::before {
-            counter-increment: index;
-            content: counter(index) ". ";
+        > *:not(.no-bullet) {
+            display: flex;
+            flex-direction: row;
+            column-gap: 1rem;
+
+            &::before {
+                display: block;
+                counter-increment: index;
+                content: counter(index) ". ";
+            }
         }
     }
 

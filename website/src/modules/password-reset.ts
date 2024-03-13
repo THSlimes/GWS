@@ -32,8 +32,8 @@ Loading.onDOMContentLoaded()
                     SEND_EMAIL_BUTTON.disabled = false;
                 });
             }
-            else showError("Opgegeven email-adres is ongeldig."); // email invalid
+            else showError("Opgegeven e-mailadres is ongeldig."); // email invalid
         }
-        else showError("Vul eerst je email-adres in."); // email empty
+        else showError("Vul eerst je e-mailadres in."); // email empty
     });
 });

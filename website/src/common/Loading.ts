@@ -1,3 +1,11 @@
+import ObjectUtil from "./util/ObjectUtil";
+import { Class } from "./util/UtilTypes";
+
+type ElementIDQuery = { [id:string]: Class<HTMLElement> };
+type ResolvedElementIDQuery<Query extends ElementIDQuery> = {
+    [ID in keyof Query]: InstanceType<Query[ID]>
+};
+
 export default abstract class Loading {
 
     private constructor() {} // prevent extension
@@ -47,10 +55,26 @@ export default abstract class Loading {
             this.markLoadEnd(window);
         });
     }
-    public static onDOMContentLoaded() {
-        return new Promise<void>(resolve => {
-            if (this.DOMContentLoaded) resolve();
-            else window.addEventListener("DOMContentLoaded", () => resolve());
+
+    private static getElementsById<Query extends ElementIDQuery>(query:Query):ResolvedElementIDQuery<Query> {
+        const out:Record<string,Element> = {};
+        for (const id in query) {
+            const elem = document.getElementById(id);
+            if (elem === null) throw new Error(`no element with id "${id}" found`);
+            else if (!(elem instanceof query[id])) throw new Error(`element with id "${id}" exists, but is ${elem}, not ${query[id].name}`);
+            out[id] = elem;
+        }
+
+        return out as ResolvedElementIDQuery<Query>;
+    }
+    public static onDOMContentLoaded<Query extends ElementIDQuery>(query:Query = {} as Query):Promise<ResolvedElementIDQuery<Query>> {
+        return new Promise((resolve,reject) => {
+            if (this.DOMContentLoaded) try { resolve(this.getElementsById(query)); }
+                catch (err) { reject(err); }
+            else window.addEventListener("DOMContentLoaded", () => {
+                try { resolve(this.getElementsById(query)); }
+                catch (err) { reject(err); }
+            });
         });
     }
 

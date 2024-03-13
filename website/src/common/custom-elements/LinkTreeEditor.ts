@@ -237,7 +237,7 @@ class LinkEntry extends HTMLElement implements HasSections<"typeIcon">, LinkTree
         this.appendChild(
             ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
                 .children(
-                    this.typeIcon = ElementFactory.p(URLUtil.getLinkIcon(this.value || '/')).class("icon").make(),
+                    this.typeIcon = ElementFactory.p(URLUtil.getLinkIcon(this.value || '/')).class("type-icon", "icon").make(),
                     this.nameInput = ElementFactory.input.text(this.name)
                         .class("name-input")
                         .placeholder("Koppelingsnaam")
