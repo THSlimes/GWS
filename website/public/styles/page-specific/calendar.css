@@ -2,6 +2,11 @@
 
 @import url("../custom-elements/event-calendar.css");
 @import url("../custom-elements/icon-selector.css");
+@import url("../custom-elements/smart-article.css");
+
+article {
+    & .post-date, & .read-more { display: none; }
+}
 
 .content {
     /* outline: .5px solid red;

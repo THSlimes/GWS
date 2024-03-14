@@ -1,7 +1,9 @@
 @import url("../shared.css");
 @import url("../custom-elements/smart-article.css");
 
-article .post-date { display: none; }
+article {
+    & .post-date, & .read-more { display: none; }
+}
 
 #form {
     > h2 { width: 100%; }
@@ -34,4 +36,21 @@ article .post-date { display: none; }
 
     & #first-name, & #family-name { flex-grow: 1; }
     & #privacy-statement-link { color: var(--accent); }
+}
+
+@media (max-aspect-ratio: 3 / 4) {
+    #form {
+        row-gap: var(--section-gap-y);
+
+        > h2 { text-align: center; }
+        > .section.flexible {
+            flex-direction: column;
+            align-items: start;
+            gap: var(--in-section-gap);
+        }
+        & ul {
+            padding-left: var(--in-section-gap);
+            & input { flex-grow: 1; }
+        }
+    }
 }

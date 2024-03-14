@@ -9,15 +9,12 @@ import "./create-split-view";
 import Placeholder from "../common/custom-elements/Placeholder";
 import "../common/custom-elements/Switch";
 import MultisourceAttachment from "../common/custom-elements/MultisourceAttachment";
-import { onAuth } from "../common/firebase/init-firebase";
 
 const ARTICLE_ID = "Inschrijven-Den-Geitenwollen-Soc";
 const DB:ArticleDatabase = new FirestoreArticleDatabase();
 Loading.useDynamicContent(DB.getById(ARTICLE_ID), articleInfo => { // load article
     if (!articleInfo) console.error(`article with ID "${ARTICLE_ID}" was now found`);
-    else {
-        const article = Placeholder.replaceWith("article", new SmartArticle(articleInfo, "full"));
-    }
+    else Placeholder.replaceWith("article", new SmartArticle(articleInfo, "full"));
 });
 
 // get privacy statement link from storage
