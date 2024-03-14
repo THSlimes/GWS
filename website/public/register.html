@@ -23,14 +23,33 @@
             <div class="section flex-columns main-axis-space-between cross-axis-center section-gap">
                 <p class="section-name">Naam</p>
                 <div class="section flex-columns cross-axis-center in-section-gap flex-wrap">
-                    <input id="first-name" name="first-name" type="text" placeholder="Voornaam..." autocomplete="given-name" required>
+                    <input id="first-name" name="first-name" type="text" placeholder="Voornaam..." autocomplete="given-name" required invalid>
                     <input id="infix" type="text" placeholder="Tussenvoegsel..." size="10">
-                    <input id="family-name" name="family-name" type="text" placeholder="Achternaam..." autocomplete="family-name" required>
+                    <input id="family-name" name="family-name" type="text" placeholder="Achternaam..." autocomplete="family-name" required invalid>
                 </div>
             </div>
             <div class="section flex-columns main-axis-space-between cross-axis-center section-gap">
                 <p class="section-name">E-mailadres</p>
                 <input id="email" name="email" type="text" size="40" autocomplete="email" required invalid>
+            </div>
+            <div class="section flex-rows main-axis-space-between in-section-gap">
+                <p class="section-name">Account wachtwoord <span class="subtitle">(<span id="password-min-length" invalid>min. 8 karakters</span>, <span id="password-has-capital" invalid>hoofdletter</span>, <span id="password-has-number" invalid>een cijfer</span> en <span id="password-has-special-char" invalid>een speciaal teken</span>)</span></p>
+                <ul class="no-margin flex-rows in-section-gap">
+                    <li class="subsection flex-columns main-axis-space-between cross-axis-center section-gap">
+                        <p>Wachtwoord</p>
+                        <div class="flex-columns cross-axis-center in-section-gap">
+                            <input type="password" id="password" name="password" size="32" autocomplete="new-password" aria-autocomplete="list" invalid>
+                            <p id="show-password-button" class="icon no-margin click-action" can-unselect title="Wachtwoord tonen">visibility</p>
+                        </div>
+                    </li>
+                    <li class="subsection flex-columns main-axis-space-between cross-axis-center section-gap">
+                        <p>Herhaal wachtwoord</p>
+                        <div class="flex-columns cross-axis-center in-section-gap">
+                            <input type="password" id="confirm-password" name="confirm-password" size="32" autocomplete="new-password" aria-autocomplete="list" invalid>
+                            <p id="show-confirm-password-button" class="icon no-margin click-action" can-unselect title="Wachtwoord tonen">visibility</p>
+                        </div>
+                    </li>
+                </ul>
             </div>
             <div class="section flex-columns main-axis-space-between cross-axis-center section-gap">
                 <p class="section-name">Telefoonnummer</p>
@@ -106,7 +125,7 @@
                 <div class="flex-columns in-section-gap flex-wrap">
                     <input id="iban" name="iban" type="text" placeholder="IBAN..." size="34" required invalid>
                     <input id="bic" name="bic" type="text" placeholder="BIC..." size="11" required invalid>
-                    <input id="bank-account-name" name="bank-account-name" type="text" placeholder="Naam rekeninghouder..." autocomplete="cc-name" required>
+                    <input id="bank-account-name" name="bank-account-name" type="text" placeholder="Naam rekeninghouder..." autocomplete="cc-name" required invalid>
                 </div>
             </div>
             <div class="section flex-columns main-axis-space-between cross-axis-center section-gap">

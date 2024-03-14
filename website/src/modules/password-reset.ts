@@ -1,9 +1,10 @@
-import { getAuth, sendPasswordResetEmail } from "@firebase/auth";
+import { sendPasswordResetEmail } from "@firebase/auth";
 import Loading from "../common/Loading";
 import { showError, showSuccess } from "../common/ui/info-messages";
 import "./header-and-footer";
 import getErrorMessage from "../common/firebase/authentication/error-messages";
 import { redirectIfLoggedIn } from "../common/firebase/authentication/auth-based-redirect";
+import { FIREBASE_AUTH } from "../common/firebase/init-firebase";
 
 redirectIfLoggedIn("/", true); // can't log in when already logged in
 
@@ -22,7 +23,7 @@ Loading.onDOMContentLoaded()
         if (email) {
             if (EMAIL_REGEX.test(email)) {
                 SEND_EMAIL_BUTTON.disabled = true;
-                sendPasswordResetEmail(getAuth(), email)
+                sendPasswordResetEmail(FIREBASE_AUTH, email)
                 .then(() => {
                     showSuccess("De email is verstuurd. Check voor de zekerheid ook je spam-box.", 5000);
                     setTimeout(() => location.href = "./login.html", 5000);

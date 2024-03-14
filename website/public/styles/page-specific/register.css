@@ -29,6 +29,7 @@ article .post-date { display: none; }
             outline-color: var(--indicate-bad);
             border-color: var(--indicate-bad) !important;
         }
+        & span[invalid] { color: var(--indicate-bad); }
     }
 
     & #first-name, & #family-name { flex-grow: 1; }

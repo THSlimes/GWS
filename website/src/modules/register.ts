@@ -9,6 +9,7 @@ import "./create-split-view";
 import Placeholder from "../common/custom-elements/Placeholder";
 import "../common/custom-elements/Switch";
 import MultisourceAttachment from "../common/custom-elements/MultisourceAttachment";
+import { onAuth } from "../common/firebase/init-firebase";
 
 const ARTICLE_ID = "Inschrijven-Den-Geitenwollen-Soc";
 const DB:ArticleDatabase = new FirestoreArticleDatabase();
@@ -26,6 +27,7 @@ Loading.useDynamicContent(MultisourceAttachment.getInfoFromFirebase("openbaar", 
 });
 
 
+const LEGAL_NAME_REGEX:RegExp = /^[A-Za-zÀ-öø-ȳ\.]+([ \-`'\/,][A-Za-zÀ-öø-ȳ\.]+)*$/;
 
 /** @see https://stackoverflow.com/questions/46155/how-can-i-validate-an-email-address-in-javascript */
 const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -35,13 +37,72 @@ MAX_BIRTH_DATE.setFullYear(MAX_BIRTH_DATE.getFullYear()-18);
 
 const NUMBER_REGEX = /[0-9]+/;
 
-const BIC_REGEX = /^[A-Z]{4}[A-Z]{2}[0-9A-Z]{2}([0-9A-Z]{3}){0,1}$/;
+const BIC_REGEX = /^[A-Z]{4}[A-Z]{2}[0-9A-Z]{2}([0-9A-Z]{3})?$/;
 
-Loading.onDOMContentLoaded({ "email": HTMLInputElement, "birth-date": HTMLInputElement, "student-number": HTMLInputElement, "iban": HTMLInputElement, "bic":HTMLInputElement })
+Loading.onDOMContentLoaded({
+    "first-name": HTMLInputElement,
+    "infix": HTMLInputElement,
+    "family-name": HTMLInputElement,
+    "email": HTMLInputElement,
+    "password": HTMLInputElement,
+    "password-min-length": HTMLSpanElement,
+    "password-has-capital": HTMLSpanElement,
+    "password-has-number": HTMLSpanElement,
+    "password-has-special-char": HTMLSpanElement,
+    "show-password-button": HTMLElement,
+    "confirm-password": HTMLInputElement,
+    "show-confirm-password-button": HTMLElement,
+    "birth-date": HTMLInputElement,
+    "student-number": HTMLInputElement,
+    "iban": HTMLInputElement,
+    "bic":HTMLInputElement,
+    "bank-account-name": HTMLInputElement
+})
 .then(elements => {
+    // show name validity
+    elements["first-name"].addEventListener("input", () => {
+        elements["first-name"].toggleAttribute("invalid", !LEGAL_NAME_REGEX.test(elements["first-name"].value.trim()))
+    });
+    elements["infix"].addEventListener("input", () => {
+        elements["infix"].toggleAttribute("invalid", !(LEGAL_NAME_REGEX.test(elements["infix"].value.trim()) && elements.infix.value.trim()))
+    });
+    elements["family-name"].addEventListener("input", () => {
+        elements["family-name"].toggleAttribute("invalid", !LEGAL_NAME_REGEX.test(elements["family-name"].value.trim()))
+    });
+
     // show email validity
     elements.email.addEventListener("input", () => {
         elements.email.toggleAttribute("invalid", !EMAIL_REGEX.test(elements.email.value));
+    });
+
+    // password validity
+    elements.password.addEventListener("input", () => {
+        const password = elements.password.value.trim();
+        const isMinLength = password.length >= 8;
+        elements["password-min-length"].toggleAttribute("invalid", !isMinLength);
+        const hasCapital = password.split("").some(c => /[A-ZÀ-öø-ȳ]/.test(c) && c === c.toLocaleUpperCase());
+        elements["password-has-capital"].toggleAttribute("invalid", !hasCapital);
+        const hasNumber = /[0-9]/.test(password);
+        elements["password-has-number"].toggleAttribute("invalid", !hasNumber);
+        const hasSpecialChar = !/^[a-zA-Z0-9]*$/.test(password);
+        elements["password-has-special-char"].toggleAttribute("invalid", !hasSpecialChar);
+
+        elements.password.toggleAttribute("invalid", [isMinLength, hasCapital, hasNumber, hasSpecialChar].some(req => !req));
+    });
+
+    // show password
+    elements["show-password-button"].addEventListener("click", () => {
+        elements.password.type = elements["show-password-button"].toggleAttribute("selected") ? "text" : "password";
+    });
+
+    // check password equality
+    elements["confirm-password"].addEventListener("input", () => {
+        elements["confirm-password"].toggleAttribute("invalid", elements["confirm-password"].value.trim() !== elements.password.value.trim());
+    });
+
+    // show confirmation password
+    elements["show-confirm-password-button"].addEventListener("click", () => {
+        elements["confirm-password"].type = elements["show-confirm-password-button"].toggleAttribute("selected") ? "text" : "password";
     });
 
     // members must be at least 18 years old
@@ -69,6 +130,11 @@ Loading.onDOMContentLoaded({ "email": HTMLInputElement, "birth-date": HTMLInputE
     elements.bic.addEventListener("input", () => {
         elements.bic.value = elements.bic.value.toUpperCase();
         elements.bic.toggleAttribute("invalid", !BIC_REGEX.test(elements.bic.value));
+    });
+
+    // check card holder name validity
+    elements["bank-account-name"].addEventListener("input", () => {
+        elements["bank-account-name"].toggleAttribute("invalid", !LEGAL_NAME_REGEX.test(elements["bank-account-name"].value.trim()));
     });
 })
 .catch(console.error);
