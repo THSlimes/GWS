@@ -52,7 +52,7 @@ export default abstract class UserDatabase extends Database<UserInfo> {
     abstract override get(options?:UserQueryFilter): Promise<UserInfo[]>;
     abstract override count(options?:UserQueryFilter): Promise<number>;
     abstract getByIds<S extends string>(...ids:S[]): Promise<{[id in S]?: UserInfo}>;
-    abstract override doWrite(...records: UserInfo[]): Promise<number>;
-    abstract override doDelete(...records: UserInfo[]): Promise<number>;
+    protected abstract override doWrite(...records: UserInfo[]): Promise<number>;
+    protected abstract override doDelete(...records: UserInfo[]): Promise<number>;
 
 }

@@ -10,7 +10,12 @@ import Placeholder from "../common/custom-elements/Placeholder";
 import "../common/custom-elements/Switch";
 import MultisourceAttachment from "../common/custom-elements/MultisourceAttachment";
 import Switch from "../common/custom-elements/Switch";
-import { showError } from "../common/ui/info-messages";
+import { showError, showSuccess } from "../common/ui/info-messages";
+import { FIREBASE_AUTH } from "../common/firebase/init-firebase";
+import { createUserWithEmailAndPassword, deleteUser, fetchSignInMethodsForEmail } from "@firebase/auth";
+import getErrorMessage from "../common/firebase/authentication/error-messages";
+import { FirestoreUserDatabase } from "../common/firebase/database/users/FirestoreUserDatabase";
+import UserDatabase, { UserInfo } from "../common/firebase/database/users/UserDatabase";
 
 // loading associated article
 const ARTICLE_ID = "Inschrijven-Den-Geitenwollen-Soc";
@@ -256,6 +261,8 @@ Loading.onDOMContentLoaded({
 .catch(console.error);
 
 
+
+const USER_DB:UserDatabase = new FirestoreUserDatabase();
 Loading.onDOMContentLoaded({ "submit-button": HTMLButtonElement })
 .then(elements => elements["submit-button"])
 .then(submitButton => {
@@ -264,8 +271,37 @@ Loading.onDOMContentLoaded({ "submit-button": HTMLButtonElement })
 
         const data = getFormData();
         const validity = getDataValidity(data);
-        if (validity.status) { // submit data
+        if (validity.status) { // data valid, submit
+            submitButton.disabled = true;
 
+            // create new user
+            createUserWithEmailAndPassword(FIREBASE_AUTH, data.email, data.password.password)
+            .then(userCred => userCred.user)
+            .then(user => {
+                // create new user entry in database
+                const userInfo = new UserInfo(
+                    user.uid,
+                    new Date(),
+                    new Date(1000, 0, 1, 0, 0, 0, 0),
+                    data.name.first_name,
+                    `${data.name.infix} ${data.name.family_name}`,
+                    []
+                );
+                USER_DB.write(userInfo)
+                .then(() => {
+                    showSuccess("Je account is aangemaakt. Welkom bij GWS!", 5000);
+                })
+                .catch(err => {
+                    showError(getErrorMessage(err));
+                    user.delete() // creation failed, delete user
+                    .then(() => console.log("user deleted"))
+                    .catch(() => console.log("uh oh"));
+                });
+            })
+            .catch(err => {
+                showError(getErrorMessage(err));
+                submitButton.disabled = false;
+            });
         }
         else showError(validity.message); // show error
     });
