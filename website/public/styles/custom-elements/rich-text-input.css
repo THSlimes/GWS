@@ -2,6 +2,8 @@
 
 @import url("../custom-elements/folder-element.css");
 @import url("../custom-elements/switch.css");
+@import url("../custom-elements/multisource-attachment.css");
+@import url("../custom-elements/multisource-image.css");
 
 rich-text-input {
     display: flex;

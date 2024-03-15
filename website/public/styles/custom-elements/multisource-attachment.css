@@ -1,5 +1,5 @@
 multisource-attachment {
-    padding: var(--in-section-gap) var(--min-section-gap);
+    padding: var(--in-section-gap) var(--min-section-gap) !important;
 
     width: max-content !important;
     flex-grow: unset !important;
