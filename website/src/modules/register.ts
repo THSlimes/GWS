@@ -10,6 +10,7 @@ import Placeholder from "../common/custom-elements/Placeholder";
 import "../common/custom-elements/Switch";
 import MultisourceAttachment from "../common/custom-elements/MultisourceAttachment";
 import Switch from "../common/custom-elements/Switch";
+import { showError } from "../common/ui/info-messages";
 
 // loading associated article
 const ARTICLE_ID = "Inschrijven-Den-Geitenwollen-Soc";
@@ -70,14 +71,14 @@ Loading.onDOMContentLoaded(FORM_INPUTS_QUERY)
 .then(elements => {
     getFormData = () => {
         return {
-            name: { first_name: elements["first-name"].value, infix: elements.infix.value, family_name: elements["family-name"].value },
-            email: elements.email.value,
-            password: { password: elements.password.value, confirmation: elements["confirm-password"].value },
-            phone_number: elements["phone-number"].value,
+            name: { first_name: elements["first-name"].value.trim(), infix: elements.infix.value.trim(), family_name: elements["family-name"].value.trim() },
+            email: elements.email.value.trim(),
+            password: { password: elements.password.value.trim(), confirmation: elements["confirm-password"].value.trim() },
+            phone_number: elements["phone-number"].value.trim(),
             birth_date: elements["birth-date"].valueAsDate,
-            study: elements.study.value,
-            student_number: elements.study.value,
-            bank_account: { iban: elements.iban.value, bic: elements.bic.value, holder: elements["bank-account-name"].value },
+            study: elements.study.value.trim(),
+            student_number: elements.study.value.trim(),
+            bank_account: { iban: elements.iban.value.trim(), bic: elements.bic.value.trim(), holder: elements["bank-account-name"].value.trim() },
             receive_news_letter: elements["receive-news-letter"].value,
             allow_social_media: { public: elements["allow-public-photos"].value, private: elements["allow-private-photos"].value },
             add_to_whatsapp: elements["add-to-whatsapp"].value,
@@ -123,7 +124,7 @@ const NUMBER_REGEX = /[0-9]+/;
 const BIC_REGEX = /^[A-Z]{4}[A-Z]{2}[0-9A-Z]{2}([0-9A-Z]{3})?$/;
 
 /** Check whether the registration form has been filled in correctly. */
-function getFormValidity(data:RegistrationFormData):{ status:boolean, components:RegistrationFormDataValidity, message:string } {
+function getDataValidity(data:RegistrationFormData):{ status:boolean, components:RegistrationFormDataValidity, message:string } {
     const password_is_min_length = data.password.password.length >= 8;
     const password_has_capital_letter = data.password.password.split("").some(c => /[A-ZÀ-öø-ȳ]/.test(c) && c === c.toLocaleUpperCase());
     const password_has_number = /[0-9]/.test(data.password.password);
@@ -132,7 +133,7 @@ function getFormValidity(data:RegistrationFormData):{ status:boolean, components
     const components:RegistrationFormDataValidity = {
         name: {
             first_name: data.name.first_name.length > 0 && LEGAL_NAME_REGEX.test(data.name.first_name),
-            infix: LEGAL_NAME_REGEX.test(data.name.infix),
+            infix: data.name.infix.length === 0 || LEGAL_NAME_REGEX.test(data.name.infix),
             family_name: data.name.family_name.length > 0 && LEGAL_NAME_REGEX.test(data.name.family_name)
         },
         email: data.email.length > 0 && EMAIL_REGEX.test(data.email),
@@ -161,11 +162,11 @@ function getFormValidity(data:RegistrationFormData):{ status:boolean, components
     };
 
     let message = "";
-
     if (!components.name.first_name) message = data.name.first_name ? "Voornaam is ongeldig." : "Voornaam is verplicht.";
     else if (!components.name.infix) message = "Tussenvoegsel is ongeldig.";
     else if (!components.name.family_name) message = data.name.family_name ? "Achternaam is ongeldig." : "Achternaam is verplicht.";
     else if (!components.email) message = data.email ? "E-mailadres is ongeldig." : "E-mailadres is verplicht.";
+    else if (!components.password.password && data.password.password.length === 0) message = "Wachtwoord is verplicht.";
     else if (!components.password.is_min_length) message = "Wachtwoord is niet lang genoeg.";
     else if (!components.password.has_capital_letter) message = "Wachtwoord moet een hoofdletter bevatten.";
     else if (!components.password.has_number) message = "Wachtwoord moet een cijfer bevatten.";
@@ -176,9 +177,9 @@ function getFormValidity(data:RegistrationFormData):{ status:boolean, components
     else if (!components.birth_date) message = data.birth_date !== null ? "Je moet minstens 18 jaar zijn om je via de website in te schrijven." : "Geboortedatum is verplicht.";
     else if (!components.study) message = "Studie is verplicht.";
     else if (!components.student_number) message = `Studentnummer moet met een "S" beginnen.`;
-    else if (!components.bank_account.iban) message = "IBAN is ongeldig.";
-    else if (!components.bank_account.bic) message = "BIC is ongeldig.";
-    else if (!components.bank_account.holder) message = "Naam van rekeninghouder is ongeldig.";
+    else if (!components.bank_account.iban) message = data.bank_account.iban ? "IBAN is ongeldig." : "IBAN is verplicht.";
+    else if (!components.bank_account.bic) message = data.bank_account.bic ? "BIC is ongeldig." : "BIC is verplicht.";
+    else if (!components.bank_account.holder) message = data.bank_account.holder ? "Naam van rekeninghouder is ongeldig." : "Naam van rekeninghouder is verplicht.";
     else if (!components.add_to_whatsapp && data.add_to_whatsapp) message = "Geef een nummer om toe te voegen aan de Whatsapp groep.";
     else if (!data.accept_privacy_statement) message = "Je moet met het privacy statement akkoord gaan om je in te kunnen schrijven.";
     else if (!data.allow_auto_transactions) message = "Je moet met de automatische incasso's akkoord gaan om je in te kunnen schrijven.";
@@ -193,9 +194,20 @@ Loading.onDOMContentLoaded({
     "password-min-length": HTMLSpanElement,
     "password-has-capital": HTMLSpanElement,
     "password-has-number": HTMLSpanElement,
-    "password-has-special-char": HTMLSpanElement
+    "password-has-special-char": HTMLSpanElement,
+    "show-password-button": HTMLElement,
+    "show-confirm-password-button": HTMLElement
 })
 .then(elements => {
+    // show password buttons
+    elements["show-password-button"].addEventListener("click", () => {
+        elements.password.type = elements["show-password-button"].toggleAttribute("selected") ? "text" : "password";
+    });
+    elements["show-confirm-password-button"].addEventListener("click", () => {
+        elements["confirm-password"].type = elements["show-confirm-password-button"].toggleAttribute("selected") ? "text" : "password";
+    });
+
+
     // members must be at least 18 years old
     let max = MAX_BIRTH_DATE.toISOString();
     max = max.substring(0, max.indexOf('T'));
@@ -214,8 +226,8 @@ Loading.onDOMContentLoaded({
         elements["student-number"].value = 'S' + oldValue.split("").filter(c => NUMBER_REGEX.test(c)).join("");
     });
 
-    elements.form.addEventListener("input", () => {
-        const components = getFormValidity(getFormData()).components;
+    const showValidity = () => {
+        const components = getDataValidity(getFormData()).components;
 
         elements["first-name"].toggleAttribute("invalid", !components.name.first_name);
         elements.infix.toggleAttribute("invalid", !components.name.infix);
@@ -237,6 +249,25 @@ Loading.onDOMContentLoaded({
         elements.iban.toggleAttribute("invalid", !components.bank_account.iban);
         elements.bic.toggleAttribute("invalid", !components.bank_account.bic);
         elements["bank-account-name"].toggleAttribute("invalid", !components.bank_account.holder);
+    };
+    elements.form.addEventListener("input", showValidity);
+    elements.form.addEventListener("change", showValidity);
+})
+.catch(console.error);
+
+
+Loading.onDOMContentLoaded({ "submit-button": HTMLButtonElement })
+.then(elements => elements["submit-button"])
+.then(submitButton => {
+    submitButton.addEventListener("click", ev => {
+        ev.preventDefault();
+
+        const data = getFormData();
+        const validity = getDataValidity(data);
+        if (validity.status) { // submit data
+
+        }
+        else showError(validity.message); // show error
     });
 })
 .catch(console.error);

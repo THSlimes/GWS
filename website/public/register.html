@@ -38,14 +38,14 @@
                     <li class="subsection flex-columns main-axis-space-between cross-axis-center section-gap">
                         <p>Wachtwoord</p>
                         <div class="flex-columns cross-axis-center in-section-gap">
-                            <input type="password" id="password" name="password" autocomplete="new-password" aria-autocomplete="list" invalid>
+                            <input type="password" id="password" name="password" autocomplete="off" required>
                             <p id="show-password-button" class="icon no-margin click-action" can-unselect title="Wachtwoord tonen">visibility</p>
                         </div>
                     </li>
                     <li class="subsection flex-columns main-axis-space-between cross-axis-center section-gap">
                         <p>Herhaal wachtwoord</p>
                         <div class="flex-columns cross-axis-center in-section-gap">
-                            <input type="password" id="confirm-password" name="confirm-password" autocomplete="new-password" aria-autocomplete="list" invalid>
+                            <input type="password" id="confirm-password" name="confirm-password" autocomplete="off" invalid>
                             <p id="show-confirm-password-button" class="icon no-margin click-action" can-unselect title="Wachtwoord tonen">visibility</p>
                         </div>
                     </li>
@@ -125,7 +125,7 @@
                 <div class="flex-columns in-section-gap flex-wrap">
                     <input id="iban" name="iban" type="text" placeholder="IBAN..." size="34" required invalid>
                     <input id="bic" name="bic" type="text" placeholder="BIC..." size="11" required invalid>
-                    <input id="bank-account-name" name="bank-account-name" type="text" placeholder="Naam rekeninghouder..." autocomplete="cc-name" required invalid>
+                    <input id="bank-account-name" name="bank-account-name" type="text" placeholder="Naam rekeninghouder..." autocomplete="off" required invalid>
                 </div>
             </div>
             <div class="section flex-columns main-axis-space-between cross-axis-center section-gap">
