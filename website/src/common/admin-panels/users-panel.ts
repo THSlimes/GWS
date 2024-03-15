@@ -7,7 +7,7 @@ import { UserInfo } from "../firebase/database/users/UserDatabase";
 import { onAuth } from "../firebase/init-firebase";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import Responsive from "../ui/Responsive";
-import { showError, showSuccess } from "../ui/info-messages";
+import UserFeedback from "../ui/UserFeedback";
 import ArrayUtil from "../util/ArrayUtil";
 import ColorUtil from "../util/ColorUtil";
 import DateUtil from "../util/DateUtil";
@@ -106,10 +106,10 @@ function makeUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, canE
     out.prepend( // id copier
         ElementFactory.iconButton("content_copy", () => {
             navigator.clipboard.writeText(userEntry.get("id"))
-            .then(() => showSuccess("Account ID gekopieerd."))
+            .then(() => UserFeedback.success("Account ID gekopieerd."))
             .catch(err => {
                 console.log(err);
-                showError("Kopiëren mislukt, probeer het later opnieuw.");
+                UserFeedback.error("Kopiëren mislukt, probeer het later opnieuw.");
             });
         }, "Kopieer account-ID").class("id", "text-center").make()
     );
@@ -200,9 +200,9 @@ export function initUsersPanel() {
             USERS_DV.save()
             .then(() => {
                 usersSaveButton.disabled = true;
-                showSuccess("Wijzigingen opgeslagen!");
+                UserFeedback.success("Wijzigingen opgeslagen!");
             })
-            .catch(err => showError(getErrorMessage(err)));
+            .catch(err => UserFeedback.error(getErrorMessage(err)));
         });
         
         initializedUsersPanel = true;

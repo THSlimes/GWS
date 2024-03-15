@@ -1,4 +1,5 @@
-import ObjectUtil from "./util/ObjectUtil";
+import Cache from "./Cache";
+import UserFeedback from "./ui/UserFeedback";
 import { Class } from "./util/UtilTypes";
 
 type ElementIDQuery = { [id:string]: Class<HTMLElement> };
@@ -87,6 +88,30 @@ export default abstract class Loading {
             this.markLoadEnd(dynContentPromise);
         })
         .catch(console.error);
+    }
+
+    static {
+        this.onDOMContentLoaded()
+        .then(() => {
+            const msgData = Cache.get("relayed-message");
+            if (msgData) {
+                switch (msgData.type) {
+                    case UserFeedback.MessageType.INFO:
+                        UserFeedback.info(msgData.content, msgData.lifetime);
+                        break;
+                    case UserFeedback.MessageType.SUCCESS:
+                        UserFeedback.success(msgData.content, msgData.lifetime);
+                        break;
+                    case UserFeedback.MessageType.WARNING:
+                        UserFeedback.warning(msgData.content, msgData.lifetime);
+                        break;
+                    case UserFeedback.MessageType.ERROR:
+                        UserFeedback.error(msgData.content, msgData.lifetime);
+                        break;
+                }
+                Cache.remove("relayed-message");
+            }
+        });
     }
 
 }

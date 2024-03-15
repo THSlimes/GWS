@@ -1,5 +1,6 @@
 import Permissions from "./firebase/database/Permissions";
 import { ImagedLink, LinkTree } from "./firebase/database/settings/SettingsDatabase";
+import UserFeedback from "./ui/UserFeedback";
 
 type CacheKeyMap = {
     "navbar-links": LinkTree,
@@ -7,6 +8,7 @@ type CacheKeyMap = {
     "social-media-links": ImagedLink[],
     "is-logged-in": true,
     "own-id": string,
+    "relayed-message": UserFeedback.MessageData,
     [key:`permissions-${string}`]: Permissions.Permission[]
 };
 type CacheKey = keyof CacheKeyMap;

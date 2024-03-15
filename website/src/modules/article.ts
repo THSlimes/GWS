@@ -8,6 +8,7 @@ import { runOnErrorCode } from "../common/firebase/authentication/error-messages
 import URLUtil from "../common/util/URLUtil";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
 import Loading from "../common/Loading";
+import UserFeedback from "../common/ui/UserFeedback";
 
 /** Creates the link to an article given its ID. */
 export function articleLink(id: string) { return `/article.html?id=${id}`; }
@@ -57,6 +58,9 @@ else window.addEventListener("DOMContentLoaded", () => {
         }
         else window.location.replace('/'); // no such article found, go to homepage
     })
-    .catch(runOnErrorCode("permission-denied", () => location.replace(URLUtil.createLinkBackURL("/login.html", location.href))))
+    .catch(runOnErrorCode("permission-denied", () => {
+        location.replace(URLUtil.createLinkBackURL("/login.html", location.href));
+        UserFeedback.relayError("Dat artikel is alleen zichtbaar voor leden.");
+    }))
     .finally(() => Loading.markLoadEnd(window));
 });

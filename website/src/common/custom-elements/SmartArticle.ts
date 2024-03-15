@@ -1,15 +1,15 @@
 import getErrorMessage from "../firebase/authentication/error-messages";
-import { checkPermissions, onPermissionCheck } from "../firebase/authentication/permission-based-redirect";
+import { onPermissionCheck } from "../firebase/authentication/permission-based-redirect";
 import Permissions from "../firebase/database/Permissions";
 import ArticleDatabase, { ArticleInfo } from "../firebase/database/articles/ArticleDatabase";
 import ElementFactory from "../html-element-factory/ElementFactory";
-import { showError, showMessage, showSuccess, showWarning } from "../ui/info-messages";
 import DateUtil from "../util/DateUtil";
 import { HasSections } from "../util/UtilTypes";
 import NodeUtil from "../util/NodeUtil";
 import Switch from "./Switch";
 import RichTextInput from "./rich-text/RichTextInput";
 import RichTextSerializer from "./rich-text/RichTextSerializer";
+import UserFeedback from "../ui/UserFeedback";
 
 export type ArticleLOD = "full" | "medium" | "low";
 
@@ -121,10 +121,10 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
                         if (self.hasAttribute("awaiting-confirmation")) {
                             this.article.sourceDB.delete(this.article)
                             .then(() => {
-                                showSuccess("Bericht succesvol verwijderd.");
+                                UserFeedback.success("Bericht succesvol verwijderd.");
                                 location.href = '/'; // go to homepage
                             })
-                            .catch(err => showError(getErrorMessage(err)));
+                            .catch(err => UserFeedback.error(getErrorMessage(err)));
                         }
                         else {
                             self.textContent = "delete_forever";
@@ -132,7 +132,7 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
                             self.setAttribute("awaiting-confirmation", "");
                             self.classList.add("pulsate-in");
 
-                            showWarning("Zeker weten? Een bericht verwijderen kan niet worden teruggedraaid!", 5000);
+                            UserFeedback.warning("Zeker weten? Een bericht verwijderen kan niet worden teruggedraaid!", 5000);
                             setTimeout(() => {
                                 self.textContent = "delete";
                                 self.title = "Bericht verwijderen";
@@ -151,8 +151,8 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
                             navigator.share({ url, title: `GWS Bericht - ${this.article.heading}` });
                         }
                         else navigator.clipboard.writeText(url)
-                            .then(() => showSuccess("Link gekopieerd!"))
-                            .catch(() => showError("Kan link niet kopiëren, probeer het later opnieuw."));
+                            .then(() => UserFeedback.success("Link gekopieerd!"))
+                            .catch(() => UserFeedback.error("Kan link niet kopiëren, probeer het later opnieuw."));
                     })
             )
             .make();
@@ -267,10 +267,8 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
                         .class("icon", "click-action")
                         .tooltip("Wijzigingen opslaan")
                         .on("click", (ev, self) => {
-                            if (!this.heading.value.trim()) showError("Koptitel is leeg.");
-                            else {
+                            if (!this.heading.value.trim()) UserFeedback.error("Koptitel is leeg.");
 
-                            }
                             const heading = this.heading.value.trim();
                             const idPromise = this.saveAsNew ?
                                 EditableSmartArticle.findFreeId(this.article.sourceDB, heading) :
@@ -290,14 +288,14 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
 
                                 this.article.sourceDB.write(newArticle)
                                 .then(() => {
-                                    showSuccess("Wijzigingen opgeslagen!");
+                                    UserFeedback.success("Wijzigingen opgeslagen!");
                                     this.onSave(newArticle);
                                     this.replaceWith(new SmartArticle(newArticle, this.lod));
                                 })
-                                .catch(err => showError(getErrorMessage(err)));
+                                .catch(err => UserFeedback.error(getErrorMessage(err)));
 
                             })
-                            .catch(err => showError(getErrorMessage(err)));
+                            .catch(err => UserFeedback.error(getErrorMessage(err)));
                         })
                         .make(),
                     ElementFactory.p("backspace")

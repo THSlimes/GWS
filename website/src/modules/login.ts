@@ -2,7 +2,6 @@ import "./header-and-footer";
 
 import { UserCredential, browserLocalPersistence, browserSessionPersistence, signInWithEmailAndPassword } from "@firebase/auth";
 import { FIREBASE_AUTH } from "../common/firebase/init-firebase";
-import { showError, showWarning } from "../common/ui/info-messages";
 import getErrorMessage from "../common/firebase/authentication/error-messages";
 import { redirectIfLoggedIn } from "../common/firebase/authentication/auth-based-redirect";
 import Cache from "../common/Cache";
@@ -10,6 +9,7 @@ import URLUtil from "../common/util/URLUtil";
 import Loading from "../common/Loading";
 import Placeholder from "../common/custom-elements/Placeholder";
 import makePhotoCarousel from "../common/ui/photo-carousel";
+import UserFeedback from "../common/ui/UserFeedback";
 
 redirectIfLoggedIn("/", true); // can't log in when already logged in
 
@@ -50,8 +50,8 @@ Loading.onDOMContentLoaded()
         const email = EMAIL_INPUT.value.trim();
         const password = PASSWORD_INPUT.value.trim();
 
-        if (!email) showWarning("Vul een e-mailadres in.");
-        else if (!password) showWarning("Vul een wachtwoord in.")
+        if (!email) UserFeedback.warning("Vul een e-mailadres in.");
+        else if (!password) UserFeedback.warning("Vul een wachtwoord in.")
         else {
             // prevent login spam
             LOGIN_BUTTON.disabled = true;
@@ -65,9 +65,9 @@ Loading.onDOMContentLoaded()
                     if (returnUrl !== null && URLUtil.isLocal(returnUrl)) location.replace(returnUrl);
                     else location.href = '/';
                 }) // redirect to homepage
-                .catch(() => showError("Er ging iets mis, probeer het later opnieuw."));
+                .catch(() => UserFeedback.error("Er ging iets mis, probeer het later opnieuw."));
             })
-            .catch(err => showError(getErrorMessage(err)))
+            .catch(err => UserFeedback.error(getErrorMessage(err)))
             .finally(() => {
                 setTimeout(() => LOGIN_BUTTON.disabled = false, 1000);
             });

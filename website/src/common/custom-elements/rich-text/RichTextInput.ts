@@ -1,5 +1,4 @@
 import TextStyling, { StyleTagClassName } from "./TextStyling";
-import { showError } from "../../ui/info-messages";
 import ArrayUtil from "../../util/ArrayUtil";
 import ColorUtil from "../../util/ColorUtil";
 import ElementUtil from "../../util/ElementUtil";
@@ -14,6 +13,7 @@ import MultisourceAttachment, { AttachmentOrigin } from "../MultisourceAttachmen
 import MultisourceImage from "../MultisourceImage";
 import Switch from "../Switch";
 import ElementFactory from "../../html-element-factory/ElementFactory";
+import UserFeedback from "../../ui/UserFeedback";
 
 /** [parent Node, "before child" index] tuple */
 type InsertionPosition = [Node, number];
@@ -635,10 +635,10 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                     )
                     .children(
                         !exclude.includes("event-calendar") && ElementFactory.iconButton("calendar_month", () => {
-                            showError("Niet geïmplementeerd.");
+                            UserFeedback.error("Niet geïmplementeerd.");
                         }, "Activiteiten-kalender toevoegen"),
                         !exclude.includes("event-note") && ElementFactory.iconButton("sticky_note_2", () => {
-                            showError("Niet geïmplementeerd.");
+                            UserFeedback.error("Niet geïmplementeerd.");
                         }, "Activiteit toevoegen")
                     )
             ).make();

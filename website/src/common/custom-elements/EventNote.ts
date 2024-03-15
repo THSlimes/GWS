@@ -1,5 +1,4 @@
 import { EventComment, EventInfo, RegisterableEventInfo } from "../firebase/database/events/EventDatabase";
-import { showError, showSuccess, showWarning } from "../ui/info-messages";
 import { HasSections } from "../util/UtilTypes";
 import ColorUtil from "../util/ColorUtil";
 import { onPermissionCheck } from "../firebase/authentication/permission-based-redirect";
@@ -18,6 +17,7 @@ import ObjectUtil from "../util/ObjectUtil";
 import URLUtil from "../util/URLUtil";
 import Switch from "./Switch";
 import Responsive from "../ui/Responsive";
+import UserFeedback from "../ui/UserFeedback";
 
 export type EventNoteSectionName = "name" | "timespan" | "description" | "quickActions";
 export class EventNote extends HTMLElement implements HasSections<EventNoteSectionName> {
@@ -134,14 +134,14 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
                     EventNote.CAN_DELETE && ElementFactory.iconButton("delete", (_, self) => {
                             if (self.hasAttribute("awaiting-confirmation")) this.event.sourceDB.delete(this.event)
                                 .then(() => {
-                                    showSuccess("Activiteit is succesvol verwijderd.");
+                                    UserFeedback.success("Activiteit is succesvol verwijderd.");
                                     EventCalendar.closeFullscreenNote();
                                 })
-                                .catch(() => showError("Kon activiteit niet verwijderen, probeer het later opnieuw."));
+                                .catch(() => UserFeedback.error("Kon activiteit niet verwijderen, probeer het later opnieuw."));
                             else {
                                 self.toggleAttribute("awaiting-confirmation", true);
                                 self.textContent = "delete_forever";
-                                showWarning("Weet je het zeker? Een activiteit verwijderen kan niet worden teruggedraaid.", 3000);
+                                UserFeedback.warning("Weet je het zeker? Een activiteit verwijderen kan niet worden teruggedraaid.", 3000);
                                 setTimeout(() => {
                                     self.removeAttribute("awaiting-confirmation");
                                     self.textContent = "delete";
@@ -155,8 +155,8 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
                             const shareData:ShareData = { url, title: `GWS Activiteit - ${this.event.name}` };
                             if (navigator.canShare(shareData)) navigator.share(shareData); // share
                             else navigator.clipboard.writeText(url) // can't share, copy to clipboard
-                                .then(() => showSuccess("Link gekopieerd!"))
-                                .catch(() => showError("Kan link niet kopiëren, probeer het later opnieuw."));
+                                .then(() => UserFeedback.success("Link gekopieerd!"))
+                                .catch(() => UserFeedback.error("Kan link niet kopiëren, probeer het later opnieuw."));
                         }, "Delen"),
                     ElementFactory.iconButton("close", () => EventCalendar.closeFullscreenNote()),
                 )
@@ -383,11 +383,11 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
 
                         this.event.sourceDB.write(newEvent)
                         .then(() => {
-                            showSuccess("Activiteit is succesvol bijgewerkt.");
+                            UserFeedback.success("Activiteit is succesvol bijgewerkt.");
                             for (const handler of this.onSaveHandlers) handler(this);
                             this.replaceWithOriginal(newEvent);
                         })
-                        .catch(err => showError(getErrorMessage(err)));
+                        .catch(err => UserFeedback.error(getErrorMessage(err)));
                     }, this.saveAsNew ? "Activiteit toevoegen" : "Aanpassingen opslaan").make(),
                     !this.saveAsNew && ElementFactory.iconButton("backspace", () => this.replaceWithOriginal(), "Annuleren")
                         .class("cancel-edit-button")
@@ -512,8 +512,8 @@ export default class RegisterableEventNote extends EventNote implements HasSecti
                                             .children(
                                                 ElementFactory.p(name).class("no-margin"),
                                                 (id in comments) && ElementFactory.iconButton("comment", () => navigator.clipboard.writeText(commentText)
-                                                    .then(() => showSuccess("Opmerking gekopieerd."))
-                                                    .catch(() => showError("Kon opmerking niet kopiëren, probeer het later opnieuw."))
+                                                    .then(() => UserFeedback.success("Opmerking gekopieerd."))
+                                                    .catch(() => UserFeedback.error("Kon opmerking niet kopiëren, probeer het later opnieuw."))
                                                 )
                                                 .class("comment")
                                                 .tooltip(commentText)
@@ -589,12 +589,12 @@ export default class RegisterableEventNote extends EventNote implements HasSecti
                             if (!user) location.href = URLUtil.createLinkBackURL("./login.html").toString(); // must log in to register
                             else this.event.toggleRegistered(user.uid, this.commentBox.value)
                                 .then(isReg => {
-                                    showSuccess(`Je bent succesvol ${isReg ? "ingeschreven" : "uitgeschreven"}.`);
+                                    UserFeedback.success(`Je bent succesvol ${isReg ? "ingeschreven" : "uitgeschreven"}.`);
                                     this.refreshRegistrationDetails();
                                 })
-                                .catch(err => showError(getErrorMessage(err)));
+                                .catch(err => UserFeedback.error(getErrorMessage(err)));
                         })
-                        .catch(err => showError(getErrorMessage(err)))
+                        .catch(err => UserFeedback.error(getErrorMessage(err)))
                     )
                     .class("register-button")
                     .attr("no-select")

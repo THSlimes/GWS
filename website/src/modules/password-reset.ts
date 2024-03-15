@@ -1,10 +1,10 @@
 import { sendPasswordResetEmail } from "@firebase/auth";
 import Loading from "../common/Loading";
-import { showError, showSuccess } from "../common/ui/info-messages";
 import "./header-and-footer";
 import getErrorMessage from "../common/firebase/authentication/error-messages";
 import { redirectIfLoggedIn } from "../common/firebase/authentication/auth-based-redirect";
 import { FIREBASE_AUTH } from "../common/firebase/init-firebase";
+import UserFeedback from "../common/ui/UserFeedback";
 
 redirectIfLoggedIn("/", true); // can't log in when already logged in
 
@@ -25,16 +25,16 @@ Loading.onDOMContentLoaded()
                 SEND_EMAIL_BUTTON.disabled = true;
                 sendPasswordResetEmail(FIREBASE_AUTH, email)
                 .then(() => {
-                    showSuccess("De email is verstuurd. Check voor de zekerheid ook je spam-box.", 5000);
+                    UserFeedback.success("De email is verstuurd. Check voor de zekerheid ook je spam-box.", 5000);
                     setTimeout(() => location.href = "./login.html", 5000);
                 })
                 .catch(err => {
-                    showError(getErrorMessage(err));
+                    UserFeedback.error(getErrorMessage(err));
                     SEND_EMAIL_BUTTON.disabled = false;
                 });
             }
-            else showError("Opgegeven e-mailadres is ongeldig."); // email invalid
+            else UserFeedback.error("Opgegeven e-mailadres is ongeldig."); // email invalid
         }
-        else showError("Vul eerst je e-mailadres in."); // email empty
+        else UserFeedback.error("Vul eerst je e-mailadres in."); // email empty
     });
 });

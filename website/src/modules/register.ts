@@ -10,12 +10,12 @@ import Placeholder from "../common/custom-elements/Placeholder";
 import "../common/custom-elements/Switch";
 import MultisourceAttachment from "../common/custom-elements/MultisourceAttachment";
 import Switch from "../common/custom-elements/Switch";
-import { showError, showSuccess } from "../common/ui/info-messages";
 import { FIREBASE_AUTH } from "../common/firebase/init-firebase";
-import { createUserWithEmailAndPassword, deleteUser, fetchSignInMethodsForEmail } from "@firebase/auth";
+import { createUserWithEmailAndPassword } from "@firebase/auth";
 import getErrorMessage from "../common/firebase/authentication/error-messages";
 import { FirestoreUserDatabase } from "../common/firebase/database/users/FirestoreUserDatabase";
 import UserDatabase, { UserInfo } from "../common/firebase/database/users/UserDatabase";
+import UserFeedback from "../common/ui/UserFeedback";
 
 // loading associated article
 const ARTICLE_ID = "Inschrijven-Den-Geitenwollen-Soc";
@@ -282,28 +282,28 @@ Loading.onDOMContentLoaded({ "submit-button": HTMLButtonElement })
                 const userInfo = new UserInfo(
                     user.uid,
                     new Date(),
-                    new Date(1000, 0, 1, 0, 0, 0, 0),
+                    new Date(1000, 0, 1),
                     data.name.first_name,
                     `${data.name.infix} ${data.name.family_name}`,
                     []
                 );
                 USER_DB.write(userInfo)
                 .then(() => {
-                    showSuccess("Je account is aangemaakt. Welkom bij GWS!", 5000);
+                    UserFeedback.success("Je account is aangemaakt. Welkom bij GWS!", 5000, () => location.href = '/');
                 })
                 .catch(err => {
-                    showError(getErrorMessage(err));
-                    user.delete() // creation failed, delete user
-                    .then(() => console.log("user deleted"))
-                    .catch(() => console.log("uh oh"));
+                    UserFeedback.error(getErrorMessage(err));
+                    // creation failed, delete user
+                    user.delete().then(() => console.log("user deleted"));
+                    submitButton.disabled = false;
                 });
             })
             .catch(err => {
-                showError(getErrorMessage(err));
+                UserFeedback.error(getErrorMessage(err));
                 submitButton.disabled = false;
             });
         }
-        else showError(validity.message); // show error
+        else UserFeedback.error(validity.message); // show error
     });
 })
 .catch(console.error);

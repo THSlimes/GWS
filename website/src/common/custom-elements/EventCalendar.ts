@@ -9,11 +9,11 @@ import Responsive from "../ui/Responsive";
 import DateUtil from "../util/DateUtil";
 import ElementUtil from "../util/ElementUtil";
 import URLUtil from "../util/URLUtil";
-import { showError } from "../ui/info-messages";
 import getErrorMessage from "../firebase/authentication/error-messages";
 import NodeUtil from "../util/NodeUtil";
 import RegisterableEventNote from "./EventNote";
 import Loading from "../Loading";
+import UserFeedback from "../ui/UserFeedback";
 
 const DAY_ABBREVIATIONS = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
 
@@ -152,7 +152,7 @@ export default class EventCalendar extends HTMLElement {
         this._viewMode = viewMode;
         this.populate(this._lookingAt, this._viewMode);
 
-        Responsive.onChange(() => { // check if Viewport change should cause redraw            
+        Responsive.onChange(() => { // check if Viewport change should cause redraw
             if (this.dayCellContainer.hasAttribute("transpose") !== doTranspose(this.viewMode)) this.redraw();
         })
 
@@ -163,7 +163,7 @@ export default class EventCalendar extends HTMLElement {
                 if (ev) EventCalendar.expandNote(ev);
                 else console.warn(`no event with ID "${hashObj["looking-at"]}" found.`);
             })
-            .catch(err => showError(getErrorMessage(err)));
+            .catch(err => UserFeedback.error(getErrorMessage(err)));
     }
 
     private static createDayCell(cellDate:Date, viewDate:Date, viewMode:calendarViewMode, options:DayCellCreationOptions={}):DayCell {

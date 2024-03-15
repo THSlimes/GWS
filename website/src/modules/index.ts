@@ -14,6 +14,20 @@ import Permissions from "../common/firebase/database/Permissions";
 import ArticleList from "../common/custom-elements/ArticleList";
 import Loading from "../common/Loading";
 import makePhotoCarousel from "../common/ui/photo-carousel";
+import UserDatabase from "../common/firebase/database/users/UserDatabase";
+import { FirestoreUserDatabase } from "../common/firebase/database/users/FirestoreUserDatabase";
+import { onAuth } from "../common/firebase/init-firebase";
+import UserFeedback from "../common/ui/UserFeedback";
+
+
+const USER_DB:UserDatabase = new FirestoreUserDatabase();
+Loading.useDynamicContent(onAuth(), user => {
+    if (user) USER_DB.getById(user.uid)
+        .then(userInfo => {
+            if (userInfo?.permissions.length === 0) UserFeedback.warning("Je inschrijving moet eerst goedgekeurd worden voordat je toegang hebt tot alle artikelen en je je kan inschrijven voor activiteiten.");
+        });
+});
+
 
 Loading.useDynamicContent(makePhotoCarousel("Studievereniging Den Geitenwollen Soc."), carousel => {
     Placeholder.replaceWith("photo-carousel", carousel);

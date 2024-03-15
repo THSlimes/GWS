@@ -1,6 +1,6 @@
 import { LinkTree } from "../firebase/database/settings/SettingsDatabase";
 import ElementFactory from "../html-element-factory/ElementFactory";
-import { showWarning } from "../ui/info-messages";
+import UserFeedback from "../ui/UserFeedback";
 import NodeUtil from "../util/NodeUtil";
 import StringUtil from "../util/StringUtil";
 import URLUtil from "../util/URLUtil";
@@ -171,7 +171,7 @@ class NestedLinkTreeEditor extends LinkTreeEditor implements LinkTreeEntry<LinkT
                     this.removeButton = ElementFactory.iconButton("playlist_remove", (_, self) => {
                         if (self.hasAttribute("awaiting-confirmation")) this.remove();
                         else {
-                            showWarning("Zeker weten? Dit kan niet ongedaan gemaakt worden.", 5000);
+                            UserFeedback.warning("Zeker weten? Dit kan niet ongedaan gemaakt worden.", 5000);
                             self.toggleAttribute("awaiting-confirmation", true);
                             self.textContent = "playlist_add_check";
                             setTimeout(() => { // back to normal

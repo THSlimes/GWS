@@ -5,7 +5,7 @@ import LinkTreeEditor from "../custom-elements/LinkTreeEditor";
 import Placeholder from "../custom-elements/Placeholder";
 import getErrorMessage from "../firebase/authentication/error-messages";
 import FirestoreSettingsDatabase from "../firebase/database/settings/FirestoreSettingsDatabase";
-import { showError, showSuccess } from "../ui/info-messages";
+import UserFeedback from "../ui/UserFeedback";
 
 let initializedLinksPanel = false;
 const SETTINGS_DB = new FirestoreSettingsDatabase();
@@ -28,7 +28,7 @@ export function initLinksPanel() {
         .then(links => {
             NAVBAR_LINKS_EDITOR = Placeholder.replaceWith("navbar-links", LinkTreeEditor.fromLinkTree(links));
         })
-        .catch(err => showError(getErrorMessage(err)));
+        .catch(err => UserFeedback.error(getErrorMessage(err)));
 
         NAVBAR_LINKS_SAVE_BUTTON = document.getElementById("navbar-links-save-button") as HTMLButtonElement;
         NAVBAR_LINKS_SAVE_BUTTON.addEventListener("click", () => {
@@ -37,14 +37,14 @@ export function initLinksPanel() {
 
                 SETTINGS_DB.setNavbarLinks(newLinks)
                 .then(() => {
-                    showSuccess("Wijzigingen opgeslagen! Het kan even duren voordat anderen de wijzigingen zien.");
+                    UserFeedback.success("Wijzigingen opgeslagen! Het kan even duren voordat anderen de wijzigingen zien.");
                     Cache.remove("navbar-links"); // clear own cache
                 })
-                .catch(err => showError(err));
+                .catch(err => UserFeedback.error(err));
             }
             catch (err) {
-                if (err instanceof Error) showError(err.message);
-                else showError(getErrorMessage(err));
+                if (err instanceof Error) UserFeedback.error(err.message);
+                else UserFeedback.error(getErrorMessage(err));
             }
         });
 
@@ -53,7 +53,7 @@ export function initLinksPanel() {
         .then(links => {
             SPONSOR_LINKS_EDITOR = Placeholder.replaceWith("sponsor-links", new ImagedLinksEditor(links));
         })
-        .catch(err => showError(getErrorMessage(err)));
+        .catch(err => UserFeedback.error(getErrorMessage(err)));
 
         SPONSOR_LINKS_SAVE_BUTTON = document.getElementById("sponsor-links-save-button") as HTMLButtonElement;
         SPONSOR_LINKS_SAVE_BUTTON.addEventListener("click", () => {
@@ -62,14 +62,14 @@ export function initLinksPanel() {
 
                 SETTINGS_DB.setSponsorLinks(newLinks)
                 .then(() => {
-                    showSuccess("Wijzigingen opgeslagen! Het kan even duren voordat anderen de wijzigingen zien.");
+                    UserFeedback.success("Wijzigingen opgeslagen! Het kan even duren voordat anderen de wijzigingen zien.");
                     Cache.remove("sponsor-links"); // clear own cache
                 })
-                .catch(err => showError(err));
+                .catch(err => UserFeedback.error(err));
             }
             catch (err) {
-                if (err instanceof Error) showError(err.message);
-                else showError(getErrorMessage(err));
+                if (err instanceof Error) UserFeedback.error(err.message);
+                else UserFeedback.error(getErrorMessage(err));
             }
         });
 
@@ -78,7 +78,7 @@ export function initLinksPanel() {
         .then(links => {
             SOCIAL_MEDIA_LINKS_EDITOR = Placeholder.replaceWith("social-media-links", new ImagedLinksEditor(links));
         })
-        .catch(err => showError(getErrorMessage(err)));
+        .catch(err => UserFeedback.error(getErrorMessage(err)));
 
         SOCIAL_MEDIA_LINKS_SAVE_BUTTON = document.getElementById("social-media-links-save-button") as HTMLButtonElement;
         SOCIAL_MEDIA_LINKS_SAVE_BUTTON.addEventListener("click", () => {
@@ -87,14 +87,14 @@ export function initLinksPanel() {
 
                 SETTINGS_DB.setSocialMediaLinks(newLinks)
                 .then(() => {
-                    showSuccess("Wijzigingen opgeslagen! Het kan even duren voordat anderen de wijzigingen zien.");
+                    UserFeedback.success("Wijzigingen opgeslagen! Het kan even duren voordat anderen de wijzigingen zien.");
                     Cache.remove("social-media-links"); // clear own cache
                 })
-                .catch(err => showError(err));
+                .catch(err => UserFeedback.error(err));
             }
             catch (err) {
-                if (err instanceof Error) showError(err.message);
-                else showError(getErrorMessage(err));
+                if (err instanceof Error) UserFeedback.error(err.message);
+                else UserFeedback.error(getErrorMessage(err));
             }
         });
 
