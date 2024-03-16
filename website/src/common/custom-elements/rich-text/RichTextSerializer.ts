@@ -79,12 +79,6 @@ export default abstract class RichTextSerializer {
                             // append list elements
                             node.childNodes.forEach(childNode => out.append(...this.finalize(childNode)));
                             return [out];
-                        case "event-calendar":
-                            throw new Error("Not implemented");
-                            break;
-                        case "event-note":
-                            throw new Error("Not implemented");
-                            break;
                         case "newspaper":
                             out.setAttribute("src", node.getAttribute("src") ?? "");
                             out.classList.add("newspaper");

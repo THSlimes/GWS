@@ -95,11 +95,11 @@
     }
 
     > event-calendar {
-
+        width: 100%;
     }
     
     > event-note, > registerable-event-note {
-
+        width: 100%;
     }
 
     > iframe-container.newspaper {
