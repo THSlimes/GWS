@@ -2,8 +2,6 @@
 
 @import url("../custom-elements/folder-element.css");
 @import url("../custom-elements/switch.css");
-@import url("../custom-elements/multisource-attachment.css");
-@import url("../custom-elements/multisource-image.css");
 
 rich-text-input {
     display: flex;
@@ -122,6 +120,8 @@ rich-text-input {
                     font-weight: bold;
                     content: "Nieuwe " var(--type);
                 }
+
+                &[type="newspaper"] > .contents { min-height: 150vh; }
 
             }
 

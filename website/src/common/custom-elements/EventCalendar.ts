@@ -1,4 +1,3 @@
-import $ from "jquery";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import EventDatabase, { EventInfo, RegisterableEventInfo } from "../firebase/database/events/EventDatabase";
 import { EventNote } from "./EventNote";
@@ -14,6 +13,8 @@ import NodeUtil from "../util/NodeUtil";
 import RegisterableEventNote from "./EventNote";
 import Loading from "../Loading";
 import UserFeedback from "../ui/UserFeedback";
+import FirestoreEventDatebase from "../firebase/database/events/FirestoreEventDatabase";
+import EventDatabaseFactory from "../firebase/database/events/EventDatabaseFactory";
 
 const DAY_ABBREVIATIONS = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
 
@@ -28,12 +29,12 @@ function computeNonOverlappingOffsets(events:EventInfo[]) {
     events.forEach(e => {
         out[e.id] = 0;
         while (events.some(other => e !== other && e.daysOverlapsWith(other) && out[e.id] === out[other.id])) out[e.id]++;
-    }); // initialize
+    });
     
     return out;
 }
 
-function findMaxOverlap(date: Date, events: EventInfo[], offsets: Record<string, number>): number {
+function findMaxOverlap(date: Date, events: EventInfo[], offsets: Record<string, number>):number {
     let group = events.filter(e => DateUtil.Days.isBetween(date, e.starts_at, e.ends_at)); // seed group
 
     while (true) { // iterate
@@ -43,39 +44,58 @@ function findMaxOverlap(date: Date, events: EventInfo[], offsets: Record<string,
     }
 }
 
-function doTranspose(viewMode:calendarViewMode) {
-    return viewMode === "week" && Responsive.isSlimmerOrEq(Responsive.Viewport.DESKTOP_SLIM);
-}
 
-type calendarViewMode = "week" | "month" | "list";
-const DEFAULT_VIEWMODE:Record<Responsive.Viewport, calendarViewMode> = {
-    [Responsive.Viewport.DESKTOP]: "month",
-    [Responsive.Viewport.DESKTOP_SLIM]: "month",
-    [Responsive.Viewport.SQUARE]: "month",
-    [Responsive.Viewport.TABLET_PORTRAIT]: "week",
-    [Responsive.Viewport.MOBILE_PORTRAIT]: "week",
-    [Responsive.Viewport.VERY_THIN]: "list"
+
+
+
+enum Viewmode {
+    WEEK = "week",
+    MONTH = "month",
+    LIST = "list"
+}
+const DEFAULT_VIEWMODES:Record<Responsive.Viewport,Viewmode> = {
+    [Responsive.Viewport.DESKTOP]: Viewmode.MONTH,
+    [Responsive.Viewport.DESKTOP_SLIM]: Viewmode.MONTH,
+    [Responsive.Viewport.SQUARE]: Viewmode.MONTH,
+    [Responsive.Viewport.TABLET_PORTRAIT]: Viewmode.WEEK,
+    [Responsive.Viewport.MOBILE_PORTRAIT]: Viewmode.WEEK,
+    [Responsive.Viewport.VERY_THIN]: Viewmode.LIST
 };
-const VIEWMODE_LODS:Record<calendarViewMode, DetailLevel> = {
+const VIEWMODE_LODS:Record<Viewmode, DetailLevel> = {
     week: DetailLevel.MEDIUM,
     month: DetailLevel.MEDIUM,
     list: DetailLevel.MEDIUM
 };
 
-type calendarEvent = {};
-type DayCell = { element:HTMLDivElement, date:Date, events:calendarEvent[] };
-type DayCellTypes = "today" | "weekend" | "different-month";
-const DC_TYPE_DETECTORS:Record<DayCellTypes, (cellDate:Date, viewDate:Date) => boolean> = {
-    today: (cellDate, viewDate) => DateUtil.Days.isSame(new Date(), cellDate),
-    weekend: cellDate => cellDate.getDay() === 0 || cellDate.getDay() === 6,
-    "different-month": (cellDate, viewDate) => cellDate.getFullYear() !== viewDate.getFullYear() || cellDate.getMonth() !== viewDate.getMonth()
+type DayCell = { element:HTMLDivElement, date:Date, events:EventInfo[] };
+enum DayCellAttribute {
+    TODAY = "today",
+    WEEKEND = "weekend",
+    DIFFERENT_MONTH = "different-month"
+}
+const DC_TYPE_DETECTORS:Record<DayCellAttribute, (cellDate:Date, viewDate:Date) => boolean> = {
+    [DayCellAttribute.TODAY]: (cellDate, viewDate) => DateUtil.Days.isSame(new Date(), cellDate),
+    [DayCellAttribute.WEEKEND]: cellDate => cellDate.getDay() === 0 || cellDate.getDay() === 6,
+    [DayCellAttribute.DIFFERENT_MONTH]: (cellDate, viewDate) => cellDate.getFullYear() !== viewDate.getFullYear() || cellDate.getMonth() !== viewDate.getMonth()
 };
 type DayCellCreationOptions = {
-    markedTypes?: DayCellTypes[],
+    markedTypes?: DayCellAttribute[],
     gridArea?:[number,number,number,number]
 }
 
+
+
+/**
+ * An EventCalendar is a type of HTMLElement which allows users get an overview of
+ * upcoming and past events.
+ */
 export default class EventCalendar extends HTMLElement {
+
+    public static readonly Viewmode = Viewmode;
+
+    private static doTranspose(viewMode:Viewmode) {
+        return viewMode === "week" && Responsive.isSlimmerOrEq(Responsive.Viewport.DESKTOP_SLIM);
+    }
 
     private static FULLSCREEN_EVENT_CONTAINER = ElementFactory.div("fullscreen-event-container", "center-content").attr("hidden").make();
     static { // add container to body
@@ -95,24 +115,24 @@ export default class EventCalendar extends HTMLElement {
 
     public static expandNote(event:EventInfo|EventNote) {
         const fsNote = this.createNote(event, DetailLevel.FULL, true);
-        $(this.FULLSCREEN_EVENT_CONTAINER).empty().append(fsNote);
+        NodeUtil.empty(this.FULLSCREEN_EVENT_CONTAINER).appendChild(fsNote);
         this.FULLSCREEN_EVENT_CONTAINER.removeAttribute("hidden");
         document.body.classList.add("no-scroll");
 
-        location.hash = `looking-at=${fsNote.event.id}`;
+        location.hash = `id=${fsNote.event.id}`;
     }
 
     public static closeFullscreenNote() {
-        URLUtil.setHashProperty("looking-at", null);
+        URLUtil.setHashProperty("id", null);
         document.body.classList.remove("no-scroll");
-        this.FULLSCREEN_EVENT_CONTAINER.setAttribute("hidden", "");
+        this.FULLSCREEN_EVENT_CONTAINER.toggleAttribute("hidden", true);
     }
 
     private readonly db:CachingEventDatebase;
 
     private static readonly LIST_VIEW_INITIAL_TIMESPAN_DAYS = 30;
-    private _viewMode:calendarViewMode;
-    public set viewMode(newViewMode:calendarViewMode) {
+    private _viewMode:Viewmode;
+    public set viewMode(newViewMode:Viewmode) {
         if (this._viewMode !== newViewMode) {
             this._viewMode = newViewMode;
             this.redraw();
@@ -138,35 +158,37 @@ export default class EventCalendar extends HTMLElement {
     private static readonly LOAD_MORE_TIMESPAN_DAYS = 15;
     private scrollEventListener?:(e:Event)=>void;
 
-    constructor(db:EventDatabase, date=new Date(), viewMode:calendarViewMode=DEFAULT_VIEWMODE[Responsive.getCurrent()]) {
+    constructor(db:EventDatabase, lookingAt=new Date(), viewMode:Viewmode=DEFAULT_VIEWMODES[Responsive.getCurrent()]) {
         super();
 
-        this.db = db instanceof CachingEventDatebase ? db : new CachingEventDatebase(db);
+        const eventOrigin = ElementUtil.getAttrAs<EventDatabaseFactory.Origin>(this, "origin", v => Object.values(EventDatabaseFactory.Origin).includes(v as EventDatabaseFactory.Origin));
+        if (eventOrigin) this.db = new CachingEventDatebase(EventDatabaseFactory.fromOrigin(eventOrigin));
+        else this.db = db instanceof CachingEventDatebase ? db : new CachingEventDatebase(db);
         
         this.db.onWrite = () => this.redraw();
         this.db.onDelete = () => this.redraw();
 
         this.classList.add("flex-rows", "main-axis-start");
         
-        this._lookingAt = date;
-        this._viewMode = viewMode;
-        this.populate(this._lookingAt, this._viewMode);
+        this._lookingAt = new Date(ElementUtil.getAttrAs(this, "looking-at", dateStr => DateUtil.Timestamps.isValid(new Date(dateStr))) ?? lookingAt);
+        this._viewMode = ElementUtil.getAttrAs(this, "view-mode", v => Object.values(Viewmode).includes(v as Viewmode)) ?? viewMode;
+        this.redraw();
 
         Responsive.onChange(() => { // check if Viewport change should cause redraw
-            if (this.dayCellContainer.hasAttribute("transpose") !== doTranspose(this.viewMode)) this.redraw();
+            if (this.dayCellContainer.hasAttribute("transpose") !== EventCalendar.doTranspose(this.viewMode)) this.redraw();
         })
 
 
         const hashObj = URLUtil.getHashProperties();
-        if ("looking-at" in hashObj) this.db.getById(hashObj["looking-at"])
+        if ("id" in hashObj) this.db.getById(hashObj["id"])
             .then(ev => {
                 if (ev) EventCalendar.expandNote(ev);
-                else console.warn(`no event with ID "${hashObj["looking-at"]}" found.`);
+                else console.warn(`no event with ID "${hashObj["id"]}" found.`);
             })
             .catch(err => UserFeedback.error(getErrorMessage(err)));
     }
 
-    private static createDayCell(cellDate:Date, viewDate:Date, viewMode:calendarViewMode, options:DayCellCreationOptions={}):DayCell {
+    private static createDayCell(cellDate:Date, viewDate:Date, viewMode:Viewmode, options:DayCellCreationOptions={}):DayCell {
         return {
             element: ElementFactory.div()
             .class(
@@ -194,7 +216,7 @@ export default class EventCalendar extends HTMLElement {
         const [x,y] = [i % 7 + 1, Math.floor(i / 7) + 2];
         return [y, x, y+1, x+1];
     }
-    private static createDayCells(viewDate:Date, viewMode:calendarViewMode):DayCell[] {
+    private static createDayCells(viewDate:Date, viewMode:Viewmode):DayCell[] {
         let firstDate = new Date(viewDate);
         if (viewMode === "month") firstDate.setDate(1); // first day of month
         if (viewMode === "month" || viewMode === "week") firstDate = DateUtil.Days.firstBefore(firstDate, "Monday");
@@ -204,40 +226,40 @@ export default class EventCalendar extends HTMLElement {
                 gridArea: viewMode === "month" ?
                     this.indexToGridArea(i) :
                     viewMode === "week" ?
-                        doTranspose(viewMode) ?
+                        EventCalendar.doTranspose(viewMode) ?
                             [i+1, 2, i+2, 8] :
                             [2, i+1, 8, i+2] :
                         undefined,
-                markedTypes: viewMode === "month" ? ["today", "weekend", "different-month"] : ["today", "weekend"]
+                markedTypes: viewMode === "month" ? Object.values(DayCellAttribute) : [DayCellAttribute.TODAY, DayCellAttribute.WEEKEND]
             })
         );
     }
     private extendDayCells(dayCells:DayCell[], from:Date, to:Date, checkCount:"before"|"after"):Promise<[DayCell[],number]> {
         const extensionCells:DayCell[] = DateUtil.Days.getRange(from, to).map((d,i) => {
-            return EventCalendar.createDayCell(d, new Date(), "list", { markedTypes: ["today","weekend"] })
+            return EventCalendar.createDayCell(d, new Date(), EventCalendar.Viewmode.LIST, { markedTypes: [ DayCellAttribute.TODAY, DayCellAttribute.WEEKEND ] })
         });
         dayCells.unshift(...extensionCells);
 
         return new Promise((resolve,reject) => {
             Promise.all([this.db.getRange(from,to), this.db.count({range: checkCount === "before" ? {to} : {from}})])
             .then(([events, numLeft]) => {
-                this.insertEventNotes(events, extensionCells, "list");
+                this.insertEventNotes(events, extensionCells, EventCalendar.Viewmode.LIST);
                 resolve([extensionCells, numLeft]);
             })
             .catch(reject);
         });
     }
 
-    private populate(date:Date, viewMode:calendarViewMode) {
+    private populate(date:Date, viewMode:Viewmode) {
         Loading.markLoadStart(this);
 
         date = new Date(date); // use copy instead
         const dateCopy = new Date(date); // make copy for controls
 
-        $(this.controls).empty(); // clear controls
-        $(this.dayCellContainer).empty(); // clear grid
+        NodeUtil.empty(this.controls); // clear controls
+        NodeUtil.empty(this.dayCellContainer); // clear grid
         if (this.scrollEventListener) this.dayCellContainer.removeEventListener("scroll", this.scrollEventListener);
-        if (doTranspose(viewMode)) this.dayCellContainer.setAttribute("transpose", "");
+        if (EventCalendar.doTranspose(viewMode)) this.dayCellContainer.toggleAttribute("transpose", true);
         else this.dayCellContainer.removeAttribute("transpose");
 
         const newDays:DayCell[] = EventCalendar.createDayCells(date,viewMode);
@@ -248,9 +270,9 @@ export default class EventCalendar extends HTMLElement {
 
         // add viewmode controls
         const vmSelector = new IconSelector(
-            ["week", "calendar_view_week", "Week", viewMode === "week"],
-            ["month", "calendar_view_month", "Maand", viewMode === "month"],
-            ["list", "calendar_view_day", "Lijst", viewMode === "list"]
+            [EventCalendar.Viewmode.WEEK, "calendar_view_week", "Week", viewMode === "week"],
+            [EventCalendar.Viewmode.MONTH, "calendar_view_month", "Maand", viewMode === "month"],
+            [EventCalendar.Viewmode.LIST, "calendar_view_day", "Lijst", viewMode === "list"]
         );
         vmSelector.classList.add("viewmode-controls");
         vmSelector.addEventListener("change", () => this.viewMode = vmSelector.value);
@@ -281,7 +303,7 @@ export default class EventCalendar extends HTMLElement {
                 DAY_ABBREVIATIONS.forEach((v,i) => {
                     this.dayCellContainer.appendChild(
                         ElementFactory.p(v).class("day-name").style({
-                            "gridArea": doTranspose(viewMode) ? `${i + 1} / 1 / ${i + 2} / 2` : `1 / ${i+1} / 2 / ${i+2}`
+                            "gridArea": EventCalendar.doTranspose(viewMode) ? `${i + 1} / 1 / ${i + 2} / 2` : `1 / ${i+1} / 2 / ${i+2}`
                         }
                     ).make());
                 });
@@ -396,7 +418,7 @@ export default class EventCalendar extends HTMLElement {
         .finally(() => Loading.markLoadEnd(this));
     }
 
-    private insertEventNotes(events:EventInfo[], dayCells:DayCell[], viewMode:calendarViewMode) {
+    private insertEventNotes(events:EventInfo[], dayCells:DayCell[], viewMode:Viewmode) {
         Loading.markLoadStart(this);
 
         switch (viewMode) {

@@ -14,6 +14,7 @@ import MultisourceImage from "../MultisourceImage";
 import Switch from "../Switch";
 import ElementFactory from "../../html-element-factory/ElementFactory";
 import UserFeedback from "../../ui/UserFeedback";
+import IFrameContainer from "../IFrameContainer";
 
 /** [parent Node, "before child" index] tuple */
 type InsertionPosition = [Node, number];
@@ -35,8 +36,8 @@ function insertAt(position:InsertionPosition, ...nodes:Node[]):void {
 }
 
 /** Union type of the possible names of a rich-text section. */
-export type RichTextSectionName = "shortcut" | "attachment" | "image" | "title" | "h1" | "h2" | "h3" | "paragraph" | "list" | "numbered-list" | "event-calendar" | "event-note";
-const richTextSectionNames:RichTextSectionName[] = ["shortcut", "attachment", "image", "title", "h1", "h2", "h3", "paragraph", "list", "numbered-list", "event-calendar", "event-note"];
+export type RichTextSectionName = "shortcut" | "attachment" | "image" | "title" | "h1" | "h2" | "h3" | "paragraph" | "list" | "numbered-list" | "event-calendar" | "event-note" | "newspaper";
+const richTextSectionNames:RichTextSectionName[] = ["shortcut", "attachment", "image", "title", "h1", "h2", "h3", "paragraph", "list", "numbered-list", "event-calendar", "event-note", "newspaper"];
 export function isRichTextSectionName(str:string):str is RichTextSectionName {
     return richTextSectionNames.some(rtsn => str === rtsn);
 }
@@ -46,7 +47,8 @@ const HEADER_SECTION_NAMES:RichTextSectionName[] = ["title", "h1", "h2", "h3"];
 /** All RichTextSectionNames that have editable text. */
 const TEXT_SECTION_NAMES:RichTextSectionName[] = [...HEADER_SECTION_NAMES, "paragraph", "shortcut"];
 /** All RichTextSectionNames categorized as widgets. */
-const WIDGET_SECTION_NAMES:RichTextSectionName[] = ["event-calendar", "event-note"];
+const WIDGET_SECTION_NAMES:RichTextSectionName[] = ["event-calendar", "event-note", "newspaper"];
+const NEWSPAPER_SRC = "https://www.bladnl.nl/bladen/tblaadje/pluginfull";
 
 const EXCLUDED_INSERTABLE_SUBSECTIONS:{[k in RichTextSectionName]?: RichTextSectionName[]} = {
     list: ["list", "numbered-list"],
@@ -65,6 +67,7 @@ function inferSectionName(elem:Element):RichTextSectionName {
     else if (elem instanceof HTMLParagraphElement) return "paragraph";
     else if (elem instanceof HTMLUListElement) return "list";
     else if (elem instanceof HTMLOListElement) return "numbered-list";
+    else if (elem.tagName === "IFRAME-CONTAINER" && elem.classList.contains("newspaper")) return "newspaper";
     else throw Error(`could not infer section type of ${elem.outerHTML}`);
 }
 
@@ -639,7 +642,12 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                         }, "Activiteiten-kalender toevoegen"),
                         !exclude.includes("event-note") && ElementFactory.iconButton("sticky_note_2", () => {
                             UserFeedback.error("Niet geïmplementeerd.");
-                        }, "Activiteit toevoegen")
+                        }, "Activiteit toevoegen"),
+                        !exclude.includes("newspaper") && ElementFactory.iconButton("newspaper", () => {
+                            const newspaper = new IFrameContainer(NEWSPAPER_SRC);
+                            newspaper.classList.add("newspaper");
+                            this.insert("newspaper", newspaper, insPosCallback());
+                        }, "Verenigingsblad toevoegen")
                     )
             ).make();
     }

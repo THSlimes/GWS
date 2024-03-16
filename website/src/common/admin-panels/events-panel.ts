@@ -31,7 +31,7 @@ export function initEventsPanel() {
         Loading.markLoadStart(initEventsPanel);
         
 
-        const eventCalendar = Placeholder.replaceWith("event-calendar", new EventCalendar(DB, new Date(), "month"));
+        const eventCalendar = Placeholder.replaceWith("event-calendar", new EventCalendar(DB, new Date(), EventCalendar.Viewmode.MONTH));
         
         Placeholder.replaceWith("new-event", getEmptyNote());
 

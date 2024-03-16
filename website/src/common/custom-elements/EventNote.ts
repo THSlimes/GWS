@@ -18,6 +18,9 @@ import URLUtil from "../util/URLUtil";
 import Switch from "./Switch";
 import Responsive from "../ui/Responsive";
 import UserFeedback from "../ui/UserFeedback";
+import ElementUtil from "../util/ElementUtil";
+import EventDatabaseFactory from "../firebase/database/events/EventDatabaseFactory";
+import NumberUtil from "../util/NumberUtil";
 
 export type EventNoteSectionName = "name" | "timespan" | "description" | "quickActions";
 export class EventNote extends HTMLElement implements HasSections<EventNoteSectionName> {
@@ -66,7 +69,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
         }
     }
 
-    public readonly event:EventInfo;
+    public event!:EventInfo;
     /** Replaces the EventNote with its editable version. */
     protected replaceWithEditable(event=this.event):void {
         this.replaceWith(new EditableEventNote(event, this.lod, this.expanded));
@@ -75,11 +78,27 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
     constructor(event:EventInfo, lod=DetailLevel.MEDIUM, expanded=false) {
         super();
 
-        this.expanded = expanded;
-        this.event = event;
-        this.initElement();
+        this.expanded = this.hasAttribute("expanded") || expanded;
 
-        this.lod = lod;
+        const eventOrigin = ElementUtil.getAttrAs<EventDatabaseFactory.Origin>(this, "origin", v => Object.values(EventDatabaseFactory.Origin).includes(v as EventDatabaseFactory.Origin));
+        const eventId = this.getAttribute("id");
+        if (eventOrigin && eventId) {
+            const db = EventDatabaseFactory.fromOrigin(eventOrigin);
+            db.getById(eventId)
+            .then(event => {
+                if (!event) throw new Error(`no event with id "${eventId}" found in ${eventOrigin} database.`);
+
+                this.event = event;
+                this.initElement();
+                this.lod = NumberUtil.clamp(ElementUtil.getAttrAsNumber(this, "lod", false) ?? lod, DetailLevel.LOW, DetailLevel.FULL);
+            })
+            .catch(console.error);
+        }
+        else {
+            this.event = event;
+            this.initElement();
+            this.lod = NumberUtil.clamp(ElementUtil.getAttrAsNumber(this, "lod", false) ?? lod, DetailLevel.LOW, DetailLevel.FULL);
+        }
 
     }
 
@@ -151,7 +170,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
                         .class("delete-button"),
                     EventNote.CAN_UPDATE && ElementFactory.iconButton("edit_square", () => this.replaceWithEditable(this.event), "Activiteit bewerken"),
                     ElementFactory.iconButton("share", () => {
-                            const url = `${location.origin}/calendar.html#looking-at=${this.event.id}`;
+                            const url = `${location.origin}/calendar.html#id=${this.event.id}`;
                             const shareData:ShareData = { url, title: `GWS Activiteit - ${this.event.name}` };
                             if (navigator.canShare(shareData)) navigator.share(shareData); // share
                             else navigator.clipboard.writeText(url) // can't share, copy to clipboard

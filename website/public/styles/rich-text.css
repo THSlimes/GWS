@@ -1,5 +1,6 @@
 @import url("./custom-elements/multisource-image.css");
 @import url("./custom-elements/multisource-attachment.css");
+@import url("./custom-elements/iframe-container.css");
 
 .rich-text {
     > * {
@@ -91,6 +92,19 @@
                 content: counter(index) ". ";
             }
         }
+    }
+
+    > event-calendar {
+
+    }
+    
+    > event-note, > registerable-event-note {
+
+    }
+
+    > iframe-container.newspaper {
+        width: 100%;
+        > .contents { min-height: 150vh; }
     }
 
     .bold { font-weight: bolder; }
