@@ -268,8 +268,9 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
     }
 
     /** Creates a button which toggles a style tag on/off. */
-    private makeStyleTagToggle(tagName:TextStyling.StyleTagClass, icon:string, tooltip:string) {
-        return ElementFactory.iconButton(icon, (ev, toggle) => {
+    private makeStyleTagToggle(tagName:TextStyling.StyleTagClass, icon:string, tooltip:string, shortcut?:RichTextInput.KeyboardShortcut) {
+
+        const toggle = ElementFactory.iconButton(icon, (ev, toggle) => {
             if (!toggle.hasAttribute("disabled")) TextStyling.applyStyleTag(this.body, tagName);
         }, tooltip)
             .attr("can-unselect")
@@ -277,11 +278,31 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
             .onMake(toggle => {
                 const checkAttrsListener = () => {
                     toggle.toggleAttribute("disabled", !this.stylableElementSelected() || !this.body.contains(document.activeElement));
-                    toggle.toggleAttribute("selected", TextStyling.isInStyleTag(tagName));
+                    toggle.toggleAttribute("selected", TextStyling.isInStyleTag(tagName) && this.body.contains(document.activeElement));
                 };
                 document.addEventListener("selectionchange", checkAttrsListener);
                 document.addEventListener("focusout", checkAttrsListener);
+            })
+            .make();
+
+        
+        if (shortcut) {
+            this.addEventListener("keydown", ev => {
+                const specialKeyPressed =
+                    !shortcut[1] ||
+                    (shortcut[1] === "alt" && ev.altKey) ||
+                    (shortcut[1] === "ctrl" && ev.ctrlKey) ||
+                    (shortcut[1] === "shift" && ev.shiftKey);
+
+                if (specialKeyPressed && ev.key.toLowerCase() === shortcut[0].toLowerCase() && !toggle.hasAttribute("disabled")) {
+                    ev.preventDefault();
+                    TextStyling.applyStyleTag(this.body, tagName);
+                }
+                
             });
+        }
+
+        return toggle;
     }
 
     private static readonly PICKER_BASE_COLORS:ColorUtil.HexColor[] = ["#FF0000", "#FF8700", "#FFD300", "#DEFF0A", "#A1FF0A", "#0AFF99", "#0AEFFF", "#147DF5", "#580AFF", "#BE0AFF"];
@@ -397,10 +418,10 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                                         })
                                         .make()
                                 ),
-                            this.makeStyleTagToggle("bold", "format_bold", "Dikgedrukt"),
-                            this.makeStyleTagToggle("italic", "format_italic", "Cursief"),
-                            this.makeStyleTagToggle("underlined", "format_underlined", "Onderstreept"),
-                            this.makeStyleTagToggle("strikethrough", "format_strikethrough", "Doorgestreept"),
+                            this.makeStyleTagToggle("bold", "format_bold", "Dikgedrukt", ['b', "ctrl"]),
+                            this.makeStyleTagToggle("italic", "format_italic", "Cursief", ['i', "ctrl"]),
+                            this.makeStyleTagToggle("underlined", "format_underlined", "Onderstreept", ['u', "ctrl"]),
+                            this.makeStyleTagToggle("strikethrough", "format_strikethrough", "Doorgestreept", ['s', "ctrl"]),
                             this.makeColorPicker(c => TextStyling.applyStyleTag(this.body, "text-color", c), "format_color_text", "Tekstkleur", "text-color"),
                             this.makeColorPicker(c => TextStyling.applyStyleTag(this.body, "background-color", c), "format_ink_highlighter", "Markeringskleur", "background-color"),
                             alignSelector = ElementFactory.folderElement("down", 250)
@@ -648,6 +669,9 @@ namespace RichTextInput {
         else if (elem.tagName === "IFRAME-CONTAINER" && elem.classList.contains("newspaper")) return "newspaper";
         else throw Error(`could not infer section type of ${elem.outerHTML}`);
     }
+
+    type SpecialKey = "ctrl" | "shift" | "alt";
+    export type KeyboardShortcut = [string] | [string, SpecialKey];
 }
 
 export default RichTextInput;
