@@ -4,14 +4,12 @@ import Permissions from "../firebase/database/Permissions";
 import ArticleDatabase, { ArticleInfo } from "../firebase/database/articles/ArticleDatabase";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import DateUtil from "../util/DateUtil";
-import { HasSections } from "../util/UtilTypes";
+import { DetailLevel, HasSections } from "../util/UtilTypes";
 import NodeUtil from "../util/NodeUtil";
 import Switch from "./Switch";
 import RichTextInput from "./rich-text/RichTextInput";
 import RichTextSerializer from "./rich-text/RichTextSerializer";
 import UserFeedback from "../ui/UserFeedback";
-
-export type ArticleLOD = "full" | "medium" | "low";
 
 /**
  * A SmartArticle is a custom type of article. It provides a consistent way
@@ -29,19 +27,21 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
         }, true, true);
     }
 
-    private static LOD_CUTOFFS:Record<ArticleLOD, number> = {
-        "full": Infinity,
-        "medium": 50,
-        "low": 30
+    private static LOD_CUTOFFS:Record<DetailLevel, number> = {
+        [DetailLevel.FULL]: Infinity,
+        [DetailLevel.HIGH]: 100,
+        [DetailLevel.MEDIUM]: 50,
+        [DetailLevel.LOW]: 30
     };
-    private static LOD_HIDDEN_ELEMENT_TYPES:Record<ArticleLOD, string[]> = {
-        full: [],
-        medium: ["IMG", "MULTISOURCE-IMAGE", "MULTISOURCE-ATTACHMENT", "UL", "OL"],
-        low: ["H1", "H2", "H3", "H4", "H5", "H6", "IMG", "MULTISOURCE-IMAGE", "MULTISOURCE-ATTACHMENT", "UL", "OL"]
+    private static LOD_HIDDEN_ELEMENT_TYPES:Record<DetailLevel, string[]> = {
+        [DetailLevel.FULL]: [],
+        [DetailLevel.HIGH]: [],
+        [DetailLevel.MEDIUM]: ["IMG", "MULTISOURCE-IMAGE", "MULTISOURCE-ATTACHMENT", "UL", "OL"],
+        [DetailLevel.LOW]: ["H1", "H2", "H3", "H4", "H5", "H6", "IMG", "MULTISOURCE-IMAGE", "MULTISOURCE-ATTACHMENT", "UL", "OL"]
     };
 
     protected readonly article:ArticleInfo;
-    public readonly lod:ArticleLOD;
+    public readonly lod:DetailLevel;
 
     public heading!:HTMLElement;
     public body!:HTMLElement;
@@ -50,7 +50,7 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
 
     public quickActions!:HTMLDivElement;
 
-    constructor(articleInfo:ArticleInfo, lod:ArticleLOD="medium") {
+    constructor(articleInfo:ArticleInfo, lod=DetailLevel.MEDIUM) {
         super();
 
         this.article = articleInfo;
@@ -61,10 +61,10 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
 
     initElement(): void {
         this.style.display = "flex";
-        this.setAttribute("lod", this.lod);
+        this.setAttribute("lod", DetailLevel.toString(this.lod));
 
         // heading element
-        this.heading = ElementFactory.a(this.lod !== "full" ? SmartArticle.getLinkTo(this.article) : undefined)
+        this.heading = ElementFactory.a(this.lod !== DetailLevel.FULL ? SmartArticle.getLinkTo(this.article) : undefined)
             .class("heading")
             .children(ElementFactory.h1(this.article.heading))
             .make();
@@ -88,7 +88,7 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
 
         
         // link to full article
-        this.readMore = this.lod === "low" ?
+        this.readMore = this.lod === DetailLevel.LOW ?
             this.readMore = ElementFactory.a(SmartArticle.getLinkTo(this.article), "article_shortcut")
                 .tooltip("Naar bericht gaan")
                 .class("read-more", "icon")
@@ -101,13 +101,13 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
         // quick-actions
         this.quickActions = ElementFactory.div(undefined, "quick-actions", "flex-columns", "cross-axis-center")
             .children(
-                this.lod === "low" && this.readMore,
+                this.lod === DetailLevel.LOW && this.readMore,
                 SmartArticle.CAN_UPDATE && ElementFactory.p("edit_square")
                     .id("edit-button")
                     .class("icon", "click-action")
                     .tooltip("Bericht bewerken")
                     .on("click", (ev, self) => {
-                        if (this.lod === "full") {
+                        if (this.lod === DetailLevel.FULL) {
                             // upgrade to editable version
                             this.replaceWith(new EditableSmartArticle(this.article, this.lod));
                         }
@@ -159,7 +159,7 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
 
 
         // adding sections to element
-        if (this.lod === "low") {
+        if (this.lod === DetailLevel.LOW) {
             this.classList.add("flex-columns", "in-section-gap", "main-axis-space-between", "cross-axis-center");
             this.append(
                 ElementFactory.div(undefined, "flex-rows", "in-section-gap")
@@ -173,7 +173,7 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
             );
         }
         else {
-            this.classList.add("flex-rows", this.lod === "full" ? "min-section-gap" : "in-section-gap");
+            this.classList.add("flex-rows", this.lod === DetailLevel.FULL ? "min-section-gap" : "in-section-gap");
             this.append(
                 this.heading,
                 this.body,
@@ -209,7 +209,7 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
     private readonly saveAsNew:boolean;
     public onSave:(newArticle:ArticleInfo)=>void = () => {};
 
-    constructor(articleInfo:ArticleInfo, lod:ArticleLOD, saveAsNew=false) {
+    constructor(articleInfo:ArticleInfo, lod:DetailLevel, saveAsNew=false) {
         super(articleInfo, lod);
 
         if (this.saveAsNew = saveAsNew) {
@@ -221,7 +221,7 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
     override initElement(): void {
         this.style.display = "flex";
         this.classList.add("flex-rows", "min-section-gap");
-        this.setAttribute("lod", this.lod);
+        this.setAttribute("lod", DetailLevel.toString(this.lod));
         
         this.heading = this.appendChild(
             ElementFactory.input.text(this.article.heading)

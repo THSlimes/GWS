@@ -1,11 +1,6 @@
 import Database, { Info, QueryFilter } from "./firebase/database/Database";
 import ObjectUtil from "./util/ObjectUtil";
 
-function valuesEqual(a:any, b:any):boolean {
-    if (a instanceof Date && b instanceof Date) return a.getTime() === b.getTime();
-    else return a === b;
-}
-
 /**
  * A DataView allows for easy editing of collections of data.
  * @param T type of a data entry
@@ -35,7 +30,7 @@ abstract class DataView<T extends Record<string,any>> {
     public set onSave(newHandler:VoidFunction) { this._onSave.push(newHandler); }
 
     private get length() {
-        if (this.entries === null) throw new DataPendingError();
+        if (this.entries === null) throw new DataView.PendingError();
         return this.entries.length;
     }
 
@@ -63,7 +58,7 @@ abstract class DataView<T extends Record<string,any>> {
     }
 
     public get(index:number):DataView.Entry<T> {
-        if (this.entries === null) throw new DataPendingError();
+        if (this.entries === null) throw new DataView.PendingError();
         else if (index < 0 || index >= this.length) throw new RangeError(`index ${index} is out of range for length ${this.length}`);
         else return this.entries[index];
     }
@@ -106,6 +101,56 @@ abstract class DataView<T extends Record<string,any>> {
     abstract save():Promise<void>;
 
 }
+
+namespace DataView {
+    
+    export class Entry<T extends Record<string,any>> {
+    
+        private readonly _index:number;
+        public get index() { return this._index; }
+        private readonly data:T;
+        public copy() { return ObjectUtil.deepCopy(this.data); }
+    
+        private modifiedKeys:Set<keyof T> = new Set();
+        public get isModified() { return this.modifiedKeys.size !== 0; }
+        private readonly onModified:VoidFunction;
+
+        protected save() { this.modifiedKeys.clear(); }
+    
+        constructor(source:DataView<T>, index:number, data:T, onModified=()=>{}) {
+            source.onSave = () => this.save;
+
+            this._index = index;
+            this.data = data;
+            this.onModified = onModified;
+        }
+    
+        public get<K extends keyof T>(key:K) {
+            return ObjectUtil.deepCopy(this.data[key]);
+        }
+    
+        public set<K extends keyof T>(key:K, newValue:T[K]):boolean {
+            if (!ObjectUtil.deepEquals(this.data[key], newValue)) {
+                this.data[key] = ObjectUtil.deepCopy(newValue);
+                this.modifiedKeys.add(key);
+                this.onModified();
+    
+                return true;
+            }
+            else return false;
+        }
+    }
+
+    /** A type of Error to be thrown when data is still being retrieved. */
+    export class PendingError extends Error {
+    
+        constructor() {
+            super("the requested data has not been retrieved yet");
+        }
+    
+    }
+}
+
 
 /**
  * A DatabaseDataView is a type of DataView which allows easy editing
@@ -158,53 +203,4 @@ export class DatabaseDataView<I extends Info> extends DataView<I> {
     
 }
 
-namespace DataView {
-    
-    export class Entry<T extends Record<string,any>> {
-    
-        private readonly _index:number;
-        public get index() { return this._index; }
-        private readonly data:T;
-        public copy() { return ObjectUtil.deepCopy(this.data); }
-    
-        private modifiedKeys:Set<keyof T> = new Set();
-        public get isModified() { return this.modifiedKeys.size !== 0; }
-        private readonly onModified:VoidFunction;
-
-        protected save() { this.modifiedKeys.clear(); }
-    
-        constructor(source:DataView<T>, index:number, data:T, onModified=()=>{}) {
-            source.onSave = () => this.save;
-
-            this._index = index;
-            this.data = data;
-            this.onModified = onModified;
-        }
-    
-        public get<K extends keyof T>(key:K) {
-            return ObjectUtil.deepCopy(this.data[key]);
-        }
-    
-        public set<K extends keyof T>(key:K, newValue:T[K]):boolean {
-            if (!valuesEqual(this.data[key], newValue)) {
-                this.data[key] = ObjectUtil.deepCopy(newValue);
-                this.modifiedKeys.add(key);
-                this.onModified();
-    
-                return true;
-            }
-            else return false;
-        }
-    }
-
-}
 export default DataView;
-
-/** A type of Error to be thrown when data is still being retrieved. */
-class DataPendingError extends Error {
-
-    constructor() {
-        super("the requested data has not been retrieved yet");
-    }
-
-}

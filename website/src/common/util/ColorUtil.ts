@@ -1,17 +1,12 @@
 import NumberUtil from "./NumberUtil";
 
-export type HexColor = `#${string}`;
-export type RGBColor = [number, number, number];
-export type RGBString = `rgb(${number}, ${number}, ${number})`;
-export type Color = HexColor | RGBColor | RGBString;
-
 /**
  * The ColorUtil helper-class provides standard functions to manipulate and process colors.
  */
-export default abstract class ColorUtil {
+abstract class ColorUtil {
 
-    private static DEFAULT_COLOR:HexColor = "#aaaaaa";
-    private static STRING_COLORS:HexColor[] = [
+    private static DEFAULT_COLOR:ColorUtil.HexColor = "#aaaaaa";
+    private static STRING_COLORS:ColorUtil.HexColor[] = [
         "#FF0000",
         "#FF8700",
         "#FFD300",
@@ -24,15 +19,15 @@ export default abstract class ColorUtil {
         "#BE0AFF"
     ];
 
-    private static isHex(c:Color): c is HexColor {
+    private static isHex(c:ColorUtil.Color): c is ColorUtil.HexColor {
         return typeof c === "string" && c.startsWith('#');
     }
 
-    private static isRGB(c:Color):c is RGBColor {
+    private static isRGB(c:ColorUtil.Color):c is ColorUtil.RGBColor {
         return Array.isArray(c) && c.length === 3 && c.every(p => 0 <= p && p <= 255);
     }
 
-    private static isRGBString(c:Color):c is RGBString {
+    private static isRGBString(c:ColorUtil.Color):c is ColorUtil.RGBString {
         return typeof c === "string"
             && c.startsWith("rgb(")
             && c.endsWith(')')
@@ -42,19 +37,19 @@ export default abstract class ColorUtil {
     }
 
     /** Converts a color from hex format to RGB format. */
-    public static toRGB(c:Color):RGBColor {
+    public static toRGB(c:ColorUtil.Color):ColorUtil.RGBColor {
         if (this.isHex(c)) {
             const color = Number.parseInt(c.substring(1), 16);
             return [(color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF];
         }
         else if (this.isRGBString(c)) {
-            return c.substring(4, c.length-1).split(", ").map(p => Number.parseInt(p)) as RGBColor;
+            return c.substring(4, c.length-1).split(", ").map(p => Number.parseInt(p)) as ColorUtil.RGBColor;
         }
         else return c; // already RGB
     }
     
     /** Converts a color from RGB format to hex format. */
-    public static toHex(c:Color):HexColor {
+    public static toHex(c:ColorUtil.Color):ColorUtil.HexColor {
         if (this.isRGB(c)) {
             const [r,g,b] = c;
             return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
@@ -70,7 +65,7 @@ export default abstract class ColorUtil {
      * @param metric distance metric to use
      * @returns non-normalized contrast between ```a``` and ```b```
      */
-    public static getContrast(a:Color, b:Color):number {
+    public static getContrast(a:ColorUtil.Color, b:ColorUtil.Color):number {
         [a, b] = [this.toRGB(a), this.toRGB(b)];
 
         // scale according to RBG visibility
@@ -86,7 +81,7 @@ export default abstract class ColorUtil {
      * @param options colors to pick from
      * @returns most contrasting color from ```options```
      */
-    public static getMostContrasting(color:Color, ...options:Color[]):HexColor {
+    public static getMostContrasting(color:ColorUtil.Color, ...options:ColorUtil.Color[]):ColorUtil.HexColor {
         let bestInd = -1;
         let bestContrast = -Infinity;
     
@@ -99,13 +94,13 @@ export default abstract class ColorUtil {
         return this.toHex(options[bestInd]);
     }
 
-    public static mix(c1:Color, c2:Color, c1Ratio:number):HexColor {
+    public static mix(c1:ColorUtil.Color, c2:ColorUtil.Color, c1Ratio:number):ColorUtil.HexColor {
         c1 = this.toRGB(c1);
         c2 = this.toRGB(c2);
         c1Ratio = NumberUtil.clamp(c1Ratio, 0, 1);
         const c2Ratio = 1-c1Ratio;
 
-        const mixed:RGBColor = [
+        const mixed:ColorUtil.RGBColor = [
             Math.floor(c1[0]*c1Ratio + c2[0]*c2Ratio),
             Math.floor(c1[1]*c1Ratio + c2[1]*c2Ratio),
             Math.floor(c1[2]*c1Ratio + c2[2]*c2Ratio)
@@ -114,7 +109,7 @@ export default abstract class ColorUtil {
         return this.toHex(mixed);
     }
 
-    public static getStringColor(cat: string):HexColor {
+    public static getStringColor(cat: string):ColorUtil.HexColor {
         if (!cat) return this.DEFAULT_COLOR;
         cat = cat.toLowerCase();
     
@@ -125,3 +120,12 @@ export default abstract class ColorUtil {
     }
 
 }
+
+namespace ColorUtil {
+    export type HexColor = `#${string}`;
+    export type RGBColor = [number, number, number];
+    export type RGBString = `rgb(${number}, ${number}, ${number})`;
+    export type Color = HexColor | RGBColor | RGBString;
+}
+
+export default ColorUtil;

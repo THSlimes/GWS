@@ -1,11 +1,8 @@
-import { HexColor } from "../../../util/StyleUtil";
+import ColorUtil from "../../../util/ColorUtil";
 import DateUtil from "../../../util/DateUtil";
 import StringUtil from "../../../util/StringUtil";
 import { Opt } from "../../../util/UtilTypes";
 import Database, { Info, QueryFilter } from "../Database";
-
-type TimeSpan = [Date, Date];
-type OpenTimespan = [Date|undefined, Date|undefined];
 
 /** An EventInfo object contains all relevant information of an event.  */
 export class EventInfo extends Info {
@@ -16,7 +13,7 @@ export class EventInfo extends Info {
     public readonly name:string;
     public readonly description:string;
     public readonly category:string;
-    public readonly color?:HexColor;
+    public readonly color?:ColorUtil.HexColor;
 
     public readonly starts_at:Date;
     public readonly ends_at:Date;
@@ -27,8 +24,8 @@ export class EventInfo extends Info {
         name:string,
         description:string,
         category="",
-        color:Opt<HexColor>=undefined,
-        timespan:TimeSpan
+        color:Opt<ColorUtil.HexColor>=undefined,
+        timespan:DateUtil.Timespan
     ) {
         super(id);
         this.sourceDB = sourceDB;
@@ -82,13 +79,13 @@ export class RegisterableEventInfo extends EventInfo {
         name:string,
         description:string,
         category="",
-        color:Opt<HexColor>=undefined,
-        timespan:TimeSpan,
+        color:Opt<ColorUtil.HexColor>=undefined,
+        timespan:DateUtil.Timespan,
 
         registrations:Record<string,string>,
         requires_payment:boolean,
         capacity?:number,
-        registration_period?:OpenTimespan
+        registration_period?:DateUtil.OpenTimespan
     ) {
         super(sourceDB, id, name, description, category, color, timespan);
 
@@ -164,7 +161,7 @@ export class RegisterableEventInfo extends EventInfo {
         });
     }
 
-    public static fromSuper(event:EventInfo, registrations:Record<string,string>, requires_payment:boolean, capacity?:number, registration_period?:OpenTimespan) {
+    public static fromSuper(event:EventInfo, registrations:Record<string,string>, requires_payment:boolean, capacity?:number, registration_period?:DateUtil.OpenTimespan) {
         return new RegisterableEventInfo(
             event.sourceDB,
             event.id,

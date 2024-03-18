@@ -2,17 +2,11 @@ import { StorageError, getDownloadURL, getMetadata, ref } from "@firebase/storag
 import { onPermissionCheck } from "../firebase/authentication/permission-based-redirect";
 import Permissions from "../firebase/database/Permissions";
 import { STORAGE } from "../firebase/init-firebase";
-import URLUtil, { FileInfo, FileType, getFileType } from "../util/URLUtil";
+import URLUtil, { FileInfo, FileType } from "../util/URLUtil";
 import ElementUtil from "../util/ElementUtil";
 import { HasSections } from "../util/UtilTypes";
 import ElementFactory from "../html-element-factory/ElementFactory";
-
-export type AttachmentOrigin = "firebase-storage-public" | "firebase-storage-protected" | "external";
-export function isAttachmentOrigin(str:string):str is AttachmentOrigin {
-    return str === "firebase-storage-public"
-        || str === "firebase-storage-private"
-        || str === "external";
-}
+import { AttachmentOrigin } from "../util/UtilTypes";
 
 export default class MultisourceAttachment extends HTMLElement implements HasSections<"filetypeIcon"|"fileNameLabel"|"fileSizeLabel"|"downloadButton"> {
 
@@ -113,7 +107,7 @@ export default class MultisourceAttachment extends HTMLElement implements HasSec
 
         this.initElement();
 
-        this._origin = origin ?? ElementUtil.getAttrAs(this, "origin", isAttachmentOrigin) ?? "firebase-storage-public";
+        this._origin = origin ?? ElementUtil.getAttrAs(this, "origin", AttachmentOrigin.checkType) ?? "firebase-storage-public";
         this._src = src ?? this.getAttribute("src") ?? "";
         this.refresh();
     }
@@ -166,7 +160,7 @@ export default class MultisourceAttachment extends HTMLElement implements HasSec
                         href: downloadUrl,
                         name: metadata.name,
                         contentType: metadata.contentType ?? "unknown/unknown",
-                        fileType: getFileType(metadata.contentType ?? "unknown/unknown"),
+                        fileType: FileType.fromContentType(metadata.contentType ?? "unknown/unknown"),
                         size: metadata.size,
                         lastModified: new Date(metadata.updated)
                     });

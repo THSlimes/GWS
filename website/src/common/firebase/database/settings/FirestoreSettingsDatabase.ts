@@ -1,39 +1,19 @@
 import { QueryDocumentSnapshot, collection, doc, getDoc, setDoc } from "@firebase/firestore";
 import { FIRESTORE } from "../../init-firebase";
 import SettingsDatabase, { ImagedLink, LinkTree } from "./SettingsDatabase";
-import { AttachmentOrigin } from "../../../custom-elements/MultisourceAttachment";
+import { AttachmentOrigin } from "../../../util/UtilTypes";
 
-
-type DBNavbarLinks = { links: string };
-
-type DBImagedLinks = {[name:string]: { origin:AttachmentOrigin, src:string, href:string }};
-namespace DBImagedLinks {
-    export function from(dbLinks:DBImagedLinks):ImagedLink[] {
-        const out:ImagedLink[] = [];
-        for (const name in dbLinks) {
-            out.push({ name, ...dbLinks[name] });
-        }
-        return out;
-    }
-
-    export function to(links:ImagedLink[]):DBImagedLinks {
-        const out:DBImagedLinks = {};
-        for (const link of links) out[link.name] = { origin: link.origin, src: link.src, href: link.href };
-        return out;
-    }
-}
-
-export default class FirestoreSettingsDatabase extends SettingsDatabase {
+class FirestoreSettingsDatabase extends SettingsDatabase {
 
     private static COLLECTION = collection(FIRESTORE, "settings");
 
 
     private static NAVBAR_LINKS_DOC = doc(this.COLLECTION, "navbar-links")
         .withConverter({
-            toFirestore(links:LinkTree):DBNavbarLinks {
+            toFirestore(links:LinkTree):FirestoreSettingsDatabase.NavbarLinks {
                 return { links: JSON.stringify(links) };
             },
-            fromFirestore(snapshot:QueryDocumentSnapshot<DBNavbarLinks,LinkTree>):LinkTree {
+            fromFirestore(snapshot:QueryDocumentSnapshot<FirestoreSettingsDatabase.NavbarLinks,LinkTree>):LinkTree {
                 return JSON.parse(snapshot.data().links);
             }
         });
@@ -42,7 +22,7 @@ export default class FirestoreSettingsDatabase extends SettingsDatabase {
         return new Promise((resolve, reject) => {
             getDoc(FirestoreSettingsDatabase.NAVBAR_LINKS_DOC)
             .then(docSnapshot => {
-                if (!docSnapshot.exists()) reject(new MissingSettingError("navbar-links"));
+                if (!docSnapshot.exists()) reject(new FirestoreSettingsDatabase.MissingDocError("navbar-links"));
                 else resolve(docSnapshot.data());
             })
             .catch(reject);
@@ -58,17 +38,17 @@ export default class FirestoreSettingsDatabase extends SettingsDatabase {
     }
 
 
-    private static SPONSOR_LINKS_DOC = doc(this.COLLECTION, "sponsor-links")
+    private SPONSOR_LINKS_DOC = doc(FirestoreSettingsDatabase.COLLECTION, "sponsor-links")
     .withConverter({
-        toFirestore: DBImagedLinks.to,
-        fromFirestore: (snapshot) => DBImagedLinks.from(snapshot.data())
+        toFirestore: FirestoreSettingsDatabase.ImagedLinks.to,
+        fromFirestore: (snapshot) => FirestoreSettingsDatabase.ImagedLinks.from(snapshot.data())
     });
 
     override getSponsorLinks(): Promise<ImagedLink[]> {
         return new Promise((resolve, reject) => {
-            getDoc(FirestoreSettingsDatabase.SPONSOR_LINKS_DOC)
+            getDoc(this.SPONSOR_LINKS_DOC)
             .then(docSnapshot => {
-                if (!docSnapshot.exists()) reject(new MissingSettingError("sponsor-links"));
+                if (!docSnapshot.exists()) reject(new FirestoreSettingsDatabase.MissingDocError("sponsor-links"));
                 else resolve(docSnapshot.data());
             })
         });
@@ -76,24 +56,24 @@ export default class FirestoreSettingsDatabase extends SettingsDatabase {
 
     override setSponsorLinks(links: ImagedLink[]):Promise<void> {
         return new Promise((resolve, reject) => {
-            setDoc(FirestoreSettingsDatabase.SPONSOR_LINKS_DOC, links)
+            setDoc(this.SPONSOR_LINKS_DOC, links)
             .then(resolve)
             .catch(reject);
         });
     }
 
 
-    private static SOCIAL_MEDIA_LINKS_DOC = doc(this.COLLECTION, "social-media-links")
+    private SOCIAL_MEDIA_LINKS_DOC = doc(FirestoreSettingsDatabase.COLLECTION, "social-media-links")
     .withConverter({
-        toFirestore: DBImagedLinks.to,
-        fromFirestore: (snapshot) => DBImagedLinks.from(snapshot.data())
+        toFirestore: FirestoreSettingsDatabase.ImagedLinks.to,
+        fromFirestore: (snapshot) => FirestoreSettingsDatabase.ImagedLinks.from(snapshot.data())
     });
 
     override getSocialMediaLinks(): Promise<ImagedLink[]> {
         return new Promise((resolve, reject) => {
-            getDoc(FirestoreSettingsDatabase.SOCIAL_MEDIA_LINKS_DOC)
+            getDoc(this.SOCIAL_MEDIA_LINKS_DOC)
             .then(docSnapshot => {
-                if (!docSnapshot.exists()) reject(new MissingSettingError("social-media-links"));
+                if (!docSnapshot.exists()) reject(new FirestoreSettingsDatabase.MissingDocError("social-media-links"));
                 else resolve(docSnapshot.data());
             })
         });
@@ -101,7 +81,7 @@ export default class FirestoreSettingsDatabase extends SettingsDatabase {
 
     override setSocialMediaLinks(links: ImagedLink[]):Promise<void> {
         return new Promise((resolve, reject) => {
-            setDoc(FirestoreSettingsDatabase.SOCIAL_MEDIA_LINKS_DOC, links)
+            setDoc(this.SOCIAL_MEDIA_LINKS_DOC, links)
             .then(resolve)
             .catch(reject);
         });
@@ -109,10 +89,35 @@ export default class FirestoreSettingsDatabase extends SettingsDatabase {
 
 }
 
-class MissingSettingError extends Error {
+namespace FirestoreSettingsDatabase {
 
-    constructor(settingName:string) {
-        super(`setting "${settingName}" not found in database.`);
+    export type NavbarLinks = { links: string };
+
+    export type ImagedLinks = {[name:string]: { origin:AttachmentOrigin, src:string, href:string }};
+    export namespace ImagedLinks {
+        export function from(dbLinks:ImagedLinks):ImagedLink[] {
+            const out:ImagedLink[] = [];
+            for (const name in dbLinks) {
+                out.push({ name, ...dbLinks[name] });
+            }
+            return out;
+        }
+
+        export function to(links:ImagedLink[]):ImagedLinks {
+            const out:ImagedLinks = {};
+            for (const link of links) out[link.name] = { origin: link.origin, src: link.src, href: link.href };
+            return out;
+        }
+    }
+
+    export class MissingDocError extends Error {
+
+        constructor(settingName:string) {
+            super(`setting "${settingName}" not found in database (missing document).`);
+        }
+
     }
 
 }
+
+export default FirestoreSettingsDatabase;

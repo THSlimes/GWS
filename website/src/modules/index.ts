@@ -6,7 +6,7 @@ import "../common/custom-elements/ElementCarousel";
 import "../common/custom-elements/ArticleList";
 
 import { ArticleQueryFilter } from "../common/firebase/database/articles/ArticleDatabase";
-import { FirestoreArticleDatabase } from "../common/firebase/database/articles/FirestoreArticleDatabase";
+import FirestoreArticleDatabase from "../common/firebase/database/articles/FirestoreArticleDatabase";
 import Placeholder from "../common/custom-elements/Placeholder";
 import ArticlePaginator from "../common/firebase/database/articles/ArticlePaginator";
 import { checkPermissions } from "../common/firebase/authentication/permission-based-redirect";
@@ -15,7 +15,7 @@ import ArticleList from "../common/custom-elements/ArticleList";
 import Loading from "../common/Loading";
 import makePhotoCarousel from "../common/ui/photo-carousel";
 import UserDatabase from "../common/firebase/database/users/UserDatabase";
-import { FirestoreUserDatabase } from "../common/firebase/database/users/FirestoreUserDatabase";
+import FirestoreUserDatabase from "../common/firebase/database/users/FirestoreUserDatabase";
 import { onAuth } from "../common/firebase/init-firebase";
 import UserFeedback from "../common/ui/UserFeedback";
 

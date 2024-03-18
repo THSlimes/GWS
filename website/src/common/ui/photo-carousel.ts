@@ -4,13 +4,11 @@ import ElementCarousel from "../custom-elements/ElementCarousel";
 import ElementFactory from "../html-element-factory/ElementFactory";
 
 // carousel of images
-const CAROUSEL_IMAGES_FOLDER_PATH = "/openbaar/fotos-homepagina";
-const IMAGES_FOLDER_REF = ref(STORAGE, CAROUSEL_IMAGES_FOLDER_PATH);
-export default function makePhotoCarousel(coverText:string):Promise<ElementCarousel> {
+function makePhotoCarousel(coverText:string):Promise<ElementCarousel> {
     return new Promise((resolve, reject) => {
         const imageElements:HTMLImageElement[] = [];
 
-        listAll(IMAGES_FOLDER_REF)
+        listAll(makePhotoCarousel.FOLDER_REF)
         .then(res => res.items)
         .then(imageRefs => {
             for (let i = 0; i < imageRefs.length; i ++) {
@@ -48,3 +46,10 @@ export default function makePhotoCarousel(coverText:string):Promise<ElementCarou
         .catch(reject);
     });
 }
+
+namespace makePhotoCarousel {
+    const FOLDER_PATH = "/openbaar/fotos-homepagina";
+    export const FOLDER_REF = ref(STORAGE, FOLDER_PATH);
+}
+
+export default makePhotoCarousel;

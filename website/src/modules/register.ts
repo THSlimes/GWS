@@ -1,7 +1,7 @@
 import Loading from "../common/Loading"
 import SmartArticle from "../common/custom-elements/SmartArticle";
 import ArticleDatabase from "../common/firebase/database/articles/ArticleDatabase";
-import { FirestoreArticleDatabase } from "../common/firebase/database/articles/FirestoreArticleDatabase";
+import FirestoreArticleDatabase from "../common/firebase/database/articles/FirestoreArticleDatabase";
 import * as IBAN from "iban";
 
 import "./header-and-footer";
@@ -13,16 +13,17 @@ import Switch from "../common/custom-elements/Switch";
 import { FIREBASE_AUTH } from "../common/firebase/init-firebase";
 import { createUserWithEmailAndPassword } from "@firebase/auth";
 import getErrorMessage from "../common/firebase/authentication/error-messages";
-import { FirestoreUserDatabase } from "../common/firebase/database/users/FirestoreUserDatabase";
+import FirestoreUserDatabase from "../common/firebase/database/users/FirestoreUserDatabase";
 import UserDatabase, { UserInfo } from "../common/firebase/database/users/UserDatabase";
 import UserFeedback from "../common/ui/UserFeedback";
+import { DetailLevel } from "../common/util/UtilTypes";
 
 // loading associated article
 const ARTICLE_ID = "Inschrijven-Den-Geitenwollen-Soc";
 const DB:ArticleDatabase = new FirestoreArticleDatabase();
 Loading.useDynamicContent(DB.getById(ARTICLE_ID), articleInfo => { // load article
     if (!articleInfo) console.error(`article with ID "${ARTICLE_ID}" was now found`);
-    else Placeholder.replaceWith("article", new SmartArticle(articleInfo, "full"));
+    else Placeholder.replaceWith("article", new SmartArticle(articleInfo, DetailLevel.FULL));
 });
 
 // get privacy statement link from storage

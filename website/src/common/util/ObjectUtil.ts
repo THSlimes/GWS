@@ -36,6 +36,22 @@ export default abstract class ObjectUtil {
     
         Object.freeze(obj);
     }
+
+    public static deepEquals(a:any, b:any):boolean {
+        if (a === b) return true; // shortcut
+
+        if ((typeof a) !== (typeof b)) return false; // not same type
+        else if (typeof a === "object" && typeof b === "object") { // both are objects
+            if ((a === null) || (b === null)) return false; // one is null, other is not
+            else if (Array.isArray(a) && Array.isArray(b)) return a.length === b.length && a.every((e,i) => this.deepEquals(e, b[i])); // array equality
+            else if (a instanceof Date && b instanceof Date) return a.getTime() === b.getTime(); // Date equality
+            else { // check key-value pairs
+                return Object.keys(a).every(k => k in b && this.deepEquals(a[k], b[k]))
+                    && Object.keys(b).every(k => k in a && this.deepEquals(b[k], a[k]));
+            }
+        }
+        else return a === b; // by-value check
+    }
     
     public static mapToObject<T extends string, U>(arr:T[], callbackfn:(value:T, index:number, array:T[]) => U):Record<T,U> {
         const out:Record<T,U> = {} as Record<T,U>;

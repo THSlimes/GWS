@@ -3,7 +3,6 @@ import { HasSections } from "../util/UtilTypes";
 import ColorUtil from "../util/ColorUtil";
 import { onPermissionCheck } from "../firebase/authentication/permission-based-redirect";
 import EventCalendar from "./EventCalendar";
-import { HexColor } from "../util/StyleUtil";
 import FunctionUtil from "../util/FunctionUtil";
 import RichTextInput from "./rich-text/RichTextInput";
 import { DetailLevel } from "../util/UtilTypes";
@@ -22,8 +21,7 @@ import ElementUtil from "../util/ElementUtil";
 import EventDatabaseFactory from "../firebase/database/events/EventDatabaseFactory";
 import NumberUtil from "../util/NumberUtil";
 
-export type EventNoteSectionName = "name" | "timespan" | "description" | "quickActions";
-export class EventNote extends HTMLElement implements HasSections<EventNoteSectionName> {
+export class EventNote extends HTMLElement implements HasSections<EventNote.SectionName> {
 
     protected static CAN_DELETE = false;
     protected static CAN_UPDATE = false;
@@ -35,14 +33,14 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
         }, true, true);
     }
     
-    protected static SECTIONS_VISIBLE_FROM:Record<EventNoteSectionName,DetailLevel> = {
+    protected static SECTIONS_VISIBLE_FROM:Record<EventNote.SectionName,DetailLevel> = {
         name: DetailLevel.LOW,
         timespan: DetailLevel.MEDIUM,
         description: DetailLevel.HIGH,
         quickActions: DetailLevel.HIGH
     };
 
-    protected isVisible(sectionName:EventNoteSectionName):boolean {
+    protected isVisible(sectionName:EventNote.SectionName):boolean {
         return EventNote.SECTIONS_VISIBLE_FROM[sectionName] <= this.lod;
     }
 
@@ -61,7 +59,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
             const ownClass = (this.constructor as typeof EventNote);
 
             for (const k in ownClass.SECTIONS_VISIBLE_FROM) { // apply lod
-                const sectionName = k as EventNoteSectionName;
+                const sectionName = k as EventNote.SectionName;
                 const elem = this[sectionName];
                 
                 if (elem) elem.hidden = this.lod < ownClass.SECTIONS_VISIBLE_FROM[sectionName];
@@ -189,15 +187,15 @@ export class EventNote extends HTMLElement implements HasSections<EventNoteSecti
 
 }
 
+export namespace EventNote {
+    export type SectionName = "name" | "timespan" | "description" | "quickActions";
+}
+
 window.addEventListener("DOMContentLoaded", () => customElements.define("event-note", EventNote));
 
 
 
-export type EditableEventNoteSectionName = "name" | "category" | "useTime" | "startsAt" | "endsAt" | "description" | "quickActions" | "saveButton";
-export type EventNoteOptionMap = {
-    "color": HexColor
-};
-export class EditableEventNote extends HTMLElement implements HasSections<EditableEventNoteSectionName> {
+export class EditableEventNote extends HTMLElement implements HasSections<EditableEventNote.SectionName> {
 
     public name!:HTMLHeadingElement;
     public category!:HTMLTextAreaElement;
@@ -218,7 +216,7 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
         for (const optionName of optionNames) this.optionCollection.hide(optionName);
     }
 
-    private noteOptions!:OptionCollection<keyof EventNoteOptionMap, EventNoteOptionMap>;
+    private noteOptions!:OptionCollection<keyof EditableEventNote.OptionMap, EditableEventNote.OptionMap>;
 
     protected readonly event:EventInfo;
     /** Replaces the EditableEventNote with its non-editable version. */
@@ -372,7 +370,7 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
         // options
         this.appendChild(this.optionCollection);
 
-        this.noteOptions = new OptionCollection<keyof EventNoteOptionMap, EventNoteOptionMap>({
+        this.noteOptions = new OptionCollection<keyof EditableEventNote.OptionMap, EditableEventNote.OptionMap>({
             "color": [
                 "palette",
                 ElementFactory.div(undefined, "center-content", "in-section-gap")
@@ -382,7 +380,7 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
                         .onValueChanged(() => this.refreshColorPalette()),
                     )
                     .make(),
-                elem => (elem.lastChild as HTMLInputElement).value as HexColor
+                elem => (elem.lastChild as HTMLInputElement).value as ColorUtil.HexColor
             ]
         }, { "color": "Kleurenpalet" });
         if (this.event.color !== undefined) this.noteOptions.add("color");
@@ -438,14 +436,21 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
 
 }
 
+export namespace EditableEventNote {
+
+    export type SectionName = "name" | "category" | "useTime" | "startsAt" | "endsAt" | "description" | "quickActions" | "saveButton";
+
+    export type OptionMap = {
+        "color": ColorUtil.HexColor
+    };
+
+}
+
 window.addEventListener("DOMContentLoaded", () => customElements.define("editable-event-note", EditableEventNote));
 
 
 
-/** [icon, text, enabled, show extra options] tuple */
-type RegisterButtonState = [string, string, boolean, boolean];
-type RegisterableEventNoteSectionName = EventNoteSectionName | "registrations" | "paymentDisclaimer" | "allowPaymentSwitch" | "registerButton" | "commentBox";
-export default class RegisterableEventNote extends EventNote implements HasSections<RegisterableEventNoteSectionName> {
+export default class RegisterableEventNote extends EventNote implements HasSections<RegisterableEventNote.SectionName> {
 
     private static CAN_REGISTER = false;
     private static CAN_DEREGISTER = false;
@@ -459,7 +464,7 @@ export default class RegisterableEventNote extends EventNote implements HasSecti
         }, true, true);
     }
 
-    protected static override SECTIONS_VISIBLE_FROM: Record<RegisterableEventNoteSectionName, DetailLevel> = {
+    protected static override SECTIONS_VISIBLE_FROM: Record<RegisterableEventNote.SectionName, DetailLevel> = {
         ...super.SECTIONS_VISIBLE_FROM,
         registrations: DetailLevel.HIGH,
         paymentDisclaimer: DetailLevel.FULL,
@@ -468,7 +473,7 @@ export default class RegisterableEventNote extends EventNote implements HasSecti
         registerButton: DetailLevel.FULL
     };
 
-    protected override isVisible(sectionName: RegisterableEventNoteSectionName): boolean {
+    protected override isVisible(sectionName: RegisterableEventNote.SectionName): boolean {
         return RegisterableEventNote.SECTIONS_VISIBLE_FROM[sectionName] <= this.lod;
     }
 
@@ -483,7 +488,7 @@ export default class RegisterableEventNote extends EventNote implements HasSecti
             .then(user => {
                 const allowsPayment = !this.allowPaymentSwitch || this.allowPaymentSwitch.value;
                 const isRegistered = user !== null && this.event.isRegistered(user.uid);
-                let state: RegisterButtonState;
+                let state: RegisterableEventNote.ButtonState;
                 const now = new Date();
 
                 if (!user) state = ["login", "Log in om je in te schrijven", true, false];
@@ -633,18 +638,20 @@ export default class RegisterableEventNote extends EventNote implements HasSecti
 
 }
 
+export namespace RegisterableEventNote {
+    export type SectionName = EventNote.SectionName | "registrations" | "paymentDisclaimer" | "allowPaymentSwitch" | "registerButton" | "commentBox";
+    
+    /** [icon, text, enabled, show extra options] tuple */
+    export type ButtonState = [string, string, boolean, boolean];
+}
+
 customElements.define("registerable-event-note", RegisterableEventNote);
 
-type EditableRegisterableEventNoteSectionName = EditableEventNoteSectionName;
-type RegisterableEventNoteOptionMap = {
-    capacity: number;
-    canRegisterFrom: Date;
-    canRegisterUntil: Date;
-    requiresPayment: boolean;
-};
-export class EditableRegisterableEventNote extends EditableEventNote implements HasSections<EditableRegisterableEventNoteSectionName> {
 
-    private registrationOptions!: OptionCollection<keyof RegisterableEventNoteOptionMap, RegisterableEventNoteOptionMap>;
+
+export class EditableRegisterableEventNote extends EditableEventNote implements HasSections<EditableRegisterableEventNote.SectionName> {
+
+    private registrationOptions!: OptionCollection<keyof EditableRegisterableEventNote.OptionMap, EditableRegisterableEventNote.OptionMap>;
 
     protected override event!: RegisterableEventInfo;
     protected override get savableEvent(): RegisterableEventInfo {
@@ -753,6 +760,17 @@ export class EditableRegisterableEventNote extends EditableEventNote implements 
         this.hideOptions("registerable");
     }
 
+}
+
+export namespace EditableRegisterableEventNote {
+    export type SectionName = EditableEventNote.SectionName;
+
+    export type OptionMap = {
+        capacity: number;
+        canRegisterFrom: Date;
+        canRegisterUntil: Date;
+        requiresPayment: boolean;
+    };
 }
 
 window.addEventListener("DOMContentLoaded", () => customElements.define("editable-registerable-event-note", EditableRegisterableEventNote));

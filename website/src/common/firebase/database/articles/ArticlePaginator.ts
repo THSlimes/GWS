@@ -2,27 +2,14 @@ import DateUtil from "../../../util/DateUtil";
 import NumberUtil from "../../../util/NumberUtil";
 import ArticleDatabase, { ArticleInfo, ArticleQueryFilter } from "./ArticleDatabase";
 
-type SortingOrder = "ascending" | "descending";
-function opposite(order:SortingOrder):SortingOrder {
-    return order === "ascending" ? "descending" : "ascending";
-}
-
-type NonTimedArticleQueryFilter = Omit<ArticleQueryFilter, "sortByCreatedAt"|"before"|"after"|"limit">;
-
-interface PageInfo {
-    index: number,
-    articles: ArticleInfo[],
-    range: { min:Date, max:Date }
-}
-
-export default class ArticlePaginator {
+class ArticlePaginator {
 
     private readonly db:ArticleDatabase;
     private readonly pageSize:number;
-    private readonly baseFilter:NonTimedArticleQueryFilter;
-    private sortOrder:SortingOrder;
+    private readonly baseFilter:ArticlePaginator.NonTimedQueryFilter;
+    private sortOrder:ArticlePaginator.Order;
 
-    constructor(db:ArticleDatabase, pageSize:number, baseFilter:NonTimedArticleQueryFilter, sortOrder:SortingOrder="descending") {
+    constructor(db:ArticleDatabase, pageSize:number, baseFilter:ArticlePaginator.NonTimedQueryFilter, sortOrder:ArticlePaginator.Order="descending") {
         this.db = db;
         this.pageSize = Math.floor(pageSize);
         this.baseFilter = baseFilter;
@@ -51,9 +38,9 @@ export default class ArticlePaginator {
 
 
 
-    private readonly pageCache:Record<number,PageInfo> = {};
+    private readonly pageCache:Record<number,ArticlePaginator.PageInfo> = {};
 
-    private addToPageCache(pageIndex:number, articles:ArticleInfo[]):PageInfo {
+    private addToPageCache(pageIndex:number, articles:ArticleInfo[]):ArticlePaginator.PageInfo {
         if (pageIndex in this.pageCache) throw new Error(`page index ${pageIndex} already in cache`);
         else {
             const sorted = articles.toSorted((a1, a2) => a1.created_at.getTime() - a2.created_at.getTime());
@@ -69,7 +56,7 @@ export default class ArticlePaginator {
         }
     }
 
-    public getPage(pageIndex:number):Promise<PageInfo> {
+    public getPage(pageIndex:number):Promise<ArticlePaginator.PageInfo> {
 
         return new Promise((resolve, reject) => {
             if (pageIndex in this.pageCache) resolve(this.pageCache[pageIndex]); // use cached value
@@ -86,7 +73,7 @@ export default class ArticlePaginator {
                     }
                     else if (pageIndex === counts.numPages - 1) { // is last page, get from DB
                         const numArticlesInPage = (counts.numArticles % this.pageSize) || this.pageSize; // size of last page may differ
-                        const queryFilter:ArticleQueryFilter = { ...this.baseFilter, sortByCreatedAt: opposite(this.sortOrder), limit: numArticlesInPage };
+                        const queryFilter:ArticleQueryFilter = { ...this.baseFilter, sortByCreatedAt: ArticlePaginator.SortingOrder.oppositeOf(this.sortOrder), limit: numArticlesInPage };
                         this.db.get(queryFilter)
                         .then(articles => resolve(this.addToPageCache(pageIndex, articles)))
                         .catch(reject);
@@ -114,3 +101,22 @@ export default class ArticlePaginator {
     }
 
 }
+
+namespace ArticlePaginator {
+    export type Order = "ascending" | "descending";
+    export namespace SortingOrder {
+        export function oppositeOf(order:Order):Order {
+            return order === "ascending" ? "descending" : "ascending";
+        }
+    }
+
+    export type NonTimedQueryFilter = Omit<ArticleQueryFilter, "id"|"notId"|"sortByCreatedAt"|"before"|"after"|"limit">;
+
+    export interface PageInfo {
+        index: number,
+        articles: ArticleInfo[],
+        range: { min:Date, max:Date }
+    }
+}
+
+export default ArticlePaginator;

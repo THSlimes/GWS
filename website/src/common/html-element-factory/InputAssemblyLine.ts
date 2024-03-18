@@ -1,87 +1,89 @@
+import ColorUtil from "../util/ColorUtil";
 import DateUtil from "../util/DateUtil";
 import AssemblyLine from "./AssemblyLine";
-import { HexColor } from "../util/StyleUtil";
-
-/** Maps the 'type' field of an HTMLInputElement to the type of its 'value' field */
-type HTMLInputElementTypeMap = {
-    "button": [string];
-    "checkbox": [string];
-    "color": [number, number, number] | [HexColor];
-    "date": [number, number, number];
-    "datetime-local": [number, number, number, number, number] | [Date];
-    "email": [string];
-    "file": [string];
-    "hidden": [string];
-    "image": [];
-    "month": [number, number];
-    "number": [number];
-    "password": [string];
-    "radio": [string];
-    "range": [number];
-    "reset": [string];
-    "search": [string];
-    "submit": [string];
-    "tel": [string];
-    "text": [string];
-    "time": [number, number];
-    "url": [string];
-    "week": [number, number];
-};
-/** Default values for each input type.  */
-type InputTypeTranslators = {
-    [K in keyof HTMLInputElementTypeMap]: (...args:HTMLInputElementTypeMap[K]) => string
-};
-
-const INPUT_TYPE_TRANSLATORS:InputTypeTranslators = {
-    button: text => text,
-    checkbox: value => value,
-    color: (...args) => {
-        if (args.length === 1) return args[0];
-        else {
-            const [r,g,b] = args;
-            return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
-        }
-    },
-    date: (...args) => {
-        return `${args[0].toString().padStart(4,'0')}-${(args[1]+1).toString().padStart(2,'0')}-${args[2].toString().padStart(2,'0')}`;
-    },
-    "datetime-local": (...args) => {
-        if (args[0] instanceof Date) {
-            const d = DateUtil.Timestamps.copy(args[0]);
-            d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-            const iso = d.toISOString();
-            return iso.includes('.') ? iso.substring(0, iso.indexOf('.')) : iso;
-        }
-        else return new Date(args[0], args[1]!, args[2]!, args[3]!, args[4]!).toISOString();
-    },
-    email: email => email,
-    file: path => path,
-    hidden: value => value,
-    image: () => "",
-    month: (year, month) => `${year.toString().padStart(4,'0')}-${(month+1).toString().padStart(2,'0')}`,
-    number: num => num.toString(),
-    password: password => password,
-    radio: value => value,
-    range: num => num.toString(),
-    reset: text => text,
-    search: query => query,
-    submit: text => text,
-    tel: telNumber => telNumber,
-    text: text => text,
-    time: (hrs, min) => `${hrs.toString().padStart(2,'0')}:${min.toString().padStart(2,'0')}`,
-    url: url => url,
-    week: (year, weekInd) => `${year.toString().padStart(4,'0')}-W${weekInd.toString().padStart(2,'0')}`
-};
 
 /** SmartInputs remember their previous value. */
 type SmartInput = HTMLInputElement & { prevValue: string };
+namespace SmartInput {
+    /** Maps the 'type' field of an HTMLInputElement to the type of its 'value' field */
+    export type InputTypeMap = {
+        "button": [string];
+        "checkbox": [string];
+        "color": [number, number, number] | [ColorUtil.HexColor];
+        "date": [number, number, number];
+        "datetime-local": [number, number, number, number, number] | [Date];
+        "email": [string];
+        "file": [string];
+        "hidden": [string];
+        "image": [];
+        "month": [number, number];
+        "number": [number];
+        "password": [string];
+        "radio": [string];
+        "range": [number];
+        "reset": [string];
+        "search": [string];
+        "submit": [string];
+        "tel": [string];
+        "text": [string];
+        "time": [number, number];
+        "url": [string];
+        "week": [number, number];
+    };
+
+    const INPUT_TYPE_TRANSLATORS:{ [K in keyof InputTypeMap]: (...args:InputTypeMap[K]) => string } = {
+        button: text => text,
+        checkbox: value => value,
+        color: (...args) => {
+            if (args.length === 1) return args[0];
+            else {
+                const [r,g,b] = args;
+                return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+            }
+        },
+        date: (...args) => {
+            return `${args[0].toString().padStart(4,'0')}-${(args[1]+1).toString().padStart(2,'0')}-${args[2].toString().padStart(2,'0')}`;
+        },
+        "datetime-local": (...args) => {
+            if (args[0] instanceof Date) {
+                const d = DateUtil.Timestamps.copy(args[0]);
+                d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+                const iso = d.toISOString();
+                return iso.includes('.') ? iso.substring(0, iso.indexOf('.')) : iso;
+            }
+            else return new Date(args[0], args[1]!, args[2]!, args[3]!, args[4]!).toISOString();
+        },
+        email: email => email,
+        file: path => path,
+        hidden: value => value,
+        image: () => "",
+        month: (year, month) => `${year.toString().padStart(4,'0')}-${(month+1).toString().padStart(2,'0')}`,
+        number: num => num.toString(),
+        password: password => password,
+        radio: value => value,
+        range: num => num.toString(),
+        reset: text => text,
+        search: query => query,
+        submit: text => text,
+        tel: telNumber => telNumber,
+        text: text => text,
+        time: (hrs, min) => `${hrs.toString().padStart(2,'0')}:${min.toString().padStart(2,'0')}`,
+        url: url => url,
+        week: (year, weekInd) => `${year.toString().padStart(4,'0')}-W${weekInd.toString().padStart(2,'0')}`
+    };
+
+    export function translateTypedValue<T extends keyof InputTypeMap>(type:T, ...val:InputTypeMap[T]):string {
+        return INPUT_TYPE_TRANSLATORS[type](...val);
+    }
+}
+
 /**
  * An InputAssemblyLine is a type of AssemblyLine specifically for
  * creating HTMLInputElements.
  *
  * @param T 'type' field of the HTMLInputElement
  */
-export class InputAssemblyLine<T extends keyof HTMLInputElementTypeMap> extends AssemblyLine<"input"> {
+export class InputAssemblyLine<T extends keyof SmartInput.InputTypeMap> extends AssemblyLine<"input"> {
 
     protected readonly type: T;
 
@@ -91,9 +93,9 @@ export class InputAssemblyLine<T extends keyof HTMLInputElementTypeMap> extends 
         this.type = type;
     }
 
-    protected _value?: HTMLInputElementTypeMap[T];
+    protected _value?: SmartInput.InputTypeMap[T];
     /** Provides the inputs 'value'. */
-    public value(...value: HTMLInputElementTypeMap[T]) {
+    public value(...value: SmartInput.InputTypeMap[T]) {
         this._value = value;
         return this;
     }
@@ -135,7 +137,7 @@ export class InputAssemblyLine<T extends keyof HTMLInputElementTypeMap> extends 
         out.type = this.type;
 
         if (this._value !== undefined) {
-            const v = INPUT_TYPE_TRANSLATORS[this.type](...this._value);
+            const v = SmartInput.translateTypedValue(this.type, ...this._value);
             out.value = v;
         }
         out.prevValue = out.value;
@@ -156,8 +158,10 @@ export class InputAssemblyLine<T extends keyof HTMLInputElementTypeMap> extends 
     }
 
 }
-type ButtonLikeType = "button" | "reset" | "submit";
-export class ButtonLikeInputAssemblyLine<BLT extends ButtonLikeType> extends InputAssemblyLine<BLT> {
+
+
+
+export class ButtonLikeInputAssemblyLine<BLT extends ButtonLikeInputAssemblyLine.InputType> extends InputAssemblyLine<BLT> {
 
     protected _onClick?: (val: string) => void;
     /** Provides a callback function for when the button is clicked. */
@@ -177,9 +181,13 @@ export class ButtonLikeInputAssemblyLine<BLT extends ButtonLikeType> extends Inp
     }
 
 }
-type CheckableInputType = "checkbox" | "radio";
-type CheckableInputElement = SmartInput & { wasChecked: boolean; };
-export class CheckableInputAssemblyLine<CT extends CheckableInputType> extends InputAssemblyLine<CT> {
+export namespace ButtonLikeInputAssemblyLine {
+    export type InputType = "button" | "reset" | "submit";
+}
+
+
+
+export class CheckableInputAssemblyLine<CT extends CheckableInputAssemblyLine.InputType> extends InputAssemblyLine<CT> {
 
     constructor(type: CT) {
         super(type);
@@ -200,7 +208,7 @@ export class CheckableInputAssemblyLine<CT extends CheckableInputType> extends I
     }
 
     public override make() {
-        const out = super.make() as CheckableInputElement;
+        const out = super.make() as CheckableInputAssemblyLine.CheckableInputElement;
 
         out.checked = this._checked;
         out.wasChecked = out.checked;
@@ -220,23 +228,30 @@ export class CheckableInputAssemblyLine<CT extends CheckableInputType> extends I
         return out;
     }
 }
-type RangedInputType = "date" | "datetime-local" | "month" | "number" | "range" | "time" | "week";
-export class RangedInputAssemblyLine<RT extends RangedInputType> extends InputAssemblyLine<RT> {
+
+namespace CheckableInputAssemblyLine {
+    export type InputType = "checkbox" | "radio";
+    export type CheckableInputElement = SmartInput & { wasChecked: boolean; };
+}
+
+
+
+export class RangedInputAssemblyLine<RT extends RangedInputAssemblyLine.InputType> extends InputAssemblyLine<RT> {
 
     constructor(type: RT) {
         super(type);
     }
 
-    protected _min?: HTMLInputElementTypeMap[RT];
+    protected _min?: SmartInput.InputTypeMap[RT];
     /** Provides a minimum value for the input. */
-    public min(...minValue: HTMLInputElementTypeMap[RT]) {
+    public min(...minValue: SmartInput.InputTypeMap[RT]) {
         this._min = minValue;
         return this;
     }
 
-    protected _max?: HTMLInputElementTypeMap[RT];
+    protected _max?: SmartInput.InputTypeMap[RT];
     /** Provides a maximum value for the input. */
-    public max(...minValue: HTMLInputElementTypeMap[RT]) {
+    public max(...minValue: SmartInput.InputTypeMap[RT]) {
         this._max = minValue;
         return this;
     }
@@ -251,20 +266,25 @@ export class RangedInputAssemblyLine<RT extends RangedInputType> extends InputAs
     public override make() {
         const out = super.make();
 
-        if (this._min !== undefined) out.min = INPUT_TYPE_TRANSLATORS[this.type](...this._min);
-        if (this._max !== undefined) out.max = INPUT_TYPE_TRANSLATORS[this.type](...this._max);
+        if (this._min !== undefined) out.min = SmartInput.translateTypedValue(this.type, ...this._min);
+        if (this._max !== undefined) out.max = SmartInput.translateTypedValue(this.type, ...this._max);
         out.step = this._step.toString();
 
         return out;
     }
 
 }
-type NumberInputType = "number" | "range";
-type NumberInput = SmartInput & { prevValueAsNumber: number; };
-export class NumberInputAssemblyLine<NT extends NumberInputType> extends RangedInputAssemblyLine<NT> {
+
+namespace RangedInputAssemblyLine {
+    export type InputType = "date" | "datetime-local" | "month" | "number" | "range" | "time" | "week";
+}
+
+
+
+export class NumberInputAssemblyLine<NT extends NumberInputAssemblyLine.InputType> extends RangedInputAssemblyLine<NT> {
 
     public override make() {
-        const out = super.make() as NumberInput;
+        const out = super.make() as NumberInputAssemblyLine.NumberInput;
 
         out.prevValueAsNumber = Number.parseFloat(out.prevValue);
 
@@ -276,12 +296,18 @@ export class NumberInputAssemblyLine<NT extends NumberInputType> extends RangedI
     }
 
 }
-type DateInputType = "date" | "datetime-local" | "month" | "week";
-type DateInput = SmartInput & { prevValueAsDate: Date; };
-export class DateInputAssemblyLine<DT extends DateInputType> extends RangedInputAssemblyLine<DT> {
+
+namespace NumberInputAssemblyLine {
+    export type InputType = "number" | "range";
+    export type NumberInput = SmartInput & { prevValueAsNumber: number; };
+}
+
+
+
+export class DateInputAssemblyLine<DT extends DateInputAssemblyLine.InputType> extends RangedInputAssemblyLine<DT> {
 
     public override make() {
-        const out = super.make() as DateInput;
+        const out = super.make() as DateInputAssemblyLine.DateInput;
 
         out.prevValueAsDate = new Date(out.prevValue);
 
@@ -293,8 +319,15 @@ export class DateInputAssemblyLine<DT extends DateInputType> extends RangedInput
     }
 
 }
-type TextInputType = "email" | "file" | "hidden" | "password" | "search" | "tel" | "text" | "url";
-export class TextInputAssemblyLine<TT extends TextInputType> extends InputAssemblyLine<TT> {
+
+namespace DateInputAssemblyLine {
+    export type InputType = "date" | "datetime-local" | "month" | "week";
+    export type DateInput = SmartInput & { prevValueAsDate: Date; };
+}
+
+
+
+export class TextInputAssemblyLine<TT extends TextInputAssemblyLine.InputType> extends InputAssemblyLine<TT> {
 
     constructor(type: TT) {
         super(type);
@@ -362,4 +395,8 @@ export class TextInputAssemblyLine<TT extends TextInputType> extends InputAssemb
         return out;
     }
 
+}
+
+namespace TextInputAssemblyLine {
+    export type InputType = "email" | "file" | "hidden" | "password" | "search" | "tel" | "text" | "url";
 }

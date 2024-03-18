@@ -2,11 +2,6 @@ import Cache from "./Cache";
 import UserFeedback from "./ui/UserFeedback";
 import { Class } from "./util/UtilTypes";
 
-type ElementIDQuery = { [id:string]: Class<HTMLElement> };
-type ResolvedElementIDQuery<Query extends ElementIDQuery> = {
-    [ID in keyof Query]: InstanceType<Query[ID]>
-};
-
 export default abstract class Loading {
 
     private constructor() {} // prevent extension
@@ -57,7 +52,7 @@ export default abstract class Loading {
         });
     }
 
-    private static getElementsById<Query extends ElementIDQuery>(query:Query):ResolvedElementIDQuery<Query> {
+    private static getElementsById<Query extends Loading.IDQuery>(query:Query):Loading.ResolvedIDQuery<Query> {
         const out:Record<string,Element> = {};
         for (const id in query) {
             const elem = document.getElementById(id);
@@ -66,9 +61,9 @@ export default abstract class Loading {
             out[id] = elem;
         }
 
-        return out as ResolvedElementIDQuery<Query>;
+        return out as Loading.ResolvedIDQuery<Query>;
     }
-    public static onDOMContentLoaded<Query extends ElementIDQuery>(query:Query = {} as Query):Promise<ResolvedElementIDQuery<Query>> {
+    public static onDOMContentLoaded<Query extends Loading.IDQuery>(query:Query = {} as Query):Promise<Loading.ResolvedIDQuery<Query>> {
         return new Promise((resolve,reject) => {
             if (this.DOMContentLoaded) try { resolve(this.getElementsById(query)); }
                 catch (err) { reject(err); }
@@ -114,4 +109,11 @@ export default abstract class Loading {
         });
     }
 
+}
+
+namespace Loading {
+    export type IDQuery = { [id:string]: Class<HTMLElement> };
+    export type ResolvedIDQuery<Query extends IDQuery> = {
+        [ID in keyof Query]: InstanceType<Query[ID]>
+    };
 }

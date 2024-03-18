@@ -3,6 +3,8 @@ import FirestoreEventDatebase from "./FirestoreEventDatabase";
 
 abstract class EventDatabaseFactory {
 
+    private constructor() { /** Prevent extension */ }
+
     public static firebase() { return new FirestoreEventDatebase(); }
 
     public static fromOrigin(origin:EventDatabaseFactory.Origin):EventDatabase {

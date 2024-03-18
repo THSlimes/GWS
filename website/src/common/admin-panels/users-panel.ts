@@ -2,7 +2,7 @@ import DataView, { DatabaseDataView } from "../DataView";
 import getErrorMessage from "../firebase/authentication/error-messages";
 import { checkPermissions } from "../firebase/authentication/permission-based-redirect";
 import Permissions from "../firebase/database/Permissions";
-import { FirestoreUserDatabase } from "../firebase/database/users/FirestoreUserDatabase";
+import FirestoreUserDatabase from "../firebase/database/users/FirestoreUserDatabase";
 import { UserInfo } from "../firebase/database/users/UserDatabase";
 import { onAuth } from "../firebase/init-firebase";
 import ElementFactory from "../html-element-factory/ElementFactory";

@@ -3,12 +3,13 @@ import "./create-split-view";
 
 import ArticleDatabase from "../common/firebase/database/articles/ArticleDatabase";
 import SmartArticle, { EditableSmartArticle } from "../common/custom-elements/SmartArticle";
-import { FirestoreArticleDatabase } from "../common/firebase/database/articles/FirestoreArticleDatabase";
+import FirestoreArticleDatabase from "../common/firebase/database/articles/FirestoreArticleDatabase";
 import { runOnErrorCode } from "../common/firebase/authentication/error-messages";
 import URLUtil from "../common/util/URLUtil";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
 import Loading from "../common/Loading";
 import UserFeedback from "../common/ui/UserFeedback";
+import { DetailLevel } from "../common/util/UtilTypes";
 
 /** Creates the link to an article given its ID. */
 export function articleLink(id: string) { return `/article.html?id=${id}`; }
@@ -26,7 +27,9 @@ else window.addEventListener("DOMContentLoaded", () => {
     DB.getById(articleId)
     .then(articleInfo => {
         if (articleInfo) {
-            const article = isEditMode ? new EditableSmartArticle(articleInfo, "full") : new SmartArticle(articleInfo, "full");
+            const article = isEditMode ?
+                new EditableSmartArticle(articleInfo, DetailLevel.FULL) :
+                new SmartArticle(articleInfo, DetailLevel.FULL);
             ARTICLE_DIV.prepend(article);
 
             if (articleInfo.show_on_homepage) {

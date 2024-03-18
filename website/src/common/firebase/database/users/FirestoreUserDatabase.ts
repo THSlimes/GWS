@@ -5,24 +5,15 @@ import { FIRESTORE } from "../../init-firebase";
 import Cache from "../../../Cache";
 import ArrayUtil from "../../../util/ArrayUtil";
 
-/** A user as they're stored in the database. */
-type DBUser = {
-    joined_at:Timestamp,
-    member_until:Timestamp,
-    first_name:string,
-    family_name:string,
-    permissions:Permissions.Permission[]
-};
-
-const USER_CONVERTER:FirestoreDataConverter<UserInfo, DBUser> = {
-    toFirestore(user:UserInfo):DBUser {
+const USER_CONVERTER:FirestoreDataConverter<UserInfo, FirestoreUserDatabase.User> = {
+    toFirestore(user:UserInfo):FirestoreUserDatabase.User {
         return {
             ...user,
             joined_at: Timestamp.fromDate(user.joined_at),
             member_until: Timestamp.fromDate(user.member_until)
         }
     },
-    fromFirestore(snapshot: QueryDocumentSnapshot<DBUser, UserInfo>):UserInfo {
+    fromFirestore(snapshot: QueryDocumentSnapshot<FirestoreUserDatabase.User, UserInfo>):UserInfo {
         const data = snapshot.data();
         return new UserInfo(
             snapshot.id,
@@ -35,7 +26,7 @@ const USER_CONVERTER:FirestoreDataConverter<UserInfo, DBUser> = {
     }
 }
 
-export class FirestoreUserDatabase extends UserDatabase {
+class FirestoreUserDatabase extends UserDatabase {
 
     private static readonly COLLECTION = collection(FIRESTORE, "users").withConverter(USER_CONVERTER);
 
@@ -153,3 +144,17 @@ export class FirestoreUserDatabase extends UserDatabase {
     }
 
 }
+
+namespace FirestoreUserDatabase {
+    /** A user as they're stored in the database. */
+    export type User = {
+        joined_at:Timestamp,
+        member_until:Timestamp,
+        first_name:string,
+        family_name:string,
+        permissions:Permissions.Permission[]
+    };
+
+}
+
+export default FirestoreUserDatabase;

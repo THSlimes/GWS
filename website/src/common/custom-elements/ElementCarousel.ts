@@ -1,5 +1,3 @@
-import $ from "jquery";
-
 /**
  * An ElementCarousel is a custom type of HTMLElement which
  * cycles through its child elements. Give a child the ```cover```
@@ -43,7 +41,7 @@ export default class ElementCarousel extends HTMLElement {
             this.current = (this.current + 1) % this.revolvingElements.length;
 
             this.revolvingElements[prev]?.setAttribute("hide", "");
-            this.revolvingElements[this.current]?.removeAttribute("hide");            
+            this.revolvingElements[this.current]?.removeAttribute("hide");
 
         }, this.delay);
     }

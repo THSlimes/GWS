@@ -1,4 +1,4 @@
-import TextStyling, { StyleTagClassName } from "./TextStyling";
+import TextStyling from "./TextStyling";
 import ArrayUtil from "../../util/ArrayUtil";
 import ColorUtil from "../../util/ColorUtil";
 import ElementUtil from "../../util/ElementUtil";
@@ -6,14 +6,13 @@ import { HasSections } from "../../util/UtilTypes";
 import FunctionUtil from "../../util/FunctionUtil";
 import NodeUtil from "../../util/NodeUtil";
 import NumberUtil from "../../util/NumberUtil";
-import { HexColor } from "../../util/StyleUtil";
 import FolderElement from "../FolderElement";
 import RichTextSerializer from "./RichTextSerializer";
-import MultisourceAttachment, { AttachmentOrigin } from "../MultisourceAttachment";
+import MultisourceAttachment from "../MultisourceAttachment";
+import { AttachmentOrigin } from "../../util/UtilTypes";
 import MultisourceImage from "../MultisourceImage";
 import Switch from "../Switch";
 import ElementFactory from "../../html-element-factory/ElementFactory";
-import UserFeedback from "../../ui/UserFeedback";
 import IFrameContainer from "../IFrameContainer";
 
 /** [parent Node, "before child" index] tuple */
@@ -35,47 +34,10 @@ function insertAt(position:InsertionPosition, ...nodes:Node[]):void {
     else for (const n of nodes) parent.insertBefore(n, parent.childNodes[ind]);
 }
 
-/** Union type of the possible names of a rich-text section. */
-export type RichTextSectionName = "shortcut" | "attachment" | "image" | "title" | "h1" | "h2" | "h3" | "paragraph" | "list" | "numbered-list" | "newspaper";
-const richTextSectionNames:RichTextSectionName[] = ["shortcut", "attachment", "image", "title", "h1", "h2", "h3", "paragraph", "list", "numbered-list", "newspaper"];
-export function isRichTextSectionName(str:string):str is RichTextSectionName {
-    return richTextSectionNames.some(rtsn => str === rtsn);
-}
-
-/** All RichTextSectionNames categorized as headers. */
-const HEADER_SECTION_NAMES:RichTextSectionName[] = ["title", "h1", "h2", "h3"];
-/** All RichTextSectionNames that have editable text. */
-const TEXT_SECTION_NAMES:RichTextSectionName[] = [...HEADER_SECTION_NAMES, "paragraph", "shortcut"];
-/** All RichTextSectionNames categorized as widgets. */
-const WIDGET_SECTION_NAMES:RichTextSectionName[] = ["newspaper"];
-const NEWSPAPER_SRC = "https://www.bladnl.nl/bladen/tblaadje/pluginfull";
-
-const EXCLUDED_INSERTABLE_SUBSECTIONS:{[k in RichTextSectionName]?: RichTextSectionName[]} = {
-    list: ["list", "numbered-list"],
-    "numbered-list": ["list", "numbered-list"]
-};
-
-function inferSectionName(elem:Element):RichTextSectionName {
-    if (elem.tagName === 'A') return "shortcut";
-    else if (elem.tagName === "MULTISOURCE-ATTACHMENT") return "attachment";
-    else if (elem.tagName === "MULTISOURCE-IMAGE") return "image";
-    else if (elem instanceof HTMLHeadingElement) {
-        if (elem.tagName === "H1") return elem.classList.contains("title") ? "title" : "h1";
-        else if (elem.tagName === "H2") return "h2";
-        else return "h3";
-    }
-    else if (elem instanceof HTMLParagraphElement) return "paragraph";
-    else if (elem instanceof HTMLUListElement) return "list";
-    else if (elem instanceof HTMLOListElement) return "numbered-list";
-    else if (elem.tagName === "IFRAME-CONTAINER" && elem.classList.contains("newspaper")) return "newspaper";
-    else throw Error(`could not infer section type of ${elem.outerHTML}`);
-}
-
-
 /**
  * A RichTextInput is a type of HTMLElement that allows for editing text to an advanced degree.
  */
-export default class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body"> {
+class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body"> {
 
     public set isCompact(newVal:boolean) {
         this.toggleAttribute("compact", newVal);
@@ -91,7 +53,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
 
         const newSections = RichTextSerializer.deserialize(newVal);
         for (const section of newSections) {
-            if (section instanceof HTMLElement) this.insert(inferSectionName(section), section, [this.body, Infinity]);
+            if (section instanceof HTMLElement) this.insert(RichTextInput.inferSectionName(section), section, [this.body, Infinity]);
             else if (section.nodeType === Node.TEXT_NODE) this.insert("paragraph", ElementFactory.p(section.textContent!).make(), [this.body, Infinity]);
             else this.body.appendChild(section);
         }
@@ -139,7 +101,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
      * @param deleteOnEmpty whether to delete the new element when backspace is pressed
      * while `newElem.textContent` is empty.
      */
-    private insert(type:RichTextSectionName, newElem:HTMLElement, position:InsertionPosition) {
+    private insert(type:RichTextInput.SectionName, newElem:HTMLElement, position:InsertionPosition) {
 
         newElem.setAttribute("do-serialize", ""); // mark as element
         newElem.setAttribute("type", type); // mark type
@@ -250,7 +212,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
         insertAt(position, container);
 
         // section type specific code
-        if (TEXT_SECTION_NAMES.includes(type)) { // marking text element properties
+        if (RichTextInput.ALL_TEXT.includes(type)) { // marking text element properties
             newElem.classList.add("text-input");
             newElem.setAttribute("contenteditable", "plaintext-only");
             newElem.setAttribute("supports-style-tags", "");
@@ -261,14 +223,14 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
             newElem.focus();
         }
 
-        if (type in EXCLUDED_INSERTABLE_SUBSECTIONS) {
+        if (type in RichTextInput.EXCLUDED_INSERTABLE_SUBSECTIONS) {
             newElem.setAttribute("insertion-target", "");
 
             // recursively insert children
             const children = NodeUtil.extractChildren(newElem);
             for (const child of children) {
                 if (child instanceof HTMLElement) {
-                    this.insert(inferSectionName(child), child, [newElem, Infinity])
+                    this.insert(RichTextInput.inferSectionName(child), child, [newElem, Infinity])
                 }
                 else newElem.appendChild(child);
             }
@@ -281,7 +243,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                     return [newElem, NodeUtil.getChildIndex(newElem, targetChild) + 1];
                 }
                 else return [newElem, Infinity]; // append to newElem
-            }, EXCLUDED_INSERTABLE_SUBSECTIONS[type]));
+            }, RichTextInput.EXCLUDED_INSERTABLE_SUBSECTIONS[type]));
         }
 
     }
@@ -306,7 +268,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
     }
 
     /** Creates a button which toggles a style tag on/off. */
-    private makeStyleTagToggle(tagName:StyleTagClassName, icon:string, tooltip:string) {
+    private makeStyleTagToggle(tagName:TextStyling.StyleTagClass, icon:string, tooltip:string) {
         return ElementFactory.iconButton(icon, (ev, toggle) => {
             if (!toggle.hasAttribute("disabled")) TextStyling.applyStyleTag(this.body, tagName);
         }, tooltip)
@@ -322,10 +284,10 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
             });
     }
 
-    private static readonly PICKER_BASE_COLORS:HexColor[] = ["#FF0000", "#FF8700", "#FFD300", "#DEFF0A", "#A1FF0A", "#0AFF99", "#0AEFFF", "#147DF5", "#580AFF", "#BE0AFF"];
+    private static readonly PICKER_BASE_COLORS:ColorUtil.HexColor[] = ["#FF0000", "#FF8700", "#FFD300", "#DEFF0A", "#A1FF0A", "#0AFF99", "#0AEFFF", "#147DF5", "#580AFF", "#BE0AFF"];
     private static readonly PICKER_SHADE_RATIOS:number[] = [.25, .5, .75];
     /** Makes a solid-colored button. */
-    private makeColorBulb(color:HexColor, onSelect:(c:HexColor)=>void) {
+    private makeColorBulb(color:ColorUtil.HexColor, onSelect:(c:ColorUtil.HexColor)=>void) {
         return ElementFactory.div()
             .class("color-bulb", "click-action", "center-content")
             .attr("value", color)
@@ -337,7 +299,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
             .on("click", () => onSelect(color))
     }
     /** Makes a new color-picker menu. */
-    private makeColorPicker(onSelect:(c:HexColor)=>void, icon:string, tooltip:string, tagName:StyleTagClassName) {
+    private makeColorPicker(onSelect:(c:ColorUtil.HexColor)=>void, icon:string, tooltip:string, tagName:TextStyling.StyleTagClass) {
         return ElementFactory.folderElement("down", 250, true)
             .heading(ElementFactory.p(icon).class("icon").tooltip(tooltip))
             .class("color-picker", "category")
@@ -539,7 +501,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
      * @param insPosCallback function to generate the insertion position
      * @param exclude section types to not make buttons for
      */
-    private makeSectionTypes(insPosCallback:()=>InsertionPosition, exclude:RichTextSectionName[]=[]):HTMLDivElement {
+    private makeSectionTypes(insPosCallback:()=>InsertionPosition, exclude:RichTextInput.SectionName[]=[]):HTMLDivElement {
         return ElementFactory.div(undefined, "section-types", "flex-columns", "cross-axis-center", "in-section-gap", "no-bullet")
             .canSelect(false)
             .children(
@@ -569,7 +531,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                         insPosCallback()
                     );
                 }, "Afbeelding toevoegen"),
-                !ArrayUtil.includesAll(exclude, ...HEADER_SECTION_NAMES) && ElementFactory.folderElement()
+                !ArrayUtil.includesAll(exclude, ...RichTextInput.ALL_HEADERS) && ElementFactory.folderElement()
                     .class("category")
                     .foldDir("down")
                     .closingDelay(250)
@@ -629,7 +591,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                             insPosCallback()
                         );
                     }, "Nieuwe genummerde lijst"),
-                !ArrayUtil.includesAll(exclude, ...WIDGET_SECTION_NAMES) &&ElementFactory.folderElement("down", 250)
+                !ArrayUtil.includesAll(exclude, ...RichTextInput.ALL_WIDGETS) &&ElementFactory.folderElement("down", 250)
                     .class("category")
                     .heading(
                         ElementFactory.p("widgets")
@@ -638,7 +600,7 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
                     )
                     .children(
                         !exclude.includes("newspaper") && ElementFactory.iconButton("newspaper", () => {
-                            const newspaper = new IFrameContainer(NEWSPAPER_SRC);
+                            const newspaper = new IFrameContainer(RichTextInput.NEWSPAPER_SRC);
                             newspaper.classList.add("newspaper");
                             this.insert("newspaper", newspaper, insPosCallback());
                         }, "Verenigingsblad toevoegen")
@@ -647,5 +609,47 @@ export default class RichTextInput extends HTMLElement implements HasSections<"t
     }
 
 }
+
+namespace RichTextInput {
+    /** Union type of the possible names of a rich-text section. */
+    export type SectionName = "shortcut" | "attachment" | "image" | "title" | "h1" | "h2" | "h3" | "paragraph" | "list" | "numbered-list" | "newspaper";
+    const richTextSectionNames:SectionName[] = ["shortcut", "attachment", "image", "title", "h1", "h2", "h3", "paragraph", "list", "numbered-list", "newspaper"];
+    export function isRichTextSectionName(str:string):str is SectionName {
+        return richTextSectionNames.some(rtsn => str === rtsn);
+    }
+
+    /** All RichTextSectionNames categorized as headers. */
+    export const ALL_HEADERS:SectionName[] = ["title", "h1", "h2", "h3"];
+    /** All RichTextSectionNames that have editable text. */
+    export const ALL_TEXT:SectionName[] = [...ALL_HEADERS, "paragraph", "shortcut"];
+    /** All RichTextSectionNames categorized as widgets. */
+    export const ALL_WIDGETS:SectionName[] = ["newspaper"];
+    export const NEWSPAPER_SRC = "https://www.bladnl.nl/bladen/tblaadje/pluginfull";
+    
+    /** SectionNames mapped to the section types that cannot be inserted in them. */
+    export const EXCLUDED_INSERTABLE_SUBSECTIONS:{[k in SectionName]?: SectionName[]} = {
+        list: ["list", "numbered-list"],
+        "numbered-list": ["list", "numbered-list"]
+    };
+    
+    /** Infers the SectionName of a serialized element. */
+    export function inferSectionName(elem:Element):SectionName {
+        if (elem.tagName === 'A') return "shortcut";
+        else if (elem.tagName === "MULTISOURCE-ATTACHMENT") return "attachment";
+        else if (elem.tagName === "MULTISOURCE-IMAGE") return "image";
+        else if (elem instanceof HTMLHeadingElement) {
+            if (elem.tagName === "H1") return elem.classList.contains("title") ? "title" : "h1";
+            else if (elem.tagName === "H2") return "h2";
+            else return "h3";
+        }
+        else if (elem instanceof HTMLParagraphElement) return "paragraph";
+        else if (elem instanceof HTMLUListElement) return "list";
+        else if (elem instanceof HTMLOListElement) return "numbered-list";
+        else if (elem.tagName === "IFRAME-CONTAINER" && elem.classList.contains("newspaper")) return "newspaper";
+        else throw Error(`could not infer section type of ${elem.outerHTML}`);
+    }
+}
+
+export default RichTextInput;
 
 window.addEventListener("DOMContentLoaded", () => customElements.define("rich-text-input", RichTextInput));

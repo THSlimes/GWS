@@ -1,12 +1,4 @@
-export type HexColor = `#${string}`;
-
-export type StyleMap = {
-    [PN in Exclude<keyof CSSStyleDeclaration, "length"|"parentRule">]?: Extract<CSSStyleDeclaration[PN], string>;
-};
-
-
-
-export default abstract class StyleUtil {
+abstract class StyleUtil {
 
     private static toKebabCase(propName:string):string {
         let out = "";
@@ -19,7 +11,7 @@ export default abstract class StyleUtil {
         return out;
     }
 
-    public static apply<E extends HTMLElement>(styleMap:StyleMap, elem:E):E {
+    public static apply<E extends HTMLElement>(styleMap:StyleUtil.StyleMap, elem:E):E {
         for (const k in styleMap) {
             const v = styleMap[k]!;
             elem.style.setProperty(this.toKebabCase(k), v);
@@ -29,3 +21,11 @@ export default abstract class StyleUtil {
     }
 
 }
+
+namespace StyleUtil {
+    export type StyleMap = {
+        [PN in Exclude<keyof CSSStyleDeclaration, "length"|"parentRule">]?: Extract<CSSStyleDeclaration[PN], string>;
+    };
+}
+
+export default StyleUtil;

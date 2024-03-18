@@ -1,29 +1,10 @@
-import { HexColor, StyleMap } from "../../util/StyleUtil";
 import ElementFactory from "../../html-element-factory/ElementFactory";
+import ColorUtil from "../../util/ColorUtil";
 import ElementUtil from "../../util/ElementUtil";
 import NodeUtil from "../../util/NodeUtil";
+import StyleUtil from "../../util/StyleUtil";
 
-interface StyleTagNameValueMap {
-    "bold": null,
-    "italic": null,
-    "underlined": null,
-    "strikethrough": null,
-    "text-color": HexColor,
-    "background-color": HexColor
-}
-export type StyleTagClassName = keyof StyleTagNameValueMap;
-
-const STYLE_TAG_CLASS_NAMES:StyleTagClassName[] = ["bold", "italic", "underlined", "strikethrough", "text-color", "background-color"];
-const DEFAULT_TAG_CLASS_NAME_VALUES:StyleTagNameValueMap = {
-    "bold": null,
-    "italic": null,
-    "underlined": null,
-    "strikethrough": null,
-    "text-color": "#000000",
-    "background-color": "#000000"
-};
-
-export default abstract class TextStyling {
+abstract class TextStyling {
 
     /**
      * Determines whether the current selection in fully encompassed by a certain style tag.
@@ -31,11 +12,11 @@ export default abstract class TextStyling {
      * @param value value associated with the style tag (e.g. its color for when `tagclass` is `"color"`)
      * @returns true if the current selection is totally within the given style tag
      */
-    public static isInStyleTag<TCN extends StyleTagClassName>(tagClass:TCN, value?:StyleTagNameValueMap[TCN]):boolean {
+    public static isInStyleTag<TCN extends TextStyling.StyleTagClass>(tagClass:TCN, value?:TextStyling.StyleTagValueMap[TCN]):boolean {
         return this.getContainingStyleTag(tagClass, value) !== null;
     }
 
-    public static getContainingStyleTag<TCN extends StyleTagClassName>(tagClass:TCN, value?:StyleTagNameValueMap[TCN]):Element|null {
+    public static getContainingStyleTag<TCN extends TextStyling.StyleTagClass>(tagClass:TCN, value?:TextStyling.StyleTagValueMap[TCN]):Element|null {
         const selection = getSelection();
 
         if (selection && selection.rangeCount !== 0) {
@@ -89,7 +70,7 @@ export default abstract class TextStyling {
         return out;
     }
 
-    private static getStyleMap<TCN extends StyleTagClassName>(tagClass:TCN, value=DEFAULT_TAG_CLASS_NAME_VALUES[tagClass]):StyleMap {
+    private static getStyleMap<TCN extends TextStyling.StyleTagClass>(tagClass:TCN, value=TextStyling.DEFAULT_VALUES_BY_CLASS[tagClass]):StyleUtil.StyleMap {
         switch (tagClass) {
             case "bold":
             case "italic":
@@ -104,7 +85,7 @@ export default abstract class TextStyling {
         }
     }
 
-    public static applyStyleTag<TCN extends StyleTagClassName>(containingElement:Element, tagClass:TCN, value=DEFAULT_TAG_CLASS_NAME_VALUES[tagClass]):boolean {
+    public static applyStyleTag<TCN extends TextStyling.StyleTagClass>(containingElement:Element, tagClass:TCN, value=TextStyling.DEFAULT_VALUES_BY_CLASS[tagClass]):boolean {
 
         let reapplyAfterwards = false;
         NodeUtil.deepReplaceAll(containingElement, '​', "");
@@ -191,7 +172,7 @@ export default abstract class TextStyling {
             contents = contents.flatMap(n => NodeUtil.getLeafNodes(n));
 
             // resolve self-ancestor issues
-            for (const className of STYLE_TAG_CLASS_NAMES) {
+            for (const className of TextStyling.STYLE_TAG_CLASSES) {
                 const elements = Array.from(containingElement.getElementsByClassName(className));
                 elements.forEach(elem => {
                     if (ElementUtil.queryAncestors(elem, `.${className}`).length !== 0) {
@@ -208,7 +189,7 @@ export default abstract class TextStyling {
                 selectedNodes = Array.from(range.extractContents().childNodes);
                 range.insertNode(selectionAnchor);
             }
-            for (const className of STYLE_TAG_CLASS_NAMES) {
+            for (const className of TextStyling.STYLE_TAG_CLASSES) {
                 const elements = Array.from(containingElement.getElementsByClassName(className));
                 elements.forEach(elem => {
                     if (!excludeFromTagCombination.includes(elem)) {
@@ -239,7 +220,7 @@ export default abstract class TextStyling {
             });
             
             // select contents again
-            if (contents.length !== 0) {                
+            if (contents.length !== 0) {
                 range.setStartBefore(contents[0]);
                 range.setEndAfter(contents.at(-1)!);
             }
@@ -259,3 +240,29 @@ export default abstract class TextStyling {
     }
 
 }
+
+namespace TextStyling {
+
+    export interface StyleTagValueMap {
+        "bold": null,
+        "italic": null,
+        "underlined": null,
+        "strikethrough": null,
+        "text-color": ColorUtil.HexColor,
+        "background-color": ColorUtil.HexColor
+    }
+    export type StyleTagClass = keyof StyleTagValueMap;
+
+    export const STYLE_TAG_CLASSES:StyleTagClass[] = ["bold", "italic", "underlined", "strikethrough", "text-color", "background-color"];
+    export const DEFAULT_VALUES_BY_CLASS:StyleTagValueMap = {
+        "bold": null,
+        "italic": null,
+        "underlined": null,
+        "strikethrough": null,
+        "text-color": "#000000",
+        "background-color": "#000000"
+    };
+
+}
+
+export default TextStyling;

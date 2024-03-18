@@ -1,9 +1,4 @@
-function isReplacedElement(e:HTMLElement) {
-    return e instanceof HTMLIFrameElement
-        || e instanceof HTMLVideoElement
-        || e instanceof HTMLEmbedElement
-        || e instanceof HTMLImageElement;
-}
+import ElementUtil from "../util/ElementUtil";
 
 /** Initializes parallax scrolling of the given element. */
 function initParallax(elem:HTMLElement) {
@@ -13,7 +8,7 @@ function initParallax(elem:HTMLElement) {
 
         // get original displacement
         const style = getComputedStyle(elem);
-        const originalDisplacement = isReplacedElement(elem) ? style.objectPosition.split(' ') : style.translate.split(' ');
+        const originalDisplacement = ElementUtil.isReplacedElement(elem) ? style.objectPosition.split(' ') : style.translate.split(' ');
         
         elem.style.setProperty("--original-displacement-x", originalDisplacement[0]);
         elem.style.setProperty("--original-displacement-y", originalDisplacement[1]);

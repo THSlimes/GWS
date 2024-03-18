@@ -1,19 +1,18 @@
 import ArticlePaginator from "../firebase/database/articles/ArticlePaginator";
-import { FirestoreArticleDatabase } from "../firebase/database/articles/FirestoreArticleDatabase";
+import FirestoreArticleDatabase from "../firebase/database/articles/FirestoreArticleDatabase";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import ElementUtil from "../util/ElementUtil";
-import { HasSections } from "../util/UtilTypes";
+import { DetailLevel, HasSections } from "../util/UtilTypes";
 import NodeUtil from "../util/NodeUtil";
-import SmartArticle, { ArticleLOD } from "./SmartArticle";
+import SmartArticle from "./SmartArticle";
 import Loading from "../Loading";
 
-type ArticleListSection = "currentPage"|"pageNavigator"|"firstPageButton"|"previousPageButton"|"nextPageButton"|"lastPageButton"|"pageNumber";
-export default class ArticleList extends HTMLElement implements HasSections<ArticleListSection> {
+class ArticleList extends HTMLElement implements HasSections<ArticleList.SectionName> {
 
     private readonly paginator:ArticlePaginator;
     private currentPageIndex = 0;
 
-    private _lod:ArticleLOD;
+    private _lod:DetailLevel;
     public get lod() { return this._lod; }
 
     public currentPage!:HTMLDivElement;
@@ -25,7 +24,7 @@ export default class ArticleList extends HTMLElement implements HasSections<Arti
     public lastPageButton!:HTMLInputElement;
     public pageNumber!:HTMLSpanElement;
 
-    constructor(paginator?:ArticlePaginator, lod?:ArticleLOD) {
+    constructor(paginator?:ArticlePaginator, lod?:DetailLevel) {
         super();
 
         this.paginator = paginator ?? new ArticlePaginator(
@@ -34,7 +33,7 @@ export default class ArticleList extends HTMLElement implements HasSections<Arti
             { forHomepage: true, forMembers: false }
         );
 
-        this._lod = lod ?? ElementUtil.getAttrAs<ArticleLOD>(this, "lod", val => ["full","medium","low"].includes(val)) ?? "medium";
+        this._lod = lod ?? DetailLevel.fromString(this.getAttribute("lod") ?? "medium");
         
         this.initElement();
     }
@@ -42,7 +41,7 @@ export default class ArticleList extends HTMLElement implements HasSections<Arti
     initElement(): void {
         this.style.display = "flex";
         this.classList.add("flex-rows", "section-gap");
-        this.setAttribute("lod", this.lod);
+        this.setAttribute("lod", DetailLevel.toString(this.lod));
 
         this.currentPage = this.appendChild(
             ElementFactory.div(undefined, "current-page", "flex-rows", "section-gap")
@@ -110,5 +109,11 @@ export default class ArticleList extends HTMLElement implements HasSections<Arti
     }
 
 }
+
+namespace ArticleList {
+    export type SectionName = "currentPage"|"pageNavigator"|"firstPageButton"|"previousPageButton"|"nextPageButton"|"lastPageButton"|"pageNumber";
+}
+
+export default ArticleList;
 
 window.addEventListener("DOMContentLoaded", () => customElements.define("article-list", ArticleList));

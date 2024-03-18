@@ -1,11 +1,10 @@
-import { FoldingDirection } from "../custom-elements/FolderElement";
 import NumberUtil from "../util/NumberUtil";
 import AssemblyLine, { AnchorElementAssemblyLine, RichTextInputAssemblyLine, SelectAssemblyLine } from "./AssemblyLine";
-import { HexColor } from "../util/StyleUtil";
 import FolderElementAssemblyLine from "./FolderElementAssemblyLine";
 import { ButtonLikeInputAssemblyLine, CheckableInputAssemblyLine, DateInputAssemblyLine, InputAssemblyLine, NumberInputAssemblyLine, RangedInputAssemblyLine, TextInputAssemblyLine } from "./InputAssemblyLine";
 import RichTextSerializer from "../custom-elements/rich-text/RichTextSerializer";
-import { AttachmentOrigin } from "../custom-elements/MultisourceAttachment";
+import FolderElement from "../custom-elements/FolderElement";
+import ColorUtil from "../util/ColorUtil";
 
 /**
  * The ElementFactory helper-class provides static methods that allow
@@ -90,7 +89,7 @@ export default abstract class ElementFactory {
             return onClick ? out.onClick(onClick) : out;
         },
         checkbox() { return new CheckableInputAssemblyLine("checkbox"); },
-        color(value?:HexColor) {
+        color(value?:ColorUtil.HexColor) {
             const out = new InputAssemblyLine("color");
             if (value) out.value(value);
             return out;
@@ -218,7 +217,7 @@ export default abstract class ElementFactory {
 
     // custom elements
 
-    public static folderElement(foldDir?:FoldingDirection, closingDelay?:number, hideArrow?:boolean) {
+    public static folderElement(foldDir?:FolderElement.Direction, closingDelay?:number, hideArrow?:boolean) {
         const out = new FolderElementAssemblyLine();
         if (foldDir) out.foldDir(foldDir);
         if (typeof closingDelay === "number") out.closingDelay(closingDelay);

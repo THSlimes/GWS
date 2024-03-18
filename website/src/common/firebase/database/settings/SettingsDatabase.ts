@@ -1,4 +1,4 @@
-import { AttachmentOrigin } from "../../../custom-elements/MultisourceAttachment";
+import { AttachmentOrigin } from "../../../util/UtilTypes";
 
 export type LinkTree = { [name:string]: string | LinkTree };
 export namespace LinkTree {

@@ -1,21 +1,6 @@
-import { EventInfo } from "../firebase/database/events/EventDatabase";
 import ObjectUtil from "./ObjectUtil";
 
-type WeekDay = "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday";
-const WEEK_DAY_INDICES:Record<WeekDay,number> = {
-    Monday: 1,
-    Tuesday: 2,
-    Wednesday: 3,
-    Thursday: 4,
-    Friday: 5,
-    Saturday: 6,
-    Sunday: 0
-};
-Object.freeze(WEEK_DAY_INDICES);
-
-type Timespan = [Date,Date];
-
-export default abstract class DateUtil {
+abstract class DateUtil {
 
     /** The earliest possible representable Date. */
     public static get FIRST() { return new Date(-8640000000000000); }
@@ -25,8 +10,8 @@ export default abstract class DateUtil {
     /** Methods related to days. */
     public static readonly Days = {
         /** Finds the first of a certain weekday before the given Date. */
-        firstBefore(d:Date, day:WeekDay):Date {
-            const ind = WEEK_DAY_INDICES[day];
+        firstBefore(d:Date, day:DateUtil.WeekDay):Date {
+            const ind = DateUtil.WEEK_DAY_INDICES[day];
         
             const out = new Date(d);
             while (out.getDay() !== ind) out.setDate(out.getDate() - 1);
@@ -36,8 +21,8 @@ export default abstract class DateUtil {
         },
 
         /** Finds the first of a certain weekday after the given Date. */
-        firstAfter(d:Date, day:WeekDay):Date {
-            const ind = WEEK_DAY_INDICES[day];
+        firstAfter(d:Date, day:DateUtil.WeekDay):Date {
+            const ind = DateUtil.WEEK_DAY_INDICES[day];
         
             const out = new Date(d);
             while (out.getDay() !== ind) out.setDate(out.getDate() + 1);
@@ -160,7 +145,7 @@ export default abstract class DateUtil {
          * @param b second timespan
          * @returns true if ```a``` and ```b``` overlap
          */
-        overlap(a:Timespan, b:Timespan):boolean {
+        overlap(a:DateUtil.Timespan, b:DateUtil.Timespan):boolean {
             return b[1] >= a[0] && b[0] <= a[1];
         },
 
@@ -170,7 +155,7 @@ export default abstract class DateUtil {
          * @param b second timespan
          * @returns true if days of ```a``` and ```b``` overlap
          */
-        daysOverlap(a:Timespan, b:Timespan) {
+        daysOverlap(a:DateUtil.Timespan, b:DateUtil.Timespan) {
             return DateUtil.Days.laterOrSame(b[1], a[0]) && DateUtil.Days.earlierOrSame(b[0], a[1]);
         },
 
@@ -179,7 +164,7 @@ export default abstract class DateUtil {
          * @param timespan
          * @param useMilliseconds whether to consider milliseconds
          */
-        areFullDays(timespan:Timespan, useMilliseconds=false) {
+        areFullDays(timespan:DateUtil.Timespan, useMilliseconds=false) {
             const [from, to] = timespan;
             return from.getHours() === 0
                 && from.getMinutes() === 0
@@ -299,3 +284,22 @@ export default abstract class DateUtil {
     }
 
 }
+
+namespace DateUtil {
+    export type WeekDay = "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday";
+    export const WEEK_DAY_INDICES:Record<WeekDay,number> = {
+        Monday: 1,
+        Tuesday: 2,
+        Wednesday: 3,
+        Thursday: 4,
+        Friday: 5,
+        Saturday: 6,
+        Sunday: 0
+    };
+    Object.freeze(WEEK_DAY_INDICES);
+
+    export type Timespan = [Date,Date];
+    export type OpenTimespan = [Date | undefined, Date | undefined];
+}
+
+export default DateUtil

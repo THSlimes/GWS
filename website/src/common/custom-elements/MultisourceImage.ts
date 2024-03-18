@@ -4,7 +4,7 @@ import Permissions from "../firebase/database/Permissions";
 import { STORAGE } from "../firebase/init-firebase";
 import ElementUtil from "../util/ElementUtil";
 import { HasSections } from "../util/UtilTypes";
-import { AttachmentOrigin, isAttachmentOrigin } from "./MultisourceAttachment";
+import { AttachmentOrigin } from "../util/UtilTypes";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import Loading from "../Loading";
 
@@ -76,7 +76,7 @@ export default class MultisourceImage extends HTMLElement implements HasSections
 
         this.initElement();
 
-        this._origin = origin ?? ElementUtil.getAttrAs(this, "origin", isAttachmentOrigin) ?? "firebase-storage-public";
+        this._origin = origin ?? ElementUtil.getAttrAs(this, "origin", AttachmentOrigin.checkType) ?? "firebase-storage-public";
         this._src = src ?? this.getAttribute("src") ?? "";
 
         this.refresh();

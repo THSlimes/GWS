@@ -100,15 +100,15 @@ event-calendar {
 
             /* overflow-x: hidden; */
 
-            &.today {
+            &.is-today {
                 background-color: lightyellow;
                 > .day-number { color: orangered; }
             }
-            &.different-month { filter: brightness(.95); }
-            &.weekend {
+            &.is-in-weekend {
                 background-color: mistyrose;
                 > .day-number { color: crimson; }
             }
+            &.is-in-different-month { filter: brightness(.95); }
 
             > .day-number {
                 margin: 0px;

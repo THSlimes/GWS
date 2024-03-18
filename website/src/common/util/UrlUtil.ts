@@ -1,25 +1,28 @@
 import DateUtil from "./DateUtil";
 import NumberUtil from "./NumberUtil";
 
-type MIMEBaseType = "application" | "audio" | "example" | "font" | "image" | "model" | "text" | "video";
-type MimeType = `${MIMEBaseType}/${string}`;
-export type FileType = MIMEBaseType | "compressed-folder" | "pdf" | "unknown";
-const COMPRESSED_FOLDER_MIME_TYPES:MimeType[] = [
-    "application/x-freearc",
-    "application/x-bzip",
-    "application/x-bzip2",
-    "application/gzip",
-    "application/vnd.rar",
-    "application/x-tar",
-    "application/zip",
-    "application/x-7z-compressed"
-];
-const PDF_MIME_TYPE:MimeType = "application/pdf";
+export type FileType = FileType.MIMEBaseType | "compressed-folder" | "pdf" | "unknown";
+export namespace FileType {
+    export type MIMEBaseType = "application" | "audio" | "example" | "font" | "image" | "model" | "text" | "video";
+    type MimeType = `${MIMEBaseType}/${string}`;
 
-export function getFileType(contentType:string):FileType {
-    if (COMPRESSED_FOLDER_MIME_TYPES.some(cpmt => contentType.startsWith(cpmt))) return "compressed-folder";
-    else if (contentType.startsWith(PDF_MIME_TYPE)) return "pdf";
-    else return contentType.substring(0, contentType.indexOf('/')) as FileType;
+    const COMPRESSED_FOLDER_MIME_TYPES:MimeType[] = [
+        "application/x-freearc",
+        "application/x-bzip",
+        "application/x-bzip2",
+        "application/gzip",
+        "application/vnd.rar",
+        "application/x-tar",
+        "application/zip",
+        "application/x-7z-compressed"
+    ];
+    const PDF_MIME_TYPE:MimeType = "application/pdf";
+
+    export function fromContentType(contentType:string):FileType {
+        if (COMPRESSED_FOLDER_MIME_TYPES.some(cpmt => contentType.startsWith(cpmt))) return "compressed-folder";
+        else if (contentType.startsWith(PDF_MIME_TYPE)) return "pdf";
+        else return contentType.substring(0, contentType.indexOf('/')) as FileType;
+    }
 }
 
 export interface FileInfo {
@@ -106,7 +109,7 @@ export default abstract class URLUtil {
                         const href = url.href;
                         const name = url.pathname.substring(url.pathname.lastIndexOf('/') + 1);
                         const contentType = headers.contentType ?? "unknown/unknown";
-                        let fileType = getFileType(contentType);
+                        let fileType = FileType.fromContentType(contentType);
                         const size = headers.contentLength && NumberUtil.isInt(headers.contentLength) ? Number.parseInt(headers.contentLength) : undefined;
                         const lastModified = headers.lastModified && DateUtil.Timestamps.isValid(headers.lastModified) ? new Date(headers.lastModified) : undefined;
 

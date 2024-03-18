@@ -1,41 +1,15 @@
-import { FieldValue, FirestoreDataConverter, QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, deleteField, doc, documentId, getCountFromServer, getDoc, getDocs, limit, query, serverTimestamp, setDoc, updateDoc, where, writeBatch } from "@firebase/firestore";
+import { FirestoreDataConverter, QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, deleteField, doc, documentId, getCountFromServer, getDoc, getDocs, limit, query, serverTimestamp, setDoc, updateDoc, where, writeBatch } from "@firebase/firestore";
 import EventDatabase, { EventQueryFilter, RegisterableEventInfo, EventInfo, EventComment } from "./EventDatabase";
 import { FIRESTORE, onAuth } from "../../init-firebase";
-import { HexColor } from "../../../util/StyleUtil";
 import { FirebaseError } from "firebase/app";
-import { FirestoreUserDatabase } from "../users/FirestoreUserDatabase";
-
-/** An event as it is stored in the database. */
-type NonRegisterableDBEvent = {
-    name:string,
-    description:string,
-    starts_at:Timestamp,
-    ends_at:Timestamp,
-    category:string,
-    color?:HexColor
-};
-
-type RegisterableDBEvent = NonRegisterableDBEvent & {
-    capacity?:number,
-    can_register_from?:Timestamp,
-    can_register_until?:Timestamp,
-    registrations:Record<string,string>,
-    requires_payment:boolean
-};
-
-type DBEventComment = {
-    body:string,
-    created_at:Timestamp
-};
-
-
-type DBEvent = NonRegisterableDBEvent | RegisterableDBEvent;
+import FirestoreUserDatabase from "../users/FirestoreUserDatabase";
+import ColorUtil from "../../../util/ColorUtil";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 /** Any event longer than (in ms) this may be queried incorrectly. */
 const MAX_EVENT_DURATION = 7 * MS_PER_DAY;
 
-function toFirestore(event:EventInfo):DBEvent {
+function toFirestore(event:EventInfo):FirestoreEventDatebase.Event {
     return event instanceof RegisterableEventInfo ? {
         name: event.name,
         description: event.description,
@@ -58,10 +32,10 @@ function toFirestore(event:EventInfo):DBEvent {
     };
 }
 
-function createConverter(db:EventDatabase):FirestoreDataConverter<EventInfo|RegisterableEventInfo,DBEvent> {
+function createConverter(db:EventDatabase):FirestoreDataConverter<EventInfo|RegisterableEventInfo,FirestoreEventDatebase.Event> {
     return {
         toFirestore,
-        fromFirestore(snapshot: QueryDocumentSnapshot<DBEvent, EventInfo>):EventInfo {
+        fromFirestore(snapshot: QueryDocumentSnapshot<FirestoreEventDatebase.Event, EventInfo>):EventInfo {
             const data = snapshot.data();
 
             if ("registrations" in data) return new RegisterableEventInfo(
@@ -94,7 +68,7 @@ function createConverter(db:EventDatabase):FirestoreDataConverter<EventInfo|Regi
  * A FirestoreEventDatabase provides an interface to interact with event data in a
  * remote FireStore database.
 */
-export default class FirestoreEventDatebase extends EventDatabase {
+class FirestoreEventDatebase extends EventDatabase {
 
     private readonly converter = createConverter(this);
     private readonly collection = collection(FIRESTORE, "events").withConverter(this.converter);
@@ -143,7 +117,7 @@ export default class FirestoreEventDatebase extends EventDatabase {
                         batch.update(doc(this.collection, event.id), { [`registrations.${user.uid}`]: userInfo.fullName });
 
                         if (comment) {
-                            const dbComment:DBEventComment = {
+                            const dbComment:FirestoreEventDatebase.Comment = {
                                 body: comment,
                                 created_at: Timestamp.now()
                             };
@@ -193,7 +167,7 @@ export default class FirestoreEventDatebase extends EventDatabase {
             .then(snapshot => {
                 const out:Record<string,EventComment> = {};
                 snapshot.forEach(docSnapshot => {
-                    const data = docSnapshot.data() as DBEventComment;
+                    const data = docSnapshot.data() as FirestoreEventDatebase.Comment;
                     out[docSnapshot.id] = { id:docSnapshot.id, created_at: data.created_at.toDate(), body: data.body };
                 });
 
@@ -271,3 +245,34 @@ export default class FirestoreEventDatebase extends EventDatabase {
     }
 
 }
+
+namespace FirestoreEventDatebase {
+    /** An event as it is stored in the database. */
+    type NonRegisterableEvent = {
+        name:string,
+        description:string,
+        starts_at:Timestamp,
+        ends_at:Timestamp,
+        category:string,
+        color?:ColorUtil.HexColor
+    };
+
+    type RegisterableEvent = NonRegisterableEvent & {
+        capacity?:number,
+        can_register_from?:Timestamp,
+        can_register_until?:Timestamp,
+        registrations:Record<string,string>,
+        requires_payment:boolean
+    };
+
+    export type Event = NonRegisterableEvent | RegisterableEvent;
+
+    export type Comment = {
+        body:string,
+        created_at:Timestamp
+    };
+
+
+}
+
+export default FirestoreEventDatebase;

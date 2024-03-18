@@ -2,8 +2,6 @@ import ElementFactory from "../html-element-factory/ElementFactory";
 import ObjectUtil from "../util/ObjectUtil";
 import { HasSections } from "../util/UtilTypes";
 
-type OptionInputs<Option extends string, OptionTypeMap extends Record<Option,any>> = {[O in Option]: [string, Element, (elem:Element)=>OptionTypeMap[O]]};
-
 export default class OptionCollection<Option extends string, OptionTypeMap extends Record<Option,any>> extends HTMLElement implements HasSections<"selector"> {
 
     private readonly optionInputs;
@@ -23,7 +21,7 @@ export default class OptionCollection<Option extends string, OptionTypeMap exten
         if (!this.activeOptionsChangeHandlers.includes(handler)) this.activeOptionsChangeHandlers.push(handler);
     }
 
-    constructor(optionInputs:OptionInputs<Option,OptionTypeMap>, optionNames?:Record<Option,string>) {
+    constructor(optionInputs:OptionCollection.Inputs<Option,OptionTypeMap>, optionNames?:Record<Option,string>) {
         super();
 
         this.optionInputs = optionInputs;
@@ -109,7 +107,9 @@ export default class OptionCollection<Option extends string, OptionTypeMap exten
 
     public combine<OthOpt extends string, OthOptTypeMap extends Record<OthOpt,any>>(other:OptionCollection<OthOpt,OthOptTypeMap>) {
         // combine inputs
-        const combInputs:OptionInputs<Option|OthOpt,OptionTypeMap&OthOptTypeMap> = {...this.optionInputs, ...other.optionInputs} as OptionInputs<Option|OthOpt,OptionTypeMap&OthOptTypeMap>;
+        const combInputs:OptionCollection.Inputs<Option|OthOpt,OptionTypeMap&OthOptTypeMap> = {
+            ...this.optionInputs, ...other.optionInputs
+        } as OptionCollection.Inputs<Option|OthOpt,OptionTypeMap&OthOptTypeMap>;
 
         // combine names
         const combNames = {...this.optionNames, ...other.optionNames};
@@ -141,6 +141,10 @@ export default class OptionCollection<Option extends string, OptionTypeMap exten
         return out;
     }
 
+}
+
+namespace OptionCollection {
+    export type Inputs<Option extends string, OptionTypeMap extends Record<Option,any>> = {[O in Option]: [string, Element, (elem:Element)=>OptionTypeMap[O]]};
 }
 
 customElements.define("option-collection", OptionCollection);

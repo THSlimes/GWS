@@ -2,19 +2,9 @@ import { FirestoreDataConverter, QueryConstraint, QueryDocumentSnapshot, Timesta
 import ArticleDatabase, { ArticleQueryFilter, ArticleInfo } from "./ArticleDatabase";
 import { FIRESTORE } from "../../init-firebase";
 
-/** An article as it appears in the database. */
-type DBArticle = {
-    heading: string,
-    body: string,
-    created_at: Timestamp,
-    category: string,
-    show_on_homepage: boolean,
-    only_for_members: boolean
-};
-
-function getArticleConverter(db:ArticleDatabase):FirestoreDataConverter<ArticleInfo, DBArticle> {
+function getArticleConverter(db:ArticleDatabase):FirestoreDataConverter<ArticleInfo, FirestoreArticleDatabase.Article> {
     return {
-        toFirestore(article: ArticleInfo): DBArticle {
+        toFirestore(article: ArticleInfo): FirestoreArticleDatabase.Article {
             return {
                 heading: article.heading,
                 body: article.body,
@@ -24,7 +14,7 @@ function getArticleConverter(db:ArticleDatabase):FirestoreDataConverter<ArticleI
                 only_for_members: article.only_for_members
             };
         },
-        fromFirestore(snapshot: QueryDocumentSnapshot<DBArticle, ArticleInfo>): ArticleInfo {
+        fromFirestore(snapshot: QueryDocumentSnapshot<FirestoreArticleDatabase.Article, ArticleInfo>): ArticleInfo {
             const data = snapshot.data();
             
             return new ArticleInfo(
@@ -42,7 +32,7 @@ function getArticleConverter(db:ArticleDatabase):FirestoreDataConverter<ArticleI
 }
 
 /** Defines database interactions related to articles. */
-export class FirestoreArticleDatabase extends ArticleDatabase {
+class FirestoreArticleDatabase extends ArticleDatabase {
 
     private readonly converter = getArticleConverter(this);
     /** Reference to the collection of articles. */
@@ -146,3 +136,17 @@ export class FirestoreArticleDatabase extends ArticleDatabase {
     }
 
 }
+
+namespace FirestoreArticleDatabase {
+    /** An article as it appears in the database. */
+    export type Article = {
+        heading: string,
+        body: string,
+        created_at: Timestamp,
+        category: string,
+        show_on_homepage: boolean,
+        only_for_members: boolean
+    };
+}
+
+export default FirestoreArticleDatabase

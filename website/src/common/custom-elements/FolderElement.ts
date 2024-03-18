@@ -3,22 +3,19 @@ import ElementFactory from "../html-element-factory/ElementFactory";
 import Responsive from "../ui/Responsive";
 import ElementUtil from "../util/ElementUtil";
 
-export type FoldingDirection = "down" | "right";
-export type ContentsPosition = "absolute" | "static";
-
 /**
  * A FolderElement is a custom type of HTMLElement. It allows other elements
  * to only be shown when hovering over its name.
  */
-export default class FolderElement extends HTMLElement {
+class FolderElement extends HTMLElement {
 
     /** Maximum Viewport that uses click-interaction to open/close a folder. */
     private static useClickInteraction() { return Responsive.isSlimmerOrEq(Responsive.Viewport.DESKTOP_SLIM); }
 
     private static topFolderContentZIndex = 100;
 
-    private _foldDir:FoldingDirection;
-    public set foldDir(newDir:FoldingDirection) {
+    private _foldDir:FolderElement.Direction;
+    public set foldDir(newDir:FolderElement.Direction) {
         this._foldDir = newDir;
         this.arrow.textContent = "chevron_right";
     }
@@ -49,9 +46,9 @@ export default class FolderElement extends HTMLElement {
     private readonly _contents:HTMLDivElement;
     public get contents() { return this._contents; }
 
-    private _contentsPosition!:ContentsPosition;
+    private _contentsPosition!:FolderElement.ContentsPosition;
     public get contentsPosition() { return this._contentsPosition; }
-    public set contentsPosition(pos:ContentsPosition) {
+    public set contentsPosition(pos:FolderElement.ContentsPosition) {
         this._contents.classList.remove("absolute", "static");
         this._contents.classList.add(pos);
         this._contentsPosition = pos;
@@ -66,12 +63,12 @@ export default class FolderElement extends HTMLElement {
      * @param foldDir what direction it folds out
      * @param closingDelay time from the mouse leaving to when it closes
      */
-    constructor(heading?:string, foldDir?:FoldingDirection, contentsPosition?:ContentsPosition, closingDelay?:number, openOn?:keyof HTMLElementEventMap, closeOn?:keyof HTMLElementEventMap) {
+    constructor(heading?:string, foldDir?:FolderElement.Direction, contentsPosition?:FolderElement.ContentsPosition, closingDelay?:number, openOn?:keyof HTMLElementEventMap, closeOn?:keyof HTMLElementEventMap) {
         super();
         this.style.position = "relative";
         this.style.display = "block";
 
-        this._foldDir = foldDir ?? (this.hasAttribute("fold-dir") ? this.getAttribute("fold-dir") as FoldingDirection : null) ?? "right";
+        this._foldDir = foldDir ?? (this.hasAttribute("fold-dir") ? this.getAttribute("fold-dir") as FolderElement.Direction : null) ?? "right";
         this.closingDelay = closingDelay ?? ElementUtil.getAttrAsNumber(this, "closing-delay") ?? 0;
 
         // initializing element
@@ -88,7 +85,7 @@ export default class FolderElement extends HTMLElement {
                 .make()
         );
 
-        contentsPosition ??= ElementUtil.getAttrAs<ContentsPosition>(this, "contents-position", v => v === "absolute" || v === "static") ?? "absolute";
+        contentsPosition ??= ElementUtil.getAttrAs<FolderElement.ContentsPosition>(this, "contents-position", v => v === "absolute" || v === "static") ?? "absolute";
         this._contents = super.appendChild(
             ElementFactory.div()
                 .class("contents", contentsPosition)
@@ -188,5 +185,12 @@ export default class FolderElement extends HTMLElement {
     }
 
 }
+
+namespace FolderElement {
+    export type Direction = "down" | "right";
+    export type ContentsPosition = "absolute" | "static";
+}
+
+export default FolderElement;
 
 customElements.define("folder-element", FolderElement);

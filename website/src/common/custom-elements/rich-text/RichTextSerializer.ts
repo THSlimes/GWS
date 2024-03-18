@@ -1,9 +1,9 @@
 import NodeUtil from "../../util/NodeUtil";
-import { isRichTextSectionName } from "./RichTextInput";
+import RichTextInput from "./RichTextInput";
 
 const EVENT_LISTENER_ATTRIBUTE_NAMES = ["onfullscreenchange", "onfullscreenerror", "onabort", "onanimationcancel", "onanimationend", "onanimationiteration", "onanimationstart", "onauxclick", "onbeforeinput", "onbeforetoggle", "onblur", "oncancel", "oncanplay", "oncanplaythrough", "onchange", "onclick", "onclose", "oncompositionend", "oncompositionstart", "oncompositionupdate", "oncontextmenu", "oncopy", "oncuechange", "oncut", "ondblclick", "ondrag", "ondragend", "ondragenter", "ondragleave", "ondragover", "ondragstart", "ondrop", "ondurationchange", "onemptied", "onended", "onerror", "onfocus", "onfocusin", "onfocusout", "onformdata", "ongotpointercapture", "oninput", "oninvalid", "onkeydown", "onkeypress", "onkeyup", "onload", "onloadeddata", "onloadedmetadata", "onloadstart", "onlostpointercapture", "onmousedown", "onmouseenter", "onmouseleave", "onmousemove", "onmouseout", "onmouseover", "onmouseup", "onpaste", "onpause", "onplay", "onplaying", "onpointercancel", "onpointerdown", "onpointerenter", "onpointerleave", "onpointermove", "onpointerout", "onpointerover", "onpointerup", "onprogress", "onratechange", "onreset", "onresize", "onscroll", "onscrollend", "onsecuritypolicyviolation", "onseeked", "onseeking", "onselect", "onselectionchange", "onselectstart", "onslotchange", "onstalled", "onsubmit", "onsuspend", "ontimeupdate", "ontoggle", "ontouchcancel", "ontouchend", "ontouchmove", "ontouchstart", "ontransitioncancel", "ontransitionend", "ontransitionrun", "ontransitionstart", "onvolumechange", "onwaiting", "onwebkitanimationend", "onwebkitanimationiteration", "onwebkitanimationstart", "onwebkittransitionend", "onwheel"];
 
-export default abstract class RichTextSerializer {
+abstract class RichTextSerializer {
 
     private static ESCAPE_CONFIG:Record<string,string> = {
         '<': "&lt;",
@@ -38,7 +38,7 @@ export default abstract class RichTextSerializer {
         else if (node instanceof HTMLElement) {
             if (node.hasAttribute("do-serialize")) {
                 const type = node.getAttribute("type");
-                if (type && isRichTextSectionName(type)) {
+                if (type && RichTextInput.isRichTextSectionName(type)) {
 
                     const out = node.cloneNode() as HTMLElement;
                     // remove all attributes and child nodes
@@ -86,18 +86,18 @@ export default abstract class RichTextSerializer {
                             break;
                     }
 
-                    throw new SerializationError(`no finalization implementation found for section type "${type}"`);
+                    throw new RichTextSerializer.SerializationError(`no finalization implementation found for section type "${type}"`);
                     
                 }
-                else if (type === null) throw new SerializationError("element was marked with do-serialize attribute, but no type was provided.");
-                else throw new SerializationError(`unrecognized section type "${type}".`);
+                else if (type === null) throw new RichTextSerializer.SerializationError("element was marked with do-serialize attribute, but no type was provided.");
+                else throw new RichTextSerializer.SerializationError(`unrecognized section type "${type}".`);
             }
             else if (node.classList.contains("element-container")) return Array.from(node.childNodes)
                 .filter(childNode => childNode instanceof Element && (childNode.hasAttribute("do-serialize") || childNode.classList.contains("element-container")))
                 .flatMap(childNode => this.finalize(childNode));
             else return [];
         }
-        else throw new SerializationError("given node is not a text, nor an element.");
+        else throw new RichTextSerializer.SerializationError("given node is not a text, nor an element.");
 
     }
 
@@ -118,26 +118,28 @@ export default abstract class RichTextSerializer {
             return Array.from(doc.body.childNodes);
         }
         catch (e) {
-            throw new DeserializationError(e instanceof Error ? e.message : "unknown cause");
+            throw new RichTextSerializer.DeserializationError(e instanceof Error ? e.message : "unknown cause");
         }
     }
 
 }
 
+namespace RichTextSerializer {
+    export class SerializationError extends Error {
 
+        constructor(cause:string) {
+            super(`failed to serialize: ${cause}`);
+        }
 
-class SerializationError extends Error {
-
-    constructor(cause:string) {
-        super(`failed to serialize: ${cause}`);
     }
 
-}
+    export class DeserializationError extends Error {
 
-class DeserializationError extends Error {
+        constructor(cause:string) {
+            super(`failed to deserialize: ${cause}`);
+        }
 
-    constructor(cause:string) {
-        super(`failed to deserialize: ${cause}`);
     }
-
 }
+
+export default RichTextSerializer;

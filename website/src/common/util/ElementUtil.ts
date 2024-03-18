@@ -66,4 +66,11 @@ export default abstract class ElementUtil {
         return elem.scrollHeight - elem.scrollTop - elem.clientHeight <= tolerance;
     }
 
+    public static isReplacedElement(e:HTMLElement) {
+        return e instanceof HTMLIFrameElement
+            || e instanceof HTMLVideoElement
+            || e instanceof HTMLEmbedElement
+            || e instanceof HTMLImageElement;
+    }
+
 }

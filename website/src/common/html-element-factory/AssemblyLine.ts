@@ -1,36 +1,5 @@
 import RichTextInput from "../custom-elements/rich-text/RichTextInput";
-import StyleUtil, { StyleMap } from "../util/StyleUtil";
-
-/**
- * OptionalElementProperties defines a mapping for values of a specific
- * type of HTMLElement/
- *
- * @param TN tag of the HTMLElement that the mapping is used for
- */
-type OptionalElementProperties<E extends HTMLElement> = {
-    [K in keyof E]?: E[K];
-}
-
-type EventHandlers<S> = {
-    [T in keyof HTMLElementEventMap]?: (event:HTMLElementEventMap[T], self:S) => void;
-}
-
-type Child = Node|AssemblyLine<any>|null|false;
-function toNodes(children:Child[]):Node[] {
-    const out:Node[] = [];
-    for (const c of children) {
-        if (c instanceof Node) out.push(c);
-        else if (c instanceof AssemblyLine) out.push(c.make());
-    }
-
-    return out;
-}
-type ChildGenerator<SelfType extends HTMLElement> = (self:SelfType) => Child|Child[];
-
-type ElementType<S extends string> = S extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[S] : HTMLElement;
-type Class<T> = new (...args:any[]) => T;
-
-type UserSelect =  "none" | "auto" | "text" | "contain" | "all";
+import StyleUtil from "../util/StyleUtil";
 
 /**
  * An AssemblyLine is a type of object that makes the construction
@@ -39,12 +8,12 @@ type UserSelect =  "none" | "auto" | "text" | "contain" | "all";
  *
  * @param TN tag of the HTMLElement that will be output by its ```make()``` method
  */
-export default class AssemblyLine<TN extends string, E extends ElementType<TN> = ElementType<TN>> {
+class AssemblyLine<TN extends string, E extends AssemblyLine.ElementType<TN> = AssemblyLine.ElementType<TN>> {
 
     private readonly tagName:TN;
     private readonly initElem?:()=>E;
 
-    private readonly elementTypeSpecific:OptionalElementProperties<E> = {};
+    private readonly elementTypeSpecific:AssemblyLine.OptionalProperties<E> = {};
 
     /**
      * Creates a new AssemblyLine.
@@ -110,8 +79,8 @@ export default class AssemblyLine<TN extends string, E extends ElementType<TN> =
         return this;
     }
 
-    private _canSelect?:UserSelect;
-    public canSelect(canSelect:UserSelect|boolean):this {
+    private _canSelect?:AssemblyLine.UserSelect;
+    public canSelect(canSelect:AssemblyLine.UserSelect|boolean):this {
         if (canSelect === true) canSelect = "all";
         else if (canSelect === false) canSelect = "none";
         
@@ -126,16 +95,16 @@ export default class AssemblyLine<TN extends string, E extends ElementType<TN> =
         return this;
     }
 
-    private _children:(Child|ChildGenerator<E>)[]= [];
+    private _children:(AssemblyLine.Child|AssemblyLine.Child.Generator<E>)[]= [];
     /** Provides child elements to be appended to the output element. */
-    public children(...children:(Child|ChildGenerator<E>)[]) {
+    public children(...children:(AssemblyLine.Child|AssemblyLine.Child.Generator<E>)[]) {
         this._children.push(...children.filter(n => n !== null));
         return this;
     }
 
-    private _styleMap:StyleMap = {};
+    private _styleMap:StyleUtil.StyleMap = {};
     /** Defines key-value pairs for CSS-properties. */
-    public style(styleMap:StyleMap) {
+    public style(styleMap:StyleUtil.StyleMap) {
         for (const k in styleMap) {
             const v = styleMap[k];
             if (v === undefined) delete this._styleMap[k];
@@ -144,8 +113,8 @@ export default class AssemblyLine<TN extends string, E extends ElementType<TN> =
         return this;
     }
 
-    private _handlers:EventHandlers<E> = {};
-    public on<T extends keyof HTMLElementEventMap>(keyword:T, handler:EventHandlers<E>[T]) {
+    private _handlers:AssemblyLine.EventHandlers<E> = {};
+    public on<T extends keyof HTMLElementEventMap>(keyword:T, handler:AssemblyLine.EventHandlers<E>[T]) {
         this._handlers[keyword] = handler;
         return this;
     }
@@ -184,7 +153,7 @@ export default class AssemblyLine<TN extends string, E extends ElementType<TN> =
                 else {
                     let res = c(out);
                     if (!Array.isArray(res)) res = [res];
-                    out.append(...toNodes(res));
+                    out.append(...AssemblyLine.Child.toNodes(res));
                 }
             }
         }
@@ -214,9 +183,9 @@ export default class AssemblyLine<TN extends string, E extends ElementType<TN> =
      * @param exposedKeys keys of specific properties of the out HTMLElement type
      * @returns AssemblyLine with extra methods to set the properties with the keys from 'exposedKeys'
      */
-    public static specific<TN extends keyof HTMLElementTagNameMap, EKs extends keyof ElementType<TN>>(tagName:TN, exposedKeys:EKs[], initElem:()=>ElementType<TN>) {
+    public static specific<TN extends keyof HTMLElementTagNameMap, EKs extends keyof AssemblyLine.ElementType<TN>>(tagName:TN, exposedKeys:EKs[], initElem:()=>AssemblyLine.ElementType<TN>) {
         const out = new AssemblyLine(tagName, initElem) as AssemblyLine<TN> & {
-            [K in EKs]:(newVal:ElementType<TN>[K])=>typeof out;
+            [K in EKs]:(newVal:AssemblyLine.ElementType<TN>[K])=>typeof out;
         };
 
         for (const k of exposedKeys) Reflect.defineProperty(out, k, {
@@ -231,6 +200,43 @@ export default class AssemblyLine<TN extends string, E extends ElementType<TN> =
     }
 
 }
+
+namespace AssemblyLine {
+    /**
+     * OptionalElementProperties defines a mapping for values of a specific
+     * type of HTMLElement/
+     *
+     * @param TN tag of the HTMLElement that the mapping is used for
+     */
+    export type OptionalProperties<E extends HTMLElement> = {
+        [K in keyof E]?: E[K];
+    }
+    
+    export type EventHandlers<S> = {
+        [T in keyof HTMLElementEventMap]?: (event:HTMLElementEventMap[T], self:S) => void;
+    }
+    
+    export type Child = Node|AssemblyLine<any>|null|false;
+    export namespace Child {
+        export function toNodes(children:Child[]):Node[] {
+            const out:Node[] = [];
+            for (const c of children) {
+                if (c instanceof Node) out.push(c);
+                else if (c instanceof AssemblyLine) out.push(c.make());
+            }
+        
+            return out;
+        }
+        export type Generator<SelfType extends HTMLElement> = (self:SelfType) => Child|Child[];
+    }
+    
+    export type ElementType<S extends string> = S extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[S] : HTMLElement;
+    
+    export type UserSelect =  "none" | "auto" | "text" | "contain" | "all";
+
+}
+
+export default AssemblyLine;
 
 /**
  * An AnchorElementAssemblyLine is a type of AssemblyLine for creating anchor (\<a>) tags

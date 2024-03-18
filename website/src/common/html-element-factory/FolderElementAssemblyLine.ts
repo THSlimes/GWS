@@ -1,4 +1,4 @@
-import FolderElement, { ContentsPosition, FoldingDirection } from "../custom-elements/FolderElement";
+import FolderElement from "../custom-elements/FolderElement";
 import AssemblyLine from "./AssemblyLine";
 
 export default class FolderElementAssemblyLine extends AssemblyLine<"folder-element", FolderElement> {
@@ -7,8 +7,8 @@ export default class FolderElementAssemblyLine extends AssemblyLine<"folder-elem
         super("folder-element", () => new FolderElement());
     }
 
-    protected _foldDir?:FoldingDirection;
-    public foldDir(foldDir:FoldingDirection):this {
+    protected _foldDir?:FolderElement.Direction;
+    public foldDir(foldDir:FolderElement.Direction):this {
         this._foldDir = foldDir;
         return this;
     }
@@ -31,8 +31,8 @@ export default class FolderElementAssemblyLine extends AssemblyLine<"folder-elem
         return this;
     }
 
-    protected _contentPosition?:ContentsPosition;
-    public contentPosition(pos:ContentsPosition):this {
+    protected _contentPosition?:FolderElement.ContentsPosition;
+    public contentPosition(pos:FolderElement.ContentsPosition):this {
         this._contentPosition = pos;
         return this;
     }
