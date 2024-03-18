@@ -418,10 +418,10 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                                         })
                                         .make()
                                 ),
-                            this.makeStyleTagToggle("bold", "format_bold", "Dikgedrukt", ['b', "ctrl"]),
-                            this.makeStyleTagToggle("italic", "format_italic", "Cursief", ['i', "ctrl"]),
-                            this.makeStyleTagToggle("underlined", "format_underlined", "Onderstreept", ['u', "ctrl"]),
-                            this.makeStyleTagToggle("strikethrough", "format_strikethrough", "Doorgestreept", ['s', "ctrl"]),
+                            this.makeStyleTagToggle("bold", "format_bold", "Dikgedrukt (ctrl+b)", ['b', "ctrl"]),
+                            this.makeStyleTagToggle("italic", "format_italic", "Cursief (ctrl+i)", ['i', "ctrl"]),
+                            this.makeStyleTagToggle("underlined", "format_underlined", "Onderstreept (ctrl+u)", ['u', "ctrl"]),
+                            this.makeStyleTagToggle("strikethrough", "format_strikethrough", "Doorgestreept (ctrl+s)", ['s', "ctrl"]),
                             this.makeColorPicker(c => TextStyling.applyStyleTag(this.body, "text-color", c), "format_color_text", "Tekstkleur", "text-color"),
                             this.makeColorPicker(c => TextStyling.applyStyleTag(this.body, "background-color", c), "format_ink_highlighter", "Markeringskleur", "background-color"),
                             alignSelector = ElementFactory.folderElement("down", 250)
