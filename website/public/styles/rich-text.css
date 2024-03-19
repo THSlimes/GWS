@@ -107,6 +107,8 @@
         > .contents { min-height: 150vh; }
     }
 
+    .small { font-size: .8em; }
+    .big { font-size: 1.25em; }
     .bold { font-weight: bolder; }
     .unbold { font-weight: lighter; }
     .italic { font-style: italic; }

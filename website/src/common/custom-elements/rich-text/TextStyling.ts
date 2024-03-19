@@ -2,6 +2,7 @@ import ElementFactory from "../../html-element-factory/ElementFactory";
 import ColorUtil from "../../util/ColorUtil";
 import ElementUtil from "../../util/ElementUtil";
 import NodeUtil from "../../util/NodeUtil";
+import ObjectUtil from "../../util/ObjectUtil";
 import StyleUtil from "../../util/StyleUtil";
 
 abstract class TextStyling {
@@ -72,6 +73,8 @@ abstract class TextStyling {
 
     private static getStyleMap<TCN extends TextStyling.StyleTagClass>(tagClass:TCN, value=TextStyling.DEFAULT_VALUES_BY_CLASS[tagClass]):StyleUtil.StyleMap {
         switch (tagClass) {
+            case "small":
+            case "big":
             case "bold":
             case "italic":
             case "underlined":
@@ -244,6 +247,8 @@ abstract class TextStyling {
 namespace TextStyling {
 
     export interface StyleTagValueMap {
+        "small": null,
+        "big": null,
         "bold": null,
         "italic": null,
         "underlined": null,
@@ -253,8 +258,9 @@ namespace TextStyling {
     }
     export type StyleTagClass = keyof StyleTagValueMap;
 
-    export const STYLE_TAG_CLASSES:StyleTagClass[] = ["bold", "italic", "underlined", "strikethrough", "text-color", "background-color"];
     export const DEFAULT_VALUES_BY_CLASS:StyleTagValueMap = {
+        "small": null,
+        "big": null,
         "bold": null,
         "italic": null,
         "underlined": null,
@@ -262,6 +268,7 @@ namespace TextStyling {
         "text-color": "#000000",
         "background-color": "#000000"
     };
+    export const STYLE_TAG_CLASSES:StyleTagClass[] = ObjectUtil.keys(DEFAULT_VALUES_BY_CLASS);
 
 }
 

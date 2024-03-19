@@ -74,7 +74,7 @@ export default abstract class Loading {
         });
     }
 
-    public static useDynamicContent<T>(dynContentPromise:Promise<T>, loadCallback:(val:T)=>void) {
+    public static useDynamicContent<T>(dynContentPromise:Promise<T>, loadCallback:(val:T)=>void, onFail=(err:any)=>console.error(err)) {
         this.markLoadStart(dynContentPromise);
 
         Promise.all([dynContentPromise, this.onDOMContentLoaded])
@@ -82,7 +82,7 @@ export default abstract class Loading {
             loadCallback(val);
             this.markLoadEnd(dynContentPromise);
         })
-        .catch(console.error);
+        .catch(err => onFail(err));
     }
 
     static {

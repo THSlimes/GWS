@@ -22,7 +22,7 @@ service cloud.firestore {
 
         // articles
         match /articles/{articleId} {
-            allow get, list : if !resource.data.only_for_members || hasPermissions(["READ_MEMBER_ARTICLES"]);
+            allow get, list : if resource == null || !resource.data.only_for_members || hasPermissions(["READ_MEMBER_ARTICLES"]);
             allow update : if hasPermissions(["UPDATE_ARTICLES"]);
             allow delete : if hasPermissions(["DELETE_ARTICLES"]);
             allow create : if hasPermissions(["CREATE_ARTICLES"]);

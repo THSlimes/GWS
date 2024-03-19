@@ -268,10 +268,15 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
     }
 
     /** Creates a button which toggles a style tag on/off. */
-    private makeStyleTagToggle(tagName:TextStyling.StyleTagClass, icon:string, tooltip:string, shortcut?:RichTextInput.KeyboardShortcut) {
+    private makeStyleTagToggle(tagName:TextStyling.StyleTagClass, icon:string, tooltip:string, shortcut?:RichTextInput.KeyboardShortcut, incompatible?:TextStyling.StyleTagClass) {
+
+        const applyTag = () => {
+            if (incompatible && TextStyling.isInStyleTag(incompatible)) TextStyling.applyStyleTag(this.body, incompatible);
+            TextStyling.applyStyleTag(this.body, tagName);
+        }
 
         const toggle = ElementFactory.iconButton(icon, (ev, toggle) => {
-            if (!toggle.hasAttribute("disabled")) TextStyling.applyStyleTag(this.body, tagName);
+            if (!toggle.hasAttribute("disabled")) applyTag();
         }, tooltip)
             .attr("can-unselect")
             .attr("disabled")
@@ -296,7 +301,7 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
 
                 if (specialKeyPressed && ev.key.toLowerCase() === shortcut[0].toLowerCase() && !toggle.hasAttribute("disabled")) {
                     ev.preventDefault();
-                    TextStyling.applyStyleTag(this.body, tagName);
+                    applyTag();
                 }
                 
             });
@@ -370,7 +375,6 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
     initElement(): void {
         this.classList.add("boxed", "flex-rows", "cross-axis-center", "section-gap");
 
-        let fontSizeInput:HTMLInputElement;
         let alignSelector:FolderElement;
         let alignOptions:HTMLElement[];
 
@@ -380,44 +384,8 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                 .children(
                     ElementFactory.div(undefined, "styling", "flex-columns", "in-section-gap")
                         .children(
-                            ElementFactory.folderElement("down", 250, true)
-                                .class("font-size-selector")
-                                .heading(
-                                    ElementFactory.p("format_size")
-                                        .class("icon")
-                                        .tooltip("Tekstgrootte")
-                                )
-                                .children(
-                                    fontSizeInput = ElementFactory.input.number(12)
-                                        .step(.1)
-                                        .onMake(fontSizeInput => {
-                                            let selectedElementCopy:HTMLElement|null;
-                                            function refocus() { // re-focusses on the previously focussed element
-                                                if (selectedElementCopy) {
-                                                    selectedElementCopy.focus();
-                                                    selectedElementCopy.classList.remove("fake-focussed");
-                                                }
-                                            }
-
-                                            fontSizeInput.addEventListener("mousedown", ev => {
-                                                selectedElementCopy = this.selectedElement;
-                                                selectedElementCopy?.classList.add("fake-focussed");
-                                            });
-                                            fontSizeInput.addEventListener("input", ev => {
-                                                fontSizeInput.valueAsNumber = NumberUtil.clamp(fontSizeInput.valueAsNumber, 1, 72);
-
-                                                if (selectedElementCopy) {
-                                                    selectedElementCopy.style.fontSize = fontSizeInput.valueAsNumber + "px";
-                                                    if (!(ev instanceof InputEvent)) refocus();
-                                                }
-                                            });
-                                            fontSizeInput.addEventListener("focusout", () => {
-                                                fontSizeInput.valueAsNumber = NumberUtil.clamp(fontSizeInput.valueAsNumber, 1, 72, true);
-                                                refocus();
-                                            });
-                                        })
-                                        .make()
-                                ),
+                            this.makeStyleTagToggle("small", "text_decrease", "Kleiner (ctrl+<)", ['<', "ctrl"], "big"),
+                            this.makeStyleTagToggle("big", "text_increase", "Groter (ctrl+>)", ['>', "ctrl"], "small"),
                             this.makeStyleTagToggle("bold", "format_bold", "Dikgedrukt (ctrl+b)", ['b', "ctrl"]),
                             this.makeStyleTagToggle("italic", "format_italic", "Cursief (ctrl+i)", ['i', "ctrl"]),
                             this.makeStyleTagToggle("underlined", "format_underlined", "Onderstreept (ctrl+u)", ['u', "ctrl"]),
@@ -493,10 +461,6 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                         
                         if (this.selectedElement) {
                             // match styling selectors to selected element
-                            fontSizeInput.value = this.selectedElement.style.fontSize ?
-                                this.selectedElement.style.fontSize.slice(-2, -1) :
-                                "14";
-
                             for (const sel of alignOptions) sel.removeAttribute("selected");
                             const selectedOpt = alignOptions.find(opt => this.selectedElement!.classList.contains(opt.getAttribute("value")!));
                             selectedOpt?.setAttribute("selected", "");
