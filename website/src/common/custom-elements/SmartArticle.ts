@@ -251,7 +251,7 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
                 )
                 .make()
         );
-
+        
         this.body = this.appendChild(
             ElementFactory.input.richText(this.article.body)
                 .placeholder("Tekst")

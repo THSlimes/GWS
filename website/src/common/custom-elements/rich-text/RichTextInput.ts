@@ -52,11 +52,13 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
         NodeUtil.empty(this.body); // remove children
 
         const newSections = RichTextSerializer.deserialize(newVal);
+
         for (const section of newSections) {
             if (section instanceof HTMLElement) this.insert(RichTextInput.inferSectionName(section), section, [this.body, Infinity]);
             else if (section.nodeType === Node.TEXT_NODE) this.insert("paragraph", ElementFactory.p(section.textContent!).make(), [this.body, Infinity]);
             else this.body.appendChild(section);
         }
+        
     }
 
     public get placeholder() { return this.style.getPropertyValue("--placeholder"); }
@@ -102,11 +104,10 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
      * while `newElem.textContent` is empty.
      */
     private insert(type:RichTextInput.SectionName, newElem:HTMLElement, position:InsertionPosition) {
-
         newElem.setAttribute("do-serialize", ""); // mark as element
         newElem.setAttribute("type", type); // mark type
 
-        let insElem:Element;
+        let insElem:HTMLElement;
 
         if (newElem instanceof HTMLAnchorElement) { // custom container for shortcuts
             insElem = ElementFactory.div(undefined, "specialized-container", "element-container", "flex-rows", "in-section-gap")
@@ -191,6 +192,8 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                 .make();
         }
         else insElem = newElem; // all other elements
+
+        insElem.style.flexGrow = '1';
 
         // put element into a container
         const container:HTMLDivElement = ElementFactory.div(undefined, "element-container", "flex-columns", "main-axis-space-between", "cross-axis-center",  "in-section-gap")
@@ -588,7 +591,7 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                             const newspaper = new IFrameContainer(RichTextInput.NEWSPAPER_SRC);
                             newspaper.classList.add("newspaper");
                             this.insert("newspaper", newspaper, insPosCallback());
-                        }, "Verenigingsblad toevoegen")
+                        }, "Verenigingsblad toevoegen"),
                     )
             ).make();
     }
@@ -597,8 +600,8 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
 
 namespace RichTextInput {
     /** Union type of the possible names of a rich-text section. */
-    export type SectionName = "shortcut" | "attachment" | "image" | "title" | "h1" | "h2" | "h3" | "paragraph" | "list" | "numbered-list" | "newspaper";
-    const richTextSectionNames:SectionName[] = ["shortcut", "attachment", "image", "title", "h1", "h2", "h3", "paragraph", "list", "numbered-list", "newspaper"];
+    export type SectionName = "shortcut" | "attachment" | "image" | "title" | "h1" | "h2" | "h3" | "paragraph" | "list" | "numbered-list" | "newspaper" | "event-note";
+    const richTextSectionNames:SectionName[] = ["shortcut", "attachment", "image", "title", "h1", "h2", "h3", "paragraph", "list", "numbered-list", "newspaper", "event-note"];
     export function isRichTextSectionName(str:string):str is SectionName {
         return richTextSectionNames.some(rtsn => str === rtsn);
     }
@@ -608,7 +611,7 @@ namespace RichTextInput {
     /** All RichTextSectionNames that have editable text. */
     export const ALL_TEXT:SectionName[] = [...ALL_HEADERS, "paragraph", "shortcut"];
     /** All RichTextSectionNames categorized as widgets. */
-    export const ALL_WIDGETS:SectionName[] = ["newspaper"];
+    export const ALL_WIDGETS:SectionName[] = ["newspaper", "event-note"];
     export const NEWSPAPER_SRC = "https://www.bladnl.nl/bladen/tblaadje/pluginfull";
     
     /** SectionNames mapped to the section types that cannot be inserted in them. */
@@ -631,6 +634,7 @@ namespace RichTextInput {
         else if (elem instanceof HTMLUListElement) return "list";
         else if (elem instanceof HTMLOListElement) return "numbered-list";
         else if (elem.tagName === "IFRAME-CONTAINER" && elem.classList.contains("newspaper")) return "newspaper";
+        else if (elem.tagName === "RICH-TEXT-WIDGET" && elem.getAttribute("type") === "event-note") return "event-note";
         else throw Error(`could not infer section type of ${elem.outerHTML}`);
     }
 

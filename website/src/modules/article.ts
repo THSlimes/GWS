@@ -23,6 +23,7 @@ const isEditMode = urlSearchParams.get("mode") === "edit";
 
 if (!articleId) window.location.replace('/'); // no article provided, go to homepage
 else Loading.useDynamicContent(Promise.all([DB.getById(articleId), checkPermissions(Permissions.Permission.UPDATE_ARTICLES)]), ([articleInfo, permRes]) => {
+    
     const canUpdate = permRes.UPDATE_ARTICLES;
 
     if (articleInfo) {
@@ -65,6 +66,7 @@ else Loading.useDynamicContent(Promise.all([DB.getById(articleId), checkPermissi
         UserFeedback.relayError("We konden dat bericht niet vinden. Mogelijk klopt de link niet?");
         window.location.replace('/'); // no such article found, go to homepage
     }
+    
 }, runOnErrorCode("permission-denied", () => {
     UserFeedback.relayError("Dat bericht is alleen zichtbaar voor leden.");
     location.replace(URLUtil.createLinkBackURL("/login.html", location.href));

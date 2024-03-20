@@ -10,6 +10,10 @@ export enum DetailLevel {
     FULL
 }
 export namespace DetailLevel {
+    export function checkType(val:number):val is DetailLevel {
+        return DetailLevel.LOW <= val && val <= DetailLevel.FULL;
+    }
+
     export function toString(lod:DetailLevel):string {
         switch(lod) {
             case DetailLevel.LOW: return "low";
@@ -19,16 +23,18 @@ export namespace DetailLevel {
         }
     }
 
-    export function fromString(str:string):DetailLevel {
+    export function fromString(str:string):DetailLevel|undefined {
         switch (str) {
             case "low": return DetailLevel.LOW;
             case "medium": return DetailLevel.MEDIUM;
             case "high": return DetailLevel.HIGH;
             case "full": return DetailLevel.FULL;
-            default: throw new Error(`unknown DetailLevel "${str}".`);
+            default: return undefined;
         }
     }
 }
+
+export interface toStringable { toString():string }
 
 /**
  * Type to be implemented by custom element types which have distinct sections.

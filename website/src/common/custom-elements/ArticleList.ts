@@ -33,7 +33,7 @@ class ArticleList extends HTMLElement implements HasSections<ArticleList.Section
             { forHomepage: true, forMembers: false }
         );
 
-        this._lod = lod ?? DetailLevel.fromString(this.getAttribute("lod") ?? "medium");
+        this._lod = lod ?? DetailLevel.fromString(this.getAttribute("lod") ?? "medium")!;
         
         this.initElement();
     }

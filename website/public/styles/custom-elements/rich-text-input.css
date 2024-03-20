@@ -111,8 +111,6 @@ rich-text-input {
                 border-radius: calc(var(--in-section-gap) / 2);
 
                 &.text-box { padding: 2px; }
-
-                &.fake-focussed { outline: var(--text-dark) auto 1px; }
         
                 &:empty::after {
                     color: var(--shadow-dark);

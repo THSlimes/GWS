@@ -173,6 +173,8 @@ class AssemblyLine<TN extends string, E extends AssemblyLine.ElementType<TN> = A
 
         if (this._onMake !== undefined) this._onMake(out);
 
+        
+
         return out;
     }
 

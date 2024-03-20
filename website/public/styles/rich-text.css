@@ -41,7 +41,7 @@
 
         color: inherit;
 
-        &[target="_blank"]:not(:empty)::after {
+        &:not(.icon)[target="_blank"]:not(:empty)::after {
             content: "open_in_new";
             font-family: "icon";
         }

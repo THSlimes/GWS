@@ -32,23 +32,28 @@ abstract class RichTextSerializer {
         return out;
     }
 
+    private static getStrippedClone(elem:HTMLElement):HTMLElement {
+        const out = elem.cloneNode() as HTMLElement;
+        // remove all attributes and child nodes
+        while (out.attributes.length !== 0) out.removeAttribute(out.attributes[0].name);
+        while (out.firstChild) out.firstChild.remove();
+        
+        ["left", "center", "right", "justify"].forEach(opt => { // universal alignment option
+            if (elem.classList.contains(`align-${opt}`)) out.classList.add(`align-${opt}`);
+        });
+        
+        return out;
+    }
+
     private static finalize(node:ChildNode):Node[] {
         
         if (node.nodeType === Node.TEXT_NODE) return [document.createTextNode(node.textContent ?? "")];
         else if (node instanceof HTMLElement) {
             if (node.hasAttribute("do-serialize")) {
                 const type = node.getAttribute("type");
+                const out = this.getStrippedClone(node);
+
                 if (type && RichTextInput.isRichTextSectionName(type)) {
-
-                    const out = node.cloneNode() as HTMLElement;
-                    // remove all attributes and child nodes
-                    while (out.attributes.length !== 0) out.removeAttribute(out.attributes[0].name);
-                    while (out.firstChild) out.firstChild.remove();
-                    
-                    ["left", "center", "right", "justify"].forEach(opt => { // universal alignment option
-                        if (node.classList.contains(`align-${opt}`)) out.classList.add(`align-${opt}`);
-                    });
-
                     switch (type) {
                         case "attachment":
                         case "image":
@@ -83,7 +88,6 @@ abstract class RichTextSerializer {
                             out.setAttribute("src", node.getAttribute("src") ?? "");
                             out.classList.add("newspaper");
                             return [out];
-                            break;
                     }
 
                     throw new RichTextSerializer.SerializationError(`no finalization implementation found for section type "${type}"`);
@@ -102,8 +106,10 @@ abstract class RichTextSerializer {
     }
 
     public static deserialize(value:string):Node[] {
+        
         try {
             const parser = new DOMParser();
+            
             const doc = parser.parseFromString(value, "text/html");
             NodeUtil.onEach(doc, n => {
                 if (n instanceof Element) {
@@ -114,7 +120,7 @@ abstract class RichTextSerializer {
                     });
                 }
             });
-
+            
             return Array.from(doc.body.childNodes);
         }
         catch (e) {
