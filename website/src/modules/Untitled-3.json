@@ -1,0 +1,25 @@
+{
+    "2": "Voornaam",
+    "3": "",
+    "4": "Achternaam",
+    "5": "test@gmail.com",
+    "6": "123456",
+    "7": {
+        "iban": "NL20INGB0001234567",
+        "bic": "INGBNL2A",
+        "name": "Voornaam Achternaam"
+    },
+    "8": "2006-3-21",
+    "9": "S123456",
+    "13": "Wel de nieuwsbrief",
+    "16": "Sociologie",
+    "20": true,
+    "26": true,
+    "28": {
+        "0": "Whatsappgroep"
+    },
+    "29": {
+        "0": "Openbare sociale media",
+        "1": "Besloten sociale media"
+    }
+}

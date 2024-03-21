@@ -30,7 +30,6 @@ export default class Switch extends HTMLElement implements HasSections<"indicato
         const newLevel = oldLevel - 1;
         if (newLevel <= 0) elem.removeAttribute("disabled");
         else elem.setAttribute("disabled", newLevel.toString());
-        console.trace(elem);
     }
 
     public readonly dependants:Element[] = [];

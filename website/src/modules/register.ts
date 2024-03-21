@@ -83,7 +83,7 @@ Loading.onDOMContentLoaded(FORM_INPUTS_QUERY)
             phone_number: elements["phone-number"].value.trim(),
             birth_date: elements["birth-date"].valueAsDate,
             study: elements.study.value.trim(),
-            student_number: elements.study.value.trim(),
+            student_number: elements["student-number"].value.trim(),
             bank_account: { iban: elements.iban.value.trim(), bic: elements.bic.value.trim(), holder: elements["bank-account-name"].value.trim() },
             receive_news_letter: elements["receive-news-letter"].value,
             allow_social_media: { public: elements["allow-public-photos"].value, private: elements["allow-private-photos"].value },
@@ -92,6 +92,36 @@ Loading.onDOMContentLoaded(FORM_INPUTS_QUERY)
             allow_auto_transactions: elements["allow-bank-transactions"].value
         };
     }
+});
+
+Loading.onDOMContentLoaded({ "form":HTMLFormElement, ...FORM_INPUTS_QUERY, "test-fill":HTMLButtonElement })
+.then(elements => {
+    elements["test-fill"].addEventListener("click", ev => {
+        ev.preventDefault();
+
+        elements["first-name"].value = "Thom";
+        elements.infix.value = "de";
+        elements["family-name"].value = "Spammer";
+
+        elements.email.value = "test@gmail.com";
+        elements.password.value = elements["confirm-password"].value = "Wachtwoord123!";
+        
+        elements["phone-number"].value = "+31 06-12345678";
+        elements["birth-date"].valueAsDate = new Date("2000-1-1");
+        elements.study.value = "Sociologie";
+        elements["student-number"].value = "S123456";
+
+        elements.iban.value = "NL20INGB0001234567";
+        elements.bic.value = "INGBNL2A";
+        elements["bank-account-name"].value = "Thom de Spammer";
+
+        elements["receive-news-letter"].value = true;
+        elements["allow-public-photos"].value = true;
+        elements["allow-private-photos"].value = true;
+        elements["add-to-whatsapp"].value = true;
+        elements["accept-privacy-statement"].value = true;
+        elements["allow-bank-transactions"].value = true;
+    });
 });
 
 interface RegistrationFormDataValidity {
@@ -275,36 +305,116 @@ Loading.onDOMContentLoaded({ "submit-button": HTMLButtonElement })
         if (validity.status) { // data valid, submit
             submitButton.disabled = true;
 
-            // create new user
-            createUserWithEmailAndPassword(FIREBASE_AUTH, data.email, data.password.password)
-            .then(userCred => userCred.user)
-            .then(user => {
-                // create new user entry in database
-                const userInfo = new UserInfo(
-                    user.uid,
-                    new Date(),
-                    new Date(1000, 0, 1),
-                    data.name.first_name,
-                    `${data.name.infix} ${data.name.family_name}`,
-                    []
-                );
-                USER_DB.write(userInfo)
-                .then(() => {
-                    UserFeedback.success("Je account is aangemaakt. Welkom bij GWS!", 5000, () => location.href = '/');
-                })
-                .catch(err => {
-                    UserFeedback.error(getErrorMessage(err));
-                    // creation failed, delete user
-                    user.delete().then(() => console.log("user deleted"));
-                    submitButton.disabled = false;
-                });
+            submitToConscribo(data)
+            .then(response => {
+                console.log(response);
             })
-            .catch(err => {
-                UserFeedback.error(getErrorMessage(err));
-                submitButton.disabled = false;
-            });
+            .catch(err => console.error(err));
+
+            // // create new user
+            // createUserWithEmailAndPassword(FIREBASE_AUTH, data.email, data.password.password)
+            // .then(userCred => userCred.user)
+            // .then(user => {
+            //     // create new user entry in database
+            //     const userInfo = new UserInfo(
+            //         user.uid,
+            //         new Date(),
+            //         new Date(1000, 0, 1),
+            //         data.name.first_name,
+            //         `${data.name.infix} ${data.name.family_name}`,
+            //         []
+            //     );
+            //     USER_DB.write(userInfo)
+            //     .then(() => {
+            //         submitToConscribo(data)
+            //         .then(response => {
+            //             console.log(response);
+            //         });
+            //         // UserFeedback.success("Je account is aangemaakt. Welkom bij GWS!", 5000, () => location.href = '/');
+            //     })
+            //     .catch(err => {
+            //         UserFeedback.error(getErrorMessage(err));
+            //         // creation failed, delete user
+            //         user.delete().then(() => console.log("user deleted"));
+            //         submitButton.disabled = false;
+            //     });
+            // })
+            // .catch(err => {
+            //     UserFeedback.error(getErrorMessage(err));
+            //     submitButton.disabled = false;
+            // });
         }
         else UserFeedback.error(validity.message); // show error
     });
 })
 .catch(console.error);
+
+
+
+function submitToConscribo(data:RegistrationFormData):Promise<string> {
+    return new Promise((resolve, reject) => {
+        submitToConscribo.getURL()
+        .then(url => {
+
+            const postData = {
+                "2": data.name.first_name,
+                "3": data.name.infix,
+                "4": data.name.family_name,
+                "5": data.email,
+                "6": data.phone_number,
+                "7":{
+                    "iban": data.bank_account.iban,
+                    "bic": data.bank_account.bic,
+                    "name": data.bank_account.holder
+                },
+                "8": data.birth_date && `${data.birth_date.getFullYear()}-${data.birth_date.getMonth() + 1}-${data.birth_date.getDate()}`,
+                "9": data.student_number,
+                "13": data.receive_news_letter ? "Wel de nieuwsbrief" : "Niet de nieuwsbrief",
+                "16": data.study,
+                "20": data.allow_auto_transactions,
+                "26": data.accept_privacy_statement,
+                "28": data.add_to_whatsapp ? { "0":"Whatsappgroep" } : {},
+                "29": {
+                    ...(data.allow_social_media.public ? { "0": "Openbare sociale media" } : {}),
+                    ...(data.allow_social_media.private ? { "1": "Besloten sociale media" } : {})
+                }
+            };
+
+            const req = new XMLHttpRequest();
+            req.onerror = () => reject(req.statusText);
+            req.onload = () => {
+                if (req.status < 200 || req.status >= 300) reject(req.statusText);
+                else resolve(req.responseText);
+            }
+            req.open("POST", url, true);
+            req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            req.send(`formData=${encodeURIComponent(JSON.stringify(postData))}`);
+        })
+        .catch(reject);
+    });
+}
+
+namespace submitToConscribo {
+
+    const FORM_SRC = "https://leden.conscribo.nl/dengeitenwollensoc/jsForm/load/4a34/cwfWordpressForm";
+    function getSessionID():Promise<string> {
+        return fetch(FORM_SRC) // fetch form insertion script
+        .then(res => res.text()) // get text
+        .then(text => {
+            // extract session id
+            const match = text.match(/this.sessionId = '(.+)';/)![0];
+            const [fromInd, toInd] = [match.indexOf(`'`) + 1, match.lastIndexOf(`'`)]
+            return match.substring(fromInd, toInd);
+        })
+        .catch()
+    }
+
+    const BASE_URL = new URL("https://leden.conscribo.nl/dengeitenwollensoc/jsForm/postForm/4a34/");
+    export function getURL():Promise<string> {
+        return getSessionID()
+        .then(sessionID => {
+            BASE_URL.searchParams.set("sessionId", sessionID);
+            return BASE_URL.toString();
+        });
+    }
+}

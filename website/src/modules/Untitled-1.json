@@ -1,0 +1,25 @@
+{
+    "2":"Voornaam",
+    "3":"van",
+    "4":"Achternaam",
+    "5":"mijn.email@hotmail.com",
+    "6":"+31 0612345678",
+    "7":{
+        "iban":"",
+        "bic":"",
+        "name":"Voornaam van Achternaam"
+    },
+    "8":"2000-1-1",
+    "9":"S123456",
+    "13":"Niet de nieuwsbrief",
+    "16":"Sociologie",
+    "20":true,
+    "26":true,
+    "28":{
+        "0":"Whatsappgroep"
+    },
+    "29":{
+        "0":"Openbare sociale media",
+        "1":"Besloten sociale media"
+    }
+}
