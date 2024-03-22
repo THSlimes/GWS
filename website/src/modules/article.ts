@@ -5,13 +5,13 @@ import ArticleDatabase from "../common/firebase/database/articles/ArticleDatabas
 import SmartArticle, { EditableSmartArticle } from "../common/custom-elements/SmartArticle";
 import FirestoreArticleDatabase from "../common/firebase/database/articles/FirestoreArticleDatabase";
 import { runOnErrorCode } from "../common/firebase/authentication/error-messages";
-import URLUtil from "../common/util/URLUtil";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
 import Loading from "../common/Loading";
 import UserFeedback from "../common/ui/UserFeedback";
 import { DetailLevel } from "../common/util/UtilTypes";
 import { checkPermissions } from "../common/firebase/authentication/permission-based-redirect";
 import Permissions from "../common/firebase/database/Permissions";
+import URLUtil from "../common/util/URLUtil";
 
 /** Creates the link to an article given its ID. */
 export function articleLink(id: string) { return `/article.html?id=${id}`; }

@@ -1,8 +1,9 @@
-import { User, getAuth } from "@firebase/auth";
+import { User, getAuth, onAuthStateChanged } from "@firebase/auth";
 import { getFirestore } from "@firebase/firestore";
 import { getStorage } from "@firebase/storage";
 import { FirebaseOptions, initializeApp } from "firebase/app";
 import Cache from "../Cache";
+import StringUtil from "../util/StringUtil";
 
 // initialize firebase connection
 const FIREBASE_CONFIG:FirebaseOptions = {
@@ -21,13 +22,20 @@ export default FIREBASE_APP;
 export const FIRESTORE = getFirestore(FIREBASE_APP); // initialize Firebase Firestore
 
 export const FIREBASE_AUTH = getAuth(FIREBASE_APP);
+if (!Cache.get("is-logged-in")) FIREBASE_AUTH.signOut();
 FIREBASE_AUTH.onAuthStateChanged(user => {
-    if (user === null) {
+    if (user === null) { // not logged in
         Cache.remove("is-logged-in");
+        Cache.remove("do-login-expiry");
+        Cache.remove(`permissions-${Cache.get("own-id")}`);
         Cache.remove("own-id");
     }
-    else {
-        Cache.set("is-logged-in", true);
+    else { // logged in
+        if (Cache.get("do-login-expiry")) {
+            Cache.set("is-logged-in", true, Date.now() + 60000);
+            setInterval(() => Cache.set("is-logged-in", true, Date.now() + 60000), 30000);
+        }
+        else Cache.set("is-logged-in", true);
         Cache.set("own-id", user.uid);
     }
 });

@@ -117,6 +117,9 @@ function makeNavbar(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                                         .on("click", () => {
                                             FIREBASE_AUTH.signOut();
                                             Cache.remove("is-logged-in");
+                                            Cache.remove("do-login-expiry");
+                                            Cache.remove(`permissions-${Cache.get("own-id")}`);
+                                            Cache.remove("own-id");
                                             location.reload();
                                         })
                                         .onMake(self => { // hide account button when not logged in

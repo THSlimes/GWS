@@ -90,6 +90,7 @@ namespace Cache {
         "sponsor-links": ImagedLink[],
         "social-media-links": ImagedLink[],
         "is-logged-in": true,
+        "do-login-expiry": boolean,
         "own-id": string,
         "relayed-message": UserFeedback.MessageData,
         [key:`permissions-${string}`]: Permissions.Permission[]

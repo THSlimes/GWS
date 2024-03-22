@@ -1,7 +1,7 @@
 import "./header-and-footer";
 
 import { UserCredential, browserLocalPersistence, browserSessionPersistence, signInWithEmailAndPassword } from "@firebase/auth";
-import { FIREBASE_AUTH } from "../common/firebase/init-firebase";
+import { FIREBASE_AUTH, onAuth } from "../common/firebase/init-firebase";
 import getErrorMessage from "../common/firebase/authentication/error-messages";
 import { redirectIfLoggedIn } from "../common/firebase/authentication/auth-based-redirect";
 import Cache from "../common/Cache";
@@ -20,47 +20,48 @@ Loading.useDynamicContent(makePhotoCarousel("Studievereniging Den Geitenwollen S
 
 function login(email:string, password:string, stayLoggedIn:boolean=false) {
     return new Promise<UserCredential>(async (resolve, reject) => {
-        FIREBASE_AUTH.setPersistence(stayLoggedIn ? browserLocalPersistence : browserSessionPersistence) // set login persistance
+        FIREBASE_AUTH.setPersistence(browserLocalPersistence) // set login persistance
         .then(() => { // login
             signInWithEmailAndPassword(FIREBASE_AUTH, email, password)
-            .then(resolve)
+            .then(user => {
+                Cache.set("do-login-expiry", !stayLoggedIn);
+                resolve(user);
+            })
             .catch(reject);
         })
         .catch(reject);
     });
 }
 
-Loading.onDOMContentLoaded()
-.then(() => {
-    // login functionality
-    const EMAIL_INPUT = document.getElementById("login-email") as HTMLInputElement;
-    const PASSWORD_INPUT = document.getElementById("login-password") as HTMLInputElement;
-    const SHOW_PASSWORD_BUTTON = document.getElementById("show-password-button") as HTMLElement;
-    const STAY_LOGGED_IN_CHECKBOX = document.getElementById("stay-logged-in") as HTMLInputElement;
-
-    const LOGIN_BUTTON = document.getElementById("login-button") as HTMLButtonElement;
-
-    SHOW_PASSWORD_BUTTON.addEventListener("click", () => {
-        SHOW_PASSWORD_BUTTON.toggleAttribute("selected");
-        if (SHOW_PASSWORD_BUTTON.toggleAttribute("active")) PASSWORD_INPUT.type = "text";
-        else PASSWORD_INPUT.type = "password";
+Loading.onDOMContentLoaded({
+    "login-email": HTMLInputElement,
+    "login-password": HTMLInputElement,
+    "show-password-button": HTMLElement,
+    "stay-logged-in": HTMLInputElement,
+    "login-button": HTMLButtonElement
+})
+.then(elements => { // login functionality
+    elements["show-password-button"].addEventListener("click", () => {
+        elements["show-password-button"].toggleAttribute("selected");
+        if (elements["show-password-button"].toggleAttribute("active")) elements["login-password"].type = "text";
+        else elements["login-password"].type = "password";
     });
 
-    LOGIN_BUTTON.addEventListener("click", () => { // attempt login
-        const email = EMAIL_INPUT.value.trim();
-        const password = PASSWORD_INPUT.value.trim();
+    elements["login-button"].addEventListener("click", () => { // attempt login
+        const email = elements["login-email"].value.trim();
+        const password = elements["login-password"].value.trim();
 
         if (!email) UserFeedback.warning("Vul een e-mailadres in.");
         else if (!password) UserFeedback.warning("Vul een wachtwoord in.")
         else {
             // prevent login spam
-            LOGIN_BUTTON.disabled = true;
+            elements["login-button"].disabled = true;
 
-            login(email, password, STAY_LOGGED_IN_CHECKBOX.checked)
+            login(email, password, elements["stay-logged-in"].checked)
             .then(userCred => {
                 FIREBASE_AUTH.updateCurrentUser(userCred.user)
                 .then(() => {
-                    Cache.set("is-logged-in", true);
+                    Cache.set("is-logged-in", true, elements["stay-logged-in"].checked ? undefined : Date.now() + 60000);
                     const returnUrl = new URLSearchParams(window.location.search).get("return-to");
                     if (returnUrl !== null && URLUtil.isLocal(returnUrl)) location.replace(returnUrl);
                     else location.href = '/';
@@ -69,7 +70,7 @@ Loading.onDOMContentLoaded()
             })
             .catch(err => UserFeedback.error(getErrorMessage(err)))
             .finally(() => {
-                setTimeout(() => LOGIN_BUTTON.disabled = false, 1000);
+                setTimeout(() => elements["login-button"].disabled = false, 1000);
             });
         }
     });
