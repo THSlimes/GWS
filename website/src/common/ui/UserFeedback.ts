@@ -3,6 +3,7 @@ import $ from "jquery";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import Cache from "../Cache";
 import Responsive from "./Responsive";
+import Loading from "../Loading";
 
 enum Type {
     INFO = "info",
@@ -14,10 +15,30 @@ enum Type {
 abstract class UserFeedback {
     private static MESSAGE_AREA:HTMLDivElement;
     static {
-        window.addEventListener("DOMContentLoaded", () => { // optimized for speed
+        Loading.onDOMContentLoaded()
+        .then(() => { // optimized for speed
             this.MESSAGE_AREA = document.body.appendChild(document.createElement("div"));
             this.MESSAGE_AREA.id = "info-messages";
             this.MESSAGE_AREA.classList.add("flex-rows", "cross-axis-center");
+
+            const msgData = Cache.get("relayed-message");
+            if (msgData) {
+                switch (msgData.type) {
+                    case UserFeedback.MessageType.INFO:
+                        UserFeedback.info(msgData.content, msgData.lifetime);
+                        break;
+                    case UserFeedback.MessageType.SUCCESS:
+                        UserFeedback.success(msgData.content, msgData.lifetime);
+                        break;
+                    case UserFeedback.MessageType.WARNING:
+                        UserFeedback.warning(msgData.content, msgData.lifetime);
+                        break;
+                    case UserFeedback.MessageType.ERROR:
+                        UserFeedback.error(msgData.content, msgData.lifetime);
+                        break;
+                }
+                Cache.remove("relayed-message");
+            }
         });
     }
     

@@ -8,6 +8,7 @@ import { initUsersPanel } from "../common/admin-panels/users-panel";
 import { initEventsPanel } from "../common/admin-panels/events-panel";
 import { initArticlesPanel } from "../common/admin-panels/articles-panel";
 import { initLinksPanel } from "../common/admin-panels/links-panel";
+import Loading from "../common/Loading";
 
 // only permitted users can view page
 redirectIfMissingPermission("/", [Permissions.Permission.VIEW_ADMIN_PANEL, Permissions.Permission.READ_OTHER_USER_INFO], true, true);
@@ -69,13 +70,16 @@ function createSectionButton(icon:string, label:string, id:PanelId, selected?:bo
         .make();
 }
 
-window.addEventListener("DOMContentLoaded", () => { // insert section selectors
-    const SECTION_SELECTOR = document.getElementById("section-selector") as HTMLDivElement;
+Loading.onDOMContentLoaded({ "section-selector": HTMLDivElement })
+.then(elements => elements["section-selector"])
+.then(sectionSelector => { // insert section selectors
 
     const ids = Object.keys(PANEL_CONFIG) as PanelId[];
     ids.sort((a,b) => PANEL_CONFIG[a].label.localeCompare(PANEL_CONFIG[b].label)); // sort alphabetically
 
     const defaultId = ids.find(id => PANEL_CONFIG[id].default) ?? ids[0];
-    SECTION_SELECTOR.append(...ids.map(id => createSectionButton(PANEL_CONFIG[id].icon, PANEL_CONFIG[id].label, id, id === defaultId)));
+    sectionSelector.append(...ids.map(id => createSectionButton(PANEL_CONFIG[id].icon, PANEL_CONFIG[id].label, id, id === defaultId)));
     showPanel(defaultId);
-});
+
+})
+.catch(console.error);

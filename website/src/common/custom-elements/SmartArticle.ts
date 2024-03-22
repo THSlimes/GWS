@@ -10,6 +10,7 @@ import Switch from "./Switch";
 import RichTextInput from "./rich-text/RichTextInput";
 import RichTextSerializer from "./rich-text/RichTextSerializer";
 import UserFeedback from "../ui/UserFeedback";
+import Loading from "../Loading";
 
 /**
  * A SmartArticle is a custom type of article. It provides a consistent way
@@ -195,7 +196,9 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
 
 }
 
-window.addEventListener("DOMContentLoaded", () => customElements.define("smart-article", SmartArticle, {extends: "article"}));
+Loading.onDOMContentLoaded().then(() => customElements.define("smart-article", SmartArticle, {extends: "article"}));
+
+
 
 export class EditableSmartArticle extends SmartArticle implements HasSections<"category"|"showOnHomepage"|"onlyForMembers"|"saveButton"> {
     
@@ -348,4 +351,4 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
 
 }
 
-window.addEventListener("DOMContentLoaded", () => customElements.define("editable-smart-article", EditableSmartArticle));
+Loading.onDOMContentLoaded().then(() => customElements.define("editable-smart-article", EditableSmartArticle));

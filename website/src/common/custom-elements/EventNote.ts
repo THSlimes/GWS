@@ -20,6 +20,7 @@ import UserFeedback from "../ui/UserFeedback";
 import ElementUtil from "../util/ElementUtil";
 import EventDatabaseFactory from "../firebase/database/events/EventDatabaseFactory";
 import NumberUtil from "../util/NumberUtil";
+import Loading from "../Loading";
 
 export class EventNote extends HTMLElement implements HasSections<EventNote.SectionName> {
 
@@ -191,7 +192,7 @@ export namespace EventNote {
     export type SectionName = "name" | "timespan" | "description" | "quickActions";
 }
 
-window.addEventListener("DOMContentLoaded", () => customElements.define("event-note", EventNote));
+Loading.onDOMContentLoaded().then(() => customElements.define("event-note", EventNote));
 
 
 
@@ -446,7 +447,7 @@ export namespace EditableEventNote {
 
 }
 
-window.addEventListener("DOMContentLoaded", () => customElements.define("editable-event-note", EditableEventNote));
+Loading.onDOMContentLoaded().then(() => customElements.define("editable-event-note", EditableEventNote));
 
 
 
@@ -773,4 +774,4 @@ export namespace EditableRegisterableEventNote {
     };
 }
 
-window.addEventListener("DOMContentLoaded", () => customElements.define("editable-registerable-event-note", EditableRegisterableEventNote));
+Loading.onDOMContentLoaded().then(() => customElements.define("editable-registerable-event-note", EditableRegisterableEventNote));

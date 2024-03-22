@@ -7,6 +7,7 @@ import ElementUtil from "../util/ElementUtil";
 import { HasSections } from "../util/UtilTypes";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import { AttachmentOrigin } from "../util/UtilTypes";
+import Loading from "../Loading";
 
 export default class MultisourceAttachment extends HTMLElement implements HasSections<"filetypeIcon"|"fileNameLabel"|"fileSizeLabel"|"downloadButton"> {
 
@@ -185,7 +186,7 @@ export default class MultisourceAttachment extends HTMLElement implements HasSec
 
 }
 
-window.addEventListener("DOMContentLoaded", () => customElements.define("multisource-attachment", MultisourceAttachment));
+Loading.onDOMContentLoaded().then(() => customElements.define("multisource-attachment", MultisourceAttachment));
 
 class AttachmentQueryError extends Error {
 

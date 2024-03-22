@@ -11,18 +11,16 @@ redirectIfLoggedIn("/", true); // can't log in when already logged in
 /** @see https://stackoverflow.com/questions/46155/how-can-i-validate-an-email-address-in-javascript */
 const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
-Loading.onDOMContentLoaded()
-.then(() => {
-    const SEND_EMAIL_BUTTON = document.getElementById("send-email-button") as HTMLButtonElement;
-    const EMAIL_INPUT = document.getElementById("email-input") as HTMLInputElement;
+Loading.onDOMContentLoaded({ "send-email-button": HTMLButtonElement, "email-input": HTMLInputElement })
+.then(elements => {
 
-    SEND_EMAIL_BUTTON.addEventListener("click", ev => {
+    elements["send-email-button"].addEventListener("click", ev => {
         ev.preventDefault();
 
-        const email = EMAIL_INPUT.value.trim();
+        const email = elements["email-input"].value.trim();
         if (email) {
             if (EMAIL_REGEX.test(email)) {
-                SEND_EMAIL_BUTTON.disabled = true;
+                elements["send-email-button"].disabled = true;
                 sendPasswordResetEmail(FIREBASE_AUTH, email)
                 .then(() => {
                     UserFeedback.success("De email is verstuurd. Check voor de zekerheid ook je spam-box.", 5000);
@@ -30,7 +28,7 @@ Loading.onDOMContentLoaded()
                 })
                 .catch(err => {
                     UserFeedback.error(getErrorMessage(err));
-                    SEND_EMAIL_BUTTON.disabled = false;
+                    elements["send-email-button"].disabled = false;
                 });
             }
             else UserFeedback.error("Opgegeven e-mailadres is ongeldig."); // email invalid

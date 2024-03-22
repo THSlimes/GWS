@@ -27,18 +27,17 @@ else Loading.useDynamicContent(Promise.all([DB.getById(articleId), checkPermissi
     const canUpdate = permRes.UPDATE_ARTICLES;
 
     if (articleInfo) {
-        const ARTICLE_DIV = document.getElementById("article")!;
-        const NAVIGATION_BUTTONS_DIV = document.getElementById("navigation-buttons")!;
+        const elements = Loading.getElementsById({ "article": HTMLDivElement, "navigation-buttons": HTMLDivElement });
 
         const article = isEditMode && canUpdate ?
             new EditableSmartArticle(articleInfo, DetailLevel.FULL) :
             new SmartArticle(articleInfo, DetailLevel.FULL);
-        ARTICLE_DIV.prepend(article);
+        elements.article.prepend(article);
 
         if (articleInfo.show_on_homepage) {
             DB.getNext(articleInfo, { forHomepage:true, forMembers:false })
             .then(nextArticle => {
-                if (nextArticle) NAVIGATION_BUTTONS_DIV.appendChild(
+                if (nextArticle) elements["navigation-buttons"].appendChild(
                     ElementFactory.button(() => location.href = articleLink(nextArticle.id))
                         .class("flex-columns", "main-axis-space-between", "cross-axis-center", "text-right")
                         .children(
@@ -50,7 +49,7 @@ else Loading.useDynamicContent(Promise.all([DB.getById(articleId), checkPermissi
             });
             DB.getPrevious(articleInfo, { forHomepage:true, forMembers:false })
             .then(prevArticle => {
-                if (prevArticle) NAVIGATION_BUTTONS_DIV.appendChild(
+                if (prevArticle) elements["navigation-buttons"].appendChild(
                     ElementFactory.button(() => location.href = articleLink(prevArticle.id))
                         .class("flex-columns", "main-axis-space-between", "cross-axis-center", "text-left")
                         .children(

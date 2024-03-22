@@ -1,3 +1,4 @@
+import Loading from "../Loading";
 import ElementUtil from "../util/ElementUtil";
 
 /** Initializes parallax scrolling of the given element. */
@@ -29,7 +30,8 @@ function initParallax(elem:HTMLElement) {
 }
 
 // initial search for parallax elements
-window.addEventListener("DOMContentLoaded", () => {
+Loading.onDOMContentLoaded()
+.then(() => {
     // store initial scroll position
     document.body.style.setProperty("--scroll-x", window.scrollX + "px");
     document.body.style.setProperty("--scroll-y", window.scrollY + "px");

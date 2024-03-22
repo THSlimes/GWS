@@ -116,4 +116,5 @@ namespace ArticleList {
 
 export default ArticleList;
 
-window.addEventListener("DOMContentLoaded", () => customElements.define("article-list", ArticleList));
+Loading.onDOMContentLoaded()
+.then(() => customElements.define("article-list", ArticleList));

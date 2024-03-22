@@ -10,11 +10,9 @@ import Placeholder from "../common/custom-elements/Placeholder";
 import "../common/custom-elements/Switch";
 import MultisourceAttachment from "../common/custom-elements/MultisourceAttachment";
 import Switch from "../common/custom-elements/Switch";
-import { FIREBASE_AUTH } from "../common/firebase/init-firebase";
-import { createUserWithEmailAndPassword } from "@firebase/auth";
-import getErrorMessage from "../common/firebase/authentication/error-messages";
+
 import FirestoreUserDatabase from "../common/firebase/database/users/FirestoreUserDatabase";
-import UserDatabase, { UserInfo } from "../common/firebase/database/users/UserDatabase";
+import UserDatabase from "../common/firebase/database/users/UserDatabase";
 import UserFeedback from "../common/ui/UserFeedback";
 import { DetailLevel } from "../common/util/UtilTypes";
 

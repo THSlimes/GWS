@@ -1,4 +1,5 @@
 import ElementFactory from "../html-element-factory/ElementFactory";
+import Loading from "../Loading";
 import ElementUtil from "../util/ElementUtil";
 import { HasSections } from "../util/UtilTypes";
 
@@ -80,4 +81,4 @@ export default class Switch extends HTMLElement implements HasSections<"indicato
 
 }
 
-window.addEventListener("DOMContentLoaded", () => customElements.define("switch-input", Switch));
+Loading.onDOMContentLoaded().then(() => customElements.define("switch-input", Switch));

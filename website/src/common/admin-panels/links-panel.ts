@@ -11,27 +11,27 @@ let initializedLinksPanel = false;
 const SETTINGS_DB = new FirestoreSettingsDatabase();
 
 let NAVBAR_LINKS_EDITOR:LinkTreeEditor;
-let NAVBAR_LINKS_SAVE_BUTTON:HTMLButtonElement;
 
 let SPONSOR_LINKS_EDITOR:ImagedLinksEditor;
-let SPONSOR_LINKS_SAVE_BUTTON:HTMLButtonElement;
 
 let SOCIAL_MEDIA_LINKS_EDITOR:ImagedLinksEditor;
-let SOCIAL_MEDIA_LINKS_SAVE_BUTTON:HTMLButtonElement;
 
 export function initLinksPanel() {
     if (!initializedLinksPanel) {
         Loading.markLoadStart(initLinksPanel);
 
+        const elements = Loading.getElementsById({ // getting buttons from page
+            "navbar-links-save-button": HTMLButtonElement,
+            "sponsor-links-save-button": HTMLButtonElement,
+            "social-media-links-save-button": HTMLButtonElement
+        });
+
         // Navbar links
         SETTINGS_DB.getNavbarLinks()
-        .then(links => {
-            NAVBAR_LINKS_EDITOR = Placeholder.replaceWith("navbar-links", LinkTreeEditor.fromLinkTree(links));
-        })
+        .then(links => NAVBAR_LINKS_EDITOR = Placeholder.replaceWith("navbar-links", LinkTreeEditor.fromLinkTree(links)))
         .catch(err => UserFeedback.error(getErrorMessage(err)));
 
-        NAVBAR_LINKS_SAVE_BUTTON = document.getElementById("navbar-links-save-button") as HTMLButtonElement;
-        NAVBAR_LINKS_SAVE_BUTTON.addEventListener("click", () => {
+        elements["navbar-links-save-button"].addEventListener("click", () => {
             try {
                 const newLinks = NAVBAR_LINKS_EDITOR.value;
 
@@ -55,8 +55,7 @@ export function initLinksPanel() {
         })
         .catch(err => UserFeedback.error(getErrorMessage(err)));
 
-        SPONSOR_LINKS_SAVE_BUTTON = document.getElementById("sponsor-links-save-button") as HTMLButtonElement;
-        SPONSOR_LINKS_SAVE_BUTTON.addEventListener("click", () => {
+        elements["sponsor-links-save-button"].addEventListener("click", () => {
             try {
                 const newLinks = SPONSOR_LINKS_EDITOR.value;
 
@@ -80,8 +79,7 @@ export function initLinksPanel() {
         })
         .catch(err => UserFeedback.error(getErrorMessage(err)));
 
-        SOCIAL_MEDIA_LINKS_SAVE_BUTTON = document.getElementById("social-media-links-save-button") as HTMLButtonElement;
-        SOCIAL_MEDIA_LINKS_SAVE_BUTTON.addEventListener("click", () => {
+        elements["social-media-links-save-button"].addEventListener("click", () => {
             try {
                 const newLinks = SOCIAL_MEDIA_LINKS_EDITOR.value;
 

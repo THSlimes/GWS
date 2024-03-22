@@ -14,6 +14,7 @@ import MultisourceImage from "../MultisourceImage";
 import Switch from "../Switch";
 import ElementFactory from "../../html-element-factory/ElementFactory";
 import IFrameContainer from "../IFrameContainer";
+import Loading from "../../Loading";
 
 /** [parent Node, "before child" index] tuple */
 type InsertionPosition = [Node, number];
@@ -644,4 +645,4 @@ namespace RichTextInput {
 
 export default RichTextInput;
 
-window.addEventListener("DOMContentLoaded", () => customElements.define("rich-text-input", RichTextInput));
+Loading.onDOMContentLoaded().then(() => customElements.define("rich-text-input", RichTextInput));

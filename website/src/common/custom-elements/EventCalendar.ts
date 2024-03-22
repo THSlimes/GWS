@@ -55,11 +55,16 @@ class EventCalendar extends HTMLElement {
         return viewMode === "week" && Responsive.isSlimmerOrEq(Responsive.Viewport.DESKTOP_SLIM);
     }
 
-    private static FULLSCREEN_EVENT_CONTAINER = ElementFactory.div("fullscreen-event-container", "center-content").attr("hidden").make();
+    private static FULLSCREEN_EVENT_CONTAINER = ElementFactory.div("fullscreen-event-container", "center-content")
+        .attr("hidden")
+        .on("click", (ev, self) => {
+            if (ev.target === self) this.closeFullscreenNote();
+        })
+        .make();
     static { // add container to body
-        window.addEventListener("DOMContentLoaded", () => document.body.appendChild(this.FULLSCREEN_EVENT_CONTAINER));
-        this.FULLSCREEN_EVENT_CONTAINER.addEventListener("mousedown", e => {
-            if (e.target === this.FULLSCREEN_EVENT_CONTAINER) this.closeFullscreenNote();
+        Loading.onDOMContentLoaded()
+        .then(() => {
+            document.body.appendChild(this.FULLSCREEN_EVENT_CONTAINER);
         });
     }
 
