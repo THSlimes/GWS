@@ -16,7 +16,7 @@
 <body class="flex-rows">
 
     <div class="content flex-columns main-axis-space-between" style="opacity: 0;">
-        <div id="login-form-container" class="center-content">
+        <div id="login-form-container" class="flex-rows main-axis-center cross-axis-center section-gap">
             <form id="login-form" class="boxed flex-rows section-gap">
                 <h1 class="no-margin">Inloggen bij GWS</h1>
 
@@ -39,7 +39,7 @@
                             <input type="checkbox" name="stay-logged-in" id="stay-logged-in">
                             <label for="stay-logged-in">Ingelogd blijven?</label>
                         </div>
-                        <a href="./password-reset.html">Wachtwoord vergeten</a>
+                        <a href="./password-reset.html" class="italic">Wachtwoord vergeten</a>
                     </div>
 
                     <button id="login-button" class="flex-columns cross-axis-center in-section-gap">
@@ -47,7 +47,10 @@
                         <h4 class="icon">chevron_right</h4>
                     </button>
                 </div>
+
             </form>
+
+            <a href="./register.html" class="italic text-center">Nog geen lid? <span style="color: var(--accent);">Schrijf je dan hier in!</span></a>
         </div>
     
         <place-holder id="photo-carousel"></place-holder>
