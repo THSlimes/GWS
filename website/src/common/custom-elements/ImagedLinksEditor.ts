@@ -2,12 +2,17 @@ import { ImagedLink } from "../firebase/database/settings/SettingsDatabase";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import ArrayUtil from "../util/ArrayUtil";
 import FunctionUtil from "../util/FunctionUtil";
+import ObjectUtil from "../util/ObjectUtil";
 import { HasSections } from "../util/UtilTypes";
 import MultisourceImage from "./MultisourceImage";
 
 class ImagedLinksEditor extends HTMLElement implements HasSections<"addButton"> {
 
     private readonly links:ImagedLink[];
+    private savedLinks:ImagedLink[];
+    public get isDataModified() { return !ObjectUtil.deepEquals(this.links, this.savedLinks); }
+    public save() { this.savedLinks = ObjectUtil.deepCopy(this.links); }
+
     public get value() {
         // check for duplicate names
         for (let i = 0; i < this.links.length; i ++) {
@@ -28,6 +33,7 @@ class ImagedLinksEditor extends HTMLElement implements HasSections<"addButton"> 
         super();
 
         this.links = links;
+        this.savedLinks = ObjectUtil.deepCopy(this.links);
 
         this.initElement();
     }
@@ -59,6 +65,9 @@ namespace ImagedLinksEditor {
     
         private readonly editor:ImagedLinksEditor;
         private readonly link:ImagedLink;
+        private savedLink:ImagedLink;
+        public get isModified() { return ObjectUtil.every(this.link, (k, v) => this.savedLink[k] === v); }
+        public save() { this.savedLink = { ...this.link }; }
     
         public nameInput!:HTMLInputElement;
         public image!:MultisourceImage;
@@ -72,6 +81,7 @@ namespace ImagedLinksEditor {
     
             this.editor = editor;
             this.link = link;
+            this.savedLink = { ...link };
     
             this.initElement();
         }

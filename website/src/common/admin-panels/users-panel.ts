@@ -40,10 +40,6 @@ function getMembershipExtensionDate():Date {
     else return new Date(`${MEMBERSHIP_EXPIRY_DATE}-${NOW.getFullYear() + 1}`); // is for next year
 }
 
-namespace getMembershipExtensionDate {
-    
-}
-
 function makeUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, canEditPerms:boolean):HTMLElement {
     canEditPerms &&= canEdit; // can only edit permissions with edit permissions
 
@@ -207,11 +203,15 @@ export function initUsersPanel() {
         
         initializedUsersPanel = true;
 
+        
+
+        window.addEventListener("beforeunload", ev => {
+            if (!ev.defaultPrevented && USERS_DV.isDataModified) ev.preventDefault();
+        });
     }
 }
 
 function refreshUserEntries() {
-    
 
     Promise.all([onAuth(), USERS_DV.onDataReady()])
     .then(([user, _]) => {

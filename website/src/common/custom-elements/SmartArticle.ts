@@ -209,6 +209,17 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
     public onlyForMembers!:Switch;
     public saveButton!:HTMLParagraphElement;
 
+    protected get data():EditableSmartArticle.PartialArticleInfo {
+        return {
+            heading: this.heading.value.trim(),
+            body: this.body.value,
+            created_at: this.article.created_at,
+            category: this.category.value.trim(),
+            show_on_homepage: this.showOnHomepage.value,
+            only_for_members: this.onlyForMembers.value
+        };
+    }
+
     private readonly saveAsNew:boolean;
     public onSave:(newArticle:ArticleInfo)=>void = () => {};
 
@@ -219,6 +230,12 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
             this.saveButton.textContent = "post_add";
             this.saveButton.title = "Bericht plaatsen";
         }
+
+        window.addEventListener("beforeunload", ev => {
+            if (document.body.contains(this) && !ev.defaultPrevented && !EditableSmartArticle.PartialArticleInfo.equals(this.data, this.article)) {
+                ev.preventDefault();
+            }
+        });
     }
 
     override initElement(): void {
@@ -270,7 +287,8 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
                         .class("icon", "click-action")
                         .tooltip("Wijzigingen opslaan")
                         .on("click", (ev, self) => {
-                            if (!this.heading.value.trim()) UserFeedback.error("Koptitel is leeg.");
+                            const data = this.data;
+                            if (!data.heading) UserFeedback.error("Koptitel is leeg.");
 
                             const heading = this.heading.value.trim();
                             const idPromise = this.saveAsNew ?
@@ -281,12 +299,12 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
                                 const newArticle = new ArticleInfo(
                                     this.article.sourceDB,
                                     id,
-                                    this.heading.value.trim(),
-                                    this.body.value,
-                                    this.article.created_at,
-                                    this.category.value.trim(),
-                                    this.showOnHomepage.value,
-                                    this.onlyForMembers.value
+                                    data.heading,
+                                    data.body,
+                                    data.created_at,
+                                    data.category,
+                                    data.show_on_homepage,
+                                    data.only_for_members
                                 );
 
                                 this.article.sourceDB.write(newArticle)
@@ -349,6 +367,28 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
         return findN(base);
     }
 
+}
+
+export namespace EditableSmartArticle {
+    export interface PartialArticleInfo {
+        heading:string,
+        body:string,
+        created_at:Date,
+        category:string,
+        show_on_homepage:boolean,
+        only_for_members:boolean
+    }
+
+    export namespace PartialArticleInfo {
+        export function equals(partial:PartialArticleInfo, full:ArticleInfo):boolean {
+            return partial.heading === full.heading
+                && partial.body === full.body
+                && partial.created_at.getTime() === full.created_at.getTime()
+                && partial.category === full.category
+                && partial.only_for_members === full.only_for_members
+                && partial.show_on_homepage === full.show_on_homepage;
+        }
+    }
 }
 
 Loading.onDOMContentLoaded().then(() => customElements.define("editable-smart-article", EditableSmartArticle));

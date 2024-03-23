@@ -21,7 +21,7 @@ abstract class DataView<T extends Record<string,any>> {
     }
 
     protected get modifiedEntries() { return this.filter(e => e.isModified); }
-    protected get dataModified() { return this.some(e => e.isModified); }
+    public get isDataModified() { return this.some(e => e.isModified); }
     private _onDataModified:VoidFunction[] = [];
     /** A handler to be called EACH TIME a data entry is modified. */
     public set onDataModified(newHandler:VoidFunction) { this._onDataModified.push(newHandler); }
@@ -50,7 +50,7 @@ abstract class DataView<T extends Record<string,any>> {
         // wrap save function
         const oldSave = this.save;
         this.save = function() {
-            const out = this.dataModified ? oldSave.bind(this)() : new Promise<void>((resolve,reject) => resolve());
+            const out = this.isDataModified ? oldSave.bind(this)() : new Promise<void>((resolve,reject) => resolve());
             out.then(() => this._onSave.forEach(h => h())); // call onSave handlers
 
             return out;

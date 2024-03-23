@@ -1,5 +1,6 @@
 import ColorUtil from "../../../util/ColorUtil";
 import DateUtil from "../../../util/DateUtil";
+import ObjectUtil from "../../../util/ObjectUtil";
 import StringUtil from "../../../util/StringUtil";
 import { Opt } from "../../../util/UtilTypes";
 import Database, { Info, QueryFilter } from "../Database";
@@ -62,6 +63,18 @@ export class EventInfo extends Info {
         
         return true;
     }
+
+    public override equals(other:EventInfo): boolean {
+        return super.equals(other)
+            && other.name === this.name
+            && other.description === this.description
+            && other.category === this.category
+            && other.color === this.color
+            // only accurate to seconds
+            && Math.floor(other.starts_at.getTime() / 1000) === Math.floor(this.starts_at.getTime() / 1000)
+            && Math.floor(other.ends_at.getTime() / 1000) === Math.floor(this.ends_at.getTime() / 1000);
+    }
+
 }
 
 /** RegisterableEventInfo is a type of EventInfo for which a user is able to register. */
@@ -175,6 +188,15 @@ export class RegisterableEventInfo extends EventInfo {
             capacity,
             registration_period
         );
+    }
+
+    public override equals(other:RegisterableEventInfo):boolean {
+        return super.equals(other)
+            && ObjectUtil.deepEquals(other.registrations, this.registrations)
+            && other.capacity === this.capacity
+            && other.can_register_from?.getTime() === this.can_register_from?.getTime()
+            && other.can_register_until?.getTime() === this.can_register_until?.getTime()
+            && other.requires_payment === this.requires_payment;
     }
 
 }

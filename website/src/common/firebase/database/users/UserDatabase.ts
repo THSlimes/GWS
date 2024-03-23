@@ -1,3 +1,4 @@
+import ArrayUtil from "../../../util/ArrayUtil";
 import Database, { Info, QueryFilter } from "../Database";
 import Permissions from "../Permissions";
 
@@ -35,6 +36,14 @@ export class UserInfo extends Info {
         else if (options.joined_after && options.joined_after >= this.joined_at) return false;
         else if (options.joined_before && options.joined_before <= this.joined_at) return false;
         else return true;
+    }
+
+    public override equals(other:UserInfo): boolean {
+        return super.equals(other)
+            && other.joined_at.getTime() === this.joined_at.getTime()
+            && other.first_name === this.first_name
+            && other.family_name === this.family_name
+            && ArrayUtil.containSame(other.permissions, this.permissions);
     }
 
 }

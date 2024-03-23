@@ -16,7 +16,7 @@ export default abstract class ObjectUtil {
 
     public static deepCopy<T>(arg: T): T {
         if (typeof arg === "object") {
-            if (Array.isArray(arg)) return [...arg].map(this.deepCopy) as T; // is array
+            if (Array.isArray(arg)) return [...arg].map(e => this.deepCopy(e)) as T; // is array
             else if (arg instanceof Date) return new Date(arg) as T;
             else { // some other object
                 const out: any = {};

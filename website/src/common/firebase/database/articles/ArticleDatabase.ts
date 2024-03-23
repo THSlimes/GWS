@@ -33,6 +33,16 @@ export class ArticleInfo extends Info {
         else return true;
     }
 
+    public override equals(other:ArticleInfo):boolean {
+        return super.equals(other)
+            && other.heading === this.heading
+            && other.body === this.body
+            && other.created_at.getTime() === this.created_at.getTime()
+            && other.category === this.category
+            && other.show_on_homepage === this.show_on_homepage
+            && other.only_for_members === this.only_for_members;
+    }
+
 }
 
 export type ArticleQueryFilter = QueryFilter<Info> & {

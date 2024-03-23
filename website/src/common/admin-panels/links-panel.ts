@@ -39,6 +39,7 @@ export function initLinksPanel() {
                 .then(() => {
                     UserFeedback.success("Wijzigingen opgeslagen! Het kan even duren voordat anderen de wijzigingen zien.");
                     Cache.remove("navbar-links"); // clear own cache
+                    NAVBAR_LINKS_EDITOR.save();
                 })
                 .catch(err => UserFeedback.error(err));
             }
@@ -63,6 +64,7 @@ export function initLinksPanel() {
                 .then(() => {
                     UserFeedback.success("Wijzigingen opgeslagen! Het kan even duren voordat anderen de wijzigingen zien.");
                     Cache.remove("sponsor-links"); // clear own cache
+                    SPONSOR_LINKS_EDITOR.save();
                 })
                 .catch(err => UserFeedback.error(err));
             }
@@ -87,6 +89,7 @@ export function initLinksPanel() {
                 .then(() => {
                     UserFeedback.success("Wijzigingen opgeslagen! Het kan even duren voordat anderen de wijzigingen zien.");
                     Cache.remove("social-media-links"); // clear own cache
+                    SOCIAL_MEDIA_LINKS_EDITOR.save();
                 })
                 .catch(err => UserFeedback.error(err));
             }
@@ -98,5 +101,15 @@ export function initLinksPanel() {
 
         initializedLinksPanel = true;
         Loading.markLoadEnd(initLinksPanel);
+
+
+
+        window.addEventListener("beforeunload", ev => {
+            if (!ev.defaultPrevented && (
+                NAVBAR_LINKS_EDITOR.isDataModified ||
+                SPONSOR_LINKS_EDITOR.isDataModified ||
+                SOCIAL_MEDIA_LINKS_EDITOR.isDataModified
+            )) ev.preventDefault();
+        });
     }
 }

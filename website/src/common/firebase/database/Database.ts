@@ -13,6 +13,10 @@ export abstract class Info {
         else return true;
     }
 
+    public equals(other:Info) {
+        return other.id === this.id;
+    }
+
 }
 
 export type QueryFilter<I extends Info = Info> = {

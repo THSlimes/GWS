@@ -289,6 +289,10 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
         this.saveAsNew = saveAsNew;
 
         this.initElement();
+
+        window.addEventListener("beforeunload", ev => {
+            if (document.body.contains(this) && !ev.defaultPrevented && !this.savableEvent.equals(this.event)) ev.preventDefault();
+        });
         
     }
 
@@ -383,7 +387,7 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
                     .make(),
                 elem => (elem.lastChild as HTMLInputElement).value as ColorUtil.HexColor
             ]
-        }, { "color": "Kleurenpalet" });
+        }, { "color": "Achtergrondkleur" });
         if (this.event.color !== undefined) this.noteOptions.add("color");
 
         this.noteOptions.onActiveOptionsChanged = () => this.refreshColorPalette();

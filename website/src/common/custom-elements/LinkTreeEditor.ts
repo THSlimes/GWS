@@ -2,6 +2,7 @@ import { LinkTree } from "../firebase/database/settings/SettingsDatabase";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import UserFeedback from "../ui/UserFeedback";
 import NodeUtil from "../util/NodeUtil";
+import ObjectUtil from "../util/ObjectUtil";
 import StringUtil from "../util/StringUtil";
 import URLUtil from "../util/URLUtil";
 import { HasSections } from "../util/UtilTypes";
@@ -45,8 +46,13 @@ namespace OrderedLinkTree {
 export default class LinkTreeEditor extends HTMLElement implements HasSections<"contents"|"addButtons"> {
 
     protected readonly links:OrderedLinkTree;
-    public get value():LinkTree {
-        return OrderedLinkTree.fromOrdered(this.links);
+    private savedLinks:OrderedLinkTree;
+    public get value():LinkTree { return OrderedLinkTree.fromOrdered(this.links); }
+    public get isDataModified() {        
+        return !ObjectUtil.deepEquals(this.links, this.savedLinks);
+    }
+    public save() {
+        this.savedLinks = ObjectUtil.deepCopy(this.links);
     }
 
     public contents!:HTMLDivElement;
@@ -56,6 +62,7 @@ export default class LinkTreeEditor extends HTMLElement implements HasSections<"
         super();
 
         this.links = root;
+        this.savedLinks = ObjectUtil.deepCopy(this.links);
 
         this.initElement();
     }
@@ -200,9 +207,13 @@ class LinkEntry extends HTMLElement implements HasSections<"typeIcon">, LinkTree
 
     private readonly parent:OrderedLinkTree;
     private readonly selfEntry:[string,string];
-    private get selfIndex() {
-        return this.parent.findIndex(e => e === this.selfEntry);
+    private get selfIndex() { return this.parent.findIndex(e => e === this.selfEntry); }
+    private readonly savedSelfEntry:[string,string];
+    public save() {
+        this.savedSelfEntry[0] = this.selfEntry[0];
+        this.savedSelfEntry[1] = this.selfEntry[1];
     }
+    public get isDataModified() { return this.selfEntry[0] === this.savedSelfEntry[0] && this.selfEntry[1] === this.savedSelfEntry[1]; }
 
     get name():string { return this.selfEntry[0]; }
     private set name(newName) {
@@ -227,6 +238,7 @@ class LinkEntry extends HTMLElement implements HasSections<"typeIcon">, LinkTree
         this.parent = parent;
 
         this.selfEntry = selfEntry;
+        this.savedSelfEntry = [this.selfEntry[0], this.selfEntry[1]];
 
         this.initElement();
     }
