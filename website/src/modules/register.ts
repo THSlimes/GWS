@@ -12,9 +12,12 @@ import MultisourceAttachment from "../common/custom-elements/MultisourceAttachme
 import Switch from "../common/custom-elements/Switch";
 
 import FirestoreUserDatabase from "../common/firebase/database/users/FirestoreUserDatabase";
-import UserDatabase from "../common/firebase/database/users/UserDatabase";
+import UserDatabase, { UserInfo } from "../common/firebase/database/users/UserDatabase";
 import UserFeedback from "../common/ui/UserFeedback";
 import { DetailLevel } from "../common/util/UtilTypes";
+import { createUserWithEmailAndPassword } from "@firebase/auth";
+import { FIREBASE_AUTH } from "../common/firebase/init-firebase";
+import getErrorMessage from "../common/firebase/authentication/error-messages";
 
 // loading associated article
 const ARTICLE_ID = "Inschrijven-Den-Geitenwollen-Soc";
@@ -297,50 +300,42 @@ Loading.onDOMContentLoaded({ "submit-button": HTMLButtonElement })
 .then(submitButton => {
     submitButton.addEventListener("click", ev => {
         ev.preventDefault();
+        submitButton.disabled = true;
 
         const data = getFormData();
         const validity = getDataValidity(data);
         if (validity.status) { // data valid, submit
-            submitButton.disabled = true;
-
-            submitToConscribo(data)
-            .then(response => {
-                console.log(response);
+            // create new user
+            createUserWithEmailAndPassword(FIREBASE_AUTH, data.email, data.password.password)
+            .then(userCred => userCred.user)
+            .then(user => {
+                // create new user entry in database
+                const userInfo = new UserInfo(
+                    user.uid,
+                    new Date(),
+                    new Date(1000, 0, 1),
+                    data.name.first_name,
+                    `${data.name.infix} ${data.name.family_name}`,
+                    []
+                );
+                USER_DB.write(userInfo)
+                .then(() => {
+                    submitToConscribo(data)
+                    .then(response => {
+                        UserFeedback.success("Je account is aangemaakt. Welkom bij GWS!", 5000, () => location.href = '/');
+                    });
+                })
+                .catch(err => {
+                    UserFeedback.error(getErrorMessage(err));
+                    // creation failed, delete user
+                    user.delete().then(() => console.log("user deleted"));
+                    submitButton.disabled = false;
+                });
             })
-            .catch(err => console.error(err));
-
-            // // create new user
-            // createUserWithEmailAndPassword(FIREBASE_AUTH, data.email, data.password.password)
-            // .then(userCred => userCred.user)
-            // .then(user => {
-            //     // create new user entry in database
-            //     const userInfo = new UserInfo(
-            //         user.uid,
-            //         new Date(),
-            //         new Date(1000, 0, 1),
-            //         data.name.first_name,
-            //         `${data.name.infix} ${data.name.family_name}`,
-            //         []
-            //     );
-            //     USER_DB.write(userInfo)
-            //     .then(() => {
-            //         submitToConscribo(data)
-            //         .then(response => {
-            //             console.log(response);
-            //         });
-            //         // UserFeedback.success("Je account is aangemaakt. Welkom bij GWS!", 5000, () => location.href = '/');
-            //     })
-            //     .catch(err => {
-            //         UserFeedback.error(getErrorMessage(err));
-            //         // creation failed, delete user
-            //         user.delete().then(() => console.log("user deleted"));
-            //         submitButton.disabled = false;
-            //     });
-            // })
-            // .catch(err => {
-            //     UserFeedback.error(getErrorMessage(err));
-            //     submitButton.disabled = false;
-            // });
+            .catch(err => {
+                UserFeedback.error(getErrorMessage(err));
+                submitButton.disabled = false;
+            });
         }
         else UserFeedback.error(validity.message); // show error
     });
