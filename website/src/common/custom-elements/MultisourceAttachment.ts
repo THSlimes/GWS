@@ -46,7 +46,7 @@ export default class MultisourceAttachment extends HTMLElement implements HasSec
     public set origin(newSrc:AttachmentOrigin) {
         if (newSrc !== this._origin) {
             this._origin = newSrc;
-            this.setAttribute("src", newSrc);
+            this.setAttribute("origin", newSrc);
             this.refresh();
         }
     }
@@ -57,7 +57,7 @@ export default class MultisourceAttachment extends HTMLElement implements HasSec
     public set src(newHref:string) {
         if (newHref !== this._src) {
             this._src = newHref;
-            this.setAttribute("href", newHref);
+            this.setAttribute("src", newHref);
             this.refresh();
         }
     }
