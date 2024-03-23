@@ -57,6 +57,7 @@ export default class MultisourceImage extends HTMLElement implements HasSections
             this.image.src = url;
             this.image.removeAttribute("hidden");
             this.errorMessage.toggleAttribute("hidden", true);
+            Loading.markLoadEnd(this);
         })
         .catch(err => { // couldn't get image url
             this.classList.add("error");
@@ -64,8 +65,8 @@ export default class MultisourceImage extends HTMLElement implements HasSections
             this.image.toggleAttribute("hidden", true);
             this.errorMessage.lastChild!.textContent = err instanceof Error ? err.message : "Er ging iets mis.";
             this.errorMessage.removeAttribute("hidden");
-        })
-        .finally(() => Loading.markLoadEnd(this));
+            Loading.markLoadEnd(this);
+        });
     }
 
     public image!:HTMLImageElement;

@@ -1,19 +1,28 @@
-import { User, getAuth, onAuthStateChanged } from "@firebase/auth";
+import { User, getAuth } from "@firebase/auth";
 import { getFirestore } from "@firebase/firestore";
 import { getStorage } from "@firebase/storage";
 import { FirebaseOptions, initializeApp } from "firebase/app";
 import Cache from "../Cache";
-import StringUtil from "../util/StringUtil";
 
 // initialize firebase connection
-const FIREBASE_CONFIG:FirebaseOptions = {
-    apiKey: "AIzaSyAr3flkC7_4DoGS1TOTlRRfQ4C64dSO4y4",
-    authDomain: "test-78a52.firebaseapp.com",
-    projectId: "test-78a52",
-    storageBucket: "test-78a52.appspot.com",
-    messagingSenderId: "766298434316",
-    appId: "1:766298434316:web:0874153a0a10b5de12b729"
+// const FIREBASE_CONFIG:FirebaseOptions = {
+//     apiKey: "AIzaSyAr3flkC7_4DoGS1TOTlRRfQ4C64dSO4y4",
+//     authDomain: "test-78a52.firebaseapp.com",
+//     projectId: "test-78a52",
+//     storageBucket: "test-78a52.appspot.com",
+//     messagingSenderId: "766298434316",
+//     appId: "1:766298434316:web:0874153a0a10b5de12b729"
+// };
+const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyBZukBmRVOeFJPgy0u1qJlMoLeTz4TXJ0k",
+    authDomain: "gws-website-52cf2.firebaseapp.com",
+    projectId: "gws-website-52cf2",
+    storageBucket: "gws-website-52cf2.appspot.com",
+    messagingSenderId: "488447336748",
+    appId: "1:488447336748:web:de9e194799dacf238ccc89",
+    measurementId: "G-HX00VJ4YYY"
 };
+
 Object.freeze(FIREBASE_CONFIG);
 
 const FIREBASE_APP = initializeApp(FIREBASE_CONFIG);

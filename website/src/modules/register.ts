@@ -95,36 +95,6 @@ Loading.onDOMContentLoaded(FORM_INPUTS_QUERY)
     }
 });
 
-Loading.onDOMContentLoaded({ "form":HTMLFormElement, ...FORM_INPUTS_QUERY, "test-fill":HTMLButtonElement })
-.then(elements => {
-    elements["test-fill"].addEventListener("click", ev => {
-        ev.preventDefault();
-
-        elements["first-name"].value = "Thom";
-        elements.infix.value = "de";
-        elements["family-name"].value = "Spammer";
-
-        elements.email.value = "test@gmail.com";
-        elements.password.value = elements["confirm-password"].value = "Wachtwoord123!";
-        
-        elements["phone-number"].value = "+31 06-12345678";
-        elements["birth-date"].valueAsDate = new Date("2000-1-1");
-        elements.study.value = "Sociologie";
-        elements["student-number"].value = "S123456";
-
-        elements.iban.value = "NL20INGB0001234567";
-        elements.bic.value = "INGBNL2A";
-        elements["bank-account-name"].value = "Thom de Spammer";
-
-        elements["receive-news-letter"].value = true;
-        elements["allow-public-photos"].value = true;
-        elements["allow-private-photos"].value = true;
-        elements["add-to-whatsapp"].value = true;
-        elements["accept-privacy-statement"].value = true;
-        elements["allow-bank-transactions"].value = true;
-    });
-});
-
 interface RegistrationFormDataValidity {
     name: { first_name:boolean, infix:boolean, family_name:boolean },
     email:boolean,
