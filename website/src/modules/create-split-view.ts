@@ -4,13 +4,11 @@ import Cache from "../common/Cache";
 import Loading from "../common/Loading";
 import MultisourceImage from "../common/custom-elements/MultisourceImage";
 import Placeholder from "../common/custom-elements/Placeholder";
-import RSSFeed from "../common/custom-elements/RSSFeed";
 import FirestoreSettingsDatabase from "../common/firebase/database/settings/FirestoreSettingsDatabase";
 import SettingsDatabase, { ImagedLink } from "../common/firebase/database/settings/SettingsDatabase";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
 
 const SETTINGS_DB:SettingsDatabase = new FirestoreSettingsDatabase();
-const NEWS_LETTER_RSS_SOURCE = `${location.origin}/test.xml`;
 
 function makeSplitView(settingsDB:SettingsDatabase):Promise<HTMLElement> {
     return new Promise((resolve, reject) => {
@@ -19,11 +17,16 @@ function makeSplitView(settingsDB:SettingsDatabase):Promise<HTMLElement> {
             ElementFactory.div("split-view")
                 .children(
                     new Placeholder("split-view-content"),
-                    ElementFactory.div("news-letters", "boxed")
+                    ElementFactory.div("news-letters", "boxed", "flex-rows", "cross-axis-center")
                         .children(
                             ElementFactory.h2("Nieuwsbrieven").class("section-name"),
-                            new RSSFeed(NEWS_LETTER_RSS_SOURCE)
-                        ),
+                            document.getElementsByClassName("display_archive")[0]
+                        )
+                        .onMake(self => {
+                            const displayArchive = self.lastElementChild as HTMLDivElement;
+                            displayArchive.classList.add("flex-rows", "in-section-gap");
+                            displayArchive.childNodes.forEach(campaign => campaign.firstChild?.remove());
+                        }),
                     ElementFactory.div("sponsors", "boxed", "flex-rows")
                         .children(
                             ElementFactory.h2("Onze sponsoren").class("section-name"),

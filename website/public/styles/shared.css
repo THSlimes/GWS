@@ -182,6 +182,10 @@ div#split-view {
             text-align: center;
             text-decoration: underline;
         }
+
+        > .display_archive {
+            padding: var(--section-gap-y) var(--in-section-gap);
+        }
     }
 
     > #sponsors {
