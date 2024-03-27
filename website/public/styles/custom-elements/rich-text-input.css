@@ -8,6 +8,7 @@ rich-text-input {
     position: relative;
 
     padding: var(--in-section-gap);
+    padding-top: 3rem;
     
     box-sizing: border-box;
     width: 100%;
@@ -46,11 +47,16 @@ rich-text-input {
     }
 
     > .toolbar {
+        position: absolute;
+        z-index: 100;
+        top: var(--in-section-gap);
+
         padding: calc(var(--in-section-gap) / 4);
 
-        width: 100%;
+        width: calc(100% - 2 * var(--in-section-gap));
 
         background-color: var(--primary);
+        outline: calc(var(--in-section-gap) / 2) solid var(--secondary);
         border-radius: var(--in-section-gap);
 
         flex-wrap: wrap;
@@ -110,6 +116,10 @@ rich-text-input {
 
                 border-radius: calc(var(--in-section-gap) / 2);
 
+                &[selected] {
+                    outline: 1px solid var(--secondary);
+                }
+
                 &.text-box { padding: 2px; }
         
                 &:empty::after {
@@ -135,6 +145,13 @@ rich-text-input {
                 > .width-selector {
                     width: 100%;
                     > input { flex-grow: 1; }
+                }
+            }
+
+            > ul, > ol {
+                > .element-container {
+                    padding-left: 2rem;
+                    > ::before { left: -2rem; }
                 }
             }
         }

@@ -27,6 +27,8 @@ else Loading.useDynamicContent(Promise.all([DB.getById(articleId), checkPermissi
     const canUpdate = permRes.UPDATE_ARTICLES;
 
     if (articleInfo) {
+        document.title = `${articleInfo.heading} - Den Geitenwollen Soc.`;
+
         const elements = Loading.getElementsById({ "article": HTMLDivElement, "navigation-buttons": HTMLDivElement });
 
         const article = isEditMode && canUpdate ?

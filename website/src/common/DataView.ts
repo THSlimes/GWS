@@ -21,7 +21,7 @@ abstract class DataView<T extends Record<string,any>> {
     }
 
     protected get modifiedEntries() { return this.filter(e => e.isModified); }
-    public get isDataModified() { return this.some(e => e.isModified); }
+    public get isDataModified() { return this.entries !== null && this.some(e => e.isModified); }
     private _onDataModified:VoidFunction[] = [];
     /** A handler to be called EACH TIME a data entry is modified. */
     public set onDataModified(newHandler:VoidFunction) { this._onDataModified.push(newHandler); }
@@ -145,7 +145,7 @@ namespace DataView {
     export class PendingError extends Error {
     
         constructor() {
-            super("the requested data has not been retrieved yet");
+            super("the requested data has not been retrieved yet.");
         }
     
     }

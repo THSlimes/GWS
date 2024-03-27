@@ -63,7 +63,7 @@ export default class MultisourceAttachment extends HTMLElement implements HasSec
     }
 
     private refresh():Promise<void> {
-        
+                
         const infoPromise = this.origin === "external" ?
             URLUtil.getInfo(this.src) :
             this.origin === "firebase-storage-protected" ?
@@ -110,7 +110,7 @@ export default class MultisourceAttachment extends HTMLElement implements HasSec
         super();
 
         this.initElement();
-
+        
         this._origin = origin ?? ElementUtil.getAttrAs(this, "origin", AttachmentOrigin.checkType) ?? "firebase-storage-public";
         this._src = src ?? this.getAttribute("src") ?? "";
         this.refresh();
@@ -144,6 +144,15 @@ export default class MultisourceAttachment extends HTMLElement implements HasSec
                 .openInNewTab(true)
                 .tooltip("Bestand downloaden")
                 .class("icon", "click-action", "download-icon")
+                .on("click", (ev, self) => {
+                    if (!this.classList.contains("error")) {
+                        const href = self.getAttribute("href");
+                        if (href) {
+                            ev.preventDefault();
+                            window.open(href, "_blank");
+                        }
+                    }
+                })
                 .make()
         );
 

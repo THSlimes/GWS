@@ -163,7 +163,7 @@ event-calendar {
 }
 
 #fullscreen-event-container {
-    z-index: 100;
+    z-index: 175;
     position: fixed;
     top:0px;
     left:0px;

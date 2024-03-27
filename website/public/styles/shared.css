@@ -3,6 +3,28 @@
 @import url("./custom-elements/multisource-image.css");
 @import url("./custom-elements/rss-feed.css");
 
+/*
+    Z-indices:
+        ----------------------------------------------------------------
+        - loading screen [1000]
+        ----------------------------------------------------------------
+        - info messages container [300]
+        ----------------------------------------------------------------
+        - absolute positioned folder element contents [280-299]
+        - navbar [260]
+        - search bar [240]
+        - static positioned folder element contents [220]
+        - sidebar [200]
+        ----------------------------------------------------------------
+        - fullscreen event note container [175]
+        - element carousel covers [150]
+        - element carousel non-covers [125]
+        - rich text toolbar [100]
+        ----------------------------------------------------------------
+        - the rest [0]
+
+*/
+
 /* Google ICONS IMPORT */
 @font-face {
     font-family: "icon";
@@ -62,7 +84,7 @@ span.icon { font-size: inherit; }
     --max-section-gap: max(var(--section-gap-x), var(--section-gap-y));
 
     --in-section-gap: .5rem;
-    --sides-gap: calc(var(--section-gap-x) * 2);
+    --sides-gap: calc(var(--section-gap-x) * 3);
 }
 
 * { /* custom scrollbar */
@@ -191,6 +213,7 @@ div#split-view {
     > #sponsors {
         grid-area: s;
         padding: var(--in-section-gap);
+        height: max-content;
 
         > .logos {
             width: 100%;
@@ -396,15 +419,18 @@ a[href], .link:not(:disabled) {
         grid-template-rows: repeat(2, max-content);
         grid-template-columns: repeat(6, 1fr);
         
-        > #sponsors > .logos {
-            flex-direction: row;
-            flex-wrap: wrap;
-            flex-grow: 1;
-            align-content: center;
-            gap:var(--in-section-gap);
-
-            > * {
-                > multisource-image { width: 22.5vw !important; }
+        > #sponsors {
+            height: unset;
+            > .logos {
+                flex-direction: row;
+                flex-wrap: wrap;
+                flex-grow: 1;
+                align-content: center;
+                gap:var(--in-section-gap);
+    
+                > * {
+                    > multisource-image { width: 22.5vw !important; }
+                }
             }
         }
     }
@@ -433,7 +459,9 @@ a[href], .link:not(:disabled) {
     button, input[type="button"], .click-action {
         &.icon, & .icon { padding: 0px; }
     }
+}
 
+@media (max-width: 600px) {
     div#split-view {
         grid-template-areas: "c" "n" "s" !important;
         grid-template-rows: repeat(3, max-content);

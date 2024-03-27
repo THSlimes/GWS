@@ -54,7 +54,7 @@ export type AttachmentOrigin = "firebase-storage-public" | "firebase-storage-pro
 export namespace AttachmentOrigin {
     export function checkType(str: string): str is AttachmentOrigin {
         return str === "firebase-storage-public"
-            || str === "firebase-storage-private"
+            || str === "firebase-storage-protected"
             || str === "external";
     }
 }

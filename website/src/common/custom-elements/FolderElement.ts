@@ -12,7 +12,7 @@ class FolderElement extends HTMLElement {
     /** Maximum Viewport that uses click-interaction to open/close a folder. */
     private static useClickInteraction() { return Responsive.isSlimmerOrEq(Responsive.Viewport.DESKTOP_SLIM); }
 
-    private static topFolderContentZIndex = 100;
+    private static topFolderContentZIndex = 280;
 
     private _foldDir:FolderElement.Direction;
     public set foldDir(newDir:FolderElement.Direction) {
@@ -106,9 +106,13 @@ class FolderElement extends HTMLElement {
             this.topper.addEventListener(openOn, () => { // only for normal interactions
                 if (!FolderElement.useClickInteraction()) this.open();
             });
-            this.topper.addEventListener("click", e => { // only for click interaction override
-                if (FolderElement.useClickInteraction()) this.isOpen ? this.close() : this.open();
-                e.preventDefault();
+            this.topper.addEventListener("click", ev => { // only for click interaction override
+                if (FolderElement.useClickInteraction()) {
+                    this.isOpen ? this.close() : this.open();
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    ev.stopImmediatePropagation();
+                }
             });
     
             this.addEventListener(openOn, () => clearTimeout(this.closingTimeout));
@@ -120,6 +124,9 @@ class FolderElement extends HTMLElement {
             document.body.addEventListener("click", ev => {
                 if (FolderElement.useClickInteraction() && ev.target instanceof Node && !this.contains(ev.target)) { // only for click interaction override
                     this.close();
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    ev.stopImmediatePropagation();
                 }
             });
         }
@@ -168,7 +175,12 @@ class FolderElement extends HTMLElement {
             }
             this._contents.style.setProperty("--top", this._contents.style.top??"0px");
 
-            if (this.contentsPosition === "absolute") this.contents.style.zIndex = (FolderElement.topFolderContentZIndex++).toString();
+            if (this.contentsPosition === "absolute") {
+                let zIndex = FolderElement.topFolderContentZIndex + 1;
+                if (zIndex >= 300) zIndex = 280;
+
+                this.contents.style.zIndex = (FolderElement.topFolderContentZIndex = zIndex).toString();
+            }
             
             $(this._contents).stop().slideDown(200, () => this._contents.style.height = "");
             this.setAttribute("open", "");

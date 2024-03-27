@@ -13,9 +13,9 @@ element-carousel, #carousel-placeholder {
 
     overflow: hidden;
 
-    > *[cover] { z-index: 2; }
+    > *[cover] { z-index: 150; }
     > *:not([cover]) {
-        z-index: 1;
+        z-index: 125;
         transition: opacity var(--fade-time) linear;
     }
 

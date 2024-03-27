@@ -15,6 +15,7 @@ import Switch from "../Switch";
 import ElementFactory from "../../html-element-factory/ElementFactory";
 import IFrameContainer from "../IFrameContainer";
 import Loading from "../../Loading";
+import Responsive from "../../ui/Responsive";
 
 /** [parent Node, "before child" index] tuple */
 type InsertionPosition = [Node, number];
@@ -74,10 +75,10 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
     private _selectedElement:HTMLElement|null = null;
     private set selectedElement(elem:HTMLElement|null) {
         const oldElem = this._selectedElement;
-        if (oldElem) oldElem.removeEventListener("blur", this.unselectCallback);
+        oldElem?.removeAttribute("selected");
 
         this._selectedElement = elem;
-        if (elem) elem.addEventListener("blur", this.unselectCallback);
+        elem?.toggleAttribute("selected", true);
     }
     private get selectedElement() {
         if (!this.body.contains(this._selectedElement)) this.selectedElement = null;
@@ -115,7 +116,7 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                 .children(() => {
                     const out:HTMLElement[] = [newElem];
 
-                    ElementFactory.input.url()
+                    ElementFactory.input.url(newElem.getAttribute("href") ?? "")
                         .onValueChanged(url => newElem.href = url)
                         .placeholder("Koppeling...")
                         .onMake(self => out.push(self))
@@ -155,7 +156,7 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                                     "firebase-storage-protected": "Firebase cloud-opslag (beveiligd)",
                                     "external": "Directe link"
                                 })
-                                .value(castElem.origin)
+                                .value(castElem.getAttribute("origin") as AttachmentOrigin)
                                 .onValueChanged(v => {
                                     castElem.origin = v;
                                     pathInput.placeholder = v === "external" ? "Link naar bestand..." : "Bestandspad...";
@@ -170,7 +171,7 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                     const pathInput = ElementFactory.input.text()
                         .class("src-input")
                         .placeholder("Bestandspad...")
-                        .value(castElem.src ?? "")
+                        .value(castElem.getAttribute("src") ?? "")
                         .on("input", () => {
                             FunctionUtil.setDelayedCallback(setSrcCallback, 500);
                         })
@@ -178,11 +179,15 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                         .make();
 
                     if (newElem.tagName === "MULTISOURCE-IMAGE") { // width selector for images
+                        let widthIndicator:HTMLLabelElement;
                         ElementFactory.div(undefined, "width-selector", "flex-columns", "cross-axis-center", "in-section-gap")
                             .children(
-                                ElementFactory.label("Breedte"),
+                                widthIndicator = ElementFactory.label(`Breedte (${newElem.style.width || "100%"})`).make(),
                                 ElementFactory.input.range(NumberUtil.parse(newElem.style.width.slice(0, -1), 100), 0, 100, 1)
-                                    .onValueChanged(val => newElem.style.width = `${val}%`)
+                                    .onValueChanged(val => {
+                                        newElem.style.width = `${val}%`;
+                                        widthIndicator.textContent = `Breedte (${val}%)`;
+                                    })
                             )
                             .onMake(self => out.push(self))
                             .make();
@@ -399,9 +404,7 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                             alignSelector = ElementFactory.folderElement("down", 250)
                                 .class("category")
                                 .tooltip("Tekst uitlijnen")
-                                .heading(
-                                    ElementFactory.p("format_align_left").class("icon")
-                                )
+                                .heading(ElementFactory.p("format_align_justify").class("icon"))
                                 .children(
                                     ElementFactory.div(undefined, "flex-columns")
                                         .children(
@@ -444,7 +447,6 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
 
         this.body = this.appendChild(
             ElementFactory.div(undefined, "body", "rich-text")
-                .on("blur", () => this.selectedElement = null)
                 .on("focusin", (ev) => {
                     let target = ev.target;
 
@@ -482,6 +484,24 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                 })
                 .make()
         );
+
+        document.addEventListener("focusin", ev => {
+            if (ev.target instanceof Node && !this.contains(ev.target)) this.selectedElement = null;
+        });
+
+        document.addEventListener("scroll", () => {
+            requestAnimationFrame(() => { // custom sticky scroll
+                const tlbRect = this.toolbar.getBoundingClientRect();
+                const thisRect = this.getBoundingClientRect();
+                this.toolbar.style.top = Responsive.isSlimmerOrEq(Responsive.Viewport.DESKTOP_SLIM) ?
+                    `clamp(var(--in-section-gap), calc(${-thisRect.top}px + 4rem), calc(${thisRect.height - tlbRect.height}px - var(--in-section-gap) / 2))` :
+                    `clamp(var(--in-section-gap), ${-thisRect.top}px, calc(${thisRect.height - tlbRect.height}px - var(--in-section-gap) / 2))`;
+            });
+        });
+
+        new ResizeObserver(() => requestAnimationFrame(() => {
+            this.style.paddingTop = `calc(${this.toolbar.getBoundingClientRect().height}px + 2 * var(--in-section-gap))`;
+        })).observe(document.body);
         
     }
 
@@ -497,14 +517,14 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                 !exclude.includes("shortcut") && ElementFactory.iconButton("add_link", () => { // add new shortcut
                     this.insert(
                         "shortcut",
-                        ElementFactory.a().class("align-left").style({ fontSize: "16px" }).make(),
+                        ElementFactory.a().class("align-justify").style({ fontSize: "16px" }).make(),
                         insPosCallback()
                     );
                     
                 }, "Snelkoppeling toevoegen"),
                 !exclude.includes("attachment") && ElementFactory.iconButton("attach_file_add", () => {
                     const newElem = new MultisourceAttachment();
-                    newElem.classList.add("align-left");
+                    newElem.classList.add("align-justify");
                     this.insert(
                         "attachment",
                         newElem,
@@ -530,7 +550,7 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                             ElementFactory.iconButton("title", () => { // add new title h1
                                 this.insert(
                                     "title",
-                                    ElementFactory.h1().class("title", "align-left").style({ fontSize: "40px" }).make(),
+                                    ElementFactory.h1().class("title", "align-justify").style({ fontSize: "40px" }).make(),
                                     insPosCallback()
                                 );
                             }, "Titel toevoegen")
@@ -539,21 +559,21 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                         !exclude.includes("h1") && ElementFactory.iconButton("format_h1", () => { // add new normal h1
                                 this.insert(
                                     "h1",
-                                    ElementFactory.h1().class("align-left").style({ fontSize: "32px" }).make(),
+                                    ElementFactory.h1().class("align-justify").style({ fontSize: "32px" }).make(),
                                     insPosCallback()
                                 );
                             }, "Nieuwe kop 1"),
                         !exclude.includes("h2") && ElementFactory.iconButton("format_h2", () => { // add new normal h2
                             this.insert(
                                 "h2",
-                                ElementFactory.h2().class("align-left").style({ fontSize: "24px" }).make(),
+                                ElementFactory.h2().class("align-justify").style({ fontSize: "24px" }).make(),
                                 insPosCallback()
                             );
                         }, "Nieuwe kop 2"),
                         !exclude.includes("h3") && ElementFactory.iconButton("format_h3", () => { // add new normal h3
                             this.insert(
                                 "h3",
-                                ElementFactory.h3().class("align-left").style({ fontSize: "18.5px" }).make(),
+                                ElementFactory.h3().class("align-justify").style({ fontSize: "18.5px" }).make(),
                                 insPosCallback()
                             );
                         }, "Nieuwe kop 3")
@@ -562,7 +582,7 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                 !exclude.includes("paragraph") && ElementFactory.iconButton("subject", () => { // add new paragraph
                         this.insert(
                             "paragraph",
-                            ElementFactory.p().class("align-left").style({ fontSize: "16px" }).make(),
+                            ElementFactory.p().class("align-justify").style({ fontSize: "16px" }).make(),
                             insPosCallback()
                         );
                     }, "Nieuwe paragraaf"),

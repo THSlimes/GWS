@@ -36,6 +36,7 @@ folder-element {
             box-sizing: border-box;
             max-width: 100%;
             overflow: hidden;
+            z-index: 220;
         }
     }
 }

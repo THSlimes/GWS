@@ -71,7 +71,7 @@ header.page-header {
             position: absolute;
             top: 100%;
             left: 0px;
-            z-index: 99;
+            z-index: 240;
 
             padding: var(--in-section-gap) var(--section-gap-x);
             
@@ -102,7 +102,7 @@ header.page-header {
 
     > #sidebar-container {
         display: none;
-        z-index: 98;
+        z-index: 200;
         position: fixed;
     
         width: 100%;
@@ -196,7 +196,7 @@ footer {
 
     header.page-header {
         position: fixed;
-        z-index: 99;
+        z-index: 260;
         top: 0px;
         left: 0px;
         

@@ -9,8 +9,11 @@ article, editable-smart-article {
     position: relative;
 
     & .heading {
+        &, > * {
+            font-size: 2rem;
+            font-weight: 600;
+        }
         width: 100%;
-        font-weight: bold;
     }
     & .body { width: 100%; }
 
@@ -34,7 +37,7 @@ article, editable-smart-article {
     
     
     &[lod="full"] {
-        & .heading { font-size: 175%; }
+        & .heading > * { font-size: 3rem; }
         & .read-more { display: none; }
         & .quick-actions {
             position: absolute;
@@ -56,9 +59,9 @@ article, editable-smart-article {
     }
 
     &[lod="low"] {
-        & .heading {
-            > h1 { margin: .5rem 0px; }
-            font-size: 80%;
+        & .heading > * {
+            margin: .5rem 0px;
+            font-size: 1.5rem;
         }
         & .post-date { font-style: italic; }
     }
@@ -73,7 +76,7 @@ editable-smart-article {
 
 @media (max-aspect-ratio: 3 / 4) {
     article[lod="full"], article[lod="medium"] {
-        & .heading > * { font-size: 150%; }
+        & .heading > * { font-size: 1.5rem; }
     }
 
     editable-smart-article {
@@ -87,8 +90,8 @@ editable-smart-article {
 /* PHONE-VIEWPORT OVERRIDE */
 
 @media (max-aspect-ratio: 10 / 16) {
-    article[lod="medium"] .heading > * { font-size: 125%; }
-    article[lod="full"] .heading > * { font-size: 100%; }
+    article[lod="medium"] .heading > * { font-size: 1.25rem; }
+    article[lod="full"] .heading > * { font-size: 1rem; }
 
     editable-smart-article {
         gap: var(--in-section-gap) !important;

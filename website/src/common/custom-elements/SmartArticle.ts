@@ -123,7 +123,8 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
                             this.article.sourceDB.delete(this.article)
                             .then(() => {
                                 UserFeedback.success("Bericht succesvol verwijderd.");
-                                location.href = '/'; // go to homepage
+                                if (location.pathname.startsWith("/article")) location.href = '/'; // go to homepage
+                                else location.reload();
                             })
                             .catch(err => UserFeedback.error(getErrorMessage(err)));
                         }
@@ -289,34 +290,35 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
                         .on("click", (ev, self) => {
                             const data = this.data;
                             if (!data.heading) UserFeedback.error("Koptitel is leeg.");
-
-                            const heading = this.heading.value.trim();
-                            const idPromise = this.saveAsNew ?
-                                EditableSmartArticle.findFreeId(this.article.sourceDB, heading) :
-                                new Promise<string>(resolve => resolve(this.article.id));
-
-                            idPromise.then(id => {
-                                const newArticle = new ArticleInfo(
-                                    this.article.sourceDB,
-                                    id,
-                                    data.heading,
-                                    data.body,
-                                    data.created_at,
-                                    data.category,
-                                    data.show_on_homepage,
-                                    data.only_for_members
-                                );
-
-                                this.article.sourceDB.write(newArticle)
-                                .then(() => {
-                                    UserFeedback.success("Wijzigingen opgeslagen!");
-                                    this.onSave(newArticle);
-                                    this.replaceWith(new SmartArticle(newArticle, this.lod));
+                            else {
+                                const heading = this.heading.value.trim();
+                                const idPromise = this.saveAsNew ?
+                                    EditableSmartArticle.findFreeId(this.article.sourceDB, heading) :
+                                    new Promise<string>(resolve => resolve(this.article.id));
+    
+                                idPromise.then(id => {
+                                    const newArticle = new ArticleInfo(
+                                        this.article.sourceDB,
+                                        id,
+                                        data.heading,
+                                        data.body,
+                                        data.created_at,
+                                        data.category,
+                                        data.show_on_homepage,
+                                        data.only_for_members
+                                    );
+    
+                                    this.article.sourceDB.write(newArticle)
+                                    .then(() => {
+                                        UserFeedback.success("Wijzigingen opgeslagen!");
+                                        this.replaceWith(new SmartArticle(newArticle, this.lod));
+                                        this.onSave(newArticle);
+                                    })
+                                    .catch(err => UserFeedback.error(getErrorMessage(err)));
+    
                                 })
                                 .catch(err => UserFeedback.error(getErrorMessage(err)));
-
-                            })
-                            .catch(err => UserFeedback.error(getErrorMessage(err)));
+                            }
                         })
                         .make(),
                     ElementFactory.p("backspace")
