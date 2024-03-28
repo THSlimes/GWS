@@ -1,7 +1,66 @@
-import Cache from "./Cache";
 import { Class } from "./util/UtilTypes";
 
+function shuffle<T>(arr:T[]):T[] { return arr.sort(() => Math.random() - .5); }
+function pick<T>(...arr:T[]):T { return arr[Math.floor(Math.random() * arr.length)]; }
+
 export default abstract class Loading {
+
+    private static readonly EMOJI_CONFIG:[[number,number], () => string[]][] = [
+        [[1, 1], () => { // new years
+            const numbers = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
+            const indices = new Date().getFullYear().toString().split("").map(n => Number.parseInt(n));
+            return ['🎉', ...indices.map(i => numbers[i]), '🎉'];
+        }],
+        [[2, 5], () => shuffle(['🥳', '🎂', '🍰', '🎈', '🎉', '🎊', '🪅']).slice(0,3)], // anniversary
+        [[2, 14], pick( // valentines day
+            () => pick(
+                [pick('👨🏻', '👨🏼', '👨🏽', '👨🏾', '👨🏿'), '❤️', pick('👨🏻', '👨🏼', '👨🏽', '👨🏾', '👨🏿')],
+                [pick('👨🏻', '👨🏼', '👨🏽', '👨🏾', '👨🏿'), '❤️', pick('👩🏻', '👩🏼', '👩🏽', '👩🏾', '👩🏿')],
+                [pick('👩🏻', '👩🏼', '👩🏽', '👩🏾', '👩🏿'), '❤️', pick('👨🏻', '👨🏼', '👨🏽', '👨🏾', '👨🏿')],
+                [pick('👩🏻', '👩🏼', '👩🏽', '👩🏾', '👩🏿'), '❤️', pick('👩🏻', '👩🏼', '👩🏽', '👩🏾', '👩🏿')]
+            ),
+            () => ['❤️‍🔥', '❤️‍🔥', '❤️‍🔥'],
+            () => ['🥰', '😍', '😘'],
+            () => ['🐐', '🫶', '🐐'],
+        )],
+        [[4, 1], () => Math.random() <= .1 ? ['🤡', '🤡', '🤡'] : this.DEFAULT_EMOJIS()], // april fools
+        [[6, 28], pick( // pride day
+            () => ['🏳️‍🌈', '🌈', '🏳️‍🌈'],
+            () => ['❤️', '🧡', '💛', '💚', '💙', '💜'],
+            () => pick(
+                ['🩵', '🩷', '🤍', '🩷', '🩵'],
+                ['💛', '🤍', '💜', '🖤'],
+                ['🖤', '🩶', '🤍', '💜'],
+                ['🩷', '💜', '💙'],
+                ['🩷', '💛', '🩵'],
+                ['🧡', '🤍', '🩷'],
+                ['💚', '🤍', '🩷'],
+                ['💚', '🤍', '💙'],
+            ),
+            () => pick(
+                [pick('👨🏻', '👨🏼', '👨🏽', '👨🏾', '👨🏿'), '❤️', pick('👨🏻', '👨🏼', '👨🏽', '👨🏾', '👨🏿')],
+                [pick('👩🏻', '👩🏼', '👩🏽', '👩🏾', '👩🏿'), '❤️', pick('👩🏻', '👩🏼', '👩🏽', '👩🏾', '👩🏿')]
+            )
+        )],
+        [[12, 5], pick( // sinterklaas
+            () => ['🐎', '🏘️', '🎁'],
+            () => ['🛥️', '🎁', '🧸']
+        )],
+        [[12, 25], pick( // Christmas
+            () => ['🎁', '🎄', '🎁'],
+            () => shuffle(['❄️', '☃️', '🫎']),
+            () => ['🎅', '🎄', '🤶'],
+            () => ['🧦', '🌟', '🧦']
+        )],
+        [[12, 31], pick( // new years eve
+            () => ['🎆', '🎇', '🎆'],
+            () => ['🎇', '🎆', '🎇'],
+            () => ['🕛', '🍾', '🥂'],
+            () => ['🎊', '📆', '🎊'],
+            () => ['🌉', '🎆', '🌉']
+        )]
+    ];
+    private static readonly DEFAULT_EMOJIS:(() => string[]) = () => ['🐐', '🧶', '🧦'];
 
     private constructor() {} // prevent extension
 
@@ -12,7 +71,10 @@ export default abstract class Loading {
         document.body.appendChild(this.loadingScreen);
         window.addEventListener("DOMContentLoaded", () => document.body.toggleAttribute("loading", true));
 
-        for (const emoji of ['🐐', '🧶', '🧦']) {
+        const now = new Date();
+        const [month, day] = [now.getMonth() + 1, now.getDate()];
+        const emojiGen = this.EMOJI_CONFIG.find(emc => emc[0][0] === month && emc[0][1] === day)?.[1] ?? this.DEFAULT_EMOJIS
+        for (const emoji of emojiGen()) {
             const p = document.createElement("p");
             p.textContent = emoji;
             this.loadingScreen.appendChild(p);

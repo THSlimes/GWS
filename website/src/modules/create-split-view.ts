@@ -32,10 +32,11 @@ function makeSplitView(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                             ElementFactory.h2("Onze sponsoren").class("section-name"),
                             ElementFactory.div(undefined, "logos", "flex-rows", "main-axis-space-between", "cross-axis-center")
                                 .children(
-                                    ...sponsorLinks.map(link => ElementFactory.a(link.href)
+                                    ...sponsorLinks.sort((a,b) => a.name.localeCompare(b.name)).map(link => ElementFactory.a(link.href)
                                         .openInNewTab(true)
                                         .class("center-content")
                                         .children(new MultisourceImage(link.origin, link.src))
+                                        .tooltip(link.name)
                                         .onMake(self => {
                                             const img = self.firstElementChild as MultisourceImage;
                                             img.alt = link.name;
