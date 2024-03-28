@@ -78,6 +78,7 @@ abstract class RichTextSerializer {
 
                             if (node.style.fontSize) out.style.fontSize = node.style.fontSize;
                             
+                            out.innerHTML = out.innerHTML.replaceAll('\n', "<br>");
                             return [out];
                         case "list":
                         case "numbered-list":

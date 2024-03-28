@@ -43,8 +43,10 @@ export default abstract class Loading {
             )
         )],
         [[12, 5], pick( // sinterklaas
-            () => ['🐎', '🏘️', '🎁'],
-            () => ['🛥️', '🎁', '🧸']
+            () => ['🎅🏼', '🎁', '👟', '🥾'], // sinterklaas kapoentje
+            () => ['👀', '👴🏼','🚢', '🚂'], // zie ginds komt de stoomboot
+            () => ['👂', '🍃', '🌳', '🐎'], // hoor de wind waait door de bomen
+            () => ['🧑', '🚲', '💥', '🚶‍♂️'] // piet ging uit fietsen
         )],
         [[12, 25], pick( // Christmas
             () => ['🎁', '🎄', '🎁'],

@@ -87,6 +87,7 @@ rich-text-input {
 
     > .body {
         padding: var(--in-section-gap);
+        row-gap: var(--in-section-gap);
 
         box-sizing: border-box;
         width: 100%;

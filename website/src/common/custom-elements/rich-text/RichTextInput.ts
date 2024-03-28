@@ -446,7 +446,7 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
         );
 
         this.body = this.appendChild(
-            ElementFactory.div(undefined, "body", "rich-text")
+            ElementFactory.div(undefined, "body", "rich-text", "flex-rows")
                 .on("focusin", (ev) => {
                     let target = ev.target;
 
