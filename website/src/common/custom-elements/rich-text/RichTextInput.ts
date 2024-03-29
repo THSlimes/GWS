@@ -16,6 +16,7 @@ import ElementFactory from "../../html-element-factory/ElementFactory";
 import IFrameContainer from "../IFrameContainer";
 import Loading from "../../Loading";
 import Responsive from "../../ui/Responsive";
+import IdeaBox from "../IdeaBox";
 
 /** [parent Node, "before child" index] tuple */
 type InsertionPosition = [Node, number];
@@ -196,6 +197,10 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                     return out;
                 })
                 .make();
+        }
+        else if (newElem.tagName === "IDEA-BOX") {
+            newElem.style.pointerEvents = "none";
+            insElem = newElem;
         }
         else insElem = newElem; // all other elements
 
@@ -611,8 +616,14 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                         !exclude.includes("newspaper") && ElementFactory.iconButton("newspaper", () => {
                             const newspaper = new IFrameContainer(RichTextInput.NEWSPAPER_SRC);
                             newspaper.classList.add("newspaper");
+                            newspaper.classList.add("align-center");
                             this.insert("newspaper", newspaper, insPosCallback());
                         }, "Verenigingsblad toevoegen"),
+                        !exclude.includes("idea-box") && ElementFactory.iconButton("emoji_objects", () => {
+                            const ideaBox = new IdeaBox;
+                            ideaBox.classList.add("align-center");
+                            this.insert("idea-box", ideaBox, insPosCallback());
+                        }, "Ideeënbox toevoegen"),
                     )
             ).make();
     }
@@ -621,8 +632,8 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
 
 namespace RichTextInput {
     /** Union type of the possible names of a rich-text section. */
-    export type SectionName = "shortcut" | "attachment" | "image" | "title" | "h1" | "h2" | "h3" | "paragraph" | "list" | "numbered-list" | "newspaper" | "event-note";
-    const richTextSectionNames:SectionName[] = ["shortcut", "attachment", "image", "title", "h1", "h2", "h3", "paragraph", "list", "numbered-list", "newspaper", "event-note"];
+    export type SectionName = "shortcut" | "attachment" | "image" | "title" | "h1" | "h2" | "h3" | "paragraph" | "list" | "numbered-list" | "newspaper" | "idea-box";
+    const richTextSectionNames:SectionName[] = ["shortcut", "attachment", "image", "title", "h1", "h2", "h3", "paragraph", "list", "numbered-list", "newspaper", "idea-box"];
     export function isRichTextSectionName(str:string):str is SectionName {
         return richTextSectionNames.some(rtsn => str === rtsn);
     }
@@ -632,7 +643,7 @@ namespace RichTextInput {
     /** All RichTextSectionNames that have editable text. */
     export const ALL_TEXT:SectionName[] = [...ALL_HEADERS, "paragraph", "shortcut"];
     /** All RichTextSectionNames categorized as widgets. */
-    export const ALL_WIDGETS:SectionName[] = ["newspaper", "event-note"];
+    export const ALL_WIDGETS:SectionName[] = ["newspaper", "idea-box"];
     export const NEWSPAPER_SRC = "https://www.bladnl.nl/bladen/tblaadje/pluginfull";
     
     /** SectionNames mapped to the section types that cannot be inserted in them. */
@@ -655,7 +666,7 @@ namespace RichTextInput {
         else if (elem instanceof HTMLUListElement) return "list";
         else if (elem instanceof HTMLOListElement) return "numbered-list";
         else if (elem.tagName === "IFRAME-CONTAINER" && elem.classList.contains("newspaper")) return "newspaper";
-        else if (elem.tagName === "RICH-TEXT-WIDGET" && elem.getAttribute("type") === "event-note") return "event-note";
+        else if (elem.tagName === "IDEA-BOX") return "idea-box";
         else throw Error(`could not infer section type of ${elem.outerHTML}`);
     }
 

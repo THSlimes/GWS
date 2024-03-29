@@ -1,0 +1,21 @@
+idea-box {
+    padding: var(--in-section-gap) !important;
+
+    > :not(.feedback) { width: 100%; }
+
+    > .message-input {
+        min-height: 8rem;
+        height: max-content;
+    }
+
+    > .feedback {
+        background-color: var(--indicate-good);
+        width: max-content;
+        height: max-content;
+    }
+
+    & *[invalid] {
+        outline-color: var(--indicate-bad);
+        border-color: var(--indicate-bad) !important;
+    }
+}

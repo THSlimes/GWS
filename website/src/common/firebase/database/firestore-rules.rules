@@ -72,5 +72,10 @@ service cloud.firestore {
                 (hasPermissions(["UPDATE_OWN_USER_INFO"]) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(["permissions"]) || hasPermissions(["UPDATE_OWN_PERMISSIONS"]))) :
                 (hasPermissions(["UPDATE_OTHER_USER_INFO"]) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(["permissions"]) || hasPermissions(["UPDATE_OTHER_USER_PERMISSIONS"])));
         }
+
+        // idea box submissions
+        match /idea-box-submissions/{submissionId} {
+            allow create : if hasPermissions(["SUBMIT_IDEA_BOX_FORM"]) && (request.resource.data.author == "anonymous" || request.resource.data.author.id == request.auth.uid);
+        }
     }
 }

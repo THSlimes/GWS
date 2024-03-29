@@ -51,7 +51,9 @@ abstract class DataView<T extends Record<string,any>> {
         const oldSave = this.save;
         this.save = function() {
             const out = this.isDataModified ? oldSave.bind(this)() : new Promise<void>((resolve,reject) => resolve());
-            out.then(() => this._onSave.forEach(h => h())); // call onSave handlers
+            out.then(() => {
+                this._onSave.forEach(h => h());
+            }); // call onSave handlers
 
             return out;
         }
@@ -112,13 +114,17 @@ namespace DataView {
         public copy() { return ObjectUtil.deepCopy(this.data); }
     
         private modifiedKeys:Set<keyof T> = new Set();
-        public get isModified() { return this.modifiedKeys.size !== 0; }
+        public get isModified() {
+            return this.modifiedKeys.size !== 0;
+        }
         private readonly onModified:VoidFunction;
 
-        protected save() { this.modifiedKeys.clear(); }
+        protected save() {
+            this.modifiedKeys.clear();
+        }
     
         constructor(source:DataView<T>, index:number, data:T, onModified=()=>{}) {
-            source.onSave = () => this.save;
+            source.onSave = () => this.save();
 
             this._index = index;
             this.data = data;

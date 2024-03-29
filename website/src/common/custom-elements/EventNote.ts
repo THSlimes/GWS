@@ -109,7 +109,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNote.Sect
         // apply color palette
         const bgColor = this.event.color ?? ColorUtil.getStringColor(this.event.category);
         this.style.setProperty("--background-color", bgColor);
-        this.style.setProperty("--text-color", ColorUtil.getMostContrasting(bgColor, "#111111", "#ffffff"));
+        this.style.setProperty("--text-color", ColorUtil.getMostContrasting(bgColor, "#233452", "#ffffff"));
 
         // name section
         this.name = ElementFactory.heading(this.expanded ? 1 : 5, this.event.name).class("name", "no-margin").make();
@@ -277,7 +277,7 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
         // apply color palette
         const bgColor = this.noteOptions.has("color") ? this.noteOptions.get("color")! : ColorUtil.getStringColor(this.category.value);
         this.style.setProperty("--background-color", bgColor);
-        this.style.setProperty("--text-color", ColorUtil.getMostContrasting(bgColor, "#111111", "#ffffff"));
+        this.style.setProperty("--text-color", ColorUtil.getMostContrasting(bgColor, "#233452", "#ffffff"));
     }
 
     constructor(event:EventInfo, lod=DetailLevel.MEDIUM, expanded=false, saveAsNew=false) {

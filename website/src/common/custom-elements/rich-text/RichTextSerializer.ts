@@ -89,6 +89,8 @@ abstract class RichTextSerializer {
                             out.setAttribute("src", node.getAttribute("src") ?? "");
                             out.classList.add("newspaper");
                             return [out];
+                        case "idea-box":
+                            return [out];
                     }
 
                     throw new RichTextSerializer.SerializationError(`no finalization implementation found for section type "${type}"`);

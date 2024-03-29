@@ -26,8 +26,8 @@ export class ArticleInfo extends Info {
 
     public override satisfies(options:ArticleQueryFilter):boolean {
         if (!super.satisfies(options)) return false;
-        else if (options.after && options.after >= this.created_at) return false;
-        else if (options.before && options.before <= this.created_at) return false;
+        else if (options.after && options.after > this.created_at) return false;
+        else if (options.before && options.before < this.created_at) return false;
         else if (options.category && options.category !== this.category) return false;
         else if (options.forHomepage && !this.show_on_homepage) return false;
         else return true;

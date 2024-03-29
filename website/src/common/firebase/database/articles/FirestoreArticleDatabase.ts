@@ -149,4 +149,4 @@ namespace FirestoreArticleDatabase {
     };
 }
 
-export default FirestoreArticleDatabase
+export default FirestoreArticleDatabase;

@@ -22,6 +22,13 @@ export default class Switch extends HTMLElement implements HasSections<"indicato
         }
     }
 
+    public get disabled() {
+        return this.hasAttribute("disabled");
+    }
+    public set disabled(isDisabled:boolean) {
+        this.toggleAttribute("disabled", isDisabled);
+    }
+
     private static addDisabler(elem:Element) {
         const oldLevel = elem.hasAttribute("disabled") ? ElementUtil.getAttrAsNumber(elem, "disabled", false) ?? 1 : 0;
         elem.setAttribute("disabled", (oldLevel + 1).toString());

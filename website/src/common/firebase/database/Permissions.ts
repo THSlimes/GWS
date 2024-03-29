@@ -18,6 +18,7 @@ export namespace Permissions {
         DELETE_ARTICLES = "DELETE_ARTICLES", // whether the user can delete articles
         UPLOAD_FILES = "UPLOAD_FILES", // whether the user can upload a new attachment
         DOWNLOAD_PROTECTED_FILES = "DOWNLOAD_PROTECTED_FILES", // whether the user is allowed to download a protected file
+        SUBMIT_IDEA_BOX_FORM = "SUBMIT_IDEA_BOX_FORM", // whether the user can submit an idea-box element form
 
         // event related
         CREATE_EVENTS = "CREATE_EVENTS", // whether the user can create a new event
@@ -59,6 +60,7 @@ export namespace Permissions {
         [Permission.REGISTER_FOR_EVENTS]: "Inschrijven voor activiteiten",
         [Permission.DEREGISTER_FOR_EVENTS]: "Uitschrijven van activiteiten",
         [Permission.READ_EVENT_COMMENTS]: "Activiteit-opmerkingen lezen",
+        [Permission.SUBMIT_IDEA_BOX_FORM]: "Ideeënbox gebruiken",
     
         [Permission.UPDATE_OWN_USER_INFO]: "Account-info van henzelf bewerken",
         [Permission.UPDATE_OWN_PERMISSIONS]: "Account-machtigingen van henzelf bewerken",
@@ -83,6 +85,7 @@ export namespace Permissions {
             Permission.DOWNLOAD_PROTECTED_FILES,
             Permission.REGISTER_FOR_EVENTS,
             Permission.DEREGISTER_FOR_EVENTS,
+            Permission.SUBMIT_IDEA_BOX_FORM
         ],
         "Administrateur": [
             Permission.UPDATE_SETTINGS,

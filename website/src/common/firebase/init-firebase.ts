@@ -4,15 +4,6 @@ import { getStorage } from "@firebase/storage";
 import { FirebaseOptions, initializeApp } from "firebase/app";
 import Cache from "../Cache";
 
-// initialize firebase connection
-// const FIREBASE_CONFIG:FirebaseOptions = {
-//     apiKey: "AIzaSyAr3flkC7_4DoGS1TOTlRRfQ4C64dSO4y4",
-//     authDomain: "test-78a52.firebaseapp.com",
-//     projectId: "test-78a52",
-//     storageBucket: "test-78a52.appspot.com",
-//     messagingSenderId: "766298434316",
-//     appId: "1:766298434316:web:0874153a0a10b5de12b729"
-// };
 const FIREBASE_CONFIG = {
     apiKey: "AIzaSyBZukBmRVOeFJPgy0u1qJlMoLeTz4TXJ0k",
     authDomain: "gws-website-52cf2.firebaseapp.com",

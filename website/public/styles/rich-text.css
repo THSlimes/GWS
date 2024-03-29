@@ -1,6 +1,7 @@
 @import url("./custom-elements/multisource-image.css");
 @import url("./custom-elements/multisource-attachment.css");
 @import url("./custom-elements/iframe-container.css");
+@import url("./custom-elements/idea-box.css");
 
 .rich-text {
 
@@ -9,7 +10,7 @@
 
         margin-bottom: 0px;
 
-        color: inherit;
+        color: var(--text-extra-dark);
 
         &.title {
             --type: "titel";
@@ -22,8 +23,7 @@
 
         margin-bottom: 0px;
 
-
-        color: inherit;
+        color: var(--text-extra-dark);
     }
 
     & h3 {
@@ -31,21 +31,20 @@
 
         margin-bottom: 0px;
 
-
-        color: inherit;
+        color: var(--text-extra-dark);
     }
 
     & p {
         --type: "paragraaf";
 
-        color: inherit;
+        color: var(--text-dark);
         line-height: 1.68rem;
     }
 
     & a {
         --type: "snelkoppeling";
 
-        color: inherit;
+        color: var(--text-dark);
 
         &:not(.icon)[target="_blank"]:not(:empty)::after {
             content: "open_in_new";
@@ -61,7 +60,7 @@
 
         padding-left: 2rem;
 
-        color: inherit;
+        color: var(--text-dark);
 
         > * { margin-top: 0px; margin-bottom: 0px; }
         > *:not(.no-bullet) {
@@ -85,7 +84,7 @@
 
         padding-left: 2rem;
 
-        color: inherit;
+        color: var(--text-dark);
         counter-reset: index;
 
         > * { margin-top: 0px; margin-bottom: 0px; }

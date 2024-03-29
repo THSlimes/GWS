@@ -65,7 +65,8 @@ span.icon { font-size: inherit; }
     --accent: rgb(214, 80, 80);
 
     --text-light: #ffffff;
-    --text-dark: rgb(0, 16, 46);
+    --text-dark: #233452;
+    --text-extra-dark: #00102E;
 
     --shadow-light: rgba(255, 255, 255, .25);
     --shadow-dark: rgba(0, 0, 0, .25);
@@ -128,7 +129,7 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
     font-family: var(--std-font);
-    color: var(--text-dark);
+    color: var(--text-extra-dark);
 }
 
 h1 { font-size: 2rem; font-weight: 600; }

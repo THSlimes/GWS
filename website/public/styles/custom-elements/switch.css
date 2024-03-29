@@ -25,6 +25,11 @@ switch-input {
         background-color: var(--indicate-good);
     }
 
+    &[disabled] {
+        pointer-events: none;
+        filter: contrast(.75);
+    }
+
     > .knob {
 
         box-sizing: border-box;
