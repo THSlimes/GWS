@@ -40,5 +40,5 @@ const PAGE_SIZE = 5;
 
 Loading.useDynamicContent(checkPermissions(Permissions.Permission.READ_MEMBER_ARTICLES, true), res => {
     const baseFilter:ArticleQueryFilter = { forHomepage: true, forMembers: res[Permissions.Permission.READ_MEMBER_ARTICLES] ? undefined : false };
-    Placeholder.replaceWith("article-list", new ArticleList(new ArticlePaginator(DB, PAGE_SIZE, baseFilter)));
+    Placeholder.replaceWith("article-list", new ArticleList(new ArticlePaginator(DB, baseFilter, PAGE_SIZE)));
 });

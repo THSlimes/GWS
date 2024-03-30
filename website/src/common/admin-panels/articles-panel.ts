@@ -23,7 +23,7 @@ export function initArticlesPanel() {
         checkPermissions(Permissions.Permission.READ_MEMBER_ARTICLES, false)
         .then(hasPerms => { // list of recent articles
             const baseFilter = { forMembers: hasPerms.READ_MEMBER_ARTICLES ? undefined : false };
-            Placeholder.replaceWith("article-list", new ArticleList(new ArticlePaginator(DB, PAGE_SIZE, baseFilter), DetailLevel.LOW));
+            Placeholder.replaceWith("article-list", new ArticleList(new ArticlePaginator(DB, baseFilter, PAGE_SIZE), DetailLevel.LOW));
         });
 
         const NEW_ARTICLE = new EditableSmartArticle(NEW_ARTICLE_INFO, DetailLevel.FULL, true);

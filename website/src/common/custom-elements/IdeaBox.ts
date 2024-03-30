@@ -83,7 +83,7 @@ export default class IdeaBox extends HTMLElement implements HasSections<"anonymo
                 .make()
         );
 
-        Promise.all([onAuth(), checkPermissions(Permissions.Permission.SUBMIT_IDEA_BOX_FORM)])
+        Promise.all([onAuth(), checkPermissions(Permissions.Permission.CREATE_IDEA_BOX_SUBMISSIONS)])
         .then(([user, permRes]) => {
             if (!user) { // not logged in
                 this.anonymousSwitch.disabled = this.subjectInput.disabled = this.bodyInput.disabled = true;
@@ -91,7 +91,7 @@ export default class IdeaBox extends HTMLElement implements HasSections<"anonymo
                 this.submitButton.lastChild!.textContent = "login";
                 this.submitButton.addEventListener("click", () => location.href = URLUtil.createLinkBackURL("/login.html", location.href).toString());
             }
-            else if (!permRes.SUBMIT_IDEA_BOX_FORM) { // missing permissions
+            else if (!permRes.CREATE_IDEA_BOX_SUBMISSIONS) { // missing permissions
                 this.anonymousSwitch.disabled = this.subjectInput.disabled = this.bodyInput.disabled = true;
                 this.submitButton.firstChild!.textContent = "Versturen niet mogelijk";
                 this.submitButton.lastChild!.textContent = "cancel_schedule_send";

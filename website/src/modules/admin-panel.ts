@@ -9,12 +9,13 @@ import { initEventsPanel } from "../common/admin-panels/events-panel";
 import { initArticlesPanel } from "../common/admin-panels/articles-panel";
 import { initLinksPanel } from "../common/admin-panels/links-panel";
 import Loading from "../common/Loading";
+import { initIdeaBoxPanel } from "../common/admin-panels/idea-box-panel";
 
 // only permitted users can view page
 redirectIfMissingPermission("/", [Permissions.Permission.VIEW_ADMIN_PANEL, Permissions.Permission.READ_OTHER_USER_INFO], true, true);
 
 /** Union type of the IDs of all panels. */
-type PanelId = "users-panel" | "articles-panel" | "events-panel" | "links-panel";
+type PanelId = "users-panel" | "articles-panel" | "events-panel" | "links-panel" | "idea-box-panel";
 
 const PANEL_CONFIG:Record<PanelId, { icon:string, label:string, default?:true, selectCallback?:VoidFunction }> = {
     "users-panel": {
@@ -36,6 +37,11 @@ const PANEL_CONFIG:Record<PanelId, { icon:string, label:string, default?:true, s
         icon: "account_tree",
         label: "Koppelingen",
         selectCallback: initLinksPanel
+    },
+    "idea-box-panel": {
+        icon: "emoji_objects",
+        label: "Ideeënbox",
+        selectCallback: initIdeaBoxPanel
     }
 };
 Object.freeze(PANEL_CONFIG);

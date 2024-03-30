@@ -75,7 +75,8 @@ service cloud.firestore {
 
         // idea box submissions
         match /idea-box-submissions/{submissionId} {
-            allow create : if hasPermissions(["SUBMIT_IDEA_BOX_FORM"]) && (request.resource.data.author == "anonymous" || request.resource.data.author.id == request.auth.uid);
+            allow create : if hasPermissions(["CREATE_IDEA_BOX_SUBMISSIONS"]) && (request.resource.data.author == "anonymous" || request.resource.data.author.id == request.auth.uid);
+            allow list, get : if hasPermissions(["READ_IDEA_BOX_SUBMISSIONS"]);
         }
     }
 }
