@@ -91,7 +91,10 @@ editable-smart-article {
 
 @media (max-aspect-ratio: 10 / 16) {
     article[lod="medium"] .heading > * { font-size: 1.25rem; }
-    article[lod="full"] .heading > * { font-size: 1rem; }
+    article[lod="full"] {
+        padding-top: var(--min-section-gap);
+        .heading > * { font-size: 1.5rem; }
+    }
 
     editable-smart-article {
         gap: var(--in-section-gap) !important;

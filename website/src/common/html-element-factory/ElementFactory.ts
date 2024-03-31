@@ -71,6 +71,13 @@ export default abstract class ElementFactory {
     }
     public static a(href?:string, text?:string) {
         const out = new AnchorElementAssemblyLine();
+        out.onMake(self => {
+            self.addEventListener("click", () => {
+                console.log("click");
+                
+                if (self.href && !self.download) location.href = self.href;
+            });
+        });
         if (href) out.href(href);
         return text ? out.text(text) : out;
     }

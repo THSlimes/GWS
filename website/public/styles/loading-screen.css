@@ -1,10 +1,6 @@
 /* Noto Color Emoji */
-@font-face {
-    font-family: "emoji";
-    font-style: normal;
-    font-weight: 100 700;
-    src: url("../fonts/NotoColorEmoji-Regular.ttf") format('ttf');
-}
+@import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&family=Noto+Emoji:wght@300..700&display=swap');
+
 
 body[loading] { overflow: hidden !important; }
 
@@ -32,7 +28,7 @@ body[loading] { overflow: hidden !important; }
     > * {
         font-size: 4rem;
         user-select: none;
-        font-family: "emoji" !important;
+        font-family: "Noto Color Emoji" !important;
     }
     > *:nth-child(3n-2) { animation: jiggle 1s linear 0ms infinite normal forwards; }
     > *:nth-child(3n-1) { animation: jiggle 1s linear -333ms infinite normal forwards; }
