@@ -2,7 +2,7 @@
 @import url("../custom-elements/smart-article.css");
 
 article {
-    & .post-date, & .read-more { display: none; }
+    & .post-date, & .read-more, & #share-button { display: none; }
 }
 
 #form {

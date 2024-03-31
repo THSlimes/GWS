@@ -285,7 +285,7 @@ Loading.onDOMContentLoaded({ "submit-button": HTMLButtonElement })
                     new Date(),
                     new Date(1000, 0, 1),
                     data.name.first_name,
-                    `${data.name.infix} ${data.name.family_name}`,
+                    data.name.infix ? `${data.name.infix} ${data.name.family_name}` : data.name.family_name,
                     []
                 );
                 USER_DB.write(userInfo)

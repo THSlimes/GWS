@@ -1,5 +1,5 @@
 import getErrorMessage from "../firebase/authentication/error-messages";
-import { checkPermissions, onPermissionCheck } from "../firebase/authentication/permission-based-redirect";
+import { checkPermissions } from "../firebase/authentication/permission-based-redirect";
 import FirestoreIBSubmissionDatabase from "../firebase/database/idea-box-submissions/FirestoreIBSubmissionDatabase";
 import IBSubmissionDatabase, { IBSubmissionInfo } from "../firebase/database/idea-box-submissions/IBSubmissionDatabase";
 import Permissions from "../firebase/database/Permissions";

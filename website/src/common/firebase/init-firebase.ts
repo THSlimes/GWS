@@ -1,7 +1,7 @@
 import { User, getAuth } from "@firebase/auth";
 import { getFirestore } from "@firebase/firestore";
 import { getStorage } from "@firebase/storage";
-import { FirebaseOptions, initializeApp } from "firebase/app";
+import { initializeApp } from "firebase/app";
 import Cache from "../Cache";
 
 const FIREBASE_CONFIG = {
