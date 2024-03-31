@@ -9,7 +9,7 @@ function makePhotoCarousel(coverText:string):Promise<ElementCarousel> {
         const imageElements:HTMLImageElement[] = [];
 
         listAll(makePhotoCarousel.FOLDER_REF)
-        .then(res => res.items)
+        .then(res => res.items.sort((a,b) => a.fullPath.localeCompare(b.fullPath)))
         .then(imageRefs => {
             for (let i = 0; i < imageRefs.length; i ++) {
                 const imgElement = document.createElement("img");

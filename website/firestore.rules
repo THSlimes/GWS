@@ -1,0 +1,82 @@
+rules_version = '2';
+
+service cloud.firestore {
+    match /databases/{database}/documents {
+
+        // Tests whether the authenticated user has the given permissions
+        function hasPermissions(requiredPerms) {
+            return requiredPerms.size() == 0 // no permissions required
+                || (request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAll(requiredPerms));
+        }
+
+        // Checks if timestamp t1 is before timestamp t2
+        function isBefore(t1, t2) {
+            return t1.toMillis() < t2.toMillis();
+        }
+
+        // settings
+        match /settings/{settingName} {
+            allow get;
+            allow update : if hasPermissions(["UPDATE_SETTINGS"])
+        }
+
+        // articles
+        match /articles/{articleId} {
+            allow get, list : if resource == null || !resource.data.only_for_members || hasPermissions(["READ_MEMBER_ARTICLES"]);
+            allow update : if hasPermissions(["UPDATE_ARTICLES"]);
+            allow delete : if hasPermissions(["DELETE_ARTICLES"]);
+            allow create : if hasPermissions(["CREATE_ARTICLES"]);
+        }
+
+        // events
+        match /events/{eventId} {
+            allow get, list; // anyone can see events
+
+            allow update : if hasPermissions(["UPDATE_EVENTS"]); // has edit permissions
+
+            // event registration
+            allow update : if request.auth != null // is logged in
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["registrations"]) // only edited registrations
+                && request.resource.data.registrations.diff(resource.data.registrations).affectedKeys().hasOnly([request.auth.uid]) // only affected own uid
+                && request.resource.data.registrations.diff(resource.data.registrations).addedKeys().hasAll([request.auth.uid]) // only added own uid
+                && (!("capacity" in resource.data) || request.resource.data.registrations.size() <= resource.data.capacity) // check capacity
+                && (!("can_register_from" in resource.data) || isBefore(resource.data.can_register_from, request.time)) // check registration start
+                && (!("can_register_until" in resource.data) || isBefore(request.time, resource.data.can_register_until)) // check registration end
+                && hasPermissions(["REGISTER_FOR_EVENTS"]); // is allowed to register
+
+            // event de-registration
+            allow update : if request.auth != null // is logged in
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["registrations"]) // only edited registrations
+                && request.resource.data.registrations.diff(resource.data.registrations).affectedKeys().hasOnly([request.auth.uid]) // only affected own uid
+                && request.resource.data.registrations.diff(resource.data.registrations).removedKeys().hasAll([request.auth.uid]) // only added own uid
+                && hasPermissions(["DEREGISTER_FOR_EVENTS"]); // is allowed to register
+
+            allow create : if hasPermissions(["CREATE_EVENTS"]);
+
+            allow delete : if hasPermissions(["DELETE_EVENTS"]);
+        }
+
+        // event comments
+        match /events/{eventId}/comments/{authorId} {
+            allow read : if hasPermissions(["READ_EVENT_COMMENTS"]);
+            allow get, write : if request.auth != null && hasPermissions(["REGISTER_FOR_EVENTS"]) && request.auth.uid == authorId;
+        }
+
+        // users
+        match /users/{userId} {
+            allow get : if (request.auth != null && request.auth.uid == userId) || hasPermissions(["READ_OTHER_USER_INFO"]);
+            allow list : if hasPermissions(["READ_OTHER_USER_INFO"]);
+            // only allow creation of non-members
+            allow create : if request.auth != null && request.auth.uid == userId && request.resource.data.permissions.size() == 0 && isBefore(request.resource.data.member_until, request.time);
+            allow update : if request.auth.uid == userId ?
+                (hasPermissions(["UPDATE_OWN_USER_INFO"]) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(["permissions"]) || hasPermissions(["UPDATE_OWN_PERMISSIONS"]))) :
+                (hasPermissions(["UPDATE_OTHER_USER_INFO"]) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(["permissions"]) || hasPermissions(["UPDATE_OTHER_USER_PERMISSIONS"])));
+        }
+
+        // idea box submissions
+        match /idea-box-submissions/{submissionId} {
+            allow create : if hasPermissions(["CREATE_IDEA_BOX_SUBMISSIONS"]) && (request.resource.data.author == "anonymous" || request.resource.data.author.id == request.auth.uid);
+            allow list, get : if hasPermissions(["READ_IDEA_BOX_SUBMISSIONS"]);
+        }
+    }
+}

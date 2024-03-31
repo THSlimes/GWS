@@ -5,7 +5,7 @@ import NumberUtil from "./NumberUtil";
  */
 abstract class ColorUtil {
 
-    private static DEFAULT_COLOR:ColorUtil.HexColor = "#aaaaaa";
+    private static DEFAULT_COLOR:ColorUtil.HexColor = "#a8c9f5";
     private static STRING_COLORS:ColorUtil.HexColor[] = [
         "#FF0000",
         "#FF8700",

@@ -1,3 +1,11 @@
+/* Noto Color Emoji */
+@font-face {
+    font-family: "emoji";
+    font-style: normal;
+    font-weight: 100 700;
+    src: url("../fonts/NotoColorEmoji-Regular.ttf") format('ttf');
+}
+
 body[loading] { overflow: hidden !important; }
 
 #loading-screen {
@@ -24,6 +32,7 @@ body[loading] { overflow: hidden !important; }
     > * {
         font-size: 4rem;
         user-select: none;
+        font-family: "emoji" !important;
     }
     > *:nth-child(3n-2) { animation: jiggle 1s linear 0ms infinite normal forwards; }
     > *:nth-child(3n-1) { animation: jiggle 1s linear -333ms infinite normal forwards; }

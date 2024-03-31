@@ -1,10 +1,16 @@
 import { Class } from "./util/UtilTypes";
 
+/** Randomly orders the given array. */
 function shuffle<T>(arr:T[]):T[] { return arr.sort(() => Math.random() - .5); }
+/** Picks an element of the given array at random. */
 function pick<T>(...arr:T[]):T { return arr[Math.floor(Math.random() * arr.length)]; }
 
+/**
+ * The Loading helper-class handles functionality of the loading-screen
+ */
 export default abstract class Loading {
 
+    /** Config of what emojis to show and when to show them. */
     private static readonly EMOJI_CONFIG:[[number,number], () => string[]][] = [
         [[1, 1], () => { // new years
             const numbers = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
@@ -62,6 +68,7 @@ export default abstract class Loading {
             () => ['🌉', '🎆', '🌉']
         )]
     ];
+    /** Emojis to show if no rule from `EMOJI_CONFIG` applies. */
     private static readonly DEFAULT_EMOJIS:(() => string[]) = () => ['🐐', '🧶', '🧦'];
 
     private constructor() {} // prevent extension
@@ -97,10 +104,11 @@ export default abstract class Loading {
     }
 
     private static currentlyLoading:object[] = [];
+    /** Number of things that are currently loading. */
     public static get numLoading() { return this.currentlyLoading.length; }
-    public static markLoadStart(obj:object) {
-        this.currentlyLoading.push(obj);
-    }
+    /** Signifies that something starts loading. */
+    public static markLoadStart(obj:object) { this.currentlyLoading.push(obj); }
+    /** Signifies that something is done loading. */
     public static markLoadEnd(obj:object) {
         const ind = this.currentlyLoading.lastIndexOf(obj);
         if (ind !== -1) this.currentlyLoading.splice(ind, 1);
@@ -115,6 +123,11 @@ export default abstract class Loading {
         });
     }
 
+    /**
+     * Gets multiple elements from the page by their ID, while checking their types.
+     * @param query a mapping from element IDs to the type of HTMLElement they are
+     * @returns a mapping of element IDs to the elements with those IDs
+     */
     public static getElementsById<Query extends Loading.IDQuery>(query:Query):Loading.ResolvedIDQuery<Query> {
         const out:Record<string,Element> = {};
         for (const id in query) {
@@ -126,6 +139,10 @@ export default abstract class Loading {
 
         return out as Loading.ResolvedIDQuery<Query>;
     }
+    /**
+     * Gives a Promise that resolves with a mapping of elements IDs to the elements with those IDs.
+     * @param query same as `Loading.getElementsById`
+     */
     public static onDOMContentLoaded<Query extends Loading.IDQuery>(query:Query = {} as Query):Promise<Loading.ResolvedIDQuery<Query>> {
         return new Promise((resolve,reject) => {
             if (this.DOMContentLoaded) try { resolve(this.getElementsById(query)); }
@@ -137,6 +154,12 @@ export default abstract class Loading {
         });
     }
 
+    /**
+     * Waits until both DOMContent is loaded and the given Promise resolves, then runs the callback.
+     * @param dynContentPromise Promise that queries some dynamic content
+     * @param loadCallback callback for successful loading
+     * @param onFail callback when `dynContentPromise` fails
+     */
     public static useDynamicContent<T>(dynContentPromise:Promise<T>, loadCallback:(val:T)=>void, onFail=(err:any)=>console.error(err)) {
         this.markLoadStart(dynContentPromise);
 
@@ -151,7 +174,9 @@ export default abstract class Loading {
 }
 
 namespace Loading {
+    /** Mapping of element IDs to their type of HTMLElement */
     export type IDQuery = { [id:string]: Class<HTMLElement> };
+    /** Mapping of element IDs to the elements with those IDs  */
     export type ResolvedIDQuery<Query extends IDQuery> = {
         [ID in keyof Query]: InstanceType<Query[ID]>
     };

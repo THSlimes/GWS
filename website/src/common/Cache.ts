@@ -85,6 +85,7 @@ export default abstract class Cache {
 }
 
 namespace Cache {
+    /** A type that maps cache keys to their value type */
     export type KeyTypeMap = {
         "navbar-links": LinkTree,
         "sponsor-links": ImagedLink[],
@@ -95,6 +96,7 @@ namespace Cache {
         "relayed-message": UserFeedback.MessageData,
         [key:`permissions-${string}`]: Permissions.Permission[]
     };
+    /** Union type of all cache keys */
     export type Key = keyof KeyTypeMap;
     
     /** [value, UNIX expiry timestamp] pair */

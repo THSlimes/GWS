@@ -18,6 +18,13 @@ Loading.useDynamicContent(makePhotoCarousel("Studievereniging Den Geitenwollen S
     Placeholder.replaceWith("photo-carousel", carousel);
 });
 
+/**
+ * Performs a login attempt.
+ * @param email login email
+ * @param password login password
+ * @param stayLoggedIn whether to remember the user
+ * @returns Promise that resolves with the logged in user
+ */
 function login(email:string, password:string, stayLoggedIn:boolean=false) {
     return new Promise<UserCredential>(async (resolve, reject) => {
         FIREBASE_AUTH.setPersistence(browserLocalPersistence) // set login persistance
@@ -33,6 +40,7 @@ function login(email:string, password:string, stayLoggedIn:boolean=false) {
     });
 }
 
+// add login form functionality
 Loading.onDOMContentLoaded({
     "login-email": HTMLInputElement,
     "login-password": HTMLInputElement,

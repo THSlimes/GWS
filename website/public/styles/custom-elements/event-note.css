@@ -18,7 +18,7 @@ event-note, registerable-event-note, editable-event-note, editable-registerable-
     
     &[expanded] {
         max-height: 90vh;
-        padding: var(--section-gap-y) var(--section-gap-x);
+        padding: calc(var(--section-gap-y) * 2) var(--section-gap-x);
         & .timespan { font-size: medium; }
     }
 

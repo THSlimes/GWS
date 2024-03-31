@@ -22,13 +22,14 @@ import UserFeedback from "../common/ui/UserFeedback";
 
 const USER_DB:UserDatabase = new FirestoreUserDatabase();
 Loading.useDynamicContent(onAuth(), user => {
+    // check if user has full permissions
     if (user) USER_DB.getById(user.uid)
         .then(userInfo => {
             if (userInfo?.permissions.length === 0) UserFeedback.warning("Je inschrijving moet eerst goedgekeurd worden voordat je toegang hebt tot alle berichten en je je kan inschrijven voor activiteiten.");
         });
 });
 
-
+// insert photo calendar
 Loading.useDynamicContent(makePhotoCarousel("Studievereniging Den Geitenwollen Soc."), carousel => {
     Placeholder.replaceWith("photo-carousel", carousel);
 });

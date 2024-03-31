@@ -3,10 +3,16 @@ import Loading from "../Loading";
 import ElementUtil from "../util/ElementUtil";
 import { HasSections } from "../util/UtilTypes";
 
+/**
+ * A Switch is a type of HTMLElement that works similar to a check box.
+ */
 export default class Switch extends HTMLElement implements HasSections<"indicator"> {
 
     private _value!:boolean;
+    /** Whether the switch is currently checked */
     public get value() { return this._value; }
+    /** Equivalent to `.value` */
+    public get checked() { return this._value; }
     public set value(newVal:boolean) {
         if (newVal !== this._value) {
             this._value = newVal;
@@ -22,6 +28,7 @@ export default class Switch extends HTMLElement implements HasSections<"indicato
         }
     }
 
+    /** Whether the switch accepts input. */
     public get disabled() {
         return this.hasAttribute("disabled");
     }
@@ -40,9 +47,11 @@ export default class Switch extends HTMLElement implements HasSections<"indicato
         else elem.setAttribute("disabled", newLevel.toString());
     }
 
+    /** Elements that are disabled when this Switch is not active. */
     public readonly dependants:Element[] = [];
     private readonly inverted:boolean;
 
+    /** The check/cross value indicator element */
     public indicator!:HTMLHeadingElement;
 
     /**
@@ -81,6 +90,7 @@ export default class Switch extends HTMLElement implements HasSections<"indicato
         this.addEventListener("click", () => this.toggle());
     }
 
+    /** Toggled the Switch on/off. */
     public toggle():boolean {
         this.value = !this.value;
         return this.value;
