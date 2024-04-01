@@ -117,6 +117,12 @@ abstract class RichTextSerializer {
             NodeUtil.onEach(doc, n => {
                 if (n instanceof Element) {
                     if (n.tagName === "SCRIPT") n.remove(); // remove all script tags
+                    else if (n instanceof HTMLAnchorElement) n.addEventListener("click", () => {
+                        if (n.href && !n.hasAttribute("download")) {
+                            if (n.target === "_blank") open(n.href);
+                            else location.href = n.href;
+                        }
+                    });
                     EVENT_LISTENER_ATTRIBUTE_NAMES.forEach(evListenerAttrName => n.removeAttribute(evListenerAttrName)); // remove event listeners
                     Array.from(n.attributes).forEach(attr => { // remove javascript protocol attributes
                         if (attr.value.toLowerCase().includes("javascript:")) n.removeAttribute(attr.name);

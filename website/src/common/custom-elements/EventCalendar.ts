@@ -117,7 +117,7 @@ class EventCalendar extends HTMLElement {
 
     private dayCellContainer:HTMLDivElement = this.appendChild(ElementFactory.div(undefined, "day-cell-container").make());
 
-    private static readonly LOAD_MORE_SCROLL_TOLERANCE = 2.5;
+    private static readonly LOAD_MORE_SCROLL_TOLERANCE = 2;
     private static readonly LOAD_MORE_TIMESPAN_DAYS = 15;
     private scrollEventListener?:(e:Event)=>void;
 
@@ -313,7 +313,7 @@ class EventCalendar extends HTMLElement {
                 this.dayCellContainer.append(...newDays.map(d=>d.element)); // append new day-cells
 
                 const loadAfter = this.dayCellContainer.appendChild(ElementFactory.div(undefined, "subtitle", "center-content", "load-more", "load-after").make());
-
+                
                 NodeUtil.whenInsertedIn(this.dayCellContainer, document.body)
                 .then(() => {
                     this.dayCellContainer.scrollBy(0, 2);
@@ -321,6 +321,7 @@ class EventCalendar extends HTMLElement {
                     let prevScrollTop = this.dayCellContainer.scrollTop;
 
                     let [loadingBefore, loadingAfter] = [false, false];
+                    
                     this.scrollEventListener = () => {
                         const scrollDelta = prevScrollTop - this.dayCellContainer.scrollTop;
                         prevScrollTop = this.dayCellContainer.scrollTop;

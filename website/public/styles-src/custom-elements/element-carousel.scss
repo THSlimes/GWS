@@ -1,0 +1,23 @@
+@import url("../parallax-scrolling.css");
+
+/* ELEMENT-CAROUSEL DEFAULT STYLE */
+
+element-carousel, #carousel-placeholder {
+    position:relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 80vw;
+    height: 100vh;
+
+    overflow: hidden;
+
+    > *[cover] { z-index: 150; }
+    > *:not([cover]) {
+        z-index: 125;
+        transition: opacity var(--fade-time) linear;
+    }
+
+    > *[hide] { opacity: 0 !important; }
+}

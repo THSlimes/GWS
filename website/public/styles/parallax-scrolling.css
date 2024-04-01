@@ -1,17 +1,1 @@
-/* PARALLAX-SCROLLING */
-
-bo
-
-iframe, video, embed, img {
-    &[parallax-scrolling] {
-        object-position:
-            var(--original-displacement-x)
-            calc(var(--original-displacement-y) + var(--scroll-y) * (1 - var(--parallax-factor))) !important;
-    }
-}
-
-*:not(iframe):not(video):not(embed):not(img)[parallax-scrolling] {
-    translate:
-        var(--original-displacement-x)
-        calc(var(--original-displacement-y) + var(--scroll-y) * (1 - var(--parallax-factor))) !important;
-}
+bo iframe[parallax-scrolling],video[parallax-scrolling],embed[parallax-scrolling],img[parallax-scrolling]{object-position:var(--original-displacement-x) calc(var(--original-displacement-y) + var(--scroll-y)*(1 - var(--parallax-factor))) !important}*:not(iframe):not(video):not(embed):not(img)[parallax-scrolling]{translate:var(--original-displacement-x) calc(var(--original-displacement-y) + var(--scroll-y)*(1 - var(--parallax-factor))) !important}/*# sourceMappingURL=parallax-scrolling.css.map */

@@ -1,0 +1,20 @@
+@import url("../shared.css");
+
+@import url("../custom-elements/event-calendar.css");
+@import url("../custom-elements/icon-selector.css");
+@import url("../custom-elements/smart-article.css");
+
+article {
+    & .post-date, & .read-more, & #share-button { display: none; }
+}
+
+.content {
+    /* outline: .5px solid red;
+    & * { outline: .5px solid red; } */
+
+    height: 100%;
+
+    > event-calendar {
+        flex-grow: 1;
+    }
+}

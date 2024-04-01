@@ -5,7 +5,7 @@ import Loading from "../common/Loading";
 import MultisourceImage from "../common/custom-elements/MultisourceImage";
 import Placeholder from "../common/custom-elements/Placeholder";
 import FirestoreSettingsDatabase from "../common/firebase/database/settings/FirestoreSettingsDatabase";
-import SettingsDatabase, { ImagedLink } from "../common/firebase/database/settings/SettingsDatabase";
+import SettingsDatabase from "../common/firebase/database/settings/SettingsDatabase";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
 
 const SETTINGS_DB:SettingsDatabase = new FirestoreSettingsDatabase();
@@ -25,7 +25,11 @@ function makeSplitView(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                         .onMake(self => {
                             const displayArchive = self.lastElementChild as HTMLDivElement;
                             displayArchive.classList.add("flex-rows", "in-section-gap");
-                            displayArchive.childNodes.forEach(campaign => campaign.firstChild?.remove());
+                            displayArchive.childNodes.forEach(campaign => {
+                                campaign.firstChild?.remove();
+                                const link = campaign.firstChild as HTMLAnchorElement;
+                                link.addEventListener("click", () => location.href = link.href);
+                            });
                         }),
                     ElementFactory.div("sponsors", "boxed", "flex-rows")
                         .children(

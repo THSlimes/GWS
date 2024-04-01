@@ -1,0 +1,21 @@
+@import url("../shared.css");
+
+@import url("../custom-elements/smart-article.css");
+
+#navigation-buttons {
+    gap: var(--in-section-gap);
+    
+    > * {
+        flex-grow: 1;
+        > .article-title { flex-grow: 1; }
+    }
+}
+
+/* TABLET-VIEWPORT OVERRIDE */
+
+@media (max-aspect-ratio: 3 / 4) {
+    #navigation-buttons {
+        flex-direction: column;
+        > * { width: 100%; }
+    }
+}

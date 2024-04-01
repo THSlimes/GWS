@@ -62,7 +62,8 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
 
     initElement(): void {
         this.style.display = "flex";
-        this.setAttribute("lod", DetailLevel.toString(this.lod));
+        this.style.position = "relative";
+        this.setAttribute("lod", DetailLevel.toString(this.lod));        
 
         // heading element
         this.heading = ElementFactory.a(this.lod !== DetailLevel.FULL ? SmartArticle.getLinkTo(this.article) : undefined)
@@ -157,6 +158,11 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
                             .catch(() => UserFeedback.error("Kan link niet kopiëren, probeer het later opnieuw."));
                     })
             )
+            .style({
+                position: "absolute",
+                right: "var(--in-section-gap)",
+                top: "var(--in-section-gap)"
+            })
             .make();
 
 
@@ -328,6 +334,11 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
                             this.replaceWith(new SmartArticle(this.article, this.lod));
                         })
                 )
+                .style({
+                    position: "absolute",
+                    right: "var(--in-section-gap)",
+                    top: "var(--in-section-gap)"
+                })
                 .make()
         );
 

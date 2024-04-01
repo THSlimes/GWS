@@ -119,10 +119,10 @@ class AssemblyLine<TN extends string, E extends AssemblyLine.ElementType<TN> = A
         return this;
     }
 
-    private _onMake?:(self:E)=>void;
+    private _onMakeHandlers:((self:E)=>void)[] = [];
     /** Provides a callback to be run after the element is created. */
     public onMake(handler:(self:E)=>void) {
-        this._onMake = handler;
+        this._onMakeHandlers.push(handler);
         return this;
     }
 
@@ -171,8 +171,8 @@ class AssemblyLine<TN extends string, E extends AssemblyLine.ElementType<TN> = A
             out.addEventListener(key, e => handler(e as any, out));
         }
 
-        if (this._onMake !== undefined) this._onMake(out);
-
+        for (const h of this._onMakeHandlers) h(out);
+        
         
 
         return out;

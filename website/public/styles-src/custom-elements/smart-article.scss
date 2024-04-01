@@ -1,0 +1,102 @@
+@import url("../rich-text.css");
+@import url("./switch.css");
+@import url("./rich-text-input.css");
+
+/* ARTICLE DEFAULT STYLE */
+
+article, editable-smart-article {
+
+    position: relative;
+
+    & .heading {
+        &, > * {
+            font-size: 2rem;
+            font-weight: 600;
+        }
+        width: 100%;
+    }
+    & .body { width: 100%; }
+
+    & .post-date { color: var(--accent); }
+
+    & .read-more {
+        margin: 0px;
+        color: var(--accent) !important;
+        white-space: nowrap;
+    }
+
+    & .quick-actions {
+        width: max-content;
+        flex-wrap: nowrap;
+
+        > * {
+            color: inherit;
+            border-radius: var(--in-section-gap);
+        }
+    }
+    
+    
+    &[lod="full"] {
+        & .heading > * { font-size: 3rem; }
+        & .read-more { display: none; }
+        & .quick-actions {
+            position: absolute;
+            top: var(--in-section-gap);
+            right: var(--in-section-gap);
+        }
+    }
+
+    &[lod="full"], &[lod="medium"] {
+        & .read-more { font-style: italic; }
+    }
+
+    &[lod="medium"] {
+        & .quick-actions { display: none; }
+    }
+    
+    &[lod="medium"], &[lod="low"] {
+        & .post-date { font-size: 75%; }
+    }
+
+    &[lod="low"] {
+        & .heading > * {
+            margin: .5rem 0px;
+            font-size: 1.5rem;
+        }
+        & .post-date { font-style: italic; }
+    }
+
+}
+
+editable-smart-article {
+    & .body { min-height: 50vh; }
+}
+
+/* TABLET-VIEWPORT OVERRIDE */
+
+@media (max-aspect-ratio: 3 / 4) {
+    article[lod="full"], article[lod="medium"] {
+        & .heading > * { font-size: 1.5rem; }
+    }
+
+    editable-smart-article {
+        > .category-and-switches {
+            flex-wrap: wrap;
+            > .category { width: 100%; }
+        }
+    }
+}
+
+/* PHONE-VIEWPORT OVERRIDE */
+
+@media (max-aspect-ratio: 10 / 16) {
+    article[lod="medium"] .heading > * { font-size: 1.25rem; }
+    article[lod="full"] {
+        padding-top: var(--min-section-gap);
+        .heading > * { font-size: 1.5rem; }
+    }
+
+    editable-smart-article {
+        gap: var(--in-section-gap) !important;
+    }
+}

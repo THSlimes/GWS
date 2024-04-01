@@ -73,9 +73,10 @@ export default abstract class ElementFactory {
         const out = new AnchorElementAssemblyLine();
         out.onMake(self => {
             self.addEventListener("click", () => {
-                console.log("click");
-                
-                if (self.href && !self.download) location.href = self.href;
+                if (self.href && !self.hasAttribute("download")) {
+                    if (self.target === "_blank") open(self.href);
+                    else location.href = self.href;
+                }
             });
         });
         if (href) out.href(href);

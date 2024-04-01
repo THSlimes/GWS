@@ -1,0 +1,32 @@
+multisource-image {
+
+    max-width: 100%;
+
+    > img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+    > .error-message {
+        box-sizing: border-box;
+        min-width: 0px;
+        width: 100%;
+
+        overflow: hidden;
+
+        padding: var(--in-section-gap) var(--min-section-gap);
+
+        background-color: var(--indicate-bad);
+        
+        border-radius: var(--in-section-gap);
+
+        > * { color: var(--text-light) !important; }
+    }
+
+}
+
+@keyframes fade-in {
+    0% { opacity: 0; }
+    1000% { opacity: 1; }
+}

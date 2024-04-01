@@ -80,11 +80,9 @@ export default abstract class NodeUtil {
             if (ancestor.contains(node)) resolve(node); // already a child
             else { // set up observer
                 const obs = new MutationObserver(mutations => {
-                    for (const m of mutations) {
-                        if (m.target === node) {
-                            resolve(node);
-                            obs.disconnect(); // cleanup
-                        }
+                    if (ancestor.contains(node)) {
+                        resolve(node);
+                        obs.disconnect(); // cleanup
                     }
                 });
                 obs.observe(ancestor, { childList:true, subtree:true })

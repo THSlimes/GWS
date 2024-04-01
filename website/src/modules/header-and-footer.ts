@@ -82,8 +82,7 @@ function makeNavbar(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                                 .class("quick-actions", "center-content", "main-axis-space-between", "cross-axis-center")
                                 .children(
                                     searchButton = ElementFactory.p("search")
-                                        .id("search-button",)
-                                        .class("icon", "click-action")
+                                        .class("search-button", "icon", "click-action")
                                         .on("click", (_, self) => {
                                             self.textContent = searchBox.style.display === "none" ? "search_off" : "search";
                                             $(searchBox).stop().slideToggle(200);
@@ -95,6 +94,8 @@ function makeNavbar(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                                                     $(searchBox).stop().slideUp(200);
                                                 }
                                             });
+
+                                            Responsive.onChange(() => self.hidden = Responsive.isSlimmerOrEq(Responsive.Viewport.MOBILE_PORTRAIT));
                                         })
                                         .make(),
                                     ElementFactory.p("admin_panel_settings")

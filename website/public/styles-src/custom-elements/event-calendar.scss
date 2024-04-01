@@ -1,0 +1,228 @@
+@import url("./event-note.css");
+@import url("./icon-selector.css");
+
+event-calendar {
+    row-gap: var(--in-section-gap);
+
+    box-sizing: border-box;
+    width: 100%;
+
+    > .controls {
+        /* padding: 0px 2em 0px 2em; */
+        box-sizing: border-box;
+        width: 100%;
+        gap: var(--in-section-gap);
+        > .timespan-controls {
+            column-gap: var(--in-section-gap);
+            > .period-input { border: none; text-align: center; }
+            > .nav-button {
+                height: min-content;
+            }
+        }
+    }
+    
+    > .day-cell-container {
+        
+        grid-row: 2 / 3;
+        
+        display: grid;
+        grid-template-rows: max-content repeat(6, 1fr);
+        grid-template-columns: repeat(7, 1fr);
+
+        &[transpose] {
+            grid-template-rows: repeat(7, 1fr);
+            grid-template-columns: max-content repeat(6, 1fr);
+
+            > .day-cell {
+                grid-template-rows: 100%;
+                grid-template-columns: max-content repeat(var(--max-overlap), 1fr);
+
+                > event-note, > registerable-event-note {
+                    grid-row: 1 / 2;
+                    grid-column: calc(var(--offset) + 2) / span 1;
+
+                    width: 100% !important;
+                    height: calc(100% * var(--length) + (2 * var(--length) - 2) * var(--day-cell-padding));
+                    /* height: calc(100% * var(--length)); */
+
+                    min-width: 0px;
+                    min-height: 0px;
+
+                    &.starts-in-earlier-week {
+                        padding-left: calc(var(--in-section-gap) / 2);
+                        padding-top: 1em;
+                        height: calc(100% * var(--length) + (2 * var(--length) - 3) * var(--day-cell-padding) + 1em);
+                        translate: 0px -1em;
+                    }
+                }
+            }
+        }
+
+        border: var(--std-border);
+        flex-grow: 1;
+        width: 100%;
+
+        border-radius: var(--in-section-gap);
+
+        background-color: var(--secondary);
+
+        overflow: hidden auto;
+        &::-webkit-scrollbar-track {
+            background-color: var(--primary);
+            border-radius: 0px 100em 100em 0px;
+        }
+
+        > .day-name {
+            margin: var(--in-section-gap);
+            justify-self: center;
+            align-self: center;
+            color: var(--text-light);
+            user-select: none;
+        }
+        
+        > .day-cell {
+            position: relative;
+
+            box-sizing: border-box;
+
+            display: grid;
+            grid-template-columns: 100%;
+            grid-template-rows: max-content repeat(var(--max-overlap), 1fr);
+            gap: calc(var(--in-section-gap) / 2);
+
+            --day-cell-padding: calc(.5 * var(--in-section-gap));
+            padding: var(--day-cell-padding);
+
+            background-color: var(--primary);
+            outline: var(--std-border);
+            outline-color: var(--shadow-dark);
+
+            /* overflow-x: hidden; */
+
+            &.is-today {
+                background-color: lightyellow;
+                > .day-number { color: orangered; }
+            }
+            &.is-in-weekend {
+                background-color: mistyrose;
+                > .day-number { color: crimson; }
+            }
+            &.is-in-different-month { filter: brightness(.95); }
+
+            > .day-number {
+                margin: 0px;
+                width: 1em;
+                user-select: none;
+            }
+
+            > event-note, > registerable-event-note {
+                grid-row: calc(var(--offset) + 2) / span 1;
+                width: calc(100% * var(--length) + (2 * var(--length) - 2) * var(--day-cell-padding));
+                min-width: 0px;
+
+                &.starts-in-earlier-week {
+                    padding-left: 1em;
+                    width: calc(100% * var(--length) + (2 * var(--length) - 2) * var(--day-cell-padding) + 1em);
+                    translate: -1em 0px;
+                }
+            }
+        }
+
+        > .load-more {
+            margin: 2px;
+            height: 2px;
+            
+            text-align: center;
+            color: var(--text-light);
+            &.no-more { height: unset; }
+        }
+    }
+
+    &[display="list"] {
+        > .day-cell-container {
+            display: flex;
+            flex-direction: column;
+
+            max-height: 80vh;
+            overflow-y: scroll;
+
+            > .day-cell {
+                display: flex;
+                flex-direction: column;
+                row-gap: var(--in-section-gap);
+
+                > .day-number { width: 100%; }
+                > .no-activities {
+                    margin: 0px var(--in-section-gap) var(--in-section-gap) var(--in-section-gap);
+                    color: var(--shadow-dark);
+                }
+            }
+        }
+    }
+}
+
+#fullscreen-event-container {
+    z-index: 175;
+    position: fixed;
+    top:0px;
+    left:0px;
+    width: 100%;
+    height: 100%;
+
+    background-color: var(--shadow-dark);
+    backdrop-filter: blur(.25em);
+
+    &[hidden] { display: none; }
+    &:not([hidden]) { animation: fade-in 200ms ease-out 0ms 1 both; }
+
+    > * {
+        max-width: 80%;
+        box-shadow: var(--std-shadow);
+        animation: fade-in 200ms ease-out 0ms 1 both, slide-up 200ms ease-out 0ms 1 both;
+    }
+}
+
+@keyframes fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@keyframes slide-up {
+    0% { translate: 0px 2em; }
+    100% { opacity: 0px 0px; }
+}
+
+@keyframes pulsate {
+    0% { scale: 1; }
+    50% { scale: 1.05; }
+    100% { scale: 1; }
+}
+
+/* PHONE-VIEWPORT OVERRIDE */
+
+@media (max-aspect-ratio: 10 / 16) {
+    event-calendar {
+        max-height: unset;
+
+        > .controls {
+            flex-direction: column;
+            > * {
+                box-sizing: border-box;
+                width: 100%;
+                text-align: center;
+            }
+
+            > .timespan-controls {
+                width: 100%;
+                > *:nth-child(2) {
+                    flex-grow: 1;
+                    font-size: 125%;
+                }
+            }
+
+            > .viewmode-controls { justify-content: space-evenly; }
+        }
+
+        &:not([display="list"]) > .day-cell-container > .day-cell { min-height: 6rem; }
+    }
+}

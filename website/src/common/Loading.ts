@@ -89,6 +89,7 @@ export default abstract class Loading {
             this.loadingScreen.appendChild(p);
         }
 
+        const loadStart = Date.now();
         this.checkLoadedInterval = setInterval(() => { // periodically check if loaded
             if (this.numLoading === 0) { // loading finished
                 document.body.removeAttribute("loading");
@@ -99,6 +100,7 @@ export default abstract class Loading {
                 });
                 this.loadingScreen.classList.add("fading");
                 clearInterval(this.checkLoadedInterval);
+                console.log(`Loading done: ${Date.now() - loadStart}ms`);
             }
         }, 50);
     }

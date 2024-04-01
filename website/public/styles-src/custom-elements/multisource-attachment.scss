@@ -1,0 +1,36 @@
+multisource-attachment {
+    padding: var(--in-section-gap) var(--min-section-gap) !important;
+
+    width: max-content !important;
+    flex-grow: unset !important;
+
+    background-color: var(--tertiary);
+
+    border-radius: var(--in-section-gap);
+    box-shadow: var(--std-shadow);
+
+    & * { color: var(--text-light) !important; }
+
+    > .file-type-icon {
+    }
+
+    > .file-info {
+        > .file-name {
+            min-width: 0px;
+        }
+
+        > .file-size {
+            font-size: smaller;
+            font-style: italic;
+
+            &:empty { display: none; }
+        }
+    }
+
+    > .download-icon {
+        margin-left: var(--min-section-gap);
+        --hover-bg-color: color-mix(in srgb, var(--tertiary), white 12.5%);
+    }
+
+    &.error { background-color: var(--indicate-bad); }
+}

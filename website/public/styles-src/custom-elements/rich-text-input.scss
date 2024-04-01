@@ -1,0 +1,189 @@
+@import url("../rich-text.css");
+
+@import url("../custom-elements/folder-element.css");
+@import url("../custom-elements/switch.css");
+
+rich-text-input {
+    display: flex;
+    position: relative;
+
+    padding: var(--in-section-gap);
+    padding-top: 3rem;
+    
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+
+    background-color: var(--secondary);
+    text-align: unset !important;
+
+    overflow: hidden !important;
+
+    &[compact] {
+        > .toolbar > * { font-size: 80%; }
+        > .body > * { font-size: 90%; }
+    }
+
+    & folder-element {
+        > .topper {
+            border-radius: var(--in-section-gap);
+            > * { margin: 0px; }
+        }
+
+        &.category {
+            > .topper {
+                outline: var(--std-border);
+                transition: border-bottom-left-radius 200ms linear;
+            }
+            &[open] > .topper { border-bottom-left-radius: 0px; }
+
+            > .contents {
+                background-color: var(--primary);
+                border: var(--std-border);
+                border-radius: 0px 0px var(--in-section-gap) var(--in-section-gap);
+            }
+        }
+
+    }
+
+    > .toolbar {
+        position: absolute;
+        z-index: 100;
+        top: var(--in-section-gap);
+
+        padding: calc(var(--in-section-gap) / 4);
+
+        width: calc(100% - 2 * var(--in-section-gap));
+
+        background-color: var(--primary);
+        outline: calc(var(--in-section-gap) / 2) solid var(--secondary);
+        border-radius: var(--in-section-gap);
+
+        flex-wrap: wrap;
+
+        & *:not(.color-bulb):not(.color-bulb-indicator) { color: var(--text-dark) !important; }
+
+        & .click-action { border-radius: var(--in-section-gap); }
+
+        & .font-size-selector > .contents > input { width: 4em; }
+
+        & .color-picker {
+            & .color-bulb {
+                width: 1.5rem;
+                height: 1.5rem;
+                border-radius: 100%;
+
+                > p {
+                    font-size: 1.5rem;
+                    translate: 0px -.1125rem;
+                }
+            }
+        }
+
+        > * {
+            border-radius: var(--in-section-gap);
+        }
+    }
+
+    > .body {
+        padding: var(--in-section-gap);
+        row-gap: var(--in-section-gap);
+
+        box-sizing: border-box;
+        width: 100%;
+        flex-grow: 1;
+
+        background-color: var(--primary);
+        color: var(--text-dark);
+        
+        border-radius: var(--in-section-gap);
+
+        overflow-y: scroll;
+
+        & .element-container {
+            box-sizing: border-box;
+            
+            padding: var(--in-section-gap);
+
+            outline: 2px dashed var(--shadow-dark);
+            border-radius: var(--in-section-gap);
+
+            > *[do-serialize] {
+                align-self: center;
+
+                padding: 2px;
+                margin: 0px;
+                flex-grow: 1;
+
+                border-radius: calc(var(--in-section-gap) / 2);
+
+                &[selected] {
+                    outline: 1px solid var(--secondary);
+                }
+
+                &.text-box { padding: 2px; }
+        
+                &:empty::after {
+                    color: var(--shadow-dark);
+                    font-style: italic;
+                    font-weight: bold;
+                    content: "Nieuwe " var(--type);
+                }
+
+                &[type="newspaper"] > .contents { min-height: 150vh; }
+
+            }
+
+            > .controls { color: var(--text-dark); }
+
+            > .specialized-container {
+                flex-grow: 1;
+
+                > * { width: 100%; }
+
+                > .src-input {}
+
+                > .width-selector {
+                    width: 100%;
+                    > input { flex-grow: 1; }
+                }
+            }
+
+            > ul, > ol {
+                > .element-container {
+                    padding-left: 2rem;
+                    > ::before { left: -2rem; }
+                }
+            }
+        }
+
+        &:empty{ /* Placeholder */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            &::before {
+                content: var(--placeholder);
+                font-size: 1.125em;
+                color: var(--shadow-dark);
+            }
+        }
+    }
+
+}
+
+/* compact toolbar */
+@media (max-aspect-ratio: 4 / 3) {
+    rich-text-input {
+        gap: var(--in-section-gap) !important;
+
+        > .toolbar {
+            gap: var(--in-section-gap);
+            > * { font-size: .75em !important; }
+        }
+    }
+}
+
+/* PHONE-VIEWPORT OVERRIDE */
+
+@media (max-aspect-ratio: 10 / 16) {
+}
