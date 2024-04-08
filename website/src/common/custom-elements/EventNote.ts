@@ -24,13 +24,23 @@ import Loading from "../Loading";
 
 export class EventNote extends HTMLElement implements HasSections<EventNote.SectionName> {
 
+    private static permissionsQueried = false;
+    private static permissionsQueriedHandlers:VoidFunction[] = [];
     protected static CAN_DELETE = false;
     protected static CAN_UPDATE = false;
+    protected static onPermissionsQueried():Promise<void> {
+        return new Promise(resolve => {
+            if (this.permissionsQueried) resolve(); // already done
+            else this.permissionsQueriedHandlers.push(resolve); // called in static block
+        });
+    }
 
     static {
         onPermissionCheck([Permissions.Permission.DELETE_EVENTS, Permissions.Permission.UPDATE_EVENTS], (_, res) => {
             this.CAN_DELETE = res.DELETE_EVENTS;
             this.CAN_UPDATE = res.UPDATE_EVENTS;
+            this.permissionsQueried = true;
+            for (const h of this.permissionsQueriedHandlers) h(); // resolved waiting promises
         }, true, true);
     }
     
@@ -146,7 +156,8 @@ export class EventNote extends HTMLElement implements HasSections<EventNote.Sect
         this.description = this.appendChild(ElementFactory.richText(this.event.description).class("description").make());
 
         // quick actions section
-        this.quickActions = this.appendChild(
+        EventNote.onPermissionsQueried()
+        .then(() => this.quickActions = this.appendChild(
             ElementFactory.div(undefined, "quick-actions", "flex-columns")
                 .children(
                     EventNote.CAN_DELETE && ElementFactory.iconButton("delete", (_, self) => {
@@ -179,7 +190,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNote.Sect
                     ElementFactory.iconButton("close", () => EventCalendar.closeFullscreenNote()),
                 )
                 .make()
-        );
+        ));
     }
 
     public copy(lod:DetailLevel=this._lod, expanded:boolean=this.expanded) {
@@ -455,17 +466,30 @@ Loading.onDOMContentLoaded().then(() => customElements.define("editable-event-no
 
 
 
-export default class RegisterableEventNote extends EventNote implements HasSections<RegisterableEventNote.SectionName> {
+export class RegisterableEventNote extends EventNote implements HasSections<RegisterableEventNote.SectionName> {
 
+    private static registrationPermissionsQueried = false;
+    private static registrationsPermissionsQueriedHandlers:VoidFunction[] = [];
     private static CAN_REGISTER = false;
     private static CAN_DEREGISTER = false;
     private static CAN_READ_COMMENTS = false;
+    private static onRegistrationPermissionsQueried():Promise<void> {
+        return new Promise(resolve => {
+            if (this.registrationPermissionsQueried) resolve(); // already done
+            else this.registrationsPermissionsQueriedHandlers.push(resolve);
+        });
+    }
 
     static {
         onPermissionCheck([Permissions.Permission.REGISTER_FOR_EVENTS, Permissions.Permission.DEREGISTER_FOR_EVENTS, Permissions.Permission.READ_EVENT_COMMENTS], (_, res) => {
             this.CAN_REGISTER = res.REGISTER_FOR_EVENTS;
             this.CAN_DEREGISTER = res.DEREGISTER_FOR_EVENTS;
             this.CAN_READ_COMMENTS = res.READ_EVENT_COMMENTS;
+            EventNote.onPermissionsQueried()
+            .then(() => {
+                this.registrationPermissionsQueried = true;
+                for (const h of this.registrationsPermissionsQueriedHandlers) h(); // resolve promises
+            });
         }, true, true);
     }
 
@@ -489,79 +513,80 @@ export default class RegisterableEventNote extends EventNote implements HasSecti
     public commentBox!: HTMLTextAreaElement;
 
     private refreshRegistrationDetails() {
-        onAuth()
-            .then(user => {
-                const allowsPayment = !this.allowPaymentSwitch || this.allowPaymentSwitch.value;
-                const isRegistered = user !== null && this.event.isRegistered(user.uid);
-                let state: RegisterableEventNote.ButtonState;
-                const now = new Date();
+        RegisterableEventNote.onRegistrationPermissionsQueried()
+        .then(() => onAuth())
+        .then(user => {
+            const allowsPayment = !this.allowPaymentSwitch || this.allowPaymentSwitch.value;
+            const isRegistered = user !== null && this.event.isRegistered(user.uid);
+            let state: RegisterableEventNote.ButtonState;
+            const now = new Date();
 
-                if (!user) state = ["login", "Log in om je in te schrijven", true, false];
-                else {
-                    if (this.event.ends_at <= now) state = ["event_busy", "Activiteit is al voorbij", false, false];
-                    else if (this.event.starts_at <= now) state = ["calendar_today", "Activiteit is al gestart", false, false];
-                    else if (this.event.can_register_until && this.event.can_register_until <= now) {
-                        state = ["event_upcoming", "Inschrijving is al gesloten", false, false];
-                    }
-                    else if (this.event.can_register_from && now <= this.event.can_register_from) {
-                        state = ["calendar_clock", `Inschrijven kan pas vanaf ${DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(this.event.can_register_from)}`, false, false];
-                    }
-                    else if (isRegistered) state = RegisterableEventNote.CAN_DEREGISTER ?
-                        ["free_cancellation", "Uitschrijven", true, false] :
-                        ["event_available", "Ingeschreven", false, false];
-                    else if (this.event.isFull()) state = ["event_busy", "Activiteit zit vol", false, false];
-                    else state = RegisterableEventNote.CAN_REGISTER ?
-                        ["calendar_add_on", "Inschrijven", allowsPayment, true] :
-                        ["event_busy", "Inschrijving niet mogelijk", false, false];
+            if (!user) state = ["login", "Log in om je in te schrijven", true, false];
+            else {
+                if (this.event.ends_at <= now) state = ["event_busy", "Activiteit is al voorbij", false, false];
+                else if (this.event.starts_at <= now) state = ["calendar_today", "Activiteit is al gestart", false, false];
+                else if (this.event.can_register_until && this.event.can_register_until <= now) {
+                    state = ["event_upcoming", "Inschrijving is al gesloten", false, false];
                 }
+                else if (this.event.can_register_from && now <= this.event.can_register_from) {
+                    state = ["calendar_clock", `Inschrijven kan pas vanaf ${DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(this.event.can_register_from)}`, false, false];
+                }
+                else if (isRegistered) state = RegisterableEventNote.CAN_DEREGISTER ?
+                    ["free_cancellation", "Uitschrijven", true, false] :
+                    ["event_available", "Ingeschreven", false, false];
+                else if (this.event.isFull()) state = ["event_busy", "Activiteit zit vol", false, false];
+                else state = RegisterableEventNote.CAN_REGISTER ?
+                    ["calendar_add_on", "Inschrijven", allowsPayment, true] :
+                    ["event_busy", "Inschrijving niet mogelijk", false, false];
+            }
 
-                [this.registerButton.firstElementChild!.textContent, this.registerButton.children[1].textContent] = state;
-                this.registerButton.disabled = !state[2];
+            [this.registerButton.firstElementChild!.textContent, this.registerButton.children[1].textContent] = state;
+            this.registerButton.disabled = !state[2];
 
-                if (this.paymentDisclaimer && this.isVisible("paymentDisclaimer")) this.paymentDisclaimer.hidden = !state[3];
-                if (this.isVisible("commentBox")) this.commentBox.hidden = !state[3];
-                this.registrations.hidden ||= ObjectUtil.sizeOf(this.event.registrations) === 0;
+            if (this.paymentDisclaimer && this.isVisible("paymentDisclaimer")) this.paymentDisclaimer.hidden = !state[3];
+            if (this.isVisible("commentBox")) this.commentBox.hidden = !state[3];
+            this.registrations.hidden ||= ObjectUtil.sizeOf(this.event.registrations) === 0;
 
-                const spacesLeft = (this.event.capacity ?? 0) - ObjectUtil.sizeOf(this.event.registrations);
-                const commentsPromise = RegisterableEventNote.CAN_READ_COMMENTS ? this.event.getComments() : new Promise<Record<string,EventComment>>(resolve => resolve({}));
-                
-                commentsPromise.then(comments => {
-                    const newRegistrations = ElementFactory.div(undefined, "registrations", "flex-rows", "in-section-gap")
-                        .children(
-                            ElementFactory.heading(this.expanded ? 3 : 4, "Ingeschreven geitjes")
-                                .children((spacesLeft > 0 && state[3]) && ElementFactory.span(` (${spacesLeft} plekken over)`).class("subtitle"))
-                                .class("no-margin"),
-                            ElementFactory.div()
-                                .class("registrations-list", "no-margin")
-                                .children(
-                                    ...ObjectUtil.mapToArray(this.event.registrations, (id, name) => {
-                                        const comment = id in comments ? comments[id] : undefined;
-                                        const commentText = id in comments ? `${name}:\n${comments[id].body} \n\n${DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(comments[id].created_at)}` : "";
-                                        return ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
-                                            .children(
-                                                ElementFactory.p(name).class("no-margin"),
-                                                (id in comments) && ElementFactory.iconButton("comment", () => navigator.clipboard.writeText(commentText)
-                                                    .then(() => UserFeedback.success("Opmerking gekopieerd."))
-                                                    .catch(() => UserFeedback.error("Kon opmerking niet kopiëren, probeer het later opnieuw."))
-                                                )
-                                                .class("comment")
-                                                .tooltip(commentText)
+            const spacesLeft = (this.event.capacity ?? 0) - ObjectUtil.sizeOf(this.event.registrations);
+            const commentsPromise = RegisterableEventNote.CAN_READ_COMMENTS ? this.event.getComments() : new Promise<Record<string,EventComment>>(resolve => resolve({}));
+            
+            commentsPromise.then(comments => {
+                const newRegistrations = ElementFactory.div(undefined, "registrations", "flex-rows", "in-section-gap")
+                    .children(
+                        ElementFactory.heading(this.expanded ? 3 : 4, "Ingeschreven geitjes")
+                            .children((spacesLeft > 0 && state[3]) && ElementFactory.span(` (${spacesLeft} plekken over)`).class("subtitle"))
+                            .class("no-margin"),
+                        ElementFactory.div()
+                            .class("registrations-list", "no-margin")
+                            .children(
+                                ...ObjectUtil.mapToArray(this.event.registrations, (id, name) => {
+                                    const comment = id in comments ? comments[id] : undefined;
+                                    const commentText = id in comments ? `${name}:\n${comments[id].body} \n\n${DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(comments[id].created_at)}` : "";
+                                    return ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
+                                        .children(
+                                            ElementFactory.p(name).class("no-margin"),
+                                            (id in comments) && ElementFactory.iconButton("comment", () => navigator.clipboard.writeText(commentText)
+                                                .then(() => UserFeedback.success("Opmerking gekopieerd."))
+                                                .catch(() => UserFeedback.error("Kon opmerking niet kopiëren, probeer het later opnieuw."))
                                             )
-                                        }
-                                    )
+                                            .class("comment")
+                                            .tooltip(commentText)
+                                        )
+                                    }
                                 )
-                                .make()
-                        )
-                        .make();
-                    
-                    this.registrations.replaceWith(newRegistrations);
-                    newRegistrations.hidden = this.registrations.hidden;
-                    this.registrations = newRegistrations;
+                            )
+                            .make()
+                    )
+                    .make();
+                
+                this.registrations.replaceWith(newRegistrations);
+                newRegistrations.hidden = this.registrations.hidden;
+                this.registrations = newRegistrations;
 
-                })
-                .catch(console.error);
             })
             .catch(console.error);
+        })
+        .catch(console.error);
     }
 
     override event!: RegisterableEventInfo;

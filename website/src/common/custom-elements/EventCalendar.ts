@@ -1,6 +1,6 @@
 import ElementFactory from "../html-element-factory/ElementFactory";
 import EventDatabase, { EventInfo, RegisterableEventInfo } from "../firebase/database/events/EventDatabase";
-import { EventNote } from "./EventNote";
+import { EventNote, RegisterableEventNote } from "./EventNote";
 import { DetailLevel } from "../util/UtilTypes";
 import CachingEventDatebase from "../firebase/database/events/CachingEventDatebase";
 import IconSelector from "./IconSelector";
@@ -10,7 +10,6 @@ import ElementUtil from "../util/ElementUtil";
 import URLUtil from "../util/URLUtil";
 import getErrorMessage from "../firebase/authentication/error-messages";
 import NodeUtil from "../util/NodeUtil";
-import RegisterableEventNote from "./EventNote";
 import Loading from "../Loading";
 import UserFeedback from "../ui/UserFeedback";
 import EventDatabaseFactory from "../firebase/database/events/EventDatabaseFactory";
