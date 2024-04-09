@@ -1,3 +1,5 @@
+import writeXlsxFile from 'write-excel-file'
+
 import { EventComment, EventInfo, RegisterableEventInfo } from "../firebase/database/events/EventDatabase";
 import { HasSections } from "../util/UtilTypes";
 import ColorUtil from "../util/ColorUtil";
@@ -21,6 +23,7 @@ import ElementUtil from "../util/ElementUtil";
 import EventDatabaseFactory from "../firebase/database/events/EventDatabaseFactory";
 import NumberUtil from "../util/NumberUtil";
 import Loading from "../Loading";
+
 
 export class EventNote extends HTMLElement implements HasSections<EventNote.SectionName> {
 
@@ -52,7 +55,8 @@ export class EventNote extends HTMLElement implements HasSections<EventNote.Sect
     };
 
     protected isVisible(sectionName:EventNote.SectionName):boolean {
-        return EventNote.SECTIONS_VISIBLE_FROM[sectionName] <= this.lod;
+        const ownClass = (this.constructor as typeof EventNote);
+        return ownClass.SECTIONS_VISIBLE_FROM[sectionName] <= this.lod;
     }
 
     public name!:HTMLHeadingElement;
@@ -189,6 +193,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNote.Sect
                         }, "Delen"),
                     ElementFactory.iconButton("close", () => EventCalendar.closeFullscreenNote()),
                 )
+                .onMake(self => self.hidden = !this.isVisible("quickActions"))
                 .make()
         ));
     }
@@ -553,9 +558,54 @@ export class RegisterableEventNote extends EventNote implements HasSections<Regi
             commentsPromise.then(comments => {
                 const newRegistrations = ElementFactory.div(undefined, "registrations", "flex-rows", "in-section-gap")
                     .children(
-                        ElementFactory.heading(this.expanded ? 3 : 4, "Ingeschreven geitjes")
-                            .children((spacesLeft > 0 && state[3]) && ElementFactory.span(` (${spacesLeft} plekken over)`).class("subtitle"))
-                            .class("no-margin"),
+                        ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
+                            .children(
+                                ElementFactory.heading(this.expanded ? 3 : 4, "Ingeschreven geitjes")
+                                    .children((spacesLeft > 0 && state[3]) && ElementFactory.span(` (${spacesLeft} plekken over)`).class("subtitle"))
+                                    .class("no-margin"),
+                                RegisterableEventNote.CAN_READ_COMMENTS && ElementFactory.iconButton("download", () => { // create xlsx file and download it
+                                    const headerRow = [
+                                        { value: "Naam" },
+                                        { value: "Inschrijfmoment" },
+                                        { value: "Opmerking" }
+                                    ];
+
+                                    let maxNameLength = headerRow[0].value.length;
+                                    let maxCommentLength = headerRow[2].value.length;
+
+                                    const data = ObjectUtil.mapToArray(this.event.registrations, (id, name) => {
+                                        maxNameLength = Math.max(maxNameLength, name.length);
+                                        if (id in comments) {
+                                            maxCommentLength = Math.max(maxCommentLength, comments[id].body.length);
+                                            return [
+                                                {
+                                                    type: String,
+                                                    value: name,
+                                                },
+                                                {
+                                                    type: Date,
+                                                    value: comments[id].created_at,
+                                                    format: "d mmmm yyyy",
+                                                },
+                                                {
+                                                    type: String,
+                                                    value: comments[id].body
+                                                }
+                                            ];
+                                        }
+                                        else return [ { type: String, value: name } ];
+                                    });
+
+                                    writeXlsxFile([
+                                        headerRow,
+                                        ...data
+                                    ], {
+                                        columns: [{ width: maxNameLength }, { width: 15 }, { width: maxCommentLength }],
+                                        fileName: `inschrijvingen ${this.event.name} (${DateUtil.DATE_FORMATS.DAY.SHORT_NO_YEAR(this.event.starts_at)}).xlsx`
+                                    })
+                                    .catch(err => console.error(err));
+                                }, "Inschrijvingen downloaden")
+                            ),
                         ElementFactory.div()
                             .class("registrations-list", "no-margin")
                             .children(
