@@ -24,13 +24,18 @@ import EventDatabaseFactory from "../firebase/database/events/EventDatabaseFacto
 import NumberUtil from "../util/NumberUtil";
 import Loading from "../Loading";
 
-
+/**
+ * An EventNote displays relevant information of an event.
+ */
 export class EventNote extends HTMLElement implements HasSections<EventNote.SectionName> {
 
     private static permissionsQueried = false;
     private static permissionsQueriedHandlers:VoidFunction[] = [];
+    /** Whether the user is allowed to delete events from the database. */
     protected static CAN_DELETE = false;
+    /** Whether the user is allowed to add events to the database. */
     protected static CAN_UPDATE = false;
+    /** Promise that resolves once relevant permissions have been queried. */
     protected static onPermissionsQueried():Promise<void> {
         return new Promise(resolve => {
             if (this.permissionsQueried) resolve(); // already done
@@ -38,7 +43,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNote.Sect
         });
     }
 
-    static {
+    static { // query permissions
         onPermissionCheck([Permissions.Permission.DELETE_EVENTS, Permissions.Permission.UPDATE_EVENTS], (_, res) => {
             this.CAN_DELETE = res.DELETE_EVENTS;
             this.CAN_UPDATE = res.UPDATE_EVENTS;
@@ -47,6 +52,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNote.Sect
         }, true, true);
     }
     
+    /** Mapping of section names to the minimum DetailLevel from which they should be visible. */
     protected static SECTIONS_VISIBLE_FROM:Record<EventNote.SectionName,DetailLevel> = {
         name: DetailLevel.LOW,
         timespan: DetailLevel.MEDIUM,
@@ -54,6 +60,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNote.Sect
         quickActions: DetailLevel.HIGH
     };
 
+    /** Whether the section with the given name should be visible */
     protected isVisible(sectionName:EventNote.SectionName):boolean {
         const ownClass = (this.constructor as typeof EventNote);
         return ownClass.SECTIONS_VISIBLE_FROM[sectionName] <= this.lod;
@@ -66,6 +73,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNote.Sect
 
     protected readonly expanded:boolean;
     private _lod!:DetailLevel;
+    /** Level of detail */
     public get lod() { return this._lod; }
     public set lod(newLOD) {
         if (newLOD !== this.lod) {
@@ -82,6 +90,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNote.Sect
         }
     }
 
+    /** EventInfo of the note */
     public event!:EventInfo;
     /** Replaces the EventNote with its editable version. */
     protected replaceWithEditable(event=this.event):void {
@@ -205,13 +214,17 @@ export class EventNote extends HTMLElement implements HasSections<EventNote.Sect
 }
 
 export namespace EventNote {
+    /** Names of sections of an EventNote */
     export type SectionName = "name" | "timespan" | "description" | "quickActions";
 }
 
 Loading.onDOMContentLoaded().then(() => customElements.define("event-note", EventNote));
 
 
-
+/**
+ * An EditableEventNote is a type of HTMLElement that allows the user to edit details
+ * of an event more easily.
+ */
 export class EditableEventNote extends HTMLElement implements HasSections<EditableEventNote.SectionName> {
 
     public name!:HTMLHeadingElement;

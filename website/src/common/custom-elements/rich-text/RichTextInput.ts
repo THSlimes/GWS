@@ -42,14 +42,12 @@ function insertAt(position:InsertionPosition, ...nodes:Node[]):void {
  */
 class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body"> {
 
-    public set isCompact(newVal:boolean) {
-        this.toggleAttribute("compact", newVal);
-    }
+    /** Whether the RichTextInput is a smaller, compact verion. */
+    public set isCompact(newVal:boolean) { this.toggleAttribute("compact", newVal); }
     public get isCompact() { return this.hasAttribute("compact"); }
 
-    public get value():string {
-        return RichTextSerializer.serialize(this.body);
-    }
+    /** Current rich text contained in the input. */
+    public get value():string { return RichTextSerializer.serialize(this.body); }
     public set value(newVal:string) {
         this.selectedElement = null;
         NodeUtil.empty(this.body); // remove children
@@ -64,6 +62,7 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
         
     }
 
+    /** Placeholder text to show when input is empty. */
     public get placeholder() { return this.style.getPropertyValue("--placeholder"); }
     public set placeholder(newPlc:string) { this.style.setProperty("--placeholder", `"${newPlc}"`); }
 
@@ -72,7 +71,6 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
     /** Body child element */
     public body!:HTMLDivElement;
 
-    private readonly unselectCallback = () => this.selectedElement = null;
     private _selectedElement:HTMLElement|null = null;
     private set selectedElement(elem:HTMLElement|null) {
         const oldElem = this._selectedElement;
@@ -198,8 +196,8 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                 })
                 .make();
         }
-        else if (newElem.tagName === "IDEA-BOX") {
-            newElem.style.pointerEvents = "none";
+        else if (newElem.tagName === "IDEA-BOX") { // custom container for idea box
+            newElem.style.pointerEvents = "none"; // simply remove interactions
             insElem = newElem;
         }
         else insElem = newElem; // all other elements
@@ -274,6 +272,7 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
         else return false;
     }
 
+    /** Creates a new RichTextInput */
     constructor(value?:string) {
         super();
 
@@ -305,7 +304,7 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
             .make();
 
         
-        if (shortcut) {
+        if (shortcut) { // add event listener to detect and perform keyboard shortcut
             this.addEventListener("keydown", ev => {
                 const specialKeyPressed =
                     !shortcut[1] ||
@@ -324,7 +323,9 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
         return toggle;
     }
 
+    /** Base colors for the color picker. */
     private static readonly PICKER_BASE_COLORS:ColorUtil.HexColor[] = ["#FF0000", "#FF8700", "#FFD300", "#DEFF0A", "#A1FF0A", "#0AFF99", "#0AEFFF", "#147DF5", "#580AFF", "#BE0AFF"];
+    /** Brightness levels for color picker base colors. */
     private static readonly PICKER_SHADE_RATIOS:number[] = [.25, .5, .75];
     /** Makes a solid-colored button. */
     private makeColorBulb(color:ColorUtil.HexColor, onSelect:(c:ColorUtil.HexColor)=>void) {
@@ -392,11 +393,11 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
         let alignSelector:FolderElement;
         let alignOptions:HTMLElement[];
 
-        this.toolbar = this.appendChild(
+        this.toolbar = this.appendChild( // toolbar (styling options + section adding buttons)
             ElementFactory.div(undefined, "toolbar", "flex-columns", "main-axis-space-evenly", "section-gap")
                 .canSelect(false)
                 .children(
-                    ElementFactory.div(undefined, "styling", "flex-columns", "in-section-gap")
+                    ElementFactory.div(undefined, "styling", "flex-columns", "in-section-gap") // styling options
                         .children(
                             this.makeStyleTagToggle("small", "text_decrease", "Kleiner (ctrl+<)", ['<', "ctrl"], "big"),
                             this.makeStyleTagToggle("big", "text_increase", "Groter (ctrl+>)", ['>', "ctrl"], "small"),
@@ -445,18 +446,17 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                                 })
                                 .make()
                         ),
-                    this.makeSectionTypes(() => this.insertionPosition)
+                    this.makeSectionTypes(() => this.insertionPosition) // section adding buttons
                 )
                 .make()
         );
 
-        this.body = this.appendChild(
+        this.body = this.appendChild( // input body (where sections go)
             ElementFactory.div(undefined, "body", "rich-text", "flex-rows")
                 .on("focusin", (ev) => {
                     let target = ev.target;
 
                     if (target instanceof HTMLElement) {
-                        
                         let elem:HTMLElement|null = target; // find element to select
                         while (!elem.hasAttribute("do-serialize")) {
                             const q:Element|null = elem.querySelector("[do-serialize]");
@@ -490,11 +490,11 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                 .make()
         );
 
-        document.addEventListener("focusin", ev => {
+        document.addEventListener("focusin", ev => { // unselect selected element on focus outside of RichTextInput
             if (ev.target instanceof Node && !this.contains(ev.target)) this.selectedElement = null;
         });
 
-        document.addEventListener("scroll", () => {
+        document.addEventListener("scroll", () => { // to move toolbar with scroll
             requestAnimationFrame(() => { // custom sticky scroll
                 const tlbRect = this.toolbar.getBoundingClientRect();
                 const thisRect = this.getBoundingClientRect();
@@ -504,7 +504,7 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
             });
         });
 
-        new ResizeObserver(() => requestAnimationFrame(() => {
+        new ResizeObserver(() => requestAnimationFrame(() => { // handle shifting height of toolbar
             this.style.paddingTop = `calc(${this.toolbar.getBoundingClientRect().height}px + 2 * var(--in-section-gap))`;
         })).observe(document.body);
         
@@ -527,7 +527,7 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                     );
                     
                 }, "Snelkoppeling toevoegen"),
-                !exclude.includes("attachment") && ElementFactory.iconButton("attach_file_add", () => {
+                !exclude.includes("attachment") && ElementFactory.iconButton("attach_file_add", () => { // add new attachment
                     const newElem = new MultisourceAttachment();
                     newElem.classList.add("align-justify");
                     this.insert(
@@ -552,7 +552,7 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                     .heading(
                         folder => exclude.includes("title") ?
                             folder.contents.firstElementChild! :
-                            ElementFactory.iconButton("title", () => { // add new title h1
+                            ElementFactory.iconButton("title", () => { // add new title heading
                                 this.insert(
                                     "title",
                                     ElementFactory.h1().class("title", "align-justify").style({ fontSize: "40px" }).make(),
@@ -591,14 +591,14 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                             insPosCallback()
                         );
                     }, "Nieuwe paragraaf"),
-                !exclude.includes("list") && ElementFactory.iconButton("format_list_bulleted", () => {
+                !exclude.includes("list") && ElementFactory.iconButton("format_list_bulleted", () => { // add new unordered list
                         this.insert(
                             "list",
                             ElementFactory.ul().make(),
                             insPosCallback()
                         );
                     }, "Nieuwe lijst"),
-                !exclude.includes("numbered-list") && ElementFactory.iconButton("format_list_numbered", () => {
+                !exclude.includes("numbered-list") && ElementFactory.iconButton("format_list_numbered", () => { // add new ordered list
                         this.insert(
                             "numbered-list",
                             ElementFactory.ol().make(),
@@ -613,13 +613,13 @@ class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">
                             .tooltip("Widgets")
                     )
                     .children(
-                        !exclude.includes("newspaper") && ElementFactory.iconButton("newspaper", () => {
+                        !exclude.includes("newspaper") && ElementFactory.iconButton("newspaper", () => { // add association newspaper
                             const newspaper = new IFrameContainer(RichTextInput.NEWSPAPER_SRC);
                             newspaper.classList.add("newspaper");
                             newspaper.classList.add("align-center");
                             this.insert("newspaper", newspaper, insPosCallback());
                         }, "Verenigingsblad toevoegen"),
-                        !exclude.includes("idea-box") && ElementFactory.iconButton("emoji_objects", () => {
+                        !exclude.includes("idea-box") && ElementFactory.iconButton("emoji_objects", () => { // add idea box
                             const ideaBox = new IdeaBox;
                             ideaBox.classList.add("align-center");
                             this.insert("idea-box", ideaBox, insPosCallback());

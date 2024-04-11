@@ -5,9 +5,11 @@ import IBSubmissionPaginator from "../firebase/database/idea-box-submissions/IBS
 import Loading from "../Loading";
 
 const DB = new FirestoreIBSubmissionDatabase();
+/** paginator for submissions */
 const PAGINATOR = new IBSubmissionPaginator(DB, {}, 10);
 
 let initializedIdeaBoxPanel = false;
+/** Initializes the panel for idea box submissions. */
 export function initIdeaBoxPanel() {
     if (!initializedIdeaBoxPanel) {
         Loading.markLoadStart(initIdeaBoxPanel);

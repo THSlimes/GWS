@@ -3,6 +3,9 @@ import RichTextInput from "./RichTextInput";
 
 const EVENT_LISTENER_ATTRIBUTE_NAMES = ["onfullscreenchange", "onfullscreenerror", "onabort", "onanimationcancel", "onanimationend", "onanimationiteration", "onanimationstart", "onauxclick", "onbeforeinput", "onbeforetoggle", "onblur", "oncancel", "oncanplay", "oncanplaythrough", "onchange", "onclick", "onclose", "oncompositionend", "oncompositionstart", "oncompositionupdate", "oncontextmenu", "oncopy", "oncuechange", "oncut", "ondblclick", "ondrag", "ondragend", "ondragenter", "ondragleave", "ondragover", "ondragstart", "ondrop", "ondurationchange", "onemptied", "onended", "onerror", "onfocus", "onfocusin", "onfocusout", "onformdata", "ongotpointercapture", "oninput", "oninvalid", "onkeydown", "onkeypress", "onkeyup", "onload", "onloadeddata", "onloadedmetadata", "onloadstart", "onlostpointercapture", "onmousedown", "onmouseenter", "onmouseleave", "onmousemove", "onmouseout", "onmouseover", "onmouseup", "onpaste", "onpause", "onplay", "onplaying", "onpointercancel", "onpointerdown", "onpointerenter", "onpointerleave", "onpointermove", "onpointerout", "onpointerover", "onpointerup", "onprogress", "onratechange", "onreset", "onresize", "onscroll", "onscrollend", "onsecuritypolicyviolation", "onseeked", "onseeking", "onselect", "onselectionchange", "onselectstart", "onslotchange", "onstalled", "onsubmit", "onsuspend", "ontimeupdate", "ontoggle", "ontouchcancel", "ontouchend", "ontouchmove", "ontouchstart", "ontransitioncancel", "ontransitionend", "ontransitionrun", "ontransitionstart", "onvolumechange", "onwaiting", "onwebkitanimationend", "onwebkitanimationiteration", "onwebkitanimationstart", "onwebkittransitionend", "onwheel"];
 
+/**
+ * The RichTextSerializer helper class helps with (de)serializing rich text.
+ */
 abstract class RichTextSerializer {
 
     private static ESCAPE_CONFIG:Record<string,string> = {
@@ -22,6 +25,11 @@ abstract class RichTextSerializer {
         return str;
     }
 
+    /**
+     * Serializes editable rich text
+     * @param root most nested element which contains the editable sections (usually editor body)
+     * @returns serialized rich text from `root`
+     */
     public static serialize(root:ParentNode):string {
         let out = "";
         root.childNodes.forEach(childNode => {
@@ -32,6 +40,7 @@ abstract class RichTextSerializer {
         return out;
     }
 
+    /** Clones a node and removes all children and attributes. */
     private static getStrippedClone(elem:HTMLElement):HTMLElement {
         const out = elem.cloneNode() as HTMLElement;
         // remove all attributes and child nodes
@@ -45,6 +54,7 @@ abstract class RichTextSerializer {
         return out;
     }
 
+    /** Serializes an editable section node. */
     private static finalize(node:ChildNode):Node[] {
         
         if (node.nodeType === Node.TEXT_NODE) return [document.createTextNode(node.textContent ?? "")];
@@ -108,6 +118,11 @@ abstract class RichTextSerializer {
 
     }
 
+    /**
+     * Deserializes serialized rich text into Nodes.
+     * @param value serialized rich text
+     * @returns deserialized rich text
+     */
     public static deserialize(value:string):Node[] {
         
         try {
@@ -140,6 +155,7 @@ abstract class RichTextSerializer {
 }
 
 namespace RichTextSerializer {
+    /** Error class to throw when rich text serialization fails. */
     export class SerializationError extends Error {
 
         constructor(cause:string) {
@@ -148,6 +164,7 @@ namespace RichTextSerializer {
 
     }
 
+    /** Error class to throw when rich text deserialization fails. */
     export class DeserializationError extends Error {
 
         constructor(cause:string) {

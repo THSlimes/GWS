@@ -13,10 +13,18 @@ export default class ElementCarousel extends HTMLElement {
     private delay:number;
     private fadeTime:number;
     private current:number;
+    /** Index of the element that is currently being displayed */
     public get currentIndex() { return this.current; }
 
+    /** All elements that are cycled through */
     public readonly revolvingElements:Element[] = [];
 
+    /**
+     * Creates a new ElementCarousel.
+     * @param delay delay between transitions (ms)
+     * @param fadeTime time a transition takes (ms)
+     * @param current index of first element to show
+     */
     constructor(delay=5000, fadeTime=1000, current=0) {
         super();
         this.classList.add("center-content");

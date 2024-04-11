@@ -12,8 +12,9 @@ import Loading from "../Loading";
 
 const DB = new CachingEventDatebase(new FirestoreEventDatebase());
 
+/** Creates an EditableEventNote for new events (is added to database upon saving) */
 function getEmptyNote():EditableEventNote {
-    const out = new EditableEventNote(
+    const out = new EditableEventNote( // placeholder into
         new EventInfo(DB, StringUtil.generateID(), "", "", "", undefined, [new Date(), new Date()]),
         DetailLevel.FULL, true, true
     );
@@ -26,11 +27,12 @@ function getEmptyNote():EditableEventNote {
 
 
 let initializedEventsPanel = false;
+/** Initializes the events panel */
 export function initEventsPanel() {
     if (!initializedEventsPanel) {
         Loading.markLoadStart(initEventsPanel);
         
-
+        // insert event calendar
         const eventCalendar = Placeholder.replaceWith("event-calendar", new EventCalendar(DB, new Date(), EventCalendar.Viewmode.MONTH));
         
         Placeholder.replaceWith("new-event", getEmptyNote());

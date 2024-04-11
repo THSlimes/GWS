@@ -5,6 +5,9 @@ import Loading from "../Loading";
 import InfoList from "./InfoList";
 import { ArticleInfo } from "../firebase/database/articles/ArticleDatabase";
 
+/**
+ * An ArticleList is a type of InfoList that shows articles as SmartArticles.
+ */
 export default class ArticleList extends InfoList<ArticleInfo> {
 
     constructor(paginator:ArticlePaginator, lod=DetailLevel.MEDIUM) {

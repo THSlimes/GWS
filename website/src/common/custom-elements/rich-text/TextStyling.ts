@@ -5,6 +5,9 @@ import NodeUtil from "../../util/NodeUtil";
 import ObjectUtil from "../../util/ObjectUtil";
 import StyleUtil from "../../util/StyleUtil";
 
+/**
+ * The TextStyling helper class makes it easier to handle/apply rich text style tags.
+ */
 abstract class TextStyling {
 
     /**
@@ -17,6 +20,12 @@ abstract class TextStyling {
         return this.getContainingStyleTag(tagClass, value) !== null;
     }
 
+    /**
+     * Gets the style tag which contains the current selection.
+     * @param tagClass class of tag to search for
+     * @param value value of tag to search for (any matches if `undefined`)
+     * @returns style tag that contains current selection (`null` if none does)
+     */
     public static getContainingStyleTag<TCN extends TextStyling.StyleTagClass>(tagClass:TCN, value?:TextStyling.StyleTagValueMap[TCN]):Element|null {
         const selection = getSelection();
 
@@ -29,6 +38,13 @@ abstract class TextStyling {
         else return null
     }
 
+    /**
+     * Creates a text node that is removed once the user unselects it.
+     * @param containingElement the editable text element
+     * @param onLegitimize callback function for when node is "legitimized" (i.e. when it is no longer removed by unselecting)
+     * @param onRemove callback function for when node is removed (due to unselecting)
+     * @returns text node that is removed when the user unselects it
+     */
     private static makeTempTextNode(containingElement:Element, onLegitimize=()=>{}, onRemove=()=>{}):Text {
         const out = ElementFactory.text('​');
 
@@ -71,6 +87,7 @@ abstract class TextStyling {
         return out;
     }
 
+    /** Creates a applicable style map from a tag class and its value. */
     private static getStyleMap<TCN extends TextStyling.StyleTagClass>(tagClass:TCN, value=TextStyling.DEFAULT_VALUES_BY_CLASS[tagClass]):StyleUtil.StyleMap {
         switch (tagClass) {
             case "small":
@@ -88,6 +105,13 @@ abstract class TextStyling {
         }
     }
 
+    /**
+     * (Un)applies a style tag to current user selection
+     * @param containingElement the editable text element
+     * @param tagClass class of style tag
+     * @param value value style tag (matches any value if `undefined`)
+     * @returns whether the user selection is in the style tag after (un)applying
+     */
     public static applyStyleTag<TCN extends TextStyling.StyleTagClass>(containingElement:Element, tagClass:TCN, value=TextStyling.DEFAULT_VALUES_BY_CLASS[tagClass]):boolean {
 
         let reapplyAfterwards = false;
@@ -246,6 +270,7 @@ abstract class TextStyling {
 
 namespace TextStyling {
 
+    /** A mapping from style tag class names to the type of their value */
     export interface StyleTagValueMap {
         "small": null,
         "big": null,
@@ -258,6 +283,7 @@ namespace TextStyling {
     }
     export type StyleTagClass = keyof StyleTagValueMap;
 
+    /** Default values per style tag class name */
     export const DEFAULT_VALUES_BY_CLASS:StyleTagValueMap = {
         "small": null,
         "big": null,
@@ -268,6 +294,7 @@ namespace TextStyling {
         "text-color": "#000000",
         "background-color": "#000000"
     };
+    // Array of all style tag class names
     export const STYLE_TAG_CLASSES:StyleTagClass[] = ObjectUtil.keys(DEFAULT_VALUES_BY_CLASS);
 
 }

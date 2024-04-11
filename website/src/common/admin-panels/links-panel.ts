@@ -16,6 +16,7 @@ let SPONSOR_LINKS_EDITOR:ImagedLinksEditor;
 
 let SOCIAL_MEDIA_LINKS_EDITOR:ImagedLinksEditor;
 
+/** Initializes the links panel. */
 export function initLinksPanel() {
     if (!initializedLinksPanel) {
         Loading.markLoadStart(initLinksPanel);
@@ -31,7 +32,7 @@ export function initLinksPanel() {
         .then(links => NAVBAR_LINKS_EDITOR = Placeholder.replaceWith("navbar-links", LinkTreeEditor.fromLinkTree(links)))
         .catch(err => UserFeedback.error(getErrorMessage(err)));
 
-        elements["navbar-links-save-button"].addEventListener("click", () => {
+        elements["navbar-links-save-button"].addEventListener("click", () => { // saving
             try {
                 const newLinks = NAVBAR_LINKS_EDITOR.value;
 
@@ -56,7 +57,7 @@ export function initLinksPanel() {
         })
         .catch(err => UserFeedback.error(getErrorMessage(err)));
 
-        elements["sponsor-links-save-button"].addEventListener("click", () => {
+        elements["sponsor-links-save-button"].addEventListener("click", () => { // saving
             try {
                 const newLinks = SPONSOR_LINKS_EDITOR.value;
 
@@ -81,7 +82,7 @@ export function initLinksPanel() {
         })
         .catch(err => UserFeedback.error(getErrorMessage(err)));
 
-        elements["social-media-links-save-button"].addEventListener("click", () => {
+        elements["social-media-links-save-button"].addEventListener("click", () => { // saving
             try {
                 const newLinks = SOCIAL_MEDIA_LINKS_EDITOR.value;
 
@@ -103,7 +104,7 @@ export function initLinksPanel() {
         Loading.markLoadEnd(initLinksPanel);
 
 
-
+        // unsaved changes warning
         window.addEventListener("beforeunload", ev => {
             if (!ev.defaultPrevented && (
                 NAVBAR_LINKS_EDITOR.isDataModified ||

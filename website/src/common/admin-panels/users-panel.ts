@@ -13,6 +13,13 @@ import ColorUtil from "../util/ColorUtil";
 import DateUtil from "../util/DateUtil";
 import ObjectUtil from "../util/ObjectUtil";
 
+/**
+ * Creates a label that shows a single user permission.
+ * @param perm Permission to show
+ * @param editable whether it can be removed
+ * @param onRemove callback for when remove button is pressed
+ * @returns permission label
+ */
 function makePermissionLabel(perm:Permissions.Permission, editable:boolean, onRemove:(label:HTMLDivElement)=>void):HTMLDivElement {
     const backgroundColor = ColorUtil.getStringColor(perm);
     const color = ColorUtil.getMostContrasting(backgroundColor, "#000000", "#ffffff");
@@ -30,16 +37,25 @@ function makePermissionLabel(perm:Permissions.Permission, editable:boolean, onRe
         .make();
 }
 
+/** Current timestamp. */
 const NOW = new Date();
 /** The Date after which registration is for the next year. */
 const REGISTRATION_CUTOFF = new Date(`8-1-${NOW.getFullYear()}`);
 /** The date at which membership starts/ends. */
 const MEMBERSHIP_EXPIRY_DATE = "10-1";
+/** Computes the date on which a new membership would expire. */
 function getMembershipExtensionDate():Date {
     if (NOW < REGISTRATION_CUTOFF) return new Date(`${MEMBERSHIP_EXPIRY_DATE}-${NOW.getFullYear()}`); // is for this year
     else return new Date(`${MEMBERSHIP_EXPIRY_DATE}-${NOW.getFullYear() + 1}`); // is for next year
 }
 
+/**
+ * Creates a list entry of the information of a single user.
+ * @param userEntry user information as a DataView entry
+ * @param canEdit whether any of the users information can be edited
+ * @param canEditPerms whether the uses permission can be edited
+ * @returns list entry with user information
+ */
 function makeUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, canEditPerms:boolean):HTMLElement {
     canEditPerms &&= canEdit; // can only edit permissions with edit permissions
 
@@ -49,7 +65,7 @@ function makeUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, canE
         DateUtil.DATE_FORMATS.DAY.SHORT(userEntry.get("joined_at")) :
         DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT(userEntry.get("joined_at"));
     if (canEdit) out.append( // add editable versions
-        ElementFactory.div(undefined, "name")
+        ElementFactory.div(undefined, "name") // name
             .children(
                 ElementFactory.input.text(userEntry.get("first_name"))
                     .placeholder("Voornaam")
@@ -59,11 +75,11 @@ function makeUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, canE
                     .onValueChanged(val => userEntry.set("family_name", val)),
             )
             .make(),
-        ElementFactory.h4(joinedAtText)
+        ElementFactory.h4(joinedAtText) // join date
             .class("joined-at", "center-content")
             .make(),
-        (userEntry.get("member_until").getTime() <= Date.now()) ?
-            ElementFactory.iconButton(
+        (userEntry.get("member_until").getTime() <= Date.now()) ? // membership status
+            ElementFactory.iconButton( // show button to make user a member
                 "add_card",
                 () => {
                     userEntry.set("member_until", getMembershipExtensionDate()); // edit membership date
@@ -74,10 +90,10 @@ function makeUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, canE
                 .make() :
             ElementFactory.div(undefined, "member-until", "flex-columns", "cross-axis-center", "in-section-gap")
                 .children(
-                    ElementFactory.input.dateTimeLocal(userEntry.get("member_until"))
+                    ElementFactory.input.dateTimeLocal(userEntry.get("member_until")) // membership expiration date
                         .onValueChanged(val => userEntry.set("member_until", new Date(val)))
                         .make(),
-                    ElementFactory.iconButton("more_time", () => {
+                    ElementFactory.iconButton("more_time", () => { // button to extend membership to next year
                         const memberUntil = userEntry.get("member_until");
                         memberUntil.setFullYear(memberUntil.getFullYear() + 1, 9, 1);
                         userEntry.set("member_until", memberUntil);
@@ -87,13 +103,13 @@ function makeUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, canE
                 .make()
     );
     else out.append( // add non-editable versions
-        ElementFactory.h4(`${userEntry.get("first_name")} ${userEntry.get("family_name")}`)
+        ElementFactory.h4(`${userEntry.get("first_name")} ${userEntry.get("family_name")}`) // name
             .class("name", "center-content")
             .make(),
-        ElementFactory.h4(joinedAtText)
+        ElementFactory.h4(joinedAtText) // join date
             .class("joined-at", "center-content")
             .make(),
-        ElementFactory.h4(DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT(userEntry.get("member_until")!))
+        ElementFactory.h4(DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT(userEntry.get("member_until"))) // membership status
             .class("member-until", "center-content")
             .make()
     );
@@ -104,15 +120,16 @@ function makeUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, canE
             navigator.clipboard.writeText(userEntry.get("id"))
             .then(() => UserFeedback.success("Account ID gekopieerd."))
             .catch(err => {
-                console.log(err);
+                console.error(err);
                 UserFeedback.error("Kopiëren mislukt, probeer het later opnieuw.");
             });
         }, "Kopieer account-ID").class("id", "text-center").make()
     );
 
-    const permissionsList = out.appendChild(ElementFactory.div(undefined, "permissions", "permissions-list") // permissions list
+    // list of permissions
+    const permissionsList = out.appendChild(ElementFactory.div(undefined, "permissions", "permissions-list")
         .children(
-            canEditPerms && ElementFactory.div(undefined, "preset-selector", "flex-columns", "cross-axis-center", "in-section-gap")
+            canEditPerms && ElementFactory.div(undefined, "preset-selector", "flex-columns", "cross-axis-center", "in-section-gap") // preset selector
                 .children(
                     ElementFactory.p("interests").class("icon", "no-margin"),
                     ElementFactory.select(ObjectUtil.keys(Permissions.PRESETS))
@@ -128,7 +145,7 @@ function makeUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, canE
                         .make(),
                 )
                 .tooltip("Groep"),
-            ...userEntry.get("permissions").sort((a, b) => Permissions.translate(a).localeCompare(Permissions.translate(b)))
+            ...userEntry.get("permissions").sort((a, b) => Permissions.translate(a).localeCompare(Permissions.translate(b))) // permission labels
                 .map(perm => makePermissionLabel(perm, canEditPerms, label => {
                     const userPerms = userEntry.get("permissions");
                     userPerms.splice(userPerms.indexOf(perm), 1);
@@ -136,7 +153,7 @@ function makeUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, canE
                     out.replaceWith(makeUserEntry(userEntry, canEdit, canEditPerms));
                 })),
             canEditPerms && userEntry.get("permissions").length < Permissions.ALL.length ?
-                ElementFactory.select(ObjectUtil.mapToObject(ArrayUtil.difference(Permissions.ALL, userEntry.get("permissions")), p => Permissions.translate(p)))
+                ElementFactory.select(ObjectUtil.mapToObject(ArrayUtil.difference(Permissions.ALL, userEntry.get("permissions")), p => Permissions.translate(p))) // new permission selector
                     .option("null", "+", true).value("null")
                     .class("new-permission", "button")
                     .onValueChanged(perm => {
@@ -159,15 +176,19 @@ let USERS_LIST:HTMLDivElement;
 
 let FILTER_FORM:HTMLDivElement;
 let NAME_FILTER_INPUT:HTMLInputElement;
+/** Filter options based on membership */
 type MembershipFilterOption = "members-only" | "non-members-only" | "both";
 let MEMBERSHIP_FILTER_SELECT:HTMLSelectElement & { value:MembershipFilterOption };
+/** Filter options based on permissions */
 type PermissionFilterOption = Permissions.Permission | "any";
 let PERMISSION_FILTER_SELECT:HTMLSelectElement & { value:PermissionFilterOption };
+/** User sorting options */
 type UserSortOption = "name-asc" | "name-desc" | "created-at-asc" | "created-at-desc" | "member-until-asc" | "member-until-desc" | "num-permissions-asc" | "num-permissions-desc";
 let USER_SORT_SELECT:HTMLSelectElement & { value:UserSortOption };
 
 let initializedUsersPanel = false;
 const USERS_DV = new DatabaseDataView(new FirestoreUserDatabase(), {}, true);
+/** Initializes the users panel. */
 export function initUsersPanel() {
     if (!initializedUsersPanel) {
 
@@ -211,6 +232,7 @@ export function initUsersPanel() {
     }
 }
 
+/** Adds the user entries to the list of all users. */
 function refreshUserEntries() {
 
     Promise.all([onAuth(), USERS_DV.onDataReady()])
@@ -240,6 +262,11 @@ function refreshUserEntries() {
     .catch(console.error);
 }
 
+/**
+ * Determines whether the given user entry matches the current filter.
+ * @param entry user entry
+ * @returns true if entry matches (false otherwise)
+ */
 function matchesFilter(entry:DataView.Entry<UserInfo>):boolean {
     const fullName = `${entry.get("first_name")} ${entry.get("family_name")}`.toLocaleLowerCase().trim();
     if (!fullName.includes(NAME_FILTER_INPUT.value.toLocaleLowerCase().trim())) return false;
@@ -254,6 +281,11 @@ function matchesFilter(entry:DataView.Entry<UserInfo>):boolean {
     return true;
 }
 
+/**
+ * Sorts the given user entries based on the selected sorting option.
+ * @param entries array of user entries
+ * @returns sorted user entries
+ */
 function sortUsers(entries:DataView.Entry<UserInfo>[]):DataView.Entry<UserInfo>[] {
     switch (USER_SORT_SELECT.value) {
         case "name-asc": return entries.sort((a,b) => {
@@ -274,5 +306,5 @@ function sortUsers(entries:DataView.Entry<UserInfo>[]):DataView.Entry<UserInfo>[
         case "num-permissions-desc": return entries.sort((a,b) => b.get("permissions").length - a.get("permissions").length);
     }
 
-    throw new Error(`unknown sorting method: "${USER_SORT_SELECT.value}"`);
+    throw new Error(`unknown sorting method: "${USER_SORT_SELECT.value}"`); // failsafe
 }

@@ -32,6 +32,13 @@ function computeNonOverlappingOffsets(events:EventInfo[]) {
     return out;
 }
 
+/**
+ * Finds the number of rows needed in a day cell.
+ * @param date date of cell
+ * @param events events overlapping with `date`
+ * @param offsets non-overlapping offset mapping from `computeNonOverlappingOffsets(...)`
+ * @returns number of rows required in day cell to not have elements overlap
+ */
 function findMaxOverlap(date: Date, events: EventInfo[], offsets: Record<string, number>):number {
     let group = events.filter(e => DateUtil.Days.isBetween(date, e.starts_at, e.ends_at)); // seed group
 
@@ -50,6 +57,7 @@ function findMaxOverlap(date: Date, events: EventInfo[], offsets: Record<string,
  */
 class EventCalendar extends HTMLElement {
 
+    /** Whether the layout should be vertical instead of horizontal */
     private static doTranspose(viewMode:EventCalendar.Viewmode) {
         return viewMode === "week" && Responsive.isSlimmerOrEq(Responsive.Viewport.DESKTOP_SLIM);
     }
@@ -67,6 +75,7 @@ class EventCalendar extends HTMLElement {
         });
     }
 
+    /** Creates a new EventNote from an EventInfo */
     private static createNote(event:EventInfo|EventNote, lod:DetailLevel, expanded=false):EventNote {
         return event instanceof EventNote ?
             event.copy(lod, expanded) :
@@ -75,6 +84,7 @@ class EventCalendar extends HTMLElement {
                 new EventNote(event, lod, expanded);
     }
 
+    /** Puts the given event in the fullscreen container */
     public static expandNote(event:EventInfo|EventNote) {
         const fsNote = this.createNote(event, DetailLevel.FULL, true);
         NodeUtil.empty(this.FULLSCREEN_EVENT_CONTAINER).appendChild(fsNote);
@@ -84,6 +94,7 @@ class EventCalendar extends HTMLElement {
         location.hash = `id=${fsNote.event.id}`;
     }
 
+    /** Closes the note opened in fullscreen */
     public static closeFullscreenNote() {
         URLUtil.setHashProperty("id", null);
         document.body.classList.remove("no-scroll");
@@ -94,6 +105,7 @@ class EventCalendar extends HTMLElement {
 
     private static readonly LIST_VIEW_INITIAL_TIMESPAN_DAYS = 30;
     private _viewMode:EventCalendar.Viewmode;
+    /** What period can be seen in the calendar */
     public set viewMode(newViewMode:EventCalendar.Viewmode) {
         if (this._viewMode !== newViewMode) {
             this._viewMode = newViewMode;
@@ -101,17 +113,20 @@ class EventCalendar extends HTMLElement {
         }
     }
     public get viewMode() { return this._viewMode; }
+    /** Re-initializes all day cells and event notes */
     protected redraw() { this.populate(this._lookingAt, this._viewMode); }
 
     private controls:HTMLDivElement = this.appendChild(ElementFactory.div().class("controls", "center-content", "main-axis-space-between").make());
 
     private _lookingAt:Date = new Date();
+    /** The Date that the calendar is focussed on */
     public set lookingAt(newDate:Date) {
         if (newDate.getTime() !== this._lookingAt.getTime()) {
             this._lookingAt = newDate;
             this.redraw();
         }
     }
+    /** Sets `this.lookingAt` to the current date. */
     public jumpToToday() { this.lookingAt = new Date(); }
 
     private dayCellContainer:HTMLDivElement = this.appendChild(ElementFactory.div(undefined, "day-cell-container").make());
@@ -120,6 +135,12 @@ class EventCalendar extends HTMLElement {
     private static readonly LOAD_MORE_TIMESPAN_DAYS = 15;
     private scrollEventListener?:(e:Event)=>void;
 
+    /**
+     * Creates a new EventCalendar
+     * @param db database to get events from
+     * @param lookingAt date to focus on
+     * @param viewMode period shown in the calendar
+     */
     constructor(db:EventDatabase, lookingAt=new Date(), viewMode=EventCalendar.DEFAULT_VIEWMODES[Responsive.getCurrent()]) {
         super();
 
@@ -214,6 +235,7 @@ class EventCalendar extends HTMLElement {
         });
     }
 
+    /** Adds day cells and event notes to element */
     private populate(date:Date, viewMode:EventCalendar.Viewmode) {
         Loading.markLoadStart(this);
 
@@ -452,11 +474,13 @@ class EventCalendar extends HTMLElement {
 }
 
 namespace EventCalendar {
+    /** Period to be shown in calendar */
     export enum Viewmode {
         WEEK = "week",
         MONTH = "month",
         LIST = "list"
     }
+    /** Default Viewmode based on screen size */
     export const DEFAULT_VIEWMODES:Record<Responsive.Viewport,Viewmode> = {
         [Responsive.Viewport.DESKTOP]: Viewmode.MONTH,
         [Responsive.Viewport.DESKTOP_SLIM]: Viewmode.MONTH,
@@ -465,15 +489,18 @@ namespace EventCalendar {
         [Responsive.Viewport.MOBILE_PORTRAIT]: Viewmode.WEEK,
         [Responsive.Viewport.VERY_THIN]: Viewmode.LIST
     };
+    /** Amount of detail to show event notes at, based on Viewmode. */
     export const VIEWMODE_LODS:Record<Viewmode, DetailLevel> = {
         week: DetailLevel.MEDIUM,
         month: DetailLevel.MEDIUM,
         list: DetailLevel.MEDIUM
     };
 
+    /** Abstraction of calendar cell in which events are stored */
     export type DayCell = { element:HTMLDivElement, date:Date, events:EventInfo[] };
     export namespace DayCell {
 
+        /** Properties a DayCell can have */
         export enum Attribute {
             IS_TODAY = "is-today",
             IS_IN_WEEKEND = "is-in-weekend",
@@ -486,6 +513,13 @@ namespace EventCalendar {
             [Attribute.IS_IN_DIFFERENT_MONTH]: (cellDate, viewDate) => cellDate.getFullYear() !== viewDate.getFullYear() || cellDate.getMonth() !== viewDate.getMonth()
         };
 
+        /**
+         * Gets all Attributes that apply to a given date.
+         * @param cellDate date of DayCell
+         * @param viewDate focussed date
+         * @param subset subset of all Attributes to detect
+         * @returns subset of `subset` of Attributes that apply to the given date
+         */
         export function detectAttributes(cellDate:Date, viewDate:Date, subset:Attribute[]=Object.values(Attribute)):Attribute[] {
             const out:Attribute[] = [];
     
@@ -496,6 +530,7 @@ namespace EventCalendar {
             return out;
         }
 
+        /** Options for the creation of a DayCell */
         export type CreationOptions = {
             markedAttrs?: Attribute[],
             gridArea?:[number,number,number,number]
