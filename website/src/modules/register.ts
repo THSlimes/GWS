@@ -283,7 +283,7 @@ Loading.onDOMContentLoaded({ "submit-button": HTMLButtonElement })
                 const userInfo = new UserInfo(
                     user.uid,
                     new Date(),
-                    new Date(1000, 0, 1),
+                    new Date(Date.now() - 1000),
                     data.name.first_name,
                     data.name.infix ? `${data.name.infix} ${data.name.family_name}` : data.name.family_name,
                     []
