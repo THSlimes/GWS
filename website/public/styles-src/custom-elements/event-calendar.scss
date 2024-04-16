@@ -159,6 +159,8 @@ event-calendar {
             }
         }
     }
+
+    &[display="week"] > .day-cell-container { overflow-y: hidden; }
 }
 
 #fullscreen-event-container {
@@ -196,6 +198,12 @@ event-calendar {
     0% { scale: 1; }
     50% { scale: 1.05; }
     100% { scale: 1; }
+}
+
+@media (max-aspect-ratio: 4 / 3) {
+    #fullscreen-event-container {
+        padding-top: 2em;
+    }
 }
 
 /* PHONE-VIEWPORT OVERRIDE */

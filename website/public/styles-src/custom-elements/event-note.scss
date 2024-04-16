@@ -28,7 +28,7 @@ event-note, registerable-event-note, editable-event-note, editable-registerable-
 
     & .name {
         margin: 0px;
-        max-width: 100%;
+        width: 100%;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -41,7 +41,9 @@ event-note, registerable-event-note, editable-event-note, editable-registerable-
     }
 
     & .description {
-        max-height: 30vh;
+        width: 100%;
+        flex-grow: 3;
+        max-height: fit-content;
         overflow-y: auto;
 
         text-align: justify;
@@ -65,6 +67,8 @@ event-note, registerable-event-note, editable-event-note, editable-registerable-
 registerable-event-note {
 
     & .registrations {
+        flex-grow: 1;
+
         & * { color: var(--text-color); }
         > .registrations-list {
             display: grid;
@@ -185,6 +189,11 @@ editable-event-note, editable-registerable-event-note {
 /* make note more compact */
 
 @media (max-aspect-ratio: 4 / 3) {
+
+    event-note, registerable-event-note {
+        &[expanded] { max-height: 85vh; }
+    }
+
     registerable-event-note {
         & .registrations > .registrations-list { grid-template-columns: repeat(3, 1fr); }
     }

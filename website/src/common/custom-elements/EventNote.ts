@@ -163,6 +163,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNote.Sect
         this.appendChild(
             ElementFactory.div()
                 .children(this.name, this.timespan)
+                .style({ width: "100%" })
                 .make()
         );
 
@@ -574,7 +575,13 @@ export class RegisterableEventNote extends EventNote implements HasSections<Regi
 
                 const newRegistrations = ElementFactory.div(undefined, "registrations", "flex-rows", "in-section-gap")
                     .children(
-                        ElementFactory.div(undefined, "flex-columns", "main-axis-space-between", "cross-axis-center", "in-section-gap")
+                        ElementFactory.div(undefined)
+                            .class(
+                                "flex-columns",
+                                !RegisterableEventNote.CAN_READ_COMMENTS && Responsive.isSlimmerOrEq(Responsive.Viewport.DESKTOP_SLIM) ? "main-axis-center" : "main-axis-space-between",
+                                "cross-axis-center",
+                                "in-section-gap"
+                            )
                             .children(
                                 ElementFactory.heading(this.expanded ? 3 : 4, "Ingeschreven geitjes")
                                     .children((spacesLeft > 0 && state[3]) && ElementFactory.span(` (${spacesLeft} plekken over)`).class("subtitle"))
@@ -649,7 +656,7 @@ export class RegisterableEventNote extends EventNote implements HasSections<Regi
                                     
                                     return ElementFactory.div(undefined, "flex-rows", "cross-axis-center")
                                         .children(
-                                            ElementFactory.p(name).class("no-margin", (comment !== undefined) && "underlined"),
+                                            ElementFactory.p(name + (comment ? '*' : "")).class("no-margin"),
                                             (comment !== undefined) && ElementFactory.div(undefined, "comment", "flex-rows", "cross-axis-center")
                                                 .children(
                                                     ElementFactory.div(undefined, "point")

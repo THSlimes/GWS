@@ -5,11 +5,17 @@ import ObjectUtil from "../util/ObjectUtil";
  */
 export namespace Responsive {
     export enum Viewport {
+        /** 16 / 9 */
         DESKTOP,
+        /** 4 / 3 */
         DESKTOP_SLIM,
+        /** 1 / 1 */
         SQUARE,
+        /** 3 / 4 */
         TABLET_PORTRAIT,
+        /** 10 / 16 */
         MOBILE_PORTRAIT,
+        /** 1 / 2 */
         VERY_THIN
     }
     /** Viewport chosen when media queries are unavailable. */
