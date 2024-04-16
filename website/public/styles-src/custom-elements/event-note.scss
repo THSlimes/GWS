@@ -73,7 +73,7 @@ registerable-event-note {
             justify-content: center;
             gap: var(--in-section-gap);
 
-            padding: 0px var(--in-section-gap);
+            padding: 0px var(--in-section-gap) 1px var(--in-section-gap);
 
             box-sizing: border-box;
             width: 100%;
@@ -93,16 +93,30 @@ registerable-event-note {
                     transform-origin: top center;
 
                     > .point {
-                        background-color: var(--primary);
-                        height: .5rem;
+                        position: relative;
                         width: 1rem;
+                        height: .5rem;
                         clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+                        background-color: var(--tertiary);
+                        
+                        > .inside {
+                            top:0px;
+                            left:0px;
+                            width: 1rem;
+                            height: .5rem;
+                            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+                            background-color: var(--primary);
+                            position: absolute;
+                            transform-origin: bottom center;
+                            scale: .9;
+                        }
                     }
                     > .message {
                         padding: calc(var(--in-section-gap) / 2);
                         color: var(--text-dark);
                         background-color: var(--primary);
                         border-radius: calc(var(--in-section-gap) / 2);
+                        outline: var(--std-border);
                     }
                 }
             }

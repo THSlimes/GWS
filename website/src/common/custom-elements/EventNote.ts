@@ -647,7 +647,8 @@ export class RegisterableEventNote extends EventNote implements HasSections<Regi
                                             ElementFactory.p(name).class("no-margin", (comment !== undefined) && "underlined"),
                                             (comment !== undefined) && ElementFactory.div(undefined, "comment", "flex-rows", "cross-axis-center")
                                                 .children(
-                                                    ElementFactory.div(undefined, "point"),
+                                                    ElementFactory.div(undefined, "point")
+                                                        .children(ElementFactory.div(undefined, "inside")),
                                                     ElementFactory.p(comment.body)
                                                         .class("message", "no-margin", "subtitle")
                                                         .tooltip(comment !== undefined ? DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(comments[id].created_at) : "")
