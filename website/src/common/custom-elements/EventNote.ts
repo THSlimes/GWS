@@ -570,6 +570,8 @@ export class RegisterableEventNote extends EventNote implements HasSections<Regi
             const commentsPromise = RegisterableEventNote.CAN_READ_COMMENTS ? this.event.getComments() : new Promise<Record<string,EventComment>>(resolve => resolve({}));
             
             commentsPromise.then(comments => {
+                const sortedIDs = Object.keys(this.event.registrations).sort((a,b) => this.event.registrations[a].localeCompare(this.event.registrations[b]));
+
                 const newRegistrations = ElementFactory.div(undefined, "registrations", "flex-rows", "in-section-gap")
                     .children(
                         ElementFactory.div(undefined, "flex-columns", "main-axis-space-between", "cross-axis-center", "in-section-gap")
@@ -588,8 +590,10 @@ export class RegisterableEventNote extends EventNote implements HasSections<Regi
         
                                             let maxNameLength = headerRow[0].value.length;
                                             let maxCommentLength = headerRow[2].value.length;
-        
-                                            const data = ObjectUtil.mapToArray(this.event.registrations, (id, name) => {
+
+                                            const data = sortedIDs.map(id => {
+                                                const name = this.event.registrations[id];
+
                                                 maxNameLength = Math.max(maxNameLength, name.length);
                                                 if (id in comments) {
                                                     maxCommentLength = Math.max(maxCommentLength, comments[id].body.length);
@@ -638,7 +642,8 @@ export class RegisterableEventNote extends EventNote implements HasSections<Regi
                         ElementFactory.div()
                             .class("registrations-list", "no-margin")
                             .children(
-                                ...ObjectUtil.mapToArray(this.event.registrations, (id, name) => {
+                                ...sortedIDs.map(id => {
+                                    const name = this.event.registrations[id];
                                     const comment = id in comments ? comments[id] : undefined;
                                     
                                     

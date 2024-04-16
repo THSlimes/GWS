@@ -5,7 +5,7 @@
   "main": "webpack.config.js",
   "scripts": {
     "server": "webpack-dev-server",
-    "build": "del-cli --force ./public/scripts && webpack",
+    "build": "del-cli --force ./public/scripts && webpack && sass public/styles-src:public/styles --style compressed",
     "deploy": "del-cli --force ./public/scripts && webpack && firebase deploy",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
