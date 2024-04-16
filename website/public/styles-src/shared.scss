@@ -254,6 +254,10 @@ div#split-view {
 .bold-weight { font-weight: 700; }
 
 .italic { font-style: italic; }
+.underlined {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
 
 .boxed {
     outline: var(--std-border);

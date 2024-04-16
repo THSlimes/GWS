@@ -22,6 +22,18 @@ icon-selector {
     }
 
     > .separator {
-        margin: 0px;
+        width: 2px;
+        height: 1em;
+        background-color: var(--text-dark);
+        border-radius: 100vw;
+    }
+
+    &[compact] {
+        padding: calc(var(--in-section-gap) / 2);
+        column-gap: calc(var(--in-section-gap) / 2);
+
+        > .option {
+            font-size: 1.5rem;
+        }
     }
 }

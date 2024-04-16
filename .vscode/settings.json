@@ -1,3 +1,10 @@
 {
-    "workbench.iconTheme": "vs-seti"
+    "workbench.iconTheme": "vs-seti",
+    "cSpell.words": [
+        "downloaden",
+        "Inschrijvingen",
+        "Opmerkingen",
+        "tonen",
+        "verbergen"
+    ]
 }

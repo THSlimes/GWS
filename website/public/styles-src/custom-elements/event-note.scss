@@ -71,14 +71,14 @@ registerable-event-note {
             grid-template-columns: repeat(5, 1fr);
             grid-auto-rows: auto;
             justify-content: center;
-            gap: calc(var(--in-section-gap) / 2);
+            gap: var(--in-section-gap);
 
             padding: 0px var(--in-section-gap);
 
             box-sizing: border-box;
             width: 100%;
             min-height: 5vh;
-            max-height: 10vh;
+            max-height: 15vh;
 
             overflow: hidden auto;
 
@@ -86,10 +86,30 @@ registerable-event-note {
                 box-sizing: border-box;
                 height: 100%;
                 justify-self: center;
+                row-gap: calc(var(--in-section-gap) / 2);
+
+                > .comment {
+                    animation: grow-appear 200ms ease-in-out 0ms 1 forwards;
+                    transform-origin: top center;
+
+                    > .point {
+                        background-color: var(--primary);
+                        height: .5rem;
+                        width: 1rem;
+                        clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+                    }
+                    > .message {
+                        padding: calc(var(--in-section-gap) / 2);
+                        color: var(--text-dark);
+                        background-color: var(--primary);
+                        border-radius: calc(var(--in-section-gap) / 2);
+                    }
+                }
             }
-            & .comment { font-size: 1.75em; }
         }
     }
+
+    &[hide-comments] > .registrations .comment { animation: shrink-disappear 200ms ease-in-out 0ms 1 forwards; }
 
     & .register-button {
         width: 100%;
@@ -103,6 +123,16 @@ registerable-event-note {
 
         color: var(--text-dark);
     }
+}
+
+@keyframes grow-appear {
+    0% { display: flex; scale: 0; }
+    100% { scale: 1 }
+}
+
+@keyframes shrink-disappear {
+    0% { scale: 1; }
+    100% { display: none; scale: 0; }
 }
 
 editable-event-note, editable-registerable-event-note {

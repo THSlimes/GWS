@@ -23,6 +23,7 @@ import ElementUtil from "../util/ElementUtil";
 import EventDatabaseFactory from "../firebase/database/events/EventDatabaseFactory";
 import NumberUtil from "../util/NumberUtil";
 import Loading from "../Loading";
+import IconSelector from './IconSelector';
 
 /**
  * An EventNote displays relevant information of an event.
@@ -571,70 +572,87 @@ export class RegisterableEventNote extends EventNote implements HasSections<Regi
             commentsPromise.then(comments => {
                 const newRegistrations = ElementFactory.div(undefined, "registrations", "flex-rows", "in-section-gap")
                     .children(
-                        ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
+                        ElementFactory.div(undefined, "flex-columns", "main-axis-space-between", "cross-axis-center", "in-section-gap")
                             .children(
                                 ElementFactory.heading(this.expanded ? 3 : 4, "Ingeschreven geitjes")
                                     .children((spacesLeft > 0 && state[3]) && ElementFactory.span(` (${spacesLeft} plekken over)`).class("subtitle"))
                                     .class("no-margin"),
-                                RegisterableEventNote.CAN_READ_COMMENTS && ElementFactory.iconButton("download", () => { // create xlsx file and download it
-                                    const headerRow = [
-                                        { value: "Naam" },
-                                        { value: "Inschrijfmoment" },
-                                        { value: "Opmerking" }
-                                    ];
-
-                                    let maxNameLength = headerRow[0].value.length;
-                                    let maxCommentLength = headerRow[2].value.length;
-
-                                    const data = ObjectUtil.mapToArray(this.event.registrations, (id, name) => {
-                                        maxNameLength = Math.max(maxNameLength, name.length);
-                                        if (id in comments) {
-                                            maxCommentLength = Math.max(maxCommentLength, comments[id].body.length);
-                                            return [
-                                                {
-                                                    type: String,
-                                                    value: name,
-                                                },
-                                                {
-                                                    type: Date,
-                                                    value: comments[id].created_at,
-                                                    format: "d mmmm yyyy",
-                                                },
-                                                {
-                                                    type: String,
-                                                    value: comments[id].body
-                                                }
+                                ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
+                                    .children(
+                                        RegisterableEventNote.CAN_READ_COMMENTS && ElementFactory.iconButton("download", () => { // create xlsx file and download it
+                                            const headerRow = [
+                                                { value: "Naam" },
+                                                { value: "Inschrijfmoment" },
+                                                { value: "Opmerking" }
                                             ];
-                                        }
-                                        else return [ { type: String, value: name } ];
-                                    });
-
-                                    writeXlsxFile([
-                                        headerRow,
-                                        ...data
-                                    ], {
-                                        columns: [{ width: maxNameLength }, { width: 15 }, { width: maxCommentLength }],
-                                        fileName: `inschrijvingen ${this.event.name} (${DateUtil.DATE_FORMATS.DAY.SHORT_NO_YEAR(this.event.starts_at)}).xlsx`
-                                    })
-                                    .catch(err => console.error(err));
-                                }, "Inschrijvingen downloaden")
+        
+                                            let maxNameLength = headerRow[0].value.length;
+                                            let maxCommentLength = headerRow[2].value.length;
+        
+                                            const data = ObjectUtil.mapToArray(this.event.registrations, (id, name) => {
+                                                maxNameLength = Math.max(maxNameLength, name.length);
+                                                if (id in comments) {
+                                                    maxCommentLength = Math.max(maxCommentLength, comments[id].body.length);
+                                                    return [
+                                                        {
+                                                            type: String,
+                                                            value: name,
+                                                        },
+                                                        {
+                                                            type: Date,
+                                                            value: comments[id].created_at,
+                                                            format: "d mmmm yyyy",
+                                                        },
+                                                        {
+                                                            type: String,
+                                                            value: comments[id].body
+                                                        }
+                                                    ];
+                                                }
+                                                else return [ { type: String, value: name } ];
+                                            });
+        
+                                            writeXlsxFile([
+                                                headerRow,
+                                                ...data
+                                            ], {
+                                                columns: [{ width: maxNameLength }, { width: 15 }, { width: maxCommentLength }],
+                                                fileName: `Inschrijvingen ${this.event.name} (${DateUtil.DATE_FORMATS.DAY.SHORT_NO_YEAR(this.event.starts_at)}).xlsx`
+                                            })
+                                            .catch(err => console.error(err));
+                                        }, "Inschrijvingen downloaden"),
+                                        RegisterableEventNote.CAN_READ_COMMENTS && ElementFactory.iconButton("comment", (ev, self) => {
+                                            if (self.toggleAttribute("selected", !this.toggleAttribute("hide-comments"))) {
+                                                self.textContent = "comment";
+                                                self.title = "Opmerkingen verbergen";
+                                            }
+                                            else {
+                                                self.textContent = "comments_disabled";
+                                                self.title = "Opmerkingen tonen";
+                                            }
+                                        }, "Opmerkingen verbergen")
+                                        .attr("selected")
+                                        .attr("can-unselect")
+                                    ),
                             ),
                         ElementFactory.div()
                             .class("registrations-list", "no-margin")
                             .children(
                                 ...ObjectUtil.mapToArray(this.event.registrations, (id, name) => {
                                     const comment = id in comments ? comments[id] : undefined;
-                                    const commentText = id in comments ? `${name}:\n${comments[id].body} \n\n${DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(comments[id].created_at)}` : "";
-                                    return ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
+                                    
+                                    
+                                    return ElementFactory.div(undefined, "flex-rows", "cross-axis-center")
                                         .children(
-                                            ElementFactory.p(name).class("no-margin"),
-                                            (id in comments) && ElementFactory.iconButton("comment", () => navigator.clipboard.writeText(commentText)
-                                                .then(() => UserFeedback.success("Opmerking gekopieerd."))
-                                                .catch(() => UserFeedback.error("Kon opmerking niet kopiëren, probeer het later opnieuw."))
-                                            )
-                                            .class("comment")
-                                            .tooltip(commentText)
-                                        )
+                                            ElementFactory.p(name).class("no-margin", (comment !== undefined) && "underlined"),
+                                            (comment !== undefined) && ElementFactory.div(undefined, "comment", "flex-rows", "cross-axis-center")
+                                                .children(
+                                                    ElementFactory.div(undefined, "point"),
+                                                    ElementFactory.p(comment.body)
+                                                        .class("message", "no-margin", "subtitle")
+                                                        .tooltip(comment !== undefined ? DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(comments[id].created_at) : "")
+                                                )
+                                        );
                                     }
                                 )
                             )
@@ -736,6 +754,8 @@ export namespace RegisterableEventNote {
     
     /** [icon, text, enabled, show extra options] tuple */
     export type ButtonState = [string, string, boolean, boolean];
+
+    export type RegistrationsViewMode = "list" | "grid";
 }
 
 customElements.define("registerable-event-note", RegisterableEventNote);

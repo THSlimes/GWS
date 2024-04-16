@@ -182,9 +182,10 @@ let MEMBERSHIP_FILTER_SELECT:HTMLSelectElement & { value:MembershipFilterOption 
 /** Filter options based on permissions */
 type PermissionFilterOption = Permissions.Permission | "any";
 let PERMISSION_FILTER_SELECT:HTMLSelectElement & { value:PermissionFilterOption };
+let PERMISSION_PRESET_FILTER_SELECT:HTMLSelectElement & { value:Permissions.PresetName|"any" };
 /** User sorting options */
 type UserSortOption = "name-asc" | "name-desc" | "created-at-asc" | "created-at-desc" | "member-until-asc" | "member-until-desc" | "num-permissions-asc" | "num-permissions-desc";
-let USER_SORT_SELECT:HTMLSelectElement & { value:UserSortOption };
+let USER_SORT_SELECT:HTMLSelectElement & { value:UserSortOption|"any" };
 
 let initializedUsersPanel = false;
 const USERS_DV = new DatabaseDataView(new FirestoreUserDatabase(), {}, true);
@@ -197,6 +198,7 @@ export function initUsersPanel() {
         NAME_FILTER_INPUT = document.getElementById("users-filter-name") as HTMLInputElement;
         MEMBERSHIP_FILTER_SELECT = document.getElementById("users-filter-membership-status") as HTMLSelectElement & { value:MembershipFilterOption };
         PERMISSION_FILTER_SELECT = document.getElementById("users-filter-permissions") as HTMLSelectElement & { value:PermissionFilterOption };
+        PERMISSION_PRESET_FILTER_SELECT = document.getElementById("users-filter-permission-preset") as HTMLSelectElement & { value:Permissions.PresetName };
         USER_SORT_SELECT = document.getElementById("users-filter-sort") as HTMLSelectElement & { value:UserSortOption };
 
         FILTER_FORM.addEventListener("input", () => refreshUserEntries());
@@ -205,6 +207,11 @@ export function initUsersPanel() {
         PERMISSION_FILTER_SELECT.options.add(ElementFactory.option().value("any").text("").make());
         for (const perm of Permissions.ALL) { // adding options to select
             PERMISSION_FILTER_SELECT.options.add(ElementFactory.option().value(perm).text(Permissions.translate(perm)).make());
+        }
+
+        PERMISSION_PRESET_FILTER_SELECT.options.add(ElementFactory.option().value("any").text("").make());
+        for (const presetName of ObjectUtil.keys(Permissions.PRESETS)) { // adding options to select
+            PERMISSION_PRESET_FILTER_SELECT.options.add(ElementFactory.option().value(presetName).text(presetName).make());
         }
 
         USERS_LIST = document.querySelector("#users-list > .list") as HTMLDivElement;
@@ -268,15 +275,25 @@ function refreshUserEntries() {
  * @returns true if entry matches (false otherwise)
  */
 function matchesFilter(entry:DataView.Entry<UserInfo>):boolean {
+    // filter name
     const fullName = `${entry.get("first_name")} ${entry.get("family_name")}`.toLocaleLowerCase().trim();
     if (!fullName.includes(NAME_FILTER_INPUT.value.toLocaleLowerCase().trim())) return false;
 
+    // filter membership status
     const membershipOption = MEMBERSHIP_FILTER_SELECT.value;
     if (membershipOption === "members-only" && entry.get("member_until") < new Date()) return false;
     else if (membershipOption === 'non-members-only' && entry.get("member_until") >= new Date()) return false;
 
+    // filter given permission
     const permissionOption = PERMISSION_FILTER_SELECT.value;
     if (permissionOption !== "any" && !entry.get("permissions").includes(permissionOption)) return false;
+
+    // filter on permission preset
+    const permissionPresetOption = PERMISSION_PRESET_FILTER_SELECT.value;
+    if (permissionPresetOption !== "any") {
+        const matchingPreset = Permissions.getPreset(entry.get("permissions"));
+        if (matchingPreset !== permissionPresetOption) return false;
+    }
 
     return true;
 }

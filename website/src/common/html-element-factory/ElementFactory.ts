@@ -5,6 +5,7 @@ import { ButtonLikeInputAssemblyLine, CheckableInputAssemblyLine, DateInputAssem
 import RichTextSerializer from "../custom-elements/rich-text/RichTextSerializer";
 import FolderElement from "../custom-elements/FolderElement";
 import ColorUtil from "../util/ColorUtil";
+import IconSelectorAssemblyLine from "./IconSelectorAssemblyLine";
 
 /**
  * The ElementFactory helper-class provides static methods that allow
@@ -205,6 +206,12 @@ export default abstract class ElementFactory {
     }
     public static option() { return AssemblyLine.specific("option", ["value", "selected"], () => document.createElement("option")); }
     public static optgroup() { return AssemblyLine.specific("optgroup", ["label"], () => document.createElement("optgroup")); }
+
+    public static iconSelector<V extends string>(...options:[V, string, string?, boolean?][]) {
+        const out = new IconSelectorAssemblyLine<V>();
+        out.options(...options);
+        return out;
+    }
 
     public static hr() { return new AssemblyLine("hr"); }
     public static br() { return new AssemblyLine("br"); }
