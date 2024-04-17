@@ -24,7 +24,7 @@ Loading.onDOMContentLoaded({ "send-email-button": HTMLButtonElement, "email-inpu
                 sendPasswordResetEmail(FIREBASE_AUTH, email)
                 .then(() => {
                     UserFeedback.success("De email is verstuurd. Check voor de zekerheid ook je spam-box.", 5000);
-                    setTimeout(() => location.href = "./login.html", 5000);
+                    setTimeout(() => location.href = "./inloggen.html", 5000);
                 })
                 .catch(err => {
                     UserFeedback.error(getErrorMessage(err));

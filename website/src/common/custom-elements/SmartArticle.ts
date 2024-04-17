@@ -124,7 +124,7 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
                             this.article.sourceDB.delete(this.article)
                             .then(() => {
                                 UserFeedback.success("Bericht succesvol verwijderd.");
-                                if (location.pathname.startsWith("/article")) location.href = '/'; // go to homepage
+                                if (location.pathname.startsWith("/artikel")) location.href = '/'; // go to homepage
                                 else location.reload();
                             })
                             .catch(err => UserFeedback.error(getErrorMessage(err)));
@@ -195,7 +195,7 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
     public static getLinkTo(article:ArticleInfo|string, editMode=false):string {
         if (article instanceof ArticleInfo) article = article.id;
 
-        let out = `${location.origin}/article.html?id=${article}`;
+        let out = `${location.origin}/artikel.html?id=${article}`;
         if (editMode) out += "&mode=edit";
 
         return out;

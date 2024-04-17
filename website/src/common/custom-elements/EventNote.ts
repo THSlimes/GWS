@@ -195,7 +195,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNote.Sect
                         .class("delete-button"),
                     EventNote.CAN_UPDATE && ElementFactory.iconButton("edit_square", () => this.replaceWithEditable(this.event), "Activiteit bewerken"),
                     ElementFactory.iconButton("share", () => {
-                            const url = `${location.origin}/calendar.html#id=${this.event.id}`;
+                            const url = `${location.origin}/agenda.html#id=${this.event.id}`;
                             const shareData:ShareData = { url, title: `GWS Activiteit - ${this.event.name}` };
                             if (navigator.canShare(shareData)) navigator.share(shareData); // share
                             else navigator.clipboard.writeText(url) // can't share, copy to clipboard
@@ -734,7 +734,7 @@ export class RegisterableEventNote extends EventNote implements HasSections<Regi
                     // register button
                     this.registerButton = ElementFactory.button(() => onAuth()
                         .then(user => {
-                            if (!user) location.href = URLUtil.createLinkBackURL("./login.html").toString(); // must log in to register
+                            if (!user) location.href = URLUtil.createLinkBackURL("./inloggen.html").toString(); // must log in to register
                             else this.event.toggleRegistered(user.uid, this.commentBox.value)
                                 .then(isReg => {
                                     UserFeedback.success(`Je bent succesvol ${isReg ? "ingeschreven" : "uitgeschreven"}.`);

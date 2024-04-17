@@ -101,14 +101,14 @@ function makeNavbar(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                                     ElementFactory.p("admin_panel_settings")
                                         .class("icon", "click-action")
                                         .tooltip("Administratie-paneel")
-                                        .on("click", () => location.href = "/admin-panel.html")
+                                        .on("click", () => location.href = "/administratiepaneel.html")
                                         .onMake(self => {
                                             onPermissionCheck(Permissions.Permission.VIEW_ADMIN_PANEL, hasPerms => self.style.display = hasPerms ? "" : "none", true, true);
                                         }),
                                     ElementFactory.p("login")
                                         .class("icon", "click-action")
                                         .tooltip("Inloggen")
-                                        .on("click", () => location.href = "/login.html")
+                                        .on("click", () => location.href = "/inloggen.html")
                                         .onMake(self => { // hide login button when already logged in
                                             checkLoginState(loggedIn => self.style.display = loggedIn ? "none" : "", true);
                                             FIREBASE_AUTH.onAuthStateChanged(user => self.style.display = user ? "none" : "");

@@ -89,7 +89,7 @@ export default class IdeaBox extends HTMLElement implements HasSections<"anonymo
                 this.anonymousSwitch.disabled = this.subjectInput.disabled = this.bodyInput.disabled = true;
                 this.submitButton.firstChild!.textContent = "Log in om te gebruiken";
                 this.submitButton.lastChild!.textContent = "login";
-                this.submitButton.addEventListener("click", () => location.href = URLUtil.createLinkBackURL("/login.html", location.href).toString());
+                this.submitButton.addEventListener("click", () => location.href = URLUtil.createLinkBackURL("/inloggen.html", location.href).toString());
             }
             else if (!permRes.CREATE_IDEA_BOX_SUBMISSIONS) { // missing permissions
                 this.anonymousSwitch.disabled = this.subjectInput.disabled = this.bodyInput.disabled = true;

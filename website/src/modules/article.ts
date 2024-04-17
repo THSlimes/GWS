@@ -14,7 +14,7 @@ import Permissions from "../common/firebase/database/Permissions";
 import URLUtil from "../common/util/URLUtil";
 
 /** Creates the link to an article given its ID. */
-export function articleLink(id: string) { return `/article.html?id=${id}`; }
+export function articleLink(id: string) { return `/artikel.html?id=${id}`; }
 
 const DB:ArticleDatabase = new FirestoreArticleDatabase();
 const urlSearchParams = new URLSearchParams(window.location.search);
@@ -70,5 +70,5 @@ else Loading.useDynamicContent(Promise.all([DB.getById(articleId), checkPermissi
     
 }, runOnErrorCode("permission-denied", () => {
     UserFeedback.relayError("Dat bericht is alleen zichtbaar voor leden.");
-    location.replace(URLUtil.createLinkBackURL("/login.html", location.href));
+    location.replace(URLUtil.createLinkBackURL("/inloggen.html", location.href));
 }));

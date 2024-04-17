@@ -158,10 +158,10 @@ export default abstract class URLUtil {
             
             if (!URLUtil.isLocal(url)) return "open_in_new";
             else if (['/', "", "/index"].includes(url.pathname)) return "home";
-            else if (url.pathname.startsWith("/login")) return "login";
-            else if (url.pathname.startsWith("/article")) return "newsmode";
-            else if (url.pathname.startsWith("/calendar")) return url.searchParams.has("id") ? "event_note" : "calendar_month";
-            else if (url.pathname.startsWith("/admin-panel")) return "admin_panel_settings";
+            else if (url.pathname.startsWith("/inloggen")) return "login";
+            else if (url.pathname.startsWith("/artikel")) return "newsmode";
+            else if (url.pathname.startsWith("/agenda")) return url.searchParams.has("id") ? "event_note" : "calendar_month";
+            else if (url.pathname.startsWith("/administratiepaneel")) return "admin_panel_settings";
             else return "link";
 
         }
