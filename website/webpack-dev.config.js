@@ -10,6 +10,7 @@ for (const filename of ENTRIES) {
     ENTRY[path.substring(0, path.lastIndexOf('.'))] = path;
 }
 
+console.log("DEVELOPMENT MODE:");
 console.log("entry");
 console.log(ENTRY);
 
@@ -31,7 +32,7 @@ module.exports = {
     resolve: {
         extensions: ['.ts', '.js']
     },
-    mode: "production",
+    mode: "development",
     devServer: {
         liveReload: true,
         port: 8080,
