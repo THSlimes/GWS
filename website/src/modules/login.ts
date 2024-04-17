@@ -84,3 +84,14 @@ Loading.onDOMContentLoaded({
     });
 
 });
+
+Loading.onDOMContentLoaded()
+.then(() => { // fix anchor tags for mobile
+    const anchors = document.getElementsByTagName("a");
+    Array.from(anchors).forEach(a => a.addEventListener("click", () => {
+        if (a.href) {
+            if (a.target === "_blank") open(a.href);
+            else location.href = a.href;
+        }
+    }));
+});
