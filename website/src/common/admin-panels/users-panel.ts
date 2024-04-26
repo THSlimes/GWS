@@ -50,6 +50,9 @@ function getMembershipExtensionDate():Date {
     else return new Date(`${MEMBERSHIP_EXPIRY_DATE}-${NOW.getFullYear() + 1}`); // is for next year
 }
 
+const minTimestamp = new Date("0001-01-01T00:00:00Z");
+const maxTimestamp = new Date("9999-12-31T23:59:59.999999999Z");
+
 /**
  * Creates a list entry of the information of a single user.
  * @param userEntry user information as a DataView entry
@@ -91,8 +94,16 @@ function makeUserEntry(userEntry:DataView.Entry<UserInfo>, canEdit:boolean, canE
                 .make() :
             ElementFactory.div(undefined, "member-until", "flex-columns", "cross-axis-center", "in-section-gap")
                 .children(
-                    ElementFactory.input.dateTimeLocal(userEntry.get("member_until")) // membership expiration date
-                        .onValueChanged(val => userEntry.set("member_until", new Date(val)))
+                    ElementFactory.input.date(userEntry.get("member_until"), minTimestamp, maxTimestamp) // membership expiration date
+                        .onValueChanged(val => {
+                            const date = new Date(val);
+                            if (DateUtil.Timestamps.isValid(date)) userEntry.set("member_until", DateUtil.Timestamps.clamp(date, minTimestamp, maxTimestamp));
+                        })
+                        .on("change", (_, self) => {
+                            const date = new Date(self.value);
+                            if (DateUtil.Timestamps.isValid(date)) userEntry.set("member_until", DateUtil.Timestamps.clamp(date, minTimestamp, maxTimestamp));
+                            DateUtil.Timestamps.setInputValue(self, userEntry.get("member_until"));
+                        })
                         .make(),
                     ElementFactory.iconButton("more_time", () => { // button to extend membership to next year
                         const memberUntil = userEntry.get("member_until");

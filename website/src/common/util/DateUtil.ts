@@ -243,14 +243,19 @@ abstract class DateUtil {
         },
 
         setInputValue(input:HTMLInputElement, value:Date):string {
-            if (input.type !== "datetime-local") throw new Error(`input element is not type datetime-local (is ${input.type} instead)`);
-            else if (!this.isValid(value)) throw new Error("value is invalid Date object");
+            if (!this.isValid(value)) throw new Error("value is invalid Date object");
             value = this.copy(value);
-            
             value.setMinutes(value.getMinutes() - value.getTimezoneOffset());
-            const iso = value.toISOString();
-            
-            return input.value = iso.includes('.') ? iso.substring(0, iso.indexOf('.')) : iso;
+
+            if (input.type === "datetime-local") {
+                const iso = value.toISOString();
+                return input.value = iso.includes('.') ? iso.substring(0, iso.indexOf('.')) : iso;
+            }
+            else if (input.type === "date") {
+                const val = `${value.getFullYear().toString().padStart(4, '0')}-${(value.getMonth() + 1).toString().padStart(2, '0')}-${value.getDate().toString().padStart(2, '0')}`;
+                return input.value = val;
+            }
+            else throw new Error(`invalid input type: ${input.type}`);
         },
 
         /** Makes a copy of the given timestamp. */

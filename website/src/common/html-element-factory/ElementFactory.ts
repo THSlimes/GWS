@@ -103,9 +103,12 @@ export default abstract class ElementFactory {
             if (value) out.value(value);
             return out;
         },
-        date(val?:Date) {
+        date(val?:Date, min?:Date, max?:Date, step?:number) {
             const out = new DateInputAssemblyLine("date");
             if (val) out.value(val.getFullYear(), val.getMonth(), val.getDate());
+            if (min) out.min(min.getFullYear(), min.getMonth(), min.getDate());
+            if (max) out.max(max.getFullYear(), max.getMonth(), max.getDate());
+            if (typeof step === "number") out.step(step);
             return out;
         },
         dateTimeLocal(value?:Date, min?:Date, max?:Date, step?:number) {
