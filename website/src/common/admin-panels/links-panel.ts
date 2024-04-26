@@ -38,7 +38,7 @@ export function initLinksPanel() {
 
                 SETTINGS_DB.setNavbarLinks(newLinks)
                 .then(() => {
-                    UserFeedback.success("Wijzigingen opgeslagen! Het kan even duren voordat anderen de wijzigingen zien.");
+                    UserFeedback.success("Wijzigingen opgeslagen! Het kan tot zes uur duren voordat anderen de wijzigingen zien.");
                     Cache.remove("navbar-links"); // clear own cache
                     NAVBAR_LINKS_EDITOR.save();
                 })
@@ -63,7 +63,7 @@ export function initLinksPanel() {
 
                 SETTINGS_DB.setSponsorLinks(newLinks)
                 .then(() => {
-                    UserFeedback.success("Wijzigingen opgeslagen! Het kan even duren voordat anderen de wijzigingen zien.");
+                    UserFeedback.success("Wijzigingen opgeslagen! Het kan tot zes uur duren voordat anderen de wijzigingen zien.");
                     Cache.remove("sponsor-links"); // clear own cache
                     SPONSOR_LINKS_EDITOR.save();
                 })
@@ -88,7 +88,7 @@ export function initLinksPanel() {
 
                 SETTINGS_DB.setSocialMediaLinks(newLinks)
                 .then(() => {
-                    UserFeedback.success("Wijzigingen opgeslagen! Het kan even duren voordat anderen de wijzigingen zien.");
+                    UserFeedback.success("Wijzigingen opgeslagen! Het kan tot zes uur duren voordat anderen de wijzigingen zien.");
                     Cache.remove("social-media-links"); // clear own cache
                     SOCIAL_MEDIA_LINKS_EDITOR.save();
                 })
