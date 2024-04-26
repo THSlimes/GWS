@@ -18,4 +18,8 @@ export default abstract class StringUtil {
         return str.slice(0,1).toUpperCase() + str.slice(1);
     }
 
+    public static normalize(str:string) {
+        return str.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase().trim()
+    }
+
 }

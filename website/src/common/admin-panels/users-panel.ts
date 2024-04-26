@@ -12,6 +12,7 @@ import ArrayUtil from "../util/ArrayUtil";
 import ColorUtil from "../util/ColorUtil";
 import DateUtil from "../util/DateUtil";
 import ObjectUtil from "../util/ObjectUtil";
+import StringUtil from "../util/StringUtil";
 
 /**
  * Creates a label that shows a single user permission.
@@ -276,8 +277,9 @@ function refreshUserEntries() {
  */
 function matchesFilter(entry:DataView.Entry<UserInfo>):boolean {
     // filter name
-    const fullName = `${entry.get("first_name")} ${entry.get("family_name")}`.toLocaleLowerCase().trim();
-    if (!fullName.includes(NAME_FILTER_INPUT.value.toLocaleLowerCase().trim())) return false;
+    const fullName = StringUtil.normalize(`${entry.get("first_name")} ${entry.get("family_name")}`);
+    const nameQuery = StringUtil.normalize(NAME_FILTER_INPUT.value);
+    if (!fullName.includes(nameQuery) && !nameQuery.includes(fullName)) return false;
 
     // filter membership status
     const membershipOption = MEMBERSHIP_FILTER_SELECT.value;
