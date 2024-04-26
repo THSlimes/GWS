@@ -27,7 +27,7 @@ switch-input {
 
     &[disabled] {
         pointer-events: none;
-        filter: contrast(.75);
+        filter: contrast(.65);
     }
 
     > .knob {
@@ -48,7 +48,7 @@ switch-input {
     > .indicator {
         flex-grow: 1;
         text-align: center;
-        color: var(--text-light);
+        color: var(--text-light) !important;
         text-shadow: var(--std-shadow);
     }
 }

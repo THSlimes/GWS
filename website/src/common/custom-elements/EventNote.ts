@@ -1,7 +1,7 @@
 import writeXlsxFile from 'write-excel-file'
 
-import { EventComment, EventInfo, RegisterableEventInfo } from "../firebase/database/events/EventDatabase";
-import { HasSections } from "../util/UtilTypes";
+import { EventInfo } from "../firebase/database/events/EventDatabase";
+import { Class, HasSections } from "../util/UtilTypes";
 import ColorUtil from "../util/ColorUtil";
 import { onPermissionCheck } from "../firebase/authentication/permission-based-redirect";
 import EventCalendar from "./EventCalendar";
@@ -12,7 +12,6 @@ import Permissions from "../firebase/database/Permissions";
 import getErrorMessage from "../firebase/authentication/error-messages";
 import { onAuth } from "../firebase/init-firebase";
 import ElementFactory from "../html-element-factory/ElementFactory";
-import OptionCollection from "../ui/OptionCollection";
 import DateUtil from "../util/DateUtil";
 import ObjectUtil from "../util/ObjectUtil";
 import URLUtil from "../util/URLUtil";
@@ -24,6 +23,7 @@ import EventDatabaseFactory from "../firebase/database/events/EventDatabaseFacto
 import NumberUtil from "../util/NumberUtil";
 import Loading from "../Loading";
 import IconSelector from './IconSelector';
+import { EventComponentEditor } from './EventComponentEditor';
 
 /**
  * An EventNote displays relevant information of an event.
@@ -58,7 +58,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNote.Sect
         name: DetailLevel.LOW,
         timespan: DetailLevel.MEDIUM,
         description: DetailLevel.HIGH,
-        quickActions: DetailLevel.HIGH
+        quickActions: DetailLevel.HIGH,
     };
 
     /** Whether the section with the given name should be visible */
@@ -72,7 +72,8 @@ export class EventNote extends HTMLElement implements HasSections<EventNote.Sect
     public description!:HTMLDivElement;
     public quickActions!:HTMLDivElement;
 
-    protected readonly expanded:boolean;
+    protected readonly _expanded:boolean;
+    public get expanded() { return this._expanded; }
     private _lod!:DetailLevel;
     /** Level of detail */
     public get lod() { return this._lod; }
@@ -93,15 +94,11 @@ export class EventNote extends HTMLElement implements HasSections<EventNote.Sect
 
     /** EventInfo of the note */
     public event!:EventInfo;
-    /** Replaces the EventNote with its editable version. */
-    protected replaceWithEditable(event=this.event):void {
-        this.replaceWith(new EditableEventNote(event, this.lod, this.expanded));
-    }
 
     constructor(event:EventInfo, lod=DetailLevel.MEDIUM, expanded=false) {
         super();
 
-        this.expanded = this.hasAttribute("expanded") || expanded;
+        this._expanded = this.hasAttribute("expanded") || expanded;
 
         const eventOrigin = ElementUtil.getAttrAs<EventDatabaseFactory.Origin>(this, "origin", v => Object.values(EventDatabaseFactory.Origin).includes(v as EventDatabaseFactory.Origin));
         const eventId = this.getAttribute("id");
@@ -114,6 +111,7 @@ export class EventNote extends HTMLElement implements HasSections<EventNote.Sect
                 this.event = event;
                 this.initElement();
                 this.lod = NumberUtil.clamp(ElementUtil.getAttrAsNumber(this, "lod", false) ?? lod, DetailLevel.LOW, DetailLevel.FULL);
+                EventNote.applyComponents(this, ...this.event.components);
             })
             .catch(console.error);
         }
@@ -121,26 +119,27 @@ export class EventNote extends HTMLElement implements HasSections<EventNote.Sect
             this.event = event;
             this.initElement();
             this.lod = NumberUtil.clamp(ElementUtil.getAttrAsNumber(this, "lod", false) ?? lod, DetailLevel.LOW, DetailLevel.FULL);
+            EventNote.applyComponents(this, ...this.event.components);
         }
 
     }
 
     initElement():void {
         this.classList.add("flex-rows");
-        this.classList.toggle("min-section-gap", this.expanded);
-        this.toggleAttribute("expanded", this.expanded);
+        this.classList.toggle("min-section-gap", this._expanded);
+        this.toggleAttribute("expanded", this._expanded);
 
         // apply color palette
-        const bgColor = this.event.color ?? ColorUtil.getStringColor(this.event.category);
+        const bgColor = ColorUtil.getStringColor(this.event.category);
         this.style.setProperty("--background-color", bgColor);
         this.style.setProperty("--text-color", ColorUtil.getMostContrasting(bgColor, "#233452", "#ffffff"));
 
         // name section
-        this.name = ElementFactory.heading(this.expanded ? 1 : 5, this.event.name).class("name", "no-margin").make();
+        this.name = ElementFactory.heading(this._expanded ? 1 : 5, this.event.name).class("name", "no-margin").make();
 
         // timespan section
         let timespanText:string;
-        if (this.expanded) { // include year
+        if (this._expanded) { // include year
             if (DateUtil.Timespans.areFullDays([this.event.starts_at, this.event.ends_at])) {
                 timespanText = DateUtil.Days.isSame(this.event.starts_at, this.event.ends_at) ?
                     DateUtil.DATE_FORMATS.DAY.SHORT(this.event.starts_at) :
@@ -193,7 +192,9 @@ export class EventNote extends HTMLElement implements HasSections<EventNote.Sect
                             }
                         }, "Activiteit verwijderen")
                         .class("delete-button"),
-                    EventNote.CAN_UPDATE && ElementFactory.iconButton("edit_square", () => this.replaceWithEditable(this.event), "Activiteit bewerken"),
+                    EventNote.CAN_UPDATE && ElementFactory.iconButton("edit_square", () => {
+                        this.replaceWith(new EditableEventNote(this.event.copy(), this.lod, this._expanded));
+                    }, "Activiteit bewerken"),
                     ElementFactory.iconButton("share", () => {
                             const url = `${location.origin}/agenda.html#id=${this.event.id}`;
                             const shareData:ShareData = { url, title: `GWS Activiteit - ${this.event.name}` };
@@ -207,10 +208,11 @@ export class EventNote extends HTMLElement implements HasSections<EventNote.Sect
                 .onMake(self => self.hidden = !this.isVisible("quickActions"))
                 .make()
         ));
+
     }
 
-    public copy(lod:DetailLevel=this._lod, expanded:boolean=this.expanded) {
-        return new EventNote(this.event, lod ?? this.lod, expanded ?? this.expanded);
+    public copy(lod:DetailLevel=this._lod, expanded:boolean=this._expanded) {
+        return new EventNote(this.event, lod ?? this.lod, expanded ?? this._expanded);
     }
 
 }
@@ -218,6 +220,245 @@ export class EventNote extends HTMLElement implements HasSections<EventNote.Sect
 export namespace EventNote {
     /** Names of sections of an EventNote */
     export type SectionName = "name" | "timespan" | "description" | "quickActions";
+
+    export async function applyComponents(note:EventNote, ...components:EventInfo.Component[]) {
+        Loading.markLoadStart(note);
+        
+        // sort based on application order
+        components = components.toSorted((a, b) => applyComponents.ORDER.indexOf(a.Class) - applyComponents.ORDER.indexOf(b.Class));
+
+        for (const comp of components) {
+            if (comp instanceof EventInfo.Components.Color) {
+                note.style.setProperty("--background-color", comp.bg);
+                note.style.setProperty("--text-color", ColorUtil.getMostContrasting(comp.bg, "#233452", "#ffffff"));
+            }
+            else if (comp instanceof EventInfo.Components.Registerable) {
+
+                if (note.lod >= DetailLevel.FULL) {
+                    const spacesLeft = (comp.capacity ?? Infinity) - comp.numRegistrations;
+                    
+                    await Promise.all([
+                        onAuth(),
+                        comp.getCommentsFor(note.event),
+                        EventInfo.Components.Registerable.checkCanReadComments(),
+                        EventInfo.Components.Registerable.checkCanRegister(),
+                        EventInfo.Components.Registerable.checkCanDeregister(),
+                    ])
+                    .then(([user, comments, canReadComments, canRegister, canDeregister]) => {
+                        const sortedIDs = Object.keys(comp.registrations).sort((a, b) => comp.registrations[a].localeCompare(comp.registrations[b]));
+
+                        // list of registrations
+                        const newReg = ElementFactory.div(undefined, "registrations", "flex-rows", "in-section-gap")
+                        .children(
+                            ElementFactory.div()
+                            .class(
+                                "flex-columns",
+                                canReadComments && Responsive.isSlimmerOrEq(Responsive.Viewport.DESKTOP_SLIM) ? "main-axis-center" : "main-axis-space-between",
+                                "cross-axis-center",
+                                "in-section-gap"
+                            )
+                            .children(
+                                ElementFactory.heading(note.expanded ? 3 : 4, "Ingeschreven geitjes")
+                                .children(Number.isFinite(spacesLeft) && ElementFactory.span(` (${spacesLeft} plekken over)`).class("subtitle"))
+                                .class("no-margin"),
+                                canReadComments && ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
+                                .children(
+                                    ElementFactory.iconButton("download", () => { // create xlsx file and download it
+                                        const headerRow = [{ value: "Naam" }, { value: "Inschrijfmoment" }, { value: "Opmerking" }];
+
+                                        let [maxNameLength, maxCommentLength] = [headerRow[0].value.length, headerRow[2].value.length];
+
+                                        const data = sortedIDs.map(id => {
+                                            const name = comp.registrations[id];
+                                            maxNameLength = Math.max(maxCommentLength, name.length);
+
+                                            if (id in comments) {
+                                                const comment = comments[id];
+                                                maxCommentLength = Math.max(maxCommentLength, comment.body.length);
+                                                return [
+                                                    { type: String, value: name },
+                                                    { type: Date, value: comment.created_at, format: "d mmmm yyyy" },
+                                                    { type: String, value: comment.body }
+                                                ];
+                                            }
+                                            else return [{ type: String, value: name }];
+                                        });
+
+                                        const fileName = `Inschrijvingen ${note.event.name} (${DateUtil.DATE_FORMATS.DAY.SHORT_NO_YEAR(note.event.starts_at)}).xlsx`;
+                                        writeXlsxFile(
+                                            [headerRow, ...data],
+                                            { columns: [{ width: maxNameLength }, { width: 15 }, { width: maxCommentLength }], fileName }
+                                        )
+                                        .catch(err => console.error(err));
+                                    }, "Inschrijvingen downloaden"),
+                                    ElementFactory.iconButton("comment", (_, self) => {
+                                        if (self.toggleAttribute("selected", !note.toggleAttribute("hide-comments"))) {
+                                            [self.textContent, self.title] = ["comment", "Opmerkingen verbergen"];
+                                        }
+                                        else [self.textContent, self.title] = ["comments_disabled", "Opmerkingen tonen"]
+                                    }, "Opmerkingen verbergen").attr("selected").attr("can-unselect")
+                                )
+                            ),
+                            ElementFactory.div(undefined, "registrations-list", "no-margin")
+                            .children(
+                                ...sortedIDs.map(id => {
+                                    const name = comp.registrations[id];
+                                    return ElementFactory.div(undefined, "flex-rows", "cross-axis-center")
+                                        .children(
+                                            ElementFactory.p(name + (id in comments ? '*' : "")).class("no-margin", "text-center"),
+                                            id in comments && ElementFactory.div(undefined, "comment", "flex-rows", "cross-axis-center")
+                                            .children(
+                                                ElementFactory.div(undefined, "point").children(ElementFactory.div(undefined, "inside")),
+                                                ElementFactory.p(comments[id].body)
+                                                .class("message", "no-margin", "subtitle")
+                                                .tooltip(DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(comments[id].created_at))
+                                            )
+                                        )
+                                })
+                            )
+                        )
+                        .make();
+
+                        Array.from(note.getElementsByClassName("registrations")).forEach(e => e.remove()); // remove old element
+                        note.insertBefore(newReg, note.quickActions);
+
+                        // registration form
+                        const isReg = user !== null && comp.isRegistered(user.uid);
+                        const newButton = ElementFactory.button().class("registration-button");
+                        let icon:string, text:string, onClick:(ev:MouseEvent, self:HTMLButtonElement)=>void, disabled:boolean;
+                        const now = new Date();
+                        if (now > note.event.ends_at) [icon, text, onClick, disabled] = ["event_busy", "Activiteit is al voorbij", () => {}, true];
+                        else if (now > note.event.starts_at) [icon, text, onClick, disabled] = ["calendar_today", "Activiteit is al gestart", () => {}, true];
+                        else if (user === null) [icon, text, onClick, disabled] = ["login", "Log in om je in te schrijven", () => location.href = URLUtil.createLinkBackURL("./inloggen.html").toString(), false];
+                        else if (isReg) { // is registered
+                            if (canDeregister) [icon, text, onClick, disabled] = ["free_cancellation", "Uitschrijven", (_, self) => {
+                                self.disabled = true;
+                                comp.deregister(note.event)
+                                .then(() => {
+                                    UserFeedback.success("Je bent uitgeschreven!");
+                                    applyComponents(note, ...components);
+                                })
+                                .catch(err => UserFeedback.error(getErrorMessage(err)))
+                                .finally(() => self.disabled = false);
+                            }, false];
+                            else [icon, text, onClick, disabled] = ["event_available", "Ingeschreven", () => {}, true];
+                        }
+                        else if (canRegister) [icon, text, onClick, disabled] = ["calendar_add_on", "Inschrijven", (_, self) => {
+                            self.disabled = true;
+                            comp.register(note.event, commentBox.value)
+                            .then(() => {
+                                UserFeedback.success("Je staat ingeschreven!");
+                                applyComponents(note, ...components);
+                            })
+                            .catch(err => UserFeedback.error(getErrorMessage(err)))
+                            .finally(() => self.disabled = false);
+                        }, false];
+                        else [icon, text, onClick, disabled] = ["event_busy", "Inschrijving niet mogelijk", () => {}, true];
+                        
+                        let commentBox = ElementFactory.textarea()
+                            .class("comment-box")
+                            .placeholder("Opmerking...")
+                            .maxLength(1024)
+                            .spellcheck(true)
+                            .make();
+
+                        Array.from(note.getElementsByClassName("registration-form")).forEach(e => e.remove()); // remove old element
+                        note.insertBefore(
+                            ElementFactory.div(undefined, "registration-form", "flex-rows", "center-content", "in-section-gap")
+                            .children(
+                                !isReg && !disabled && commentBox,
+                                newButton.children(
+                                    ElementFactory.h4(icon).class("icon", "no-margin"),
+                                    ElementFactory.h4(text).class("no-margin")
+                                )
+                                .attr("disabled", disabled ? "" : null)
+                                .on("click", onClick)
+                            )
+                            .make(),
+                            note.quickActions
+                        );
+
+                    })
+                    .catch(err => console.error(err))
+                }
+                
+            }
+            else if (comp instanceof EventInfo.Components.RegistrationStart) {
+                if (note.lod >= DetailLevel.FULL) {
+                    const regButton = note.getElementsByClassName("registration-button")[0];
+                    const regForm = note.getElementsByClassName("registration-form")[0];
+                    if (new Date() < comp.moment) {
+                        regButton.toggleAttribute("disabled", true);
+                        regForm.childNodes.forEach(cn => {
+                            if (cn !== regButton) cn.remove();
+                        });
+                        regButton.firstElementChild!.textContent = "calendar_clock";
+                        regButton.lastElementChild!.textContent = `Inschrijven kan pas vanaf ${DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(comp.moment)}`;
+                    }
+                }
+            }
+            else if (comp instanceof EventInfo.Components.RegistrationEnd) {
+                if (note.lod >= DetailLevel.FULL) {
+                    const regButton = note.getElementsByClassName("registration-button")[0];
+                    const regForm = note.getElementsByClassName("registration-form")[0];
+                    if (new Date() > comp.moment) {
+                        regButton.toggleAttribute("disabled", true);
+                        regForm.childNodes.forEach(cn => {
+                            if (cn !== regButton) cn.remove();
+                        });
+                        regButton.firstElementChild!.textContent = "event_upcoming";
+                        regButton.lastElementChild!.textContent = `Inschrijving is al gesloten`;
+                    }
+                }
+            }
+            else if (comp instanceof EventInfo.Components.Cost) {
+                if (note.lod >= DetailLevel.FULL) {
+                    
+                    const regForm = note.getElementsByClassName("registration-form")[0];
+                    const regButton = note.getElementsByClassName("registration-button")[0];
+
+                    if (regButton.hasAttribute("disabled")) {
+                        regForm.prepend(ElementFactory.p(`De inschrijfkosten bedragen €${(comp.cost * .01).toFixed(2).replace('.', ',')}.`).make());
+                    }
+                    else await onAuth()
+                        .then(user => {
+                            if (user && !note.event.getComponent(EventInfo.Components.Registerable)!.isRegistered(user.uid)) {
+                                let allowPaymentSwitch = new Switch(false, regButton);
+            
+                                regForm.prepend(
+                                    ElementFactory.div(undefined, "payment-disclaimer", "flex-columns", "cross-axis-center", "in-section-gap")
+                                    .children(
+                                        ElementFactory.p(`Ik ga akkoord met de kosten van €${(comp.cost * .01).toFixed(2).replace('.', ',')} voor deze activiteit.`)
+                                        .class("no-margin"),
+                                        ElementFactory.div(undefined, "icon-switch")
+                                        .children(
+                                            ElementFactory.p("euro_symbol").class("icon", "no-margin"),
+                                            allowPaymentSwitch
+                                        )
+                                        .tooltip(`Kosten (€${(comp.cost * .01).toFixed(2).replace('.', ',')}) accepteren`)
+                                    )
+                                    .make()
+                                );
+                            }
+                        });
+                }
+            }
+            else console.error(`no applicator found for ${comp.Class.name}`);
+        }
+
+        Loading.markLoadEnd(note);
+    }
+
+    export namespace applyComponents {
+        /** Order that components should be applied in */
+        export const ORDER:Class<EventInfo.Component>[] = [
+            EventInfo.Components.Color,
+            EventInfo.Components.Registerable,
+            EventInfo.Components.RegistrationStart,
+            EventInfo.Components.RegistrationEnd,
+            EventInfo.Components.Cost,
+        ];
+    }
 }
 
 Loading.onDOMContentLoaded().then(() => customElements.define("event-note", EventNote));
@@ -235,25 +476,15 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
     public startsAt!:HTMLInputElement;
     public endsAt!:HTMLInputElement;
     public description!:RichTextInput;
+    public componentEditor!:EventComponentEditor;
     public quickActions!:HTMLDivElement;
     public saveButton!:HTMLElement;
 
-    private optionCollection:OptionCollection<string,{}> = new OptionCollection({});
-    protected addOptions(newOptions:OptionCollection<string,any>) {
-        const combined = this.optionCollection.combine(newOptions);
-        this.optionCollection.replaceWith(combined);
-        this.optionCollection = combined;
-    }
-    protected hideOptions(...optionNames:string[]) {
-        for (const optionName of optionNames) this.optionCollection.hide(optionName);
-    }
-
-    private noteOptions!:OptionCollection<keyof EditableEventNote.OptionMap, EditableEventNote.OptionMap>;
-
+    protected readonly originalEvent:EventInfo;
     protected readonly event:EventInfo;
     /** Replaces the EditableEventNote with its non-editable version. */
     protected replaceWithOriginal(event=this.event):void {
-        this.replaceWith(new EventNote(event, this.lod, this.expanded));
+        this.replaceWith(new EventNote(event.copy(), this.lod, this.expanded));
     }
 
     protected get savableEvent() {
@@ -272,8 +503,8 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
             this.name.textContent ?? "Activiteit",
             this.description.value,
             this.category.value ? this.category.value : undefined,
-            this.noteOptions.has("color") ? this.noteOptions.get("color")! : undefined,
-            [startDate, endDate]
+            [startDate, endDate],
+            this.event.components.map(c => c.copy())
         );
     }
 
@@ -304,16 +535,10 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
         return out;
     }
 
-    private refreshColorPalette() {
-        // apply color palette
-        const bgColor = this.noteOptions.has("color") ? this.noteOptions.get("color")! : ColorUtil.getStringColor(this.category.value);
-        this.style.setProperty("--background-color", bgColor);
-        this.style.setProperty("--text-color", ColorUtil.getMostContrasting(bgColor, "#233452", "#ffffff"));
-    }
-
     constructor(event:EventInfo, lod=DetailLevel.MEDIUM, expanded=false, saveAsNew=false) {
         super();
 
+        this.originalEvent = event.copy();
         this.event = event;
         this.lod = lod;
         this.expanded = expanded;
@@ -327,12 +552,17 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
         
     }
 
+    private applyComponents() {
+        // apply color palette
+        const bgColor = this.event.getComponent(EventInfo.Components.Color)?.bg ?? ColorUtil.getStringColor(this.category.value);
+        this.style.setProperty("--background-color", bgColor);
+        this.style.setProperty("--text-color", ColorUtil.getMostContrasting(bgColor, "#233452", "#ffffff"));
+    }
+
     initElement():void {
         this.classList.add("flex-rows");
         this.classList.toggle("min-section-gap", this.expanded);
         this.toggleAttribute("expanded", this.expanded);
-
-        const refreshColorCallback = () => this.refreshColorPalette();
 
         this.appendChild( // name and category sections
             ElementFactory.div(undefined, "flex-columns", "in-section-gap")
@@ -345,7 +575,7 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
                         .class("category")
                         .attr("no-resize")
                         .placeholder("Categorie")
-                        .on("input", () => FunctionUtil.setDelayedCallback(refreshColorCallback, 250))
+                        .on("input", () => FunctionUtil.setDelayedCallback(() => this.applyComponents(), 250))
                         .make()
                 )
                 .make(),
@@ -403,29 +633,11 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
                 .make()
         );
 
-        // options
-        this.appendChild(this.optionCollection);
-
-        this.noteOptions = new OptionCollection<keyof EditableEventNote.OptionMap, EditableEventNote.OptionMap>({
-            "color": [
-                "palette",
-                ElementFactory.div(undefined, "center-content", "in-section-gap")
-                    .children(
-                        ElementFactory.h4("Kleurenpalet instellen").class("no-margin"),
-                        ElementFactory.input.color(this.event.color ?? "#eeeeee")
-                        .onValueChanged(() => this.refreshColorPalette()),
-                    )
-                    .make(),
-                elem => (elem.lastChild as HTMLInputElement).value as ColorUtil.HexColor
-            ]
-        }, { "color": "Achtergrondkleur" });
-        if (this.event.color !== undefined) this.noteOptions.add("color");
-
-        this.noteOptions.onActiveOptionsChanged = () => this.refreshColorPalette();
-
-        this.addOptions(this.noteOptions);
-
-        this.refreshColorPalette();
+        // component editor section
+        this.componentEditor = this.appendChild(new EventComponentEditor(this.event));
+        this.componentEditor.classList.add("component-editor");
+        this.componentEditor.addEventListener("change", () => this.applyComponents());
+        this.componentEditor.addEventListener("input", () => this.applyComponents());
 
         // quick-actions section
         this.quickActions = this.appendChild(
@@ -442,39 +654,20 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
                         })
                         .catch(err => UserFeedback.error(getErrorMessage(err)));
                     }, this.saveAsNew ? "Activiteit toevoegen" : "Aanpassingen opslaan").make(),
-                    !this.saveAsNew && ElementFactory.iconButton("backspace", () => this.replaceWithOriginal(), "Annuleren")
+                    !this.saveAsNew && ElementFactory.iconButton("backspace", () => this.replaceWithOriginal(this.originalEvent), "Annuleren")
                         .class("cancel-edit-button")
                 )
                 .make()
         );
-
-        if (this.saveAsNew) {
-            const regOption = new OptionCollection(
-                {"registerable": ["how_to_reg", ElementFactory.h4("Inschrijfbaar voor leden").class("text-center", "no-margin").make(), () => undefined]},
-                { "registerable": "Inschrijfbaar voor leden" }
-            );
-            regOption.onActiveOptionsChanged = () => {
-                if (regOption.has("registerable")) {
-                    const replacement = new EditableRegisterableEventNote(
-                        RegisterableEventInfo.fromSuper(this.savableEvent, {}, false, undefined, [undefined, undefined]),
-                        this.lod, this.expanded, this.saveAsNew
-                    );
-                    [replacement.id, replacement.className] = [this.id, this.className];
-                    for (const handler of this.onSaveHandlers) replacement.onSave = handler;
-
-                    this.replaceWith(replacement);
-                }
-            }
-
-            this.addOptions(regOption);
-        }
+        
+        this.applyComponents();
     }
 
 }
 
 export namespace EditableEventNote {
 
-    export type SectionName = "name" | "category" | "useTime" | "startsAt" | "endsAt" | "description" | "quickActions" | "saveButton";
+    export type SectionName = "name" | "category" | "useTime" | "startsAt" | "endsAt" | "description" | "componentEditor" | "quickActions" | "saveButton";
 
     export type OptionMap = {
         "color": ColorUtil.HexColor
@@ -483,420 +676,3 @@ export namespace EditableEventNote {
 }
 
 Loading.onDOMContentLoaded().then(() => customElements.define("editable-event-note", EditableEventNote));
-
-
-
-export class RegisterableEventNote extends EventNote implements HasSections<RegisterableEventNote.SectionName> {
-
-    private static registrationPermissionsQueried = false;
-    private static registrationsPermissionsQueriedHandlers:VoidFunction[] = [];
-    private static CAN_REGISTER = false;
-    private static CAN_DEREGISTER = false;
-    private static CAN_READ_COMMENTS = false;
-    private static onRegistrationPermissionsQueried():Promise<void> {
-        return new Promise(resolve => {
-            if (this.registrationPermissionsQueried) resolve(); // already done
-            else this.registrationsPermissionsQueriedHandlers.push(resolve);
-        });
-    }
-
-    static {
-        onPermissionCheck([Permissions.Permission.REGISTER_FOR_EVENTS, Permissions.Permission.DEREGISTER_FOR_EVENTS, Permissions.Permission.READ_EVENT_COMMENTS], (_, res) => {
-            this.CAN_REGISTER = res.REGISTER_FOR_EVENTS;
-            this.CAN_DEREGISTER = res.DEREGISTER_FOR_EVENTS;
-            this.CAN_READ_COMMENTS = res.READ_EVENT_COMMENTS;
-            EventNote.onPermissionsQueried()
-            .then(() => {
-                this.registrationPermissionsQueried = true;
-                for (const h of this.registrationsPermissionsQueriedHandlers) h(); // resolve promises
-            });
-        }, true, true);
-    }
-
-    protected static override SECTIONS_VISIBLE_FROM: Record<RegisterableEventNote.SectionName, DetailLevel> = {
-        ...super.SECTIONS_VISIBLE_FROM,
-        registrations: DetailLevel.HIGH,
-        paymentDisclaimer: DetailLevel.FULL,
-        allowPaymentSwitch: DetailLevel.FULL,
-        commentBox: DetailLevel.FULL,
-        registerButton: DetailLevel.FULL
-    };
-
-    protected override isVisible(sectionName: RegisterableEventNote.SectionName): boolean {
-        return RegisterableEventNote.SECTIONS_VISIBLE_FROM[sectionName] <= this.lod;
-    }
-
-    public registrations!: HTMLDivElement;
-    public paymentDisclaimer!: HTMLDivElement | null;
-    public allowPaymentSwitch!: Switch | null;
-    public registerButton!: HTMLButtonElement;
-    public commentBox!: HTMLTextAreaElement;
-
-    private refreshRegistrationDetails() {
-        RegisterableEventNote.onRegistrationPermissionsQueried()
-        .then(() => onAuth())
-        .then(user => {
-            const allowsPayment = !this.allowPaymentSwitch || this.allowPaymentSwitch.value;
-            const isRegistered = user !== null && this.event.isRegistered(user.uid);
-            let state: RegisterableEventNote.ButtonState;
-            const now = new Date();
-
-            if (!user) state = ["login", "Log in om je in te schrijven", true, false];
-            else {
-                if (this.event.ends_at <= now) state = ["event_busy", "Activiteit is al voorbij", false, false];
-                else if (this.event.starts_at <= now) state = ["calendar_today", "Activiteit is al gestart", false, false];
-                else if (this.event.can_register_until && this.event.can_register_until <= now) {
-                    state = ["event_upcoming", "Inschrijving is al gesloten", false, false];
-                }
-                else if (this.event.can_register_from && now <= this.event.can_register_from) {
-                    state = ["calendar_clock", `Inschrijven kan pas vanaf ${DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(this.event.can_register_from)}`, false, false];
-                }
-                else if (isRegistered) state = RegisterableEventNote.CAN_DEREGISTER ?
-                    ["free_cancellation", "Uitschrijven", true, false] :
-                    ["event_available", "Ingeschreven", false, false];
-                else if (this.event.isFull()) state = ["event_busy", "Activiteit zit vol", false, false];
-                else state = RegisterableEventNote.CAN_REGISTER ?
-                    ["calendar_add_on", "Inschrijven", allowsPayment, true] :
-                    ["event_busy", "Inschrijving niet mogelijk", false, false];
-            }
-
-            [this.registerButton.firstElementChild!.textContent, this.registerButton.children[1].textContent] = state;
-            this.registerButton.disabled = !state[2];
-
-            if (this.paymentDisclaimer && this.isVisible("paymentDisclaimer")) this.paymentDisclaimer.hidden = !state[3];
-            if (this.isVisible("commentBox")) this.commentBox.hidden = !state[3];
-            this.registrations.hidden ||= ObjectUtil.sizeOf(this.event.registrations) === 0;
-
-            const spacesLeft = (this.event.capacity ?? 0) - ObjectUtil.sizeOf(this.event.registrations);
-            const commentsPromise = RegisterableEventNote.CAN_READ_COMMENTS ? this.event.getComments() : new Promise<Record<string,EventComment>>(resolve => resolve({}));
-            
-            commentsPromise.then(comments => {
-                const sortedIDs = Object.keys(this.event.registrations).sort((a,b) => this.event.registrations[a].localeCompare(this.event.registrations[b]));
-
-                const newRegistrations = ElementFactory.div(undefined, "registrations", "flex-rows", "in-section-gap")
-                    .children(
-                        ElementFactory.div(undefined)
-                            .class(
-                                "flex-columns",
-                                !RegisterableEventNote.CAN_READ_COMMENTS && Responsive.isSlimmerOrEq(Responsive.Viewport.DESKTOP_SLIM) ? "main-axis-center" : "main-axis-space-between",
-                                "cross-axis-center",
-                                "in-section-gap"
-                            )
-                            .children(
-                                ElementFactory.heading(this.expanded ? 3 : 4, "Ingeschreven geitjes")
-                                    .children((spacesLeft > 0 && state[3]) && ElementFactory.span(` (${spacesLeft} plekken over)`).class("subtitle"))
-                                    .class("no-margin"),
-                                ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
-                                    .children(
-                                        RegisterableEventNote.CAN_READ_COMMENTS && ElementFactory.iconButton("download", () => { // create xlsx file and download it
-                                            const headerRow = [
-                                                { value: "Naam" },
-                                                { value: "Inschrijfmoment" },
-                                                { value: "Opmerking" }
-                                            ];
-        
-                                            let maxNameLength = headerRow[0].value.length;
-                                            let maxCommentLength = headerRow[2].value.length;
-
-                                            const data = sortedIDs.map(id => {
-                                                const name = this.event.registrations[id];
-
-                                                maxNameLength = Math.max(maxNameLength, name.length);
-                                                if (id in comments) {
-                                                    maxCommentLength = Math.max(maxCommentLength, comments[id].body.length);
-                                                    return [
-                                                        {
-                                                            type: String,
-                                                            value: name,
-                                                        },
-                                                        {
-                                                            type: Date,
-                                                            value: comments[id].created_at,
-                                                            format: "d mmmm yyyy",
-                                                        },
-                                                        {
-                                                            type: String,
-                                                            value: comments[id].body
-                                                        }
-                                                    ];
-                                                }
-                                                else return [ { type: String, value: name } ];
-                                            });
-        
-                                            writeXlsxFile([
-                                                headerRow,
-                                                ...data
-                                            ], {
-                                                columns: [{ width: maxNameLength }, { width: 15 }, { width: maxCommentLength }],
-                                                fileName: `Inschrijvingen ${this.event.name} (${DateUtil.DATE_FORMATS.DAY.SHORT_NO_YEAR(this.event.starts_at)}).xlsx`
-                                            })
-                                            .catch(err => console.error(err));
-                                        }, "Inschrijvingen downloaden"),
-                                        RegisterableEventNote.CAN_READ_COMMENTS && ElementFactory.iconButton("comment", (ev, self) => {
-                                            if (self.toggleAttribute("selected", !this.toggleAttribute("hide-comments"))) {
-                                                self.textContent = "comment";
-                                                self.title = "Opmerkingen verbergen";
-                                            }
-                                            else {
-                                                self.textContent = "comments_disabled";
-                                                self.title = "Opmerkingen tonen";
-                                            }
-                                        }, "Opmerkingen verbergen")
-                                        .attr("selected")
-                                        .attr("can-unselect")
-                                    ),
-                            ),
-                        ElementFactory.div()
-                            .class("registrations-list", "no-margin")
-                            .children(
-                                ...sortedIDs.map(id => {
-                                    const name = this.event.registrations[id];
-                                    const comment = id in comments ? comments[id] : undefined;
-                                    
-                                    
-                                    return ElementFactory.div(undefined, "flex-rows", "cross-axis-center")
-                                        .children(
-                                            ElementFactory.p(name + (comment ? '*' : "")).class("no-margin"),
-                                            (comment !== undefined) && ElementFactory.div(undefined, "comment", "flex-rows", "cross-axis-center")
-                                                .children(
-                                                    ElementFactory.div(undefined, "point")
-                                                        .children(ElementFactory.div(undefined, "inside")),
-                                                    ElementFactory.p(comment.body)
-                                                        .class("message", "no-margin", "subtitle")
-                                                        .tooltip(comment !== undefined ? DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(comments[id].created_at) : "")
-                                                )
-                                        );
-                                    }
-                                )
-                            )
-                            .make()
-                    )
-                    .make();
-                
-                this.registrations.replaceWith(newRegistrations);
-                newRegistrations.hidden = this.registrations.hidden;
-                this.registrations = newRegistrations;
-
-            })
-            .catch(console.error);
-        })
-        .catch(console.error);
-    }
-
-    override event!: RegisterableEventInfo;
-    protected override replaceWithEditable(event = this.event): void {
-        this.replaceWith(new EditableRegisterableEventNote(event, this.lod, this.expanded));
-    }
-
-    constructor(regEvent: RegisterableEventInfo, lod = DetailLevel.MEDIUM, expanded = false) {
-        super(regEvent, lod, expanded);
-
-        // refresh at registration start
-        if (this.event.can_register_from && this.event.can_register_from.getTime() > Date.now()) setTimeout(() => {
-            this.refreshRegistrationDetails();
-        }, this.event.can_register_from.getTime() - Date.now());
-        // refresh at registration end
-        const regEnd = this.event.can_register_until ?? this.event.starts_at;
-        if (regEnd.getTime() > Date.now()) setTimeout(() => this.refreshRegistrationDetails(), regEnd.getTime() - Date.now());
-    }
-
-    public override initElement(): void {
-        super.initElement();
-
-        // registrations
-        this.registrations = this.appendChild(ElementFactory.div().make());
-
-        this.appendChild( // registration info
-            ElementFactory.div(undefined, "flex-rows", "cross-axis-center", "in-section-gap")
-                .children(
-                    // payment disclaimer section
-                    (this.event.requires_payment === true) && (this.paymentDisclaimer = this.appendChild(
-                        ElementFactory.div(undefined, "payment-disclaimer", "flex-columns", "cross-axis-center", "in-section-gap")
-                            .children(
-                                ElementFactory.p("Ik ga akkoord met de kosten van deze activiteit.").class("no-margin"),
-                                ElementFactory.div(undefined, "icon-switch")
-                                    .children(
-                                        ElementFactory.p("euro_symbol").class("icon", "no-margin"),
-                                        this.allowPaymentSwitch = new Switch(false)
-                                    )
-                                    .tooltip("Kosten accepteren")
-                            )
-                            .make()
-                    )),
-                    // comment box
-                    this.commentBox = ElementFactory.textarea()
-                        .class("comment-box")
-                        .placeholder("Opmerking")
-                        .attr("no-resize")
-                        .spellcheck(true)
-                        .maxLength(512)
-                        .make(),
-                    // register button
-                    this.registerButton = ElementFactory.button(() => onAuth()
-                        .then(user => {
-                            if (!user) location.href = URLUtil.createLinkBackURL("./inloggen.html").toString(); // must log in to register
-                            else this.event.toggleRegistered(user.uid, this.commentBox.value)
-                                .then(isReg => {
-                                    UserFeedback.success(`Je bent succesvol ${isReg ? "ingeschreven" : "uitgeschreven"}.`);
-                                    this.refreshRegistrationDetails();
-                                })
-                                .catch(err => UserFeedback.error(getErrorMessage(err)));
-                        })
-                        .catch(err => UserFeedback.error(getErrorMessage(err)))
-                    )
-                    .class("register-button")
-                    .attr("no-select")
-                    .children(ElementFactory.h4("event").class("icon"), ElementFactory.h4("Inschrijven"))
-                    .make()
-                )
-                .make()
-        );
-
-        if (this.allowPaymentSwitch) this.allowPaymentSwitch.addEventListener("input", () => this.refreshRegistrationDetails());
-        this.refreshRegistrationDetails();
-    }
-
-    public override copy(lod?: DetailLevel, expanded?: boolean): RegisterableEventNote {
-        return new RegisterableEventNote(this.event, lod ?? this.lod, expanded ?? this.expanded);
-    }
-
-}
-
-export namespace RegisterableEventNote {
-    export type SectionName = EventNote.SectionName | "registrations" | "paymentDisclaimer" | "allowPaymentSwitch" | "registerButton" | "commentBox";
-    
-    /** [icon, text, enabled, show extra options] tuple */
-    export type ButtonState = [string, string, boolean, boolean];
-
-    export type RegistrationsViewMode = "list" | "grid";
-}
-
-customElements.define("registerable-event-note", RegisterableEventNote);
-
-
-
-export class EditableRegisterableEventNote extends EditableEventNote implements HasSections<EditableRegisterableEventNote.SectionName> {
-
-    private registrationOptions!: OptionCollection<keyof EditableRegisterableEventNote.OptionMap, EditableRegisterableEventNote.OptionMap>;
-
-    protected override event!: RegisterableEventInfo;
-    protected override get savableEvent(): RegisterableEventInfo {
-        // put registration bounds right way around
-        let [canRegisterFrom, canRegisterUntil] = [this.registrationOptions.get("canRegisterFrom"), this.registrationOptions.get("canRegisterUntil")];
-        if (canRegisterFrom !== undefined && canRegisterUntil !== undefined && canRegisterFrom > canRegisterUntil) {
-            [canRegisterFrom, canRegisterUntil] = [canRegisterUntil, canRegisterFrom];
-        }
-
-        return RegisterableEventInfo.fromSuper(
-            super.savableEvent,
-            this.event.registrations,
-            this.registrationOptions.get("requiresPayment") ?? false,
-            this.registrationOptions.has("capacity") ? Math.max(ObjectUtil.sizeOf(this.event.registrations), this.registrationOptions.get("capacity")!) : undefined,
-            [canRegisterFrom, canRegisterUntil]
-        );
-    }
-
-    protected override replaceWithOriginal(regEvent = this.event): void {
-        this.replaceWith(new RegisterableEventNote(regEvent, this.lod, this.expanded));
-    }
-
-    constructor(regEvent: RegisterableEventInfo, lod = DetailLevel.MEDIUM, expanded = false, saveAsNew?: boolean) {
-        super(regEvent, lod, expanded, saveAsNew);
-    }
-
-    public override initElement(): void {
-        super.initElement();
-
-        this.registrationOptions = new OptionCollection({
-            "capacity": [
-                "social_distance",
-                ElementFactory.div(undefined, "center-content", "in-section-gap")
-                    .children(
-                        ElementFactory.h4("Maximaal aantal inschrijvingen").class("no-margin"),
-                        ElementFactory.input.number(Math.max(1, this.event.capacity ?? 0, ObjectUtil.sizeOf(this.event.registrations)))
-                            .min(Math.max(1, ObjectUtil.sizeOf(this.event.registrations)))
-                            .step(1)
-                            .style({ "width": "4em" })
-                    )
-                    .make(),
-                elem => {
-                    const input = elem.lastChild as HTMLInputElement;
-                    return input.value ? input.valueAsNumber : 0;
-                }
-            ],
-            "canRegisterFrom": [
-                "line_start_square",
-                ElementFactory.div(undefined, "center-content", "in-section-gap")
-                    .children(
-                        ElementFactory.h4("Inschrijving kan vanaf").class("no-margin"),
-                        ElementFactory.input.dateTimeLocal(this.event.can_register_from ?? new Date())
-                    )
-                    .make(),
-                elem => {
-                    const date = new Date((elem.lastChild as HTMLInputElement).value);
-                    return DateUtil.Timestamps.isValid(date) ? date : new Date();
-                }
-            ],
-            "canRegisterUntil": [
-                "line_end_square",
-                ElementFactory.div(undefined, "center-content", "in-section-gap")
-                    .children(
-                        ElementFactory.h4("Inschrijving kan t/m").class("no-margin"),
-                        ElementFactory.input.dateTimeLocal(this.event.can_register_until ?? this.event.starts_at)
-                    )
-                    .make(),
-                elem => {
-                    const date = new Date((elem.lastChild as HTMLInputElement).value);
-                    return DateUtil.Timestamps.isValid(date) ? date : this.event.starts_at;
-                }
-            ],
-            "requiresPayment": ["euro_symbol", ElementFactory.h4("Activiteit kost geld").class("text-center", "no-margin").make(), () => true],
-        }, {
-            "capacity": "Maximaal aantal inschrijvingen",
-            "canRegisterFrom": "Startmoment voor inschrijving",
-            "canRegisterUntil": "Eindmoment voor inschrijving",
-            "requiresPayment": "Activiteit kost geld"
-        });
-
-        if (this.event.requires_payment) this.registrationOptions.add("requiresPayment");
-        if (this.event.can_register_from !== undefined) this.registrationOptions.add("canRegisterFrom");
-        if (this.event.can_register_until !== undefined) this.registrationOptions.add("canRegisterUntil");
-        if (this.event.capacity !== undefined) this.registrationOptions.add("capacity");
-
-        this.addOptions(this.registrationOptions);
-
-        this.querySelector("option-collection")!.prepend(
-            ElementFactory.div(undefined, "option", "flex-columns", "cross-axis-center", "in-section-gap")
-                .children(
-                    ElementFactory.p("how_to_reg").class("icon"),
-                    ElementFactory.h4("Inschrijfbaar voor leden").class("no-margin").style({ "textAlign": "center" }),
-                    this.saveAsNew ?
-                        ElementFactory.iconButton("remove", () => {
-                            const replacement = new EditableEventNote(this.savableEvent, this.lod, this.expanded, this.saveAsNew);
-                            [replacement.id, replacement.className] = [this.id, this.className];
-                            for (const handler of this.onSaveHandlers) replacement.onSave = handler;
-
-                            this.replaceWith(replacement);
-                        }, "Instelling weghalen") :
-                        ElementFactory.p("done").class("icon")
-                )
-                .make()
-        );
-
-        this.hideOptions("registerable");
-    }
-
-}
-
-export namespace EditableRegisterableEventNote {
-    export type SectionName = EditableEventNote.SectionName;
-
-    export type OptionMap = {
-        capacity: number;
-        canRegisterFrom: Date;
-        canRegisterUntil: Date;
-        requiresPayment: boolean;
-    };
-}
-
-Loading.onDOMContentLoaded().then(() => customElements.define("editable-registerable-event-note", EditableRegisterableEventNote));

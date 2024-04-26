@@ -89,14 +89,6 @@ export default abstract class ArrayUtil {
 
         return out;
     }
-
-    public static sorted<A extends any[]>(arr:A, compareFn?: ((a:ElementOf<A>, b: ElementOf<A>) => number)):A {
-        return arr.sort(compareFn);
-    }
-
-    public static toSorted<A extends any[]>(arr:A, compareFn?: ((a:ElementOf<A>, b: ElementOf<A>) => number)):A {
-        return arr.toSorted(compareFn) as A;
-    }
     
     /**
      * Counts how many array elements match the predicate.

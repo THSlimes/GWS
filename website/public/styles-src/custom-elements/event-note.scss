@@ -1,6 +1,6 @@
 @import url("./switch.css");
 @import url("./rich-text-input.css");
-@import url("./option-collection.css");
+@import url("./info-component-editor.css");
 
 event-note, registerable-event-note, editable-event-note, editable-registerable-event-note {
     display: block;
@@ -49,22 +49,6 @@ event-note, registerable-event-note, editable-event-note, editable-registerable-
         text-align: justify;
         &, & * { color:inherit }
     }
-    
-    & .quick-actions {
-        position: absolute;
-        top: var(--in-section-gap);
-        right: var(--in-section-gap);
-        
-        > * {
-            color: inherit;
-            border-radius: var(--in-section-gap);
-        }
-
-        > .delete-button[awaiting-confirmation] { animation: pulsate-in 1000ms ease-in-out 0ms infinite; }
-    }
-}
-
-registerable-event-note {
 
     & .registrations {
         flex-grow: 1;
@@ -126,20 +110,32 @@ registerable-event-note {
             }
         }
     }
-
     &[hide-comments] > .registrations .comment { animation: shrink-disappear 200ms ease-in-out 0ms 1 forwards; }
 
-    & .register-button {
-        width: 100%;
+    & .registration-button {
+        width: max-content;
     }
-
-    & .payment-disclaimer > * { color:inherit; }
 
     & .comment-box {
         width: 100%;
         height: 10vh;
 
         color: var(--text-dark);
+    }
+
+    & .payment-disclaimer > * { color:inherit; }
+    
+    & .quick-actions {
+        position: absolute;
+        top: var(--in-section-gap);
+        right: var(--in-section-gap);
+        
+        > * {
+            color: inherit;
+            border-radius: var(--in-section-gap);
+        }
+
+        > .delete-button[awaiting-confirmation] { animation: pulsate-in 1000ms ease-in-out 0ms infinite; }
     }
 }
 
@@ -153,7 +149,7 @@ registerable-event-note {
     100% { display: none; scale: 0; }
 }
 
-editable-event-note, editable-registerable-event-note {
+editable-event-note{
 
     transition: background-color 250ms ease-out;
 
@@ -177,9 +173,10 @@ editable-event-note, editable-registerable-event-note {
 
     & .description { min-height: 30vh; }
 
-    > option-collection > .option {
-        outline-color: var(--text-color);
-        & * { color: var(--text-color); }
+    & .component-editor {
+        flex-grow: 1;
+        overflow: visible scroll;
+        padding: var(--in-section-gap);
     }
 
 }

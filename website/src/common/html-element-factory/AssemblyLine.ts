@@ -149,6 +149,7 @@ class AssemblyLine<TN extends string, E extends AssemblyLine.ElementType<TN> = A
         for (const c of this._children) {
             if (c) {
                 if (c instanceof Node) out.appendChild(c);
+                else if (typeof c === "string") out.appendChild(document.createTextNode(c));
                 else if (c instanceof AssemblyLine) out.appendChild(c.make());
                 else {
                     let res = c(out);
@@ -218,12 +219,13 @@ namespace AssemblyLine {
         [T in keyof HTMLElementEventMap]?: (event:HTMLElementEventMap[T], self:S) => void;
     }
     
-    export type Child = Node|AssemblyLine<any>|null|false;
+    export type Child = Node|string|AssemblyLine<any>|null|false;
     export namespace Child {
         export function toNodes(children:Child[]):Node[] {
             const out:Node[] = [];
             for (const c of children) {
                 if (c instanceof Node) out.push(c);
+                else if (typeof c === "string") out.push(document.createTextNode(c));
                 else if (c instanceof AssemblyLine) out.push(c.make());
             }
         

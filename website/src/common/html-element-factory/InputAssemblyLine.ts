@@ -45,13 +45,16 @@ namespace SmartInput {
             return `${args[0].toString().padStart(4,'0')}-${(args[1]+1).toString().padStart(2,'0')}-${args[2].toString().padStart(2,'0')}`;
         },
         "datetime-local": (...args) => {
+            let iso:string;
             if (args[0] instanceof Date) {
                 const d = DateUtil.Timestamps.copy(args[0]);
                 d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-                const iso = d.toISOString();
-                return iso.includes('.') ? iso.substring(0, iso.indexOf('.')) : iso;
+                iso = d.toISOString();
             }
-            else return new Date(args[0], args[1]!, args[2]!, args[3]!, args[4]!).toISOString();
+            else {
+                iso = new Date(args[0], args[1]!, args[2]!, args[3]!, args[4]!).toISOString();
+            }
+            return iso.includes('.') ? iso.substring(0, iso.indexOf('.')) : iso;
         },
         email: email => email,
         file: path => path,

@@ -1,10 +1,14 @@
 {
     "workbench.iconTheme": "vs-seti",
     "cSpell.words": [
+        "Activiteit",
         "downloaden",
+        "eurocents",
         "Inschrijvingen",
+        "kost",
         "Opmerkingen",
         "tonen",
         "verbergen"
-    ]
+    ],
+    "cSpell.language": "en,nl"
 }

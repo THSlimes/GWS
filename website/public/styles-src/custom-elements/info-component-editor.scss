@@ -1,0 +1,51 @@
+.info-component-editor {
+
+    > .component-editors {
+        width: 100%;
+        box-sizing: border-box;
+        
+        > * {
+            padding: calc((var(--in-section-gap) / 2)) var(--in-section-gap);
+            box-sizing: border-box;
+            width: 100%;
+    
+            outline: 2px solid var(--text-color);
+            border-radius: var(--in-section-gap);
+    
+            > :not(.icon) { flex-grow: 1; }
+            & * { color: var(--text-color); }
+        }
+    }
+
+    > select {
+        padding: 0px !important;
+        width: 2rem;
+        aspect-ratio: 1 / 1;
+
+        text-align: center;
+        font-family: "icon";
+        font-weight: bold;
+        font-size: 1.5rem;
+        line-height: 1em;
+        appearance: none;
+
+        background-color: var(--secondary) !important;
+        color: var(--text-light) !important;
+
+        > option {
+            background-color: var(--primary);
+            color: var(--text-dark);
+
+            text-align: center;
+            font-family: var(--std-font);
+            font-size: 1rem;
+        }
+    }
+
+}
+
+event-component-editor {
+    > .component-editors {
+        & input { font-size: 75%; }
+    }
+}

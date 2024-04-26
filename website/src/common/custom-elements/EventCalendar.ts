@@ -1,6 +1,6 @@
 import ElementFactory from "../html-element-factory/ElementFactory";
-import EventDatabase, { EventInfo, RegisterableEventInfo } from "../firebase/database/events/EventDatabase";
-import { EventNote, RegisterableEventNote } from "./EventNote";
+import EventDatabase, { EventInfo } from "../firebase/database/events/EventDatabase";
+import { EventNote } from "./EventNote";
 import { DetailLevel } from "../util/UtilTypes";
 import CachingEventDatebase from "../firebase/database/events/CachingEventDatebase";
 import IconSelector from "./IconSelector";
@@ -79,9 +79,7 @@ class EventCalendar extends HTMLElement {
     private static createNote(event:EventInfo|EventNote, lod:DetailLevel, expanded=false):EventNote {
         return event instanceof EventNote ?
             event.copy(lod, expanded) :
-            event instanceof RegisterableEventInfo ?
-                new RegisterableEventNote(event, lod, expanded) :
-                new EventNote(event, lod, expanded);
+            new EventNote(event, lod, expanded);
     }
 
     /** Puts the given event in the fullscreen container */

@@ -13,7 +13,7 @@ export class ArticleInfo extends Info {
     public readonly only_for_members:boolean
 
     constructor(sourceDB:ArticleDatabase, id:string, heading:string, body:string, created_at:Date, category:string, show_on_homepage:boolean, only_for_members:boolean) {
-        super(id);
+        super(id, []);
 
         this.sourceDB = sourceDB;
         this.heading = heading;
@@ -22,6 +22,19 @@ export class ArticleInfo extends Info {
         this.category = category;
         this.show_on_homepage = show_on_homepage;
         this.only_for_members = only_for_members;
+    }
+
+    public override copy():ArticleInfo {
+        return new ArticleInfo(
+            this.sourceDB,
+            this.id,
+            this.heading,
+            this.body,
+            new Date(this.created_at),
+            this.category,
+            this.show_on_homepage,
+            this.only_for_members
+        );
     }
 
     public override satisfies(options:ArticleQueryFilter):boolean {

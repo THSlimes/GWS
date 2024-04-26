@@ -15,7 +15,7 @@ const DB = new CachingEventDatebase(new FirestoreEventDatebase());
 /** Creates an EditableEventNote for new events (is added to database upon saving) */
 function getEmptyNote():EditableEventNote {
     const out = new EditableEventNote( // placeholder into
-        new EventInfo(DB, StringUtil.generateID(), "", "", "", undefined, [new Date(), new Date()]),
+        new EventInfo(DB, StringUtil.generateID(), "", "", "", [new Date(), new Date()], []),
         DetailLevel.FULL, true, true
     );
     out.id = "new-event";

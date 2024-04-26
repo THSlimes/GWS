@@ -1,5 +1,5 @@
 import DateUtil from "../../../util/DateUtil";
-import EventDatabase, { EventQueryFilter, EventInfo, RegisterableEventInfo, EventComment } from "./EventDatabase";
+import EventDatabase, { EventQueryFilter, EventInfo } from "./EventDatabase";
 
 /**
  * A CachingEventDatabase is a type of EventDatabase which
@@ -115,17 +115,19 @@ export default class CachingEventDatebase extends EventDatabase {
         });
     }
 
-    registerFor(event:RegisterableEventInfo, comment?:string):Promise<[string,string]> {
+    doRegisterFor(event:EventInfo, comment?:string):Promise<[string,string]> {
         return this.relay.registerFor(event, comment);
     }
 
-    deregisterFor(event:RegisterableEventInfo):Promise<string> {
+    doDeregisterFor(event:EventInfo):Promise<string> {
         return this.relay.deregisterFor(event);
     }
 
     /** Mapping of event IDs to their comment collection. */
-    private readonly commentCache:Record<string,Record<string,EventComment>> = {};
-    getCommentsFor(event:RegisterableEventInfo):Promise<Record<string, EventComment>> {
+    private readonly commentCache:Record<string,Record<string,EventInfo.Components.Registerable.Comment>> = {};
+    fetchCommentsFor(event:EventInfo):Promise<Record<string, EventInfo.Components.Registerable.Comment>> {
+        if (!event.hasComponent(EventInfo.Components.Registerable)) throw new Error("Event is not registerable, thus does not have any comments");
+
         return new Promise((resolve,reject) => {
             if (event.id in this.commentCache) resolve(this.commentCache[event.id]);
             else this.relay.getCommentsFor(event)

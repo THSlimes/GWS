@@ -1,5 +1,3 @@
-debugger;
-
 import "./header-and-footer";
 import "./create-split-view";
 

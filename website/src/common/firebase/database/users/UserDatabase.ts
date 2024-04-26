@@ -11,7 +11,7 @@ export class UserInfo extends Info {
     public readonly permissions:Permissions.Permission[];
 
     constructor(id:string, joined_at:Date, member_until:Date, first_name:string, family_name:string, permissions:Permissions.Permission[]) {
-        super(id);
+        super(id, []);
 
         this.joined_at = joined_at;
         this.member_until = member_until;
@@ -22,6 +22,10 @@ export class UserInfo extends Info {
 
     /** Combination of `this.first_name` and `this.family_name`. */
     public get fullName() { return `${this.first_name} ${this.family_name}`; }
+
+    public override copy():UserInfo {
+        return new UserInfo(this.id, new Date(this.joined_at), new Date(this.member_until), this.first_name, this.family_name, [...this.permissions]);
+    }
 
     public override satisfies(options:UserQueryFilter):boolean {
         if (!super.satisfies(options)) return false;

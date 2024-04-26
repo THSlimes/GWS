@@ -1,5 +1,5 @@
 import { FirestoreDataConverter, QueryConstraint, QueryDocumentSnapshot, Timestamp, collection, deleteField, doc, documentId, getCountFromServer, getDoc, getDocs, limit, query, where, writeBatch } from "@firebase/firestore";
-import EventDatabase, { EventQueryFilter, RegisterableEventInfo, EventInfo, EventComment } from "./EventDatabase";
+import EventDatabase, { EventQueryFilter, EventInfo } from "./EventDatabase";
 import { FIRESTORE, onAuth } from "../../init-firebase";
 import { FirebaseError } from "firebase/app";
 import FirestoreUserDatabase from "../users/FirestoreUserDatabase";
@@ -9,56 +9,56 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 /** Any event longer than (in ms) this may be queried incorrectly. */
 const MAX_EVENT_DURATION = 7 * MS_PER_DAY;
 
-function toFirestore(event:EventInfo):FirestoreEventDatebase.Event {
-    return event instanceof RegisterableEventInfo ? {
-        name: event.name,
-        description: event.description,
-        category: event.category,
-        ...(event.color && { color: event.color }),
-        registrations: event.registrations,
-        requires_payment: event.requires_payment,
-        ...(event.capacity && { capacity: event.capacity }),
-        starts_at: Timestamp.fromDate(event.starts_at),
-        ends_at: Timestamp.fromDate(event.ends_at),
-        ...(event.can_register_from && { can_register_from: event.can_register_from }),
-        ...(event.can_register_until && { can_register_until: event.can_register_until })
-    } : {
-        name: event.name,
-        description: event.description,
-        category: event.category,
-        ...(event.color && { color: event.color }),
-        starts_at: Timestamp.fromDate(event.starts_at),
-        ends_at: Timestamp.fromDate(event.ends_at)
-    };
-}
-
-function createConverter(db:EventDatabase):FirestoreDataConverter<EventInfo|RegisterableEventInfo,FirestoreEventDatebase.Event> {
+function createConverter(db:EventDatabase):FirestoreDataConverter<EventInfo,FirestoreEventDatebase.Event> {
     return {
-        toFirestore,
-        fromFirestore(snapshot: QueryDocumentSnapshot<FirestoreEventDatebase.Event, EventInfo>):EventInfo {
+        toFirestore(event:EventInfo):FirestoreEventDatebase.Event {
+            const regComp = event.getComponent(EventInfo.Components.Registerable);
+            return regComp ? {
+                name: event.name,
+                description: event.description,
+                category: event.category,
+                ...(event.hasComponent(EventInfo.Components.Color) && { color: event.getComponent(EventInfo.Components.Color)!.bg }),
+                registrations: regComp.registrations,
+                ...(regComp.capacity && { capacity: regComp.capacity }),
+                ...(event.hasComponent(EventInfo.Components.Cost) && { cost: event.getComponent(EventInfo.Components.Cost)!.cost }),
+                starts_at: Timestamp.fromDate(event.starts_at),
+                ends_at: Timestamp.fromDate(event.ends_at),
+                ...(event.hasComponent(EventInfo.Components.RegistrationStart) && {
+                    can_register_from: Timestamp.fromDate(event.getComponent(EventInfo.Components.RegistrationStart)!.moment)
+                }),
+                ...(event.hasComponent(EventInfo.Components.RegistrationEnd) && {
+                    can_register_until: Timestamp.fromDate(event.getComponent(EventInfo.Components.RegistrationEnd)!.moment)
+                })
+            } : {
+                name: event.name,
+                description: event.description,
+                category: event.category,
+                ...(event.hasComponent(EventInfo.Components.Color) && { color: event.getComponent(EventInfo.Components.Color)!.bg }),
+                starts_at: Timestamp.fromDate(event.starts_at),
+                ends_at: Timestamp.fromDate(event.ends_at),
+            }
+        },
+        fromFirestore(snapshot: QueryDocumentSnapshot<FirestoreEventDatebase.Event,EventInfo>):EventInfo {
             const data = snapshot.data();
 
-            if ("registrations" in data) return new RegisterableEventInfo(
+            // TODO: change DB data structure
+            const components:EventInfo.Component[] = [];
+            if (data.color) components.push(new EventInfo.Components.Color(data.color));
+            if ("registrations" in data) {
+                components.push(new EventInfo.Components.Registerable(data.registrations, data.capacity));
+                if (data.can_register_from) components.push(new EventInfo.Components.RegistrationStart(data.can_register_from.toDate()));
+                if (data.can_register_until) components.push(new EventInfo.Components.RegistrationEnd(data.can_register_until.toDate()));
+                if (data.cost) components.push(new EventInfo.Components.Cost(data.cost));
+            }
+
+            return new EventInfo(
                 db,
                 snapshot.id,
                 data.name,
                 data.description,
                 data.category,
-                data.color,
                 [data.starts_at.toDate(), data.ends_at.toDate()],
-                data.registrations,
-                data.requires_payment,
-                data.capacity,
-                [data.can_register_from?.toDate(), data.can_register_until?.toDate()]
-            );
-            else return new EventInfo(
-                db,
-                snapshot.id,
-                data.name,
-                data.description,
-                data.category,
-                data.color,
-                [data.starts_at.toDate(), data.ends_at.toDate()]
+                components
             );
         }
     };
@@ -104,83 +104,62 @@ class FirestoreEventDatebase extends EventDatabase {
     }
 
     private static USER_DB = new FirestoreUserDatabase();
-    registerFor(event:RegisterableEventInfo, comment?:string): Promise<[string,string]> {
-        return new Promise((resolve,reject) => {
-            onAuth() // get logged in user
+    protected override doRegisterFor(ev: EventInfo, comment?: string): Promise<[string, string]> {
+        return onAuth() // get logged in user
             .then(user => {
-                if (user === null) reject(new FirebaseError("unauthenticated", "Not logged in."));
-                else FirestoreEventDatebase.USER_DB.getById(user.uid) // get user info
-                .then(userInfo => {
-                    if (userInfo) {
-                        const batch = writeBatch(FIRESTORE);
-
-                        batch.update(doc(this.collection, event.id), { [`registrations.${user.uid}`]: userInfo.fullName });
-
-                        if (comment) {
-                            const dbComment:FirestoreEventDatebase.Comment = {
-                                body: comment,
-                                created_at: Timestamp.now()
-                            };
-                            batch.set(doc(FIRESTORE, "events", event.id, "comments", user.uid), dbComment);
-                        }
-
-                        batch.commit()
-                        .then(() => resolve([user.uid, userInfo.fullName]))
-                        .catch(reject);
-                    }
-                    else reject(new Error(`no user info found for id "${user.uid}"`)); // user not found
-                })
-                .catch(reject);
+                if (user === null) throw new FirebaseError("unauthenticated", "Not logged in.");
+                else return FirestoreEventDatebase.USER_DB.getById(user.uid); // get user info
             })
-            .catch(reject);
-        });
-    }
-
-    deregisterFor(event:RegisterableEventInfo): Promise<string> {
-        return new Promise((resolve,reject) => {
-            onAuth()
-            .then(user => {
-                if (user === null) reject(new FirebaseError("unauthenticated", "Not logged in."));
+            .then(userInfo => {
+                if (!userInfo) throw new Error("user not found!!"); // failsafe, should not happen!
                 else {
                     const batch = writeBatch(FIRESTORE);
-                    // remove from registrations field
-                    batch.update(doc(this.collection, event.id), { [`registrations.${user.uid}`]: deleteField() });
-                    // remove comment
-                    batch.delete(doc(this.collection, event.id, "comments", user.uid));
+                    batch.update(doc(this.collection, ev.id), { [`registrations.${userInfo.id}`]: userInfo.fullName });
 
-                    batch.commit()
-                    .then(() => {
-                        delete event.registrations[user.uid];
-                        resolve(user.uid);
-                    })
-                    .catch(reject);
+                    if (comment) { // add comment to db
+                        const dbComment:FirestoreEventDatebase.Comment = { body: comment, created_at: Timestamp.now() };
+                        batch.set(doc(FIRESTORE, "events", ev.id, "comments", userInfo.id), dbComment);
+                    }
+
+                    return Promise.all([batch.commit(), [userInfo.id, userInfo.fullName] as [string,string]]);
                 }
             })
-            .catch(reject);
-        });
+            .then(([_, regEntry]) => regEntry);
     }
 
-    getCommentsFor(event: RegisterableEventInfo): Promise<Record<string,EventComment>> {
-        return new Promise((resolve, reject) => {
-            const commentCollection = collection(FIRESTORE, "events", event.id, "comments");
-            getDocs(commentCollection)
+    protected override doDeregisterFor(ev: EventInfo): Promise<string> {
+        return onAuth()
+            .then(user => {
+                if (user === null) throw new FirebaseError("unauthenticated", "Not logged in.");
+                else {
+                    const batch = writeBatch(FIRESTORE);
+                    batch.update(doc(this.collection, ev.id), { [`registrations.${user.uid}`]: deleteField() }); // remove from registrations field
+                    batch.delete(doc(this.collection, ev.id, "comments", user.uid)); // delete comment
+
+                    return Promise.all([batch.commit(), user.uid]);
+                }
+            })
+            .then(([_, id]) => id);
+    }
+
+    protected override fetchCommentsFor(event: EventInfo): Promise<Record<string, EventInfo.Components.Registerable.Comment>> {
+        const commentCollection = collection(FIRESTORE, "events", event.id, "comments");
+        return getDocs(commentCollection)
             .then(snapshot => {
-                const out:Record<string,EventComment> = {};
+                const out:Record<string,EventInfo.Components.Registerable.Comment> = {};
                 snapshot.forEach(docSnapshot => {
                     const data = docSnapshot.data() as FirestoreEventDatebase.Comment;
                     out[docSnapshot.id] = { id:docSnapshot.id, created_at: data.created_at.toDate(), body: data.body };
                 });
 
-                resolve(out);
-            })
-            .catch(reject);
-        });
+                return out;
+            });
     }
 
     public doWrite(...records: EventInfo[]): Promise<number> {
         return new Promise((resolve,reject) => {
             const batch = writeBatch(FIRESTORE);
-            for (const rec of records) batch.set(doc(FIRESTORE, "events", rec.id), toFirestore(rec));
+            for (const rec of records) batch.set(doc(FIRESTORE, "events", rec.id), this.converter.toFirestore(rec));
 
             batch.commit()
             .then(() => resolve(records.length))
@@ -262,7 +241,7 @@ namespace FirestoreEventDatebase {
         can_register_from?:Timestamp,
         can_register_until?:Timestamp,
         registrations:Record<string,string>,
-        requires_payment:boolean
+        cost:number
     };
 
     export type Event = NonRegisterableEvent | RegisterableEvent;

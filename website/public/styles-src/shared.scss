@@ -147,7 +147,7 @@ p, input, label {
 }
 
 input, textarea, select, *[contenteditable="plaintext-only"], *[contenteditable="true"] {
-    padding: calc(var(--in-section-gap) / 2);
+    padding: calc(var(--in-section-gap) / 2) var(--in-section-gap);
 
     box-sizing: border-box;
     height: min-content;
@@ -170,13 +170,15 @@ input, textarea, select, *[contenteditable="plaintext-only"], *[contenteditable=
         background-color: var(--secondary);
         border: var(--std-border);
     }
-    &:disabled { filter: contrast(.75); }
+    &:disabled { filter: contrast(.65); }
     &::placeholder { font-style: italic; }
 }
 
 .subtitle {
     font-size: 75%;
     font-style: italic;
+
+    > input, select { font-size: 75%; }
 }
 
 div#split-view {
@@ -360,7 +362,7 @@ button, input[type="button"], .button {
         &:hover { background-color: var(--hover-bg-color) !important; }
         &:active { scale: 105%; }
     }
-    &:disabled { filter: contrast(.75); }
+    &:disabled, &[disabled] { filter: contrast(.65); }
 
     > * { margin: 0px; }
 }

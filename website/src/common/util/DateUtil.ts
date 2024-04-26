@@ -193,6 +193,10 @@ abstract class DateUtil {
             return latest;
         },
 
+        clamp(date:Date, min=DateUtil.FIRST, max= DateUtil.LAST) {
+            return date < min ? new Date(min) : date > max ? new Date(max) : new Date(date);
+        },
+
         /** Gives the first moment before the given date. */
         justBefore(d:Date) {
             d = new Date(d);
@@ -238,12 +242,24 @@ abstract class DateUtil {
             return new Date(year, month, day, hours, minutes, seconds, millis);
         },
 
+        setInputValue(input:HTMLInputElement, value:Date):string {
+            if (input.type !== "datetime-local") throw new Error(`input element is not type datetime-local (is ${input.type} instead)`);
+            else if (!this.isValid(value)) throw new Error("value is invalid Date object");
+            value = this.copy(value);
+            
+            value.setMinutes(value.getMinutes() - value.getTimezoneOffset());
+            const iso = value.toISOString();
+            
+            return input.value = iso.includes('.') ? iso.substring(0, iso.indexOf('.')) : iso;
+        },
+
         /** Makes a copy of the given timestamp. */
         copy(d:Date):Date {
             return new Date(d);
         },
 
         isValid(d:Date|string):boolean {
+            if (d === null) return false;
             d = typeof d === "string" ? new Date(d) : d;
             return !isNaN(d.getTime());
         }

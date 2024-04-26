@@ -19,15 +19,15 @@ abstract class ColorUtil {
         "#BE0AFF"
     ];
 
-    private static isHex(c:ColorUtil.Color): c is ColorUtil.HexColor {
+    public static isHex(c:ColorUtil.Color): c is ColorUtil.HexColor {
         return typeof c === "string" && c.startsWith('#');
     }
 
-    private static isRGB(c:ColorUtil.Color):c is ColorUtil.RGBColor {
+    public static isRGB(c:ColorUtil.Color):c is ColorUtil.RGBColor {
         return Array.isArray(c) && c.length === 3 && c.every(p => 0 <= p && p <= 255);
     }
 
-    private static isRGBString(c:ColorUtil.Color):c is ColorUtil.RGBString {
+    public static isRGBString(c:ColorUtil.Color):c is ColorUtil.RGBString {
         return typeof c === "string"
             && c.startsWith("rgb(")
             && c.endsWith(')')

@@ -1,5 +1,6 @@
 import ObjectUtil from "../../../util/ObjectUtil";
 import Database, { Info, QueryFilter } from "../Database";
+import { UserInfo } from "../users/UserDatabase";
 
 export class IBSubmissionInfo extends Info {
 
@@ -9,12 +10,16 @@ export class IBSubmissionInfo extends Info {
     public readonly body:string;
 
     constructor(id:string, author:IBSubmissionInfo.Author, created_at:Date, subject:string, body:string) {
-        super(id);
+        super(id, []);
 
         this.author = author;
         this.created_at = created_at;
         this.subject = subject;
         this.body = body;
+    }
+
+    public override copy():IBSubmissionInfo {
+        return new IBSubmissionInfo(this.id, typeof this.author === "string" ? this.author : {...this.author}, new Date(this.created_at), this.subject, this.body);
     }
 
     public override satisfies(options:IBSubmissionQueryFilter): boolean {

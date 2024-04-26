@@ -2,8 +2,10 @@ import ColorUtil from "../../../util/ColorUtil";
 import DateUtil from "../../../util/DateUtil";
 import ObjectUtil from "../../../util/ObjectUtil";
 import StringUtil from "../../../util/StringUtil";
-import { Opt } from "../../../util/UtilTypes";
+import { Class, Opt } from "../../../util/UtilTypes";
+import { checkPermissions } from "../../authentication/permission-based-redirect";
 import Database, { Info, QueryFilter } from "../Database";
+import Permissions from "../Permissions";
 
 /** An EventInfo object contains all relevant information of an event.  */
 export class EventInfo extends Info {
@@ -14,10 +16,11 @@ export class EventInfo extends Info {
     public readonly name:string;
     public readonly description:string;
     public readonly category:string;
-    public readonly color?:ColorUtil.HexColor;
 
     public readonly starts_at:Date;
     public readonly ends_at:Date;
+
+    public override readonly components:EventInfo.Component[];
 
     constructor(
         sourceDB:EventDatabase,
@@ -25,16 +28,16 @@ export class EventInfo extends Info {
         name:string,
         description:string,
         category="",
-        color:Opt<ColorUtil.HexColor>=undefined,
-        timespan:DateUtil.Timespan
+        timespan:DateUtil.Timespan,
+        components:EventInfo.Component[]
     ) {
-        super(id);
+        super(id, components);
+        this.components = components;
         this.sourceDB = sourceDB;
         
         this.name = name;
         this.description = description;
         this.category = category;
-        this.color = color;
 
         [this.starts_at, this.ends_at] = timespan;
     }
@@ -50,6 +53,24 @@ export class EventInfo extends Info {
 
     public daysOverlapsWith(other:EventInfo) {
         return DateUtil.Timespans.daysOverlap([this.starts_at, this.ends_at], [other.starts_at, other.ends_at]);
+    }
+
+    public isValid():boolean {
+        return this.name.length !== 0
+            && this.starts_at <= this.ends_at
+            && this.components.every(c => c.validate(this));
+    }
+
+    public override copy():EventInfo {
+        return new EventInfo(
+            this.sourceDB,
+            this.id,
+            this.name,
+            this.description,
+            this.category,
+            [new Date(this.starts_at), new Date(this.ends_at)],
+            this.components.map(c => c.copy())
+        );
     }
 
     /** Whether this event matches the given filter. */
@@ -69,7 +90,6 @@ export class EventInfo extends Info {
             && other.name === this.name
             && other.description === this.description
             && other.category === this.category
-            && other.color === this.color
             // only accurate to seconds
             && Math.floor(other.starts_at.getTime() / 1000) === Math.floor(this.starts_at.getTime() / 1000)
             && Math.floor(other.ends_at.getTime() / 1000) === Math.floor(this.ends_at.getTime() / 1000);
@@ -77,134 +97,217 @@ export class EventInfo extends Info {
 
 }
 
-/** RegisterableEventInfo is a type of EventInfo for which a user is able to register. */
-export class RegisterableEventInfo extends EventInfo {
+export namespace EventInfo {
 
-    public readonly registrations:Record<string,string>;
-    public readonly capacity?:number;
-    public readonly can_register_from?:Date;
-    public readonly can_register_until?:Date;
-    public readonly requires_payment:boolean;
+    export type Component = Info.Component<EventInfo>;
 
-    constructor(
-        sourceDB:EventDatabase,
-        id = StringUtil.generateID(),
-        name:string,
-        description:string,
-        category="",
-        color:Opt<ColorUtil.HexColor>=undefined,
-        timespan:DateUtil.Timespan,
+    /** Namespace containing all event component classes. */
+    export namespace Components {
 
-        registrations:Record<string,string>,
-        requires_payment:boolean,
-        capacity?:number,
-        registration_period?:DateUtil.OpenTimespan
-    ) {
-        super(sourceDB, id, name, description, category, color, timespan);
+        export class Color extends Info.Component<EventInfo> {
+            public override readonly Class = Color;
+            public override readonly dependencies = [];
+            public override readonly translatedName = "Achtergrondkleur";
 
-        this.registrations = registrations;
-        this.requires_payment = requires_payment
-        this.capacity = capacity;
-        [this.can_register_from,this.can_register_until] = registration_period ?? [];
+            private _bg!:ColorUtil.HexColor;
+            public get bg() { return this._bg; }
+            public set bg(newBG:ColorUtil.HexColor) {
+                if (!ColorUtil.isHex(newBG)) throw new TypeError(`value "${newBG}" is now a HexColor`);
+                else this._bg = newBG;
+            }
+
+            constructor(bg:ColorUtil.HexColor) {
+                super();
+                Object.freeze(this.dependencies);
+                this.bg = bg;
+            }
+
+            public override copy():Color {
+                return new Color(this.bg);
+            }
+
+            public override validateValues() { return ColorUtil.isHex(this.bg); }
+
+        }
+
+        export class Registerable extends Info.Component<EventInfo> {
+            private static CAN_READ_COMMENTS?:boolean;
+            private static CAN_REGISTER?:boolean;
+            private static CAN_DEREGISTER?:boolean;
+            private static fetchPermissions() {
+                return checkPermissions([
+                    Permissions.Permission.READ_EVENT_COMMENTS,
+                    Permissions.Permission.REGISTER_FOR_EVENTS,
+                    Permissions.Permission.DEREGISTER_FOR_EVENTS
+                ])
+                .then(res => {
+                    this.CAN_READ_COMMENTS = res.READ_EVENT_COMMENTS;
+                    this.CAN_REGISTER = res.REGISTER_FOR_EVENTS;
+                    this.CAN_DEREGISTER = res.DEREGISTER_FOR_EVENTS;
+                    return res;
+                });
+            }
+            public static checkCanReadComments():Promise<boolean> {
+                return this.CAN_READ_COMMENTS === undefined ? this.fetchPermissions().then(res => res.READ_EVENT_COMMENTS) : Promise.resolve(this.CAN_READ_COMMENTS);
+            }
+            public static checkCanRegister():Promise<boolean> {
+                return this.CAN_REGISTER === undefined ? this.fetchPermissions().then(res => res.REGISTER_FOR_EVENTS) : Promise.resolve(this.CAN_REGISTER);
+            }
+            public static checkCanDeregister():Promise<boolean> {
+                return this.CAN_DEREGISTER === undefined ? this.fetchPermissions().then(res => res.DEREGISTER_FOR_EVENTS) : Promise.resolve(this.CAN_DEREGISTER);
+            }
+
+            public override readonly Class = Registerable;
+            public override readonly dependencies:Class<Component>[] = [];
+            public override readonly translatedName:string = "Inschrijfbaar voor leden";
+
+            private _registrations:Record<string,string>;
+            public get registrations() { return { ...this._registrations } }
+            public get registeredNames() { return Object.values(this._registrations); }
+            public get numRegistrations() { return ObjectUtil.sizeOf(this._registrations); }
+            public isRegistered(id:string) { return id in this._registrations; }
+
+            private _capacity?:number;
+            /** Maximum number of registrations */
+            public get capacity() { return this._capacity; }
+            public set capacity(newCap:number|undefined) {
+                if (newCap !== undefined && newCap < this.numRegistrations) {
+                    throw new Error("Capacity must be greater or equal to the number of registrations");
+                }
+                else this._capacity = newCap;
+            }
+
+            constructor(registrations:Record<string,string>, capacity?:number) {
+                super();
+                this._registrations = { ...registrations };
+                this.capacity = capacity;
+            }
+
+            public override canBeRemovedFrom(ev:EventInfo) {
+                return super.canBeRemovedFrom(ev)
+                    && this.numRegistrations === 0;
+            }
+
+            public getCommentsFor(ev:EventInfo):Promise<Record<string,Registerable.Comment>> {
+                return Registerable.checkCanReadComments().then(res => res ? ev.sourceDB.getCommentsFor(ev) : {});
+            }
+
+            public register(ev:EventInfo, comment:string):Promise<void> {
+                return ev.sourceDB.registerFor(ev, comment)
+                    .then(([id, name]) => {
+                        this._registrations[id] = name;
+                    });
+            }
+
+            public deregister(ev:EventInfo):Promise<void> {
+                return ev.sourceDB.deregisterFor(ev)
+                    .then(id => {
+                        delete this._registrations[id];
+                    });
+            }
+
+            public override copy():Registerable {
+                return new Registerable({...this._registrations}, this.capacity);
+            }
+
+            protected override validateValues(ev: EventInfo):boolean { // extra check
+                return this._capacity === undefined || ObjectUtil.sizeOf(this._registrations) < this._capacity;
+            }
+        }
+
+        export namespace Registerable {
+            export interface Comment {
+                id:string,
+                body:string,
+                created_at:Date
+            }
+        }
+
+        export class RegistrationStart extends Info.Component<EventInfo> {
+            public override readonly Class = RegistrationStart;
+            public override dependencies = [Registerable];
+            public override translatedName:string = "Startmoment voor inschrijving";
+
+            public moment:Date;
+
+            constructor(moment:Date) {
+                super();
+                this.moment = moment;
+            }
+
+            public isNow() { return Date.now() >= this.moment.getTime(); }
+
+            public override copy():RegistrationStart {
+                return new RegistrationStart(new Date(this.moment));
+            }
+
+            protected override validateValues(ev:EventInfo):boolean {
+                return this.moment < ev.ends_at;
+            }
+        }
+
+        export class RegistrationEnd extends Info.Component<EventInfo> {
+            public override readonly Class = RegistrationEnd;
+            public override dependencies = [Registerable];
+            public override translatedName:string = "Eindmoment voor inschrijving";
+
+            public moment:Date;
+
+            constructor(moment:Date) {
+                super();
+                this.moment = moment;
+            }
+
+            public isNow() { return Date.now() <= this.moment.getTime(); }
+
+            public override copy():RegistrationEnd {
+                return new RegistrationEnd(new Date(this.moment));
+            }
+
+            protected override validateValues(ev:EventInfo):boolean {
+                return this.moment < ev.ends_at;
+            }
+        }
+
+        export class Cost extends Info.Component<EventInfo> {
+            public override readonly Class = Cost;
+            public override readonly dependencies = [Registerable];
+            public override readonly translatedName:string = "Activiteit kost geld";
+
+            private _cost!:number;
+            /** Cost (in eurocents) */
+            public get cost() { return this._cost; }
+            public set cost(newCost:number) {
+                if (Number.isNaN(newCost)) throw new Error("new cost cannot be NaN");
+                else if (!Number.isFinite(newCost)) throw new Error("new cost must be finite");
+                else if (newCost % 1 !== 0) throw new Error(`cost must be in whole cents (${newCost} is not)`);
+                else if (newCost <= 0) throw new Error(`cost must be greater than 0 (${newCost} is not)`);
+                else this._cost = newCost;
+            }
+
+            constructor(cost:number) {
+                super();
+                this.cost = cost;
+            }
+
+            public override copy():Cost {
+                return new Cost(this.cost);
+            }
+
+            public override validateValues(ev: EventInfo):boolean {
+                return this._cost > 0 && this._cost % 1 === 0;
+            }
+
+            public override canBeAddedTo(ev:EventInfo) {
+                const regComp = ev.getComponent(EventInfo.Components.Registerable);
+                // cannot be added if members already registered, since they didn't accept the costs
+                return super.canBeAddedTo(ev) && (regComp === undefined || regComp.numRegistrations === 0);
+            }
+
+        }
+
     }
 
-    /** Whether at least one person can register for this event. */
-    public isFull(useCache=false):boolean {
-        return this.capacity !== undefined && Object.keys(this.registrations).length >= this.capacity;
-    }
-
-    /** Whether this events registration period is ongoing. */
-    public openForRegistration(d=new Date()):boolean {
-        if (this.starts_at <= d) return false; // can only register before event
-        else if (this.can_register_from && this.can_register_until) return this.can_register_from <= d && d <= this.can_register_until;
-        else if (this.can_register_from) return this.can_register_from <= d;
-        else if (this.can_register_until) return d <= this.can_register_until;
-        else return true;
-    }
-
-    /** Checks whether the current user is registered for this event. */
-    public isRegistered(userId:string):boolean {
-        return userId in this.registrations;
-    }
-
-    /** Registers the current user for this event. */
-    public register(comment?:string):Promise<void> {
-        return new Promise((resolve,reject) => {
-            this.sourceDB.registerFor(this, comment)
-            .then(([id, name]) => {
-                this.registrations[id] = name;
-                if (this.cachedComments && comment) this.cachedComments[id] = { id, created_at: new Date(), body: comment }; // cache comment
-                resolve();
-            })
-            .catch(reject);
-        });
-    }
-
-    /** De-registers the current user from this event. */
-    public deregister():Promise<void> {
-        return new Promise((resolve,reject) => {
-            this.sourceDB.deregisterFor(this)
-            .then(id => {
-                delete this.registrations[id];
-                if (this.cachedComments) delete this.cachedComments[id];
-                resolve();
-            })
-            .catch(reject);
-        });
-    }
-
-    public toggleRegistered(userId:string, comment?:string):Promise<boolean> {
-        return new Promise((resolve,reject) => {
-            if (this.isRegistered(userId)) this.deregister()
-                .then(() => resolve(false))
-                .catch(reject);
-            else this.register(comment)
-                .then(() => resolve(true))
-                .catch(reject);
-        });
-    }
-
-    private cachedComments?:Record<string,EventComment>;
-    public getComments():Promise<Record<string,EventComment>> {
-        return new Promise((resolve, reject) => {
-            if (this.cachedComments !== undefined) resolve(this.cachedComments);
-            else this.sourceDB.getCommentsFor(this)
-                .then(comments => resolve(this.cachedComments = comments))
-                .catch(reject);
-        });
-    }
-
-    public static fromSuper(event:EventInfo, registrations:Record<string,string>, requires_payment:boolean, capacity?:number, registration_period?:DateUtil.OpenTimespan) {
-        return new RegisterableEventInfo(
-            event.sourceDB,
-            event.id,
-            event.name,
-            event.description,
-            event.category,
-            event.color,
-            [event.starts_at, event.ends_at],
-            registrations,
-            requires_payment,
-            capacity,
-            registration_period
-        );
-    }
-
-    public override equals(other:RegisterableEventInfo):boolean {
-        return super.equals(other)
-            && ObjectUtil.deepEquals(other.registrations, this.registrations)
-            && other.capacity === this.capacity
-            && other.can_register_from?.getTime() === this.can_register_from?.getTime()
-            && other.can_register_until?.getTime() === this.can_register_until?.getTime()
-            && other.requires_payment === this.requires_payment;
-    }
-
-}
-
-export interface EventComment {
-    id:string,
-    body:string,
-    created_at:Date
 }
 
 /** EventFilterOptions specify conditions which are supposed to be met by an event. */
@@ -225,14 +328,21 @@ export default abstract class EventDatabase extends Database<EventInfo> {
 
     abstract getByCategory(category: string, options?: Omit<EventQueryFilter, "category">): Promise<EventInfo[]>;
 
-    abstract registerFor(event:RegisterableEventInfo, comment?:string):Promise<[string,string]>;
-    abstract deregisterFor(event:RegisterableEventInfo):Promise<string>;
+    protected abstract doRegisterFor(ev:EventInfo, comment?:string):Promise<[string,string]>;
+    public registerFor(event:EventInfo, comment?:string) {
+        if (!event.hasComponent(EventInfo.Components.Registerable)) throw new Error("event is not registerable");
+        else return this.doRegisterFor(event, comment);
+    }
+    protected abstract doDeregisterFor(ev:EventInfo):Promise<string>;
+    public deregisterFor(event:EventInfo) {
+        if (!event.hasComponent(EventInfo.Components.Registerable)) throw new Error("event is not registerable");
+        else return this.doDeregisterFor(event);
+    }
 
-    /**
-     * Retrieves the comments of an event.
-     * @param event event to fetch comments for
-     * @returns a Promise which resolves with a mapping from user ids to their comment
-     */
-    abstract getCommentsFor(event:RegisterableEventInfo):Promise<Record<string,EventComment>>;
+    protected abstract fetchCommentsFor(event:EventInfo):Promise<Record<string,EventInfo.Components.Registerable.Comment>>;
+    public getCommentsFor(event:EventInfo) {
+        if (!event.hasComponent(EventInfo.Components.Registerable)) throw new Error("event is not registerable");
+        else return this.fetchCommentsFor(event);
+    }
 
 }
