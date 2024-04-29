@@ -13,7 +13,6 @@ import getErrorMessage from "../firebase/authentication/error-messages";
 import { onAuth } from "../firebase/init-firebase";
 import ElementFactory from "../html-element-factory/ElementFactory";
 import DateUtil from "../util/DateUtil";
-import ObjectUtil from "../util/ObjectUtil";
 import URLUtil from "../util/URLUtil";
 import Switch from "./Switch";
 import Responsive from "../ui/Responsive";
@@ -22,8 +21,8 @@ import ElementUtil from "../util/ElementUtil";
 import EventDatabaseFactory from "../firebase/database/events/EventDatabaseFactory";
 import NumberUtil from "../util/NumberUtil";
 import Loading from "../Loading";
-import IconSelector from './IconSelector';
 import { EventComponentEditor } from './EventComponentEditor';
+import ObjectUtil from '../util/ObjectUtil';
 
 /**
  * An EventNote displays relevant information of an event.
@@ -227,6 +226,8 @@ export namespace EventNote {
         // sort based on application order
         components = components.toSorted((a, b) => applyComponents.ORDER.indexOf(a.Class) - applyComponents.ORDER.indexOf(b.Class));
 
+        const formResponseGetters:(()=>EventInfo.Components.Form.Response)[] = [];
+
         for (const comp of components) {
             if (comp instanceof EventInfo.Components.Color) {
                 note.style.setProperty("--background-color", comp.bg);
@@ -239,12 +240,12 @@ export namespace EventNote {
                     
                     await Promise.all([
                         onAuth(),
-                        comp.getCommentsFor(note.event),
-                        EventInfo.Components.Registerable.checkCanReadComments(),
+                        comp.getResponsesFor(note.event),
+                        EventInfo.Components.Registerable.checkCanReadResponses(),
                         EventInfo.Components.Registerable.checkCanRegister(),
                         EventInfo.Components.Registerable.checkCanDeregister(),
                     ])
-                    .then(([user, comments, canReadComments, canRegister, canDeregister]) => {
+                    .then(([user, responses, canReadResponses, canRegister, canDeregister]) => {
                         const sortedIDs = Object.keys(comp.registrations).sort((a, b) => comp.registrations[a].localeCompare(comp.registrations[b]));
 
                         // list of registrations
@@ -253,7 +254,7 @@ export namespace EventNote {
                             ElementFactory.div()
                             .class(
                                 "flex-columns",
-                                canReadComments && Responsive.isSlimmerOrEq(Responsive.Viewport.DESKTOP_SLIM) ? "main-axis-center" : "main-axis-space-between",
+                                canReadResponses && Responsive.isSlimmerOrEq(Responsive.Viewport.DESKTOP_SLIM) ? "main-axis-center" : "main-axis-space-between",
                                 "cross-axis-center",
                                 "in-section-gap"
                             )
@@ -261,37 +262,51 @@ export namespace EventNote {
                                 ElementFactory.heading(note.expanded ? 3 : 4, "Ingeschreven geitjes")
                                 .children(Number.isFinite(spacesLeft) && ElementFactory.span(` (${spacesLeft} plekken over)`).class("subtitle"))
                                 .class("no-margin"),
-                                canReadComments && ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
+                                canReadResponses && ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
                                 .children(
-                                    ElementFactory.iconButton("download", () => { // create xlsx file and download it
-                                        const headerRow = [{ value: "Naam" }, { value: "Inschrijfmoment" }, { value: "Opmerking" }];
-
-                                        let [maxNameLength, maxCommentLength] = [headerRow[0].value.length, headerRow[2].value.length];
+                                    comp.numRegistrations !== 0 && ElementFactory.iconButton("download", () => { // create xlsx file and download it
+                                        const headerRow = [
+                                            { value: "Naam" },
+                                            { value: "Inschrijfmoment" },
+                                            { value: "Opmerking" },
+                                            ...(Object.values(responses).find(res => res.form_responses !== undefined)?.form_responses ?? []).map(r => {
+                                                return { value: r.name };
+                                            })
+                                        ];
 
                                         const data = sortedIDs.map(id => {
                                             const name = comp.registrations[id];
-                                            maxNameLength = Math.max(maxCommentLength, name.length);
 
-                                            if (id in comments) {
-                                                const comment = comments[id];
-                                                maxCommentLength = Math.max(maxCommentLength, comment.body.length);
+                                            if (id in responses) {
+                                                const response = responses[id];
                                                 return [
                                                     { type: String, value: name },
-                                                    { type: Date, value: comment.created_at, format: "d mmmm yyyy" },
-                                                    { type: String, value: comment.body }
+                                                    { type: Date, value: response.created_at, format: "d mmmm yyyy" },
+                                                    { type: String, value: response.body ?? "" },
+                                                    ...(response.form_responses ?? []).map(r => {
+                                                        return { type: String, value: r.value || '-' }
+                                                    })
                                                 ];
                                             }
                                             else return [{ type: String, value: name }];
                                         });
 
+                                        const widths:number[] = [0, headerRow[1].value.length];
+                                        for (const row of [headerRow, ...data]) {
+                                            while (row.length > widths.length) widths.push(0);
+                                            for (let i = 0; i < row.length; i ++) {
+                                                if (i !== 1) widths[i] = Math.max(widths[i], row[i].value.toString().length);
+                                            }
+                                        }
+
                                         const fileName = `Inschrijvingen ${note.event.name} (${DateUtil.DATE_FORMATS.DAY.SHORT_NO_YEAR(note.event.starts_at)}).xlsx`;
                                         writeXlsxFile(
                                             [headerRow, ...data],
-                                            { columns: [{ width: maxNameLength }, { width: 15 }, { width: maxCommentLength }], fileName }
+                                            { columns: widths.map(w => { return { width: Math.round(w*1.25) } }), fileName }
                                         )
                                         .catch(err => console.error(err));
                                     }, "Inschrijvingen downloaden"),
-                                    ElementFactory.iconButton("comment", (_, self) => {
+                                    (ObjectUtil.sizeOf(responses) !== 0) && ElementFactory.iconButton("comment", (_, self) => {
                                         if (self.toggleAttribute("selected", !note.toggleAttribute("hide-comments"))) {
                                             [self.textContent, self.title] = ["comment", "Opmerkingen verbergen"];
                                         }
@@ -303,15 +318,25 @@ export namespace EventNote {
                             .children(
                                 ...sortedIDs.map(id => {
                                     const name = comp.registrations[id];
+                                    const resp = responses[id];
+                                    const showResponse = resp?.body !== undefined || resp?.form_responses?.length !== undefined;
                                     return ElementFactory.div(undefined, "flex-rows", "cross-axis-center")
                                         .children(
-                                            ElementFactory.p(name + (id in comments ? '*' : "")).class("no-margin", "text-center"),
-                                            id in comments && ElementFactory.div(undefined, "comment", "flex-rows", "cross-axis-center")
+                                            ElementFactory.p(name + (showResponse ? '*' : "")).class("no-margin", "text-center"),
+                                            showResponse && ElementFactory.div(undefined, "comment", "flex-rows", "cross-axis-center")
                                             .children(
                                                 ElementFactory.div(undefined, "point").children(ElementFactory.div(undefined, "inside")),
-                                                ElementFactory.p(comments[id].body)
-                                                .class("message", "no-margin", "subtitle")
-                                                .tooltip(DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(comments[id].created_at))
+                                                ElementFactory.div(undefined, "message", "flex-rows")
+                                                .children(
+                                                    (resp.body !== undefined) && ElementFactory.p(`"${resp.body}"`)
+                                                    .class("message", "no-margin", "subtitle"),
+                                                    ...(resp.form_responses ?? []).map((resp, i) => {
+                                                        return ElementFactory.p()
+                                                            .children(`${i+1}.  ${resp.value || '-'}`)
+                                                            .class("no-margin", "subtitle", "flex-columns", "main-axis-space-between");
+                                                    })
+                                                )
+                                                .tooltip(DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(resp.created_at)),
                                             )
                                         )
                                 })
@@ -345,7 +370,8 @@ export namespace EventNote {
                         }
                         else if (canRegister) [icon, text, onClick, disabled] = ["calendar_add_on", "Inschrijven", (_, self) => {
                             self.disabled = true;
-                            comp.register(note.event, commentBox.value)
+                            
+                            comp.register(note.event, commentBox.value ? commentBox.value : undefined, formResponseGetters.map(f => f()))
                             .then(() => {
                                 UserFeedback.success("Je staat ingeschreven!");
                                 applyComponents(note, ...components);
@@ -357,6 +383,7 @@ export namespace EventNote {
                         
                         let commentBox = ElementFactory.textarea()
                             .class("comment-box")
+                            .attr("no-resize")
                             .placeholder("Opmerking...")
                             .maxLength(1024)
                             .spellcheck(true)
@@ -411,6 +438,59 @@ export namespace EventNote {
                     }
                 }
             }
+            else if (comp instanceof EventInfo.Components.Form) {
+                if (note.lod >= DetailLevel.FULL) {
+
+                    const regButton = note.getElementsByClassName("registration-button")[0];
+                    const regForm = note.getElementsByClassName("registration-form")[0];
+
+                    if (!regButton.hasAttribute("disabled")) await onAuth()
+                        .then(user => {
+                            if (user && !note.event.getComponent(EventInfo.Components.Registerable)!.isRegistered(user.uid)) {
+                                regForm.prepend(
+                                    ElementFactory.div(undefined, "form-inputs", "flex-columns", "center-content", "min-section-gap")
+                                    .children(
+                                        ...comp.inputs.map(input => {
+                                            switch (input.type) {
+                                                case "select":
+                                                    return ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
+                                                        .children(
+                                                            ElementFactory.label(input.name + (input.required ? '*' : "")),
+                                                            ElementFactory.select([...(input.required ? [] : [""]), ...input.options])
+                                                            .value(input.required ? input.options[0] : "")
+                                                            .onMake(self => formResponseGetters.push(() => {
+                                                                return { type: input.type, name: input.name, value: self.value };
+                                                            }))
+                                                        )
+                                                        .make()
+                                                case "text":
+                                                    return ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
+                                                        .children(
+                                                            ElementFactory.label(input.name + (input.required ? '*' : "")),
+                                                            ElementFactory.input.text()
+                                                            .maxLength(input.maxLength)
+                                                            .onValueChanged((curr, prev) => {
+                                                                if (input.required) {
+                                                                    if (curr && !prev) ElementUtil.enable(regButton); // empty to non-empty
+                                                                    else if (prev && !curr) ElementUtil.disable(regButton); // non-empty to empty
+                                                                }
+                                                            })
+                                                            .onMake(self => {
+                                                                formResponseGetters.push(() => { return { type: input.type, name: input.name, value: self.value } });
+                                                                if (input.required && self.value.length === 0) ElementUtil.disable(regButton);
+                                                            })
+                                                        )
+                                                        .make()
+                                            }
+                                        })
+                                    )
+                                    .make()
+                                );
+                            }
+                        });
+
+                }
+            }
             else if (comp instanceof EventInfo.Components.Cost) {
                 if (note.lod >= DetailLevel.FULL) {
                     
@@ -425,11 +505,10 @@ export namespace EventNote {
                             if (user && !note.event.getComponent(EventInfo.Components.Registerable)!.isRegistered(user.uid)) {
                                 let allowPaymentSwitch = new Switch(false, regButton);
             
-                                regForm.prepend(
-                                    ElementFactory.div(undefined, "payment-disclaimer", "flex-columns", "cross-axis-center", "in-section-gap")
+                                regForm.insertBefore(
+                                    ElementFactory.div(undefined, "payment-disclaimer", "flex-columns", "cross-axis-center", "min-section-gap")
                                     .children(
-                                        ElementFactory.p(`Ik ga akkoord met de kosten van €${(comp.cost * .01).toFixed(2).replace('.', ',')} voor deze activiteit.`)
-                                        .class("no-margin"),
+                                        ElementFactory.label(`Ik ga akkoord met de kosten van €${(comp.cost * .01).toFixed(2).replace('.', ',')} voor deze activiteit.`),
                                         ElementFactory.div(undefined, "icon-switch")
                                         .children(
                                             ElementFactory.p("euro_symbol").class("icon", "no-margin"),
@@ -437,7 +516,8 @@ export namespace EventNote {
                                         )
                                         .tooltip(`Kosten (€${(comp.cost * .01).toFixed(2).replace('.', ',')}) accepteren`)
                                     )
-                                    .make()
+                                    .make(),
+                                    regForm.getElementsByClassName("comment-box")[0]
                                 );
                             }
                         });
@@ -456,7 +536,8 @@ export namespace EventNote {
             EventInfo.Components.Registerable,
             EventInfo.Components.RegistrationStart,
             EventInfo.Components.RegistrationEnd,
-            EventInfo.Components.Cost,
+            EventInfo.Components.Form,
+            EventInfo.Components.Cost
         ];
     }
 }

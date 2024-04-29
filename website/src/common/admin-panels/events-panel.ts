@@ -2,7 +2,7 @@ import EventCalendar from "../custom-elements/EventCalendar";
 import Placeholder from "../custom-elements/Placeholder";
 import "../custom-elements/Switch";
 import "../custom-elements/FolderElement";
-import CachingEventDatebase from "../firebase/database/events/CachingEventDatebase";
+import CachingEventDatabase from "../firebase/database/events/CachingEventDatabase";
 import FirestoreEventDatebase from "../firebase/database/events/FirestoreEventDatabase";
 import { EventInfo } from "../firebase/database/events/EventDatabase";
 import StringUtil from "../util/StringUtil";
@@ -10,7 +10,7 @@ import { EditableEventNote } from "../custom-elements/EventNote";
 import { DetailLevel } from "../util/UtilTypes";
 import Loading from "../Loading";
 
-const DB = new CachingEventDatebase(new FirestoreEventDatebase());
+const DB = new CachingEventDatabase(new FirestoreEventDatebase());
 
 /** Creates an EditableEventNote for new events (is added to database upon saving) */
 function getEmptyNote():EditableEventNote {

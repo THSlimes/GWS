@@ -147,7 +147,7 @@ export namespace EventInfo {
                     return res;
                 });
             }
-            public static checkCanReadComments():Promise<boolean> {
+            public static checkCanReadResponses():Promise<boolean> {
                 return this.CAN_READ_COMMENTS === undefined ? this.fetchPermissions().then(res => res.READ_EVENT_COMMENTS) : Promise.resolve(this.CAN_READ_COMMENTS);
             }
             public static checkCanRegister():Promise<boolean> {
@@ -188,12 +188,12 @@ export namespace EventInfo {
                     && this.numRegistrations === 0;
             }
 
-            public getCommentsFor(ev:EventInfo):Promise<Record<string,Registerable.Comment>> {
-                return Registerable.checkCanReadComments().then(res => res ? ev.sourceDB.getCommentsFor(ev) : {});
+            public getResponsesFor(ev:EventInfo):Promise<Record<string,Registerable.Response>> {
+                return Registerable.checkCanReadResponses().then(res => res ? ev.sourceDB.getResponsesFor(ev) : {});
             }
 
-            public register(ev:EventInfo, comment:string):Promise<void> {
-                return ev.sourceDB.registerFor(ev, comment)
+            public register(ev:EventInfo, comment?:string, formResponses?:EventInfo.Components.Form.Response[]):Promise<void> {
+                return ev.sourceDB.registerFor(ev, comment, formResponses)
                     .then(([id, name]) => {
                         this._registrations[id] = name;
                     });
@@ -216,10 +216,11 @@ export namespace EventInfo {
         }
 
         export namespace Registerable {
-            export interface Comment {
+            export interface Response {
                 id:string,
-                body:string,
-                created_at:Date
+                body?:string,
+                created_at:Date,
+                form_responses?:Form.Response[]
             }
         }
 
@@ -306,6 +307,81 @@ export namespace EventInfo {
 
         }
 
+        export class Form extends Info.Component<EventInfo> {
+
+            public override Class = Form;
+            public override dependencies = [Registerable];
+            public override translatedName = "Formulier";
+
+            private readonly _inputs:Form.Input[];
+            public addInput<I extends Form.Input>(input:I):I {
+                this._inputs.push(input);
+                return input;
+            }
+            public removeInput(input:Form.Input) {
+                const ind = this._inputs.indexOf(input);
+                if (ind === -1) throw new Error("input is not part of component");
+                this._inputs.splice(ind, 1);
+            }
+            public get inputs() { return [...this._inputs]; }
+
+            constructor(inputs:Form.Input[]) {
+                super();
+
+                this._inputs = ObjectUtil.deepCopy(inputs);
+            }
+
+            public override copy() {
+                return new Form(ObjectUtil.deepCopy(this._inputs.filter(input => {
+                    switch (input.type) {
+                        case "select": return input.options.length !== 0;
+                        case "text": return input.name.length !== 0;
+                    }
+                })));
+            }
+
+            public override canBeAddedTo(ev: EventInfo): boolean {
+                return super.canBeAddedTo(ev) && ev.getComponent(Registerable)!.numRegistrations === 0;
+            }
+
+            public override canBeRemovedFrom(ev: EventInfo): boolean {
+                return super.canBeRemovedFrom(ev) && ev.getComponent(Registerable)!.numRegistrations === 0;
+            }
+
+            protected override validateValues(ev:EventInfo):boolean {
+                return this._inputs.every(input => {
+                    switch (input.type) {
+                        case "select": return input.options.length !== 0;
+                        default: return true;
+                    }
+                });
+            }
+            
+        }
+
+        export namespace Form {
+            interface TypeInputMap {
+                select: {
+                    type:"select",
+                    name:string,
+                    options:string[],
+                    required:boolean
+                },
+                text: {
+                    type:"text",
+                    name:string,
+                    maxLength:number,
+                    required:boolean
+                }
+            }
+            export type InputType = keyof TypeInputMap;
+            export type Input = TypeInputMap[keyof TypeInputMap];
+            export type Response<I extends Input = Input> = { type: I["type"], name:I["name"], value:string };
+            
+            export type InputOfType<T extends keyof TypeInputMap> = TypeInputMap[T];
+            export type ResponseOfType<T extends keyof TypeInputMap> = Response<InputOfType<T>>;
+        }
+
     }
 
 }
@@ -328,10 +404,10 @@ export default abstract class EventDatabase extends Database<EventInfo> {
 
     abstract getByCategory(category: string, options?: Omit<EventQueryFilter, "category">): Promise<EventInfo[]>;
 
-    protected abstract doRegisterFor(ev:EventInfo, comment?:string):Promise<[string,string]>;
-    public registerFor(event:EventInfo, comment?:string) {
+    protected abstract doRegisterFor(ev:EventInfo, comment?:string, formResponses?:EventInfo.Components.Form.Response[]):Promise<[string,string]>;
+    public registerFor(event:EventInfo, comment?:string, formResponses:EventInfo.Components.Form.Response[] = []) {
         if (!event.hasComponent(EventInfo.Components.Registerable)) throw new Error("event is not registerable");
-        else return this.doRegisterFor(event, comment);
+        else return this.doRegisterFor(event, comment, formResponses);
     }
     protected abstract doDeregisterFor(ev:EventInfo):Promise<string>;
     public deregisterFor(event:EventInfo) {
@@ -339,10 +415,10 @@ export default abstract class EventDatabase extends Database<EventInfo> {
         else return this.doDeregisterFor(event);
     }
 
-    protected abstract fetchCommentsFor(event:EventInfo):Promise<Record<string,EventInfo.Components.Registerable.Comment>>;
-    public getCommentsFor(event:EventInfo) {
+    protected abstract fetchResponsesFor(event:EventInfo):Promise<Record<string,EventInfo.Components.Registerable.Response>>;
+    public getResponsesFor(event:EventInfo) {
         if (!event.hasComponent(EventInfo.Components.Registerable)) throw new Error("event is not registerable");
-        else return this.fetchCommentsFor(event);
+        else return this.fetchResponsesFor(event);
     }
 
 }

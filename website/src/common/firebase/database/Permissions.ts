@@ -29,7 +29,7 @@ export namespace Permissions {
         DELETE_EVENTS = "DELETE_EVENTS", // whether the user can delete events
         REGISTER_FOR_EVENTS = "REGISTER_FOR_EVENTS", // whether the user is allowed to register for an event
         DEREGISTER_FOR_EVENTS = "DEREGISTER_FOR_EVENTS", // whether the user is allowed to deregister for an event
-        READ_EVENT_COMMENTS = "READ_EVENT_COMMENTS", // whether the user has the ability to retrieve event comments
+        READ_EVENT_COMMENTS = "READ_EVENT_COMMENTS", // whether the user has the ability to retrieve event event registration details
 
         // user related
         UPDATE_OWN_USER_INFO = "UPDATE_OWN_USER_INFO", // whether the user can edit their own info
@@ -62,7 +62,7 @@ export namespace Permissions {
         [Permission.DELETE_EVENTS]: "Activiteiten verwijderen",
         [Permission.REGISTER_FOR_EVENTS]: "Inschrijven voor activiteiten",
         [Permission.DEREGISTER_FOR_EVENTS]: "Uitschrijven van activiteiten",
-        [Permission.READ_EVENT_COMMENTS]: "Activiteit-opmerkingen lezen",
+        [Permission.READ_EVENT_COMMENTS]: "Inschrijvingsdetails lezen",
 
         [Permission.CREATE_IDEA_BOX_SUBMISSIONS]: "Ideeënbox gebruiken",
         [Permission.READ_IDEA_BOX_SUBMISSIONS]: "Ideeënbox suggesties lezen",

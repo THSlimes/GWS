@@ -2,7 +2,7 @@ import ElementFactory from "../html-element-factory/ElementFactory";
 import EventDatabase, { EventInfo } from "../firebase/database/events/EventDatabase";
 import { EventNote } from "./EventNote";
 import { DetailLevel } from "../util/UtilTypes";
-import CachingEventDatebase from "../firebase/database/events/CachingEventDatebase";
+import CachingEventDatabase from "../firebase/database/events/CachingEventDatabase";
 import IconSelector from "./IconSelector";
 import Responsive from "../ui/Responsive";
 import DateUtil from "../util/DateUtil";
@@ -99,7 +99,7 @@ class EventCalendar extends HTMLElement {
         this.FULLSCREEN_EVENT_CONTAINER.toggleAttribute("hidden", true);
     }
 
-    private readonly db:CachingEventDatebase;
+    private readonly db:CachingEventDatabase;
 
     private static readonly LIST_VIEW_INITIAL_TIMESPAN_DAYS = 30;
     private _viewMode:EventCalendar.Viewmode;
@@ -143,8 +143,8 @@ class EventCalendar extends HTMLElement {
         super();
 
         const eventOrigin = ElementUtil.getAttrAs<EventDatabaseFactory.Origin>(this, "origin", v => Object.values(EventDatabaseFactory.Origin).includes(v as EventDatabaseFactory.Origin));
-        if (eventOrigin) this.db = new CachingEventDatebase(EventDatabaseFactory.fromOrigin(eventOrigin));
-        else this.db = db instanceof CachingEventDatebase ? db : new CachingEventDatebase(db);
+        if (eventOrigin) this.db = new CachingEventDatabase(EventDatabaseFactory.fromOrigin(eventOrigin));
+        else this.db = db instanceof CachingEventDatabase ? db : new CachingEventDatabase(db);
         
         this.db.onWrite = () => this.redraw();
         this.db.onDelete = () => this.redraw();

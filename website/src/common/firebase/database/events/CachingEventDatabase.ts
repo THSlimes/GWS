@@ -6,7 +6,7 @@ import EventDatabase, { EventQueryFilter, EventInfo } from "./EventDatabase";
  * caches recent queries to allow for faster and more efficient
  * retrieval in the future.
  */
-export default class CachingEventDatebase extends EventDatabase {
+export default class CachingEventDatabase extends EventDatabase {
 
     private readonly relay:EventDatabase;
 
@@ -115,23 +115,23 @@ export default class CachingEventDatebase extends EventDatabase {
         });
     }
 
-    doRegisterFor(event:EventInfo, comment?:string):Promise<[string,string]> {
-        return this.relay.registerFor(event, comment);
+    doRegisterFor(event:EventInfo, comment?:string, formResponses?:EventInfo.Components.Form.Response[]):Promise<[string,string]> {
+        return this.relay.registerFor(event, comment, formResponses);
     }
 
     doDeregisterFor(event:EventInfo):Promise<string> {
         return this.relay.deregisterFor(event);
     }
 
-    /** Mapping of event IDs to their comment collection. */
-    private readonly commentCache:Record<string,Record<string,EventInfo.Components.Registerable.Comment>> = {};
-    fetchCommentsFor(event:EventInfo):Promise<Record<string, EventInfo.Components.Registerable.Comment>> {
+    /** Mapping of event IDs to their response collection. */
+    private readonly responseCache:Record<string,Record<string,EventInfo.Components.Registerable.Response>> = {};
+    fetchResponsesFor(event:EventInfo):Promise<Record<string, EventInfo.Components.Registerable.Response>> {
         if (!event.hasComponent(EventInfo.Components.Registerable)) throw new Error("Event is not registerable, thus does not have any comments");
 
         return new Promise((resolve,reject) => {
-            if (event.id in this.commentCache) resolve(this.commentCache[event.id]);
-            else this.relay.getCommentsFor(event)
-                .then(comments => resolve(this.commentCache[event.id] = comments))
+            if (event.id in this.responseCache) resolve(this.responseCache[event.id]);
+            else this.relay.getResponsesFor(event)
+                .then(responses => resolve(this.responseCache[event.id] = responses))
                 .catch(reject);
         });
     }
@@ -183,8 +183,8 @@ export default class CachingEventDatebase extends EventDatabase {
         // remove from categoryCache
         for (const cat in this.categoryCache) this.categoryCache[cat] = this.categoryCache[cat].filter(e => !ids.includes(e.id));
 
-        // remove from commentCache
-        for (const rec of records) delete this.commentCache[rec.id];
+        // remove from responseCache
+        for (const rec of records) delete this.responseCache[rec.id];
     }
 
     doDelete(...records:EventInfo[]):Promise<number> {

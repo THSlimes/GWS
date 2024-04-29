@@ -38,6 +38,7 @@ export default abstract class InfoComponentEditor<I extends Info, Name extends s
                 return [comp.translatedName, !comp.canBeAddedTo(this.info)] as [string,boolean];
             }))
             .option('+', "variable_add", true).value('+')
+            .class("add-button")
             .onValueChanged(newCompName => {
                 if (newCompName !== '+') {
                     this.addComponent(newCompName, this.createComponent(newCompName));

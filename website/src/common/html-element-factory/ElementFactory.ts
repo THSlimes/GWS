@@ -6,6 +6,8 @@ import RichTextSerializer from "../custom-elements/rich-text/RichTextSerializer"
 import FolderElement from "../custom-elements/FolderElement";
 import ColorUtil from "../util/ColorUtil";
 import IconSelectorAssemblyLine from "./IconSelectorAssemblyLine";
+import Switch from "../custom-elements/Switch";
+import SwitchAssemblyLine from "./SwitchAssemblyLine";
 
 /**
  * The ElementFactory helper-class provides static methods that allow
@@ -151,6 +153,9 @@ export default abstract class ElementFactory {
         reset() { return new ButtonLikeInputAssemblyLine("reset"); },
         search() { return new TextInputAssemblyLine("search"); },
         submit() { return new ButtonLikeInputAssemblyLine("submit"); },
+        switch(initial?:boolean, dependants?:string|Element|(string|Element)[], inverted?:boolean) {
+            return new SwitchAssemblyLine(initial, dependants, inverted);
+        },
         tel() { return new TextInputAssemblyLine("tel"); },
         text(val?:string) {
             const out = new TextInputAssemblyLine("text");
@@ -201,7 +206,7 @@ export default abstract class ElementFactory {
     }
 
     public static textarea(text?:string) {
-        const out = AssemblyLine.specific("textarea", ["value", "placeholder", "minLength", "maxLength", "readOnly", "spellcheck"], () => document.createElement("textarea"));
+        const out = AssemblyLine.specific("textarea", ["value", "placeholder", "minLength", "maxLength", "readOnly", "spellcheck", "rows", "cols"], () => document.createElement("textarea"));
         if (text) out.value(text);
         return out;
     }

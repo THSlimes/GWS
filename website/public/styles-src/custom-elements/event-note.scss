@@ -100,11 +100,15 @@ event-note, registerable-event-note, editable-event-note, editable-registerable-
                         }
                     }
                     > .message {
-                        padding: calc(var(--in-section-gap) / 2);
-                        color: var(--text-dark);
+                        padding: calc(var(--in-section-gap) / 2) var(--in-section-gap);
+                        row-gap: calc(var(--in-section-gap) / 2);
                         background-color: var(--primary);
                         border-radius: calc(var(--in-section-gap) / 2);
                         outline: var(--std-border);
+                        > * {
+                            width: 100%;
+                            color: var(--text-dark);
+                        }
                     }
                 }
             }
@@ -112,18 +116,37 @@ event-note, registerable-event-note, editable-event-note, editable-registerable-
     }
     &[hide-comments] > .registrations .comment { animation: shrink-disappear 200ms ease-in-out 0ms 1 forwards; }
 
-    & .registration-button {
-        width: max-content;
+    & .registration-form {
+
+        flex-wrap: wrap;
+
+        > .form-inputs {
+            flex-wrap: wrap;
+            & input, & textarea, & select, & label { font-size: 75%; }
+            & label { color: inherit; }
+            & switch-input, & select { height: 1.6rem; }
+        }
+        
+        > .payment-disclaimer > * {
+            font-size: 75%;
+            color: inherit;
+        }
+    
+        > .comment-box {
+            width: 100%;
+            height: 10vh;
+    
+            color: var(--text-dark);
+        }
+
+        > .registration-button {
+            width: max-content;
+            outline: var(--std-border);
+            outline-color: var(--text-color);
+        }
+
     }
 
-    & .comment-box {
-        width: 100%;
-        height: 10vh;
-
-        color: var(--text-dark);
-    }
-
-    & .payment-disclaimer > * { color:inherit; }
     
     & .quick-actions {
         position: absolute;
@@ -140,13 +163,13 @@ event-note, registerable-event-note, editable-event-note, editable-registerable-
 }
 
 @keyframes grow-appear {
-    0% { display: flex; scale: 0; }
-    100% { scale: 1 }
+    0% { display: flex; scale: 0; opacity: 0; }
+    100% { scale: 1; opacity: 1; }
 }
 
 @keyframes shrink-disappear {
-    0% { scale: 1; }
-    100% { display: none; scale: 0; }
+    0% { scale: 1; opacity: 1; }
+    100% { display: none; scale: 0; opacity: 0; }
 }
 
 editable-event-note{

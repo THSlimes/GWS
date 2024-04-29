@@ -134,22 +134,22 @@ body[loading] {
     > *:nth-child(3n-1) { animation: jiggle 1s linear -333ms infinite normal forwards; }
     > *:nth-child(3n) { animation: jiggle 1s linear -666ms infinite normal forwards; }
 
-    &.fading { animation: fade-out 200ms ease-out 0ms 1 normal forwards; }
+    &.fading { animation: fade-out 200ms ease-out 0ms 1 normal both; }
 }
 
 @keyframes jiggle {
-    0%, 50%, 100% { transform: translateY(0rem); }
-    10% { transform: translateY(1.17557050458rem); }
-    20% { transform: translateY(1.90211303259rem); }
-    30% { transform: translateY(1.90211303259rem); }
-    40% { transform: translateY(1.17557050458rem); }
-    60% { transform: translateY(-1.17557050458rem); }
-    70% { transform: translateY(-1.90211303259rem); }
-    80% { transform: translateY(-1.90211303259rem); }
-    90% { transform: translateY(-1.17557050458rem); }
+  0%, 50%, 100% { transform: translateY(0rem); }
+  10% { transform: translateY(1.17557050458rem); }
+  20% { transform: translateY(1.90211303259rem); }
+  30% { transform: translateY(1.90211303259rem); }
+  40% { transform: translateY(1.17557050458rem); }
+  60% { transform: translateY(-1.17557050458rem); }
+  70% { transform: translateY(-1.90211303259rem); }
+  80% { transform: translateY(-1.90211303259rem); }
+  90% { transform: translateY(-1.17557050458rem); }
 }
 
 @keyframes fade-out {
-    0% { opacity: 1; }
-    100% { opacity: 0; display: none; pointer-events: none; }
+  0% { opacity: 1; }
+  100% { opacity: 0; display: none; pointer-events: none; }
 }

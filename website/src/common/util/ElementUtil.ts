@@ -73,4 +73,19 @@ export default abstract class ElementUtil {
             || e instanceof HTMLImageElement;
     }
 
+    public static disable(e:Element):number {
+        let lvl = Number.parseInt(e.getAttribute("disabled") ?? '0');
+        lvl++;
+        e.setAttribute("disabled", lvl.toString());
+        return lvl
+    }
+
+    public static enable(e:Element):number {
+        let lvl = Number.parseInt(e.getAttribute("disabled") ?? '0');
+        lvl--;
+        if (lvl <= 0) e.removeAttribute("disabled");
+        else e.setAttribute("disabled", lvl.toString());
+        return lvl
+    }
+
 }

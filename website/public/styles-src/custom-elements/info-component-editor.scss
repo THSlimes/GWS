@@ -1,4 +1,5 @@
 .info-component-editor {
+    box-sizing: border-box;
 
     > .component-editors {
         width: 100%;
@@ -17,10 +18,11 @@
         }
     }
 
-    > select {
+    & .add-button {
         padding: 0px !important;
         width: 2rem;
-        aspect-ratio: 1 / 1;
+        min-height: 2rem;
+        height: 2rem;
 
         text-align: center;
         font-family: "icon";
@@ -46,6 +48,19 @@
 
 event-component-editor {
     > .component-editors {
-        & input { font-size: 75%; }
+        & input, & textarea, & select, & label { font-size: 75%; }
+        & switch-input { height: 1.6rem; }
+    }
+
+    > .component-editors > * {
+        counter-reset: index;
+        & .input-editor {
+            width: 100%;
+            flex-wrap: wrap;
+            &::before {
+                counter-increment: index;
+                content: counter(index) ". ";
+            }
+        }
     }
 }
