@@ -247,6 +247,12 @@ div#split-view {
     > .section-name { text-decoration: underline; }
 }
 
+/* LOADING SCREEN */
+body[loading] {
+    overflow: hidden !important;
+    > *:not(#loading-screen) { opacity: 0; }
+}
+
 /* UTILITY CLASSES */
 
 *[hidden] { display: none !important; }
