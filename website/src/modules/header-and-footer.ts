@@ -61,6 +61,7 @@ function makeNavbar(settingsDB:SettingsDatabase):Promise<HTMLElement> {
             let searchButton:HTMLElement;
             let searchBox:HTMLDivElement;
             let searchResults:HTMLDivElement;
+            let queryInput:HTMLInputElement;
 
             const out = ElementFactory.header()
                 .class("page-header")
@@ -85,6 +86,7 @@ function makeNavbar(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                                         .class("search-button", "icon", "click-action")
                                         .on("click", (_, self) => {
                                             self.textContent = searchBox.style.display === "none" ? "search_off" : "search";
+                                            if (self.textContent === "search_off") setTimeout(() => queryInput.focus(), 0); // goofy ahh focus code
                                             $(searchBox).stop().slideToggle(200);
                                         })
                                         .onMake(self => {
@@ -142,7 +144,7 @@ function makeNavbar(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                                     searchResults = ElementFactory.div(undefined, "results", "flex-columns", "cross-axis-center", "in-section-gap")
                                         .children(document.createElement("p"))
                                         .make(),
-                                    ElementFactory.input.text()
+                                    queryInput = ElementFactory.input.text()
                                         .placeholder("Zoeken...")
                                         .class("query-input")
                                         .onValueChanged(query => {
@@ -157,6 +159,7 @@ function makeNavbar(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                                             }
                                             searchResults.appendChild(document.createElement("p"));
                                         })
+                                        .make()
                                 )
                                 .make()
                         ),
