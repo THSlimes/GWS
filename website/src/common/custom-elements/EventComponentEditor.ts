@@ -150,6 +150,12 @@ export class EventComponentEditor extends InfoComponentEditor<EventInfo,Name,Com
                                 .on("change", (_, self) => {
                                     try {
                                         let val = new Date(self.value);
+
+                                        console.log(val);
+                                        console.log(new Date());
+                                        console.log(ev.starts_at);
+                                        console.log(DateUtil.Timestamps.clamp(val, new Date(), ev.starts_at));
+                                        
                                         
                                         if (DateUtil.Timestamps.isValid(val)) val = DateUtil.Timestamps.clamp(val, new Date(), ev.starts_at);
                                         else val = component.moment;
@@ -190,6 +196,7 @@ export class EventComponentEditor extends InfoComponentEditor<EventInfo,Name,Com
                                         let val = new Date(self.value);
                                         const min = ev.getComponent(EventInfo.Components.RegistrationStart)?.moment ?? new Date();
                                         
+                                        // if (!DateUtil.Timespans)
                                         if (DateUtil.Timestamps.isValid(val)) val = DateUtil.Timestamps.clamp(val, min, ev.starts_at);
                                         else val = component.moment;
                                         DateUtil.Timestamps.setInputValue(self, val);

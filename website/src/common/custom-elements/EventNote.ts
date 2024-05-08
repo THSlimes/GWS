@@ -602,7 +602,10 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
         let out = new Date(this.startsAt.value);
         if (!DateUtil.Timestamps.isValid(out)) out = this.event.starts_at;
 
-        if (!this.useTime.value) out.setHours(0, 0, 0, 0);
+        if (!this.useTime.value) {
+            out.setHours(0, 0, 0, 0);
+            out.setMinutes(out.getMinutes() - new Date().getTimezoneOffset());
+        }
         
         return out;
     }
@@ -611,7 +614,10 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
         let out = new Date(this.endsAt.value);
         if (!DateUtil.Timestamps.isValid(out)) out = this.event.ends_at;
         
-        if (!this.useTime.value) out.setHours(23, 59, 59, 999);
+        if (!this.useTime.value) {
+            out.setHours(23, 59, 59, 999);
+            out.setMinutes(out.getMinutes() - new Date().getTimezoneOffset());
+        }
         
         return out;
     }
@@ -670,16 +676,24 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
                     ElementFactory.div(undefined, "flex-columns", "main-axis-space-around", "cross-axis-center", "in-section-gap")
                         .children(
                             this.startsAt = areFullDays ?
-                                ElementFactory.input.date(this.event.starts_at).make() :
-                                ElementFactory.input.dateTimeLocal(this.event.starts_at).make(),
+                                ElementFactory.input.date(this.event.starts_at)
+                                .on("input", () => this.event.starts_at = this.startDate)
+                                .make() :
+                                ElementFactory.input.dateTimeLocal(this.event.starts_at)
+                                .on("input", () => this.event.starts_at = this.startDate)
+                                .make(),
                             ElementFactory.p()
                                 .class("no-margin")
                                 .onMake(self => {
                                     Responsive.onChange(vp => self.textContent = Responsive.isSlimmerOrEq(Responsive.Viewport.SQUARE) ? '→' : "t/m", true);
                                 }),
                             this.endsAt = areFullDays ?
-                                ElementFactory.input.date(this.event.ends_at).make() :
-                                ElementFactory.input.dateTimeLocal(this.event.ends_at).make()
+                                ElementFactory.input.date(this.event.ends_at)
+                                .on("input", () => this.event.ends_at = this.endDate)
+                                .make() :
+                                ElementFactory.input.dateTimeLocal(this.event.ends_at)
+                                .on("input", () => this.event.ends_at = this.endDate)
+                                .make()
                         ),
                     ElementFactory.div(undefined, "icon-switch")
                         .children(
@@ -694,14 +708,22 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
         this.useTime.addEventListener("input", () => { // update on switch
                                     
             const newSAInput = this.useTime.value ?
-                ElementFactory.input.dateTimeLocal(this.startsAt.valueAsDate ?? this.event.starts_at).make() :
-                ElementFactory.input.date(this.startsAt.valueAsDate ?? this.event.starts_at).make();
+                ElementFactory.input.dateTimeLocal(this.startsAt.valueAsDate ?? this.event.starts_at)
+                .on("input", () => this.event.starts_at = this.startDate)
+                .make() :
+                ElementFactory.input.date(this.startsAt.valueAsDate ?? this.event.starts_at)
+                .on("input", () => this.event.starts_at = this.startDate)
+                .make();
             this.startsAt.replaceWith(newSAInput);
             this.startsAt = newSAInput;
 
             const newEAInput = this.useTime.value ?
-                ElementFactory.input.dateTimeLocal(this.endsAt.valueAsDate ?? this.event.ends_at).make() :
-                ElementFactory.input.date(this.endsAt.valueAsDate ?? this.event.ends_at).make();
+                ElementFactory.input.dateTimeLocal(this.endsAt.valueAsDate ?? this.event.ends_at)
+                .on("input", () => this.event.ends_at = this.endDate)
+                .make() :
+                ElementFactory.input.date(this.endsAt.valueAsDate ?? this.event.ends_at)
+                .on("input", () => this.event.ends_at = this.endDate)
+                .make();
             this.endsAt.replaceWith(newEAInput);
             this.endsAt = newEAInput;
         });
@@ -729,7 +751,8 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
 
                         this.event.sourceDB.write(newEvent)
                         .then(() => {
-                            UserFeedback.success("Activiteit is succesvol bijgewerkt.");
+                            if (this.saveAsNew) UserFeedback.success("Activiteit is succesvol toegevoegd.");
+                            else UserFeedback.success("Activiteit is succesvol bijgewerkt.");
                             for (const handler of this.onSaveHandlers) handler(this);
                             this.replaceWithOriginal(newEvent);
                         })

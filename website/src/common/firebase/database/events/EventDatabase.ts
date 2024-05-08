@@ -17,8 +17,8 @@ export class EventInfo extends Info {
     public readonly description:string;
     public readonly category:string;
 
-    public readonly starts_at:Date;
-    public readonly ends_at:Date;
+    public starts_at:Date;
+    public ends_at:Date;
 
     public override readonly components:EventInfo.Component[];
 
