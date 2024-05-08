@@ -126,7 +126,7 @@ export default abstract class URLUtil {
 
     /** Gets the key-value pairs stored in the URL hash. */
     public static getHashProperties(url:URL|Location=location):Record<string,string> {
-        const pairs = url.hash.substring(1).split(',');
+        const pairs = url.hash.substring(1).split(',').filter(s => s.length !== 0);
 
         const out:Record<string,string> = {};
         for (const p of pairs) {
@@ -138,6 +138,7 @@ export default abstract class URLUtil {
     }
 
     public static setHashProperty(key:string, value:string|null):string|null {
+        console.trace(key, value);
         const pairs = this.getHashProperties();
         const out = pairs[key] ?? null; // get original value
 
