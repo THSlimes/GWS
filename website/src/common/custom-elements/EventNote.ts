@@ -237,6 +237,9 @@ export namespace EventNote {
 
                 if (note.lod >= DetailLevel.FULL) {
                     const spacesLeft = (comp.capacity ?? Infinity) - comp.numRegistrations;
+
+                    comp.onRegistrationsChanged = () => note.style.setProperty("--num-registrations", comp.numRegistrations.toString());
+                    note.style.setProperty("--num-registrations", comp.numRegistrations.toString());
                     
                     await Promise.all([
                         onAuth(),
@@ -250,99 +253,99 @@ export namespace EventNote {
 
                         // list of registrations
                         const newReg = ElementFactory.div(undefined, "registrations", "flex-rows", "in-section-gap")
-                        .children(
-                            ElementFactory.div()
-                            .class(
-                                "flex-columns",
-                                canReadResponses && Responsive.isSlimmerOrEq(Responsive.Viewport.DESKTOP_SLIM) ? "main-axis-center" : "main-axis-space-between",
-                                "cross-axis-center",
-                                "in-section-gap"
-                            )
                             .children(
-                                ElementFactory.heading(note.expanded ? 3 : 4, "Ingeschreven geitjes")
-                                .children(Number.isFinite(spacesLeft) && ElementFactory.span(` (${spacesLeft} plekken over)`).class("subtitle"))
-                                .class("no-margin"),
-                                canReadResponses && ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
-                                .children(
-                                    comp.numRegistrations !== 0 && ElementFactory.iconButton("download", () => { // create xlsx file and download it
-                                        const headerRow = [
-                                            { value: "Naam" },
-                                            { value: "Inschrijfmoment" },
-                                            { value: "Opmerking" },
-                                            ...(Object.values(responses).find(res => res.form_responses !== undefined)?.form_responses ?? []).map(r => {
-                                                return { value: r.name };
-                                            })
-                                        ];
-
-                                        const data = sortedIDs.map(id => {
-                                            const name = comp.registrations[id];
-
-                                            if (id in responses) {
-                                                const response = responses[id];
-                                                return [
-                                                    { type: String, value: name },
-                                                    { type: Date, value: response.created_at, format: "d mmmm yyyy" },
-                                                    { type: String, value: response.body ?? "" },
-                                                    ...(response.form_responses ?? []).map(r => {
-                                                        return { type: String, value: r.value || '-' }
-                                                    })
-                                                ];
-                                            }
-                                            else return [{ type: String, value: name }];
-                                        });
-
-                                        const widths:number[] = [0, headerRow[1].value.length];
-                                        for (const row of [headerRow, ...data]) {
-                                            while (row.length > widths.length) widths.push(0);
-                                            for (let i = 0; i < row.length; i ++) {
-                                                if (i !== 1) widths[i] = Math.max(widths[i], row[i].value.toString().length);
-                                            }
-                                        }
-
-                                        const fileName = `Inschrijvingen ${note.event.name} (${DateUtil.DATE_FORMATS.DAY.SHORT_NO_YEAR(note.event.starts_at)}).xlsx`;
-                                        writeXlsxFile(
-                                            [headerRow, ...data],
-                                            { columns: widths.map(w => { return { width: Math.round(w*1.25) } }), fileName }
-                                        )
-                                        .catch(err => console.error(err));
-                                    }, "Inschrijvingen downloaden"),
-                                    (ObjectUtil.sizeOf(responses) !== 0) && ElementFactory.iconButton("comment", (_, self) => {
-                                        if (self.toggleAttribute("selected", !note.toggleAttribute("hide-comments"))) {
-                                            [self.textContent, self.title] = ["comment", "Opmerkingen verbergen"];
-                                        }
-                                        else [self.textContent, self.title] = ["comments_disabled", "Opmerkingen tonen"]
-                                    }, "Opmerkingen verbergen").attr("selected").attr("can-unselect")
+                                ElementFactory.div()
+                                .class(
+                                    "flex-columns",
+                                    canReadResponses && Responsive.isSlimmerOrEq(Responsive.Viewport.DESKTOP_SLIM) ? "main-axis-center" : "main-axis-space-between",
+                                    "cross-axis-center",
+                                    "in-section-gap"
                                 )
-                            ),
-                            ElementFactory.div(undefined, "registrations-list", "no-margin")
-                            .children(
-                                ...sortedIDs.map(id => {
-                                    const name = comp.registrations[id];
-                                    const resp = responses[id];
-                                    const showResponse = resp?.body !== undefined || resp?.form_responses?.length !== undefined;
-                                    return ElementFactory.div(undefined, "flex-rows", "cross-axis-center")
-                                        .children(
-                                            ElementFactory.p(name + (showResponse ? '*' : "")).class("no-margin", "text-center"),
-                                            showResponse && ElementFactory.div(undefined, "comment", "flex-rows", "cross-axis-center")
-                                            .children(
-                                                ElementFactory.div(undefined, "point").children(ElementFactory.div(undefined, "inside")),
-                                                ElementFactory.div(undefined, "message", "flex-rows")
-                                                .children(
-                                                    (resp.body !== undefined) && ElementFactory.p(`"${resp.body}"`)
-                                                    .class("message", "no-margin", "subtitle"),
-                                                    ...(resp.form_responses ?? []).map((resp, i) => {
-                                                        return ElementFactory.p()
-                                                            .children(`${i+1}.  ${resp.value || '-'}`)
-                                                            .class("no-margin", "subtitle", "flex-columns", "main-axis-space-between");
-                                                    })
-                                                )
-                                                .tooltip(DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(resp.created_at)),
+                                .children(
+                                    ElementFactory.heading(note.expanded ? 3 : 4, "Ingeschreven geitjes")
+                                    .children(Number.isFinite(spacesLeft) && ElementFactory.span(` (${spacesLeft} plekken over)`).class("subtitle"))
+                                    .class("no-margin"),
+                                    canReadResponses && ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
+                                    .children(
+                                        comp.numRegistrations !== 0 && ElementFactory.iconButton("download", () => { // create xlsx file and download it
+                                            const headerRow = [
+                                                { value: "Naam" },
+                                                { value: "Inschrijfmoment" },
+                                                { value: "Opmerking" },
+                                                ...(Object.values(responses).find(res => res.form_responses !== undefined)?.form_responses ?? []).map(r => {
+                                                    return { value: r.name };
+                                                })
+                                            ];
+
+                                            const data = sortedIDs.map(id => {
+                                                const name = comp.registrations[id];
+
+                                                if (id in responses) {
+                                                    const response = responses[id];
+                                                    return [
+                                                        { type: String, value: name },
+                                                        { type: Date, value: response.created_at, format: "d mmmm yyyy" },
+                                                        { type: String, value: response.body ?? "" },
+                                                        ...(response.form_responses ?? []).map(r => {
+                                                            return { type: String, value: r.value || '-' }
+                                                        })
+                                                    ];
+                                                }
+                                                else return [{ type: String, value: name }];
+                                            });
+
+                                            const widths:number[] = [0, headerRow[1].value.length];
+                                            for (const row of [headerRow, ...data]) {
+                                                while (row.length > widths.length) widths.push(0);
+                                                for (let i = 0; i < row.length; i ++) {
+                                                    if (i !== 1) widths[i] = Math.max(widths[i], row[i].value.toString().length);
+                                                }
+                                            }
+
+                                            const fileName = `Inschrijvingen ${note.event.name} (${DateUtil.DATE_FORMATS.DAY.SHORT_NO_YEAR(note.event.starts_at)}).xlsx`;
+                                            writeXlsxFile(
+                                                [headerRow, ...data],
+                                                { columns: widths.map(w => { return { width: Math.round(w*1.25) } }), fileName }
                                             )
-                                        )
-                                })
+                                            .catch(err => console.error(err));
+                                        }, "Inschrijvingen downloaden"),
+                                        (ObjectUtil.sizeOf(responses) !== 0) && ElementFactory.iconButton("comment", (_, self) => {
+                                            if (self.toggleAttribute("selected", !note.toggleAttribute("hide-comments"))) {
+                                                [self.textContent, self.title] = ["comment", "Opmerkingen verbergen"];
+                                            }
+                                            else [self.textContent, self.title] = ["comments_disabled", "Opmerkingen tonen"]
+                                        }, "Opmerkingen verbergen").attr("selected").attr("can-unselect")
+                                    )
+                                ),
+                                ElementFactory.div(undefined, "registrations-list", "no-margin")
+                                .children(
+                                    ...sortedIDs.map(id => {
+                                        const name = comp.registrations[id];
+                                        const resp = responses[id];
+                                        const showResponse = resp?.body !== undefined || resp?.form_responses?.length !== undefined;
+                                        return ElementFactory.div(undefined, "flex-rows", "cross-axis-center")
+                                            .children(
+                                                ElementFactory.p(name + (showResponse ? '*' : "")).class("no-margin", "text-center"),
+                                                showResponse && ElementFactory.div(undefined, "comment", "flex-rows", "cross-axis-center")
+                                                .children(
+                                                    ElementFactory.div(undefined, "point").children(ElementFactory.div(undefined, "inside")),
+                                                    ElementFactory.div(undefined, "message", "flex-rows")
+                                                    .children(
+                                                        (resp.body !== undefined) && ElementFactory.p(`"${resp.body}"`)
+                                                        .class("message", "no-margin", "subtitle"),
+                                                        ...(resp.form_responses ?? []).map((resp, i) => {
+                                                            return ElementFactory.p()
+                                                                .children(`${i+1}.  ${resp.value || '-'}`)
+                                                                .class("no-margin", "subtitle", "flex-columns", "main-axis-space-between");
+                                                        })
+                                                    )
+                                                    .tooltip(DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(resp.created_at)),
+                                                )
+                                            )
+                                    })
+                                )
                             )
-                        )
-                        .make();
+                            .make();
 
                         Array.from(note.getElementsByClassName("registrations")).forEach(e => e.remove()); // remove old element
                         note.insertBefore(newReg, note.quickActions);
@@ -408,6 +411,16 @@ export namespace EventNote {
                     })
                     .catch(err => console.error(err))
                 }
+                else onAuth()
+                    .then(user => note.appendChild(
+                        ElementFactory.p(user !== null && comp.isRegistered(user.uid) ? "how_to_reg" : "calendar_add_on")
+                        .class("icon", "registered-indicator")
+                        .tooltip("Ingeschreven")
+                        .onMake(self => {
+                            comp.onRegistrationsChanged = () => self. textContent = comp.isRegistered(user!.uid) ? "how_to_reg" : "calendar_add_on";
+                        })
+                        .make()
+                    ));
                 
             }
             else if (comp instanceof EventInfo.Components.RegistrationStart) {

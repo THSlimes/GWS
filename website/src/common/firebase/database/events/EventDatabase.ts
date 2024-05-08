@@ -192,10 +192,14 @@ export namespace EventInfo {
                 return Registerable.checkCanReadResponses().then(res => res ? ev.sourceDB.getResponsesFor(ev) : {});
             }
 
+            private readonly regChangeHandlers:VoidFunction[] = [];
+            public set onRegistrationsChanged(handler:VoidFunction) { this.regChangeHandlers.push(handler); }
+
             public register(ev:EventInfo, comment?:string, formResponses?:EventInfo.Components.Form.Response[]):Promise<void> {
                 return ev.sourceDB.registerFor(ev, comment, formResponses)
                     .then(([id, name]) => {
                         this._registrations[id] = name;
+                        for (const h of this.regChangeHandlers) h();
                     });
             }
 
@@ -203,6 +207,7 @@ export namespace EventInfo {
                 return ev.sourceDB.deregisterFor(ev)
                     .then(id => {
                         delete this._registrations[id];
+                        for (const h of this.regChangeHandlers) h();
                     });
             }
 
