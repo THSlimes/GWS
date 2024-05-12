@@ -225,6 +225,8 @@ export namespace EventNote {
 
     export async function applyComponents(note:EventNote, ...components:EventInfo.Component[]) {
         Loading.markLoadStart(note);
+
+        const now = new Date();
         
         // sort based on application order
         components = components.toSorted((a, b) => applyComponents.ORDER.indexOf(a.Class) - applyComponents.ORDER.indexOf(b.Class));
@@ -238,20 +240,20 @@ export namespace EventNote {
             }
             else if (comp instanceof EventInfo.Components.Registerable) {
 
-                if (note.lod >= DetailLevel.FULL) {
-                    const spacesLeft = (comp.capacity ?? Infinity) - comp.numRegistrations;
+                const spacesLeft = (comp.capacity ?? Infinity) - comp.numRegistrations;
 
-                    comp.onRegistrationsChanged = () => note.style.setProperty("--num-registrations", comp.numRegistrations.toString());
-                    note.style.setProperty("--num-registrations", comp.numRegistrations.toString());
-                    
-                    await Promise.all([
-                        onAuth(),
-                        comp.getResponsesFor(note.event),
-                        EventInfo.Components.Registerable.checkCanReadResponses(),
-                        EventInfo.Components.Registerable.checkCanRegister(),
-                        EventInfo.Components.Registerable.checkCanDeregister(),
-                    ])
-                    .then(([user, responses, canReadResponses, canRegister, canDeregister]) => {
+                comp.onRegistrationsChanged = () => note.style.setProperty("--num-registrations", comp.numRegistrations.toString());
+                note.style.setProperty("--num-registrations", comp.numRegistrations.toString());
+                
+                await Promise.all([
+                    onAuth(),
+                    comp.getResponsesFor(note.event),
+                    EventInfo.Components.Registerable.checkCanReadResponses(),
+                    EventInfo.Components.Registerable.checkCanRegister(),
+                    EventInfo.Components.Registerable.checkCanDeregister(),
+                ])
+                .then(([user, responses, canReadResponses, canRegister, canDeregister]) => {
+                    if (note.lod >= DetailLevel.FULL) {
                         const sortedIDs = Object.keys(comp.registrations).sort((a, b) => comp.registrations[a].localeCompare(comp.registrations[b]));
 
                         // list of registrations
@@ -357,7 +359,6 @@ export namespace EventNote {
                         const isReg = user !== null && comp.isRegistered(user.uid);
                         const newButton = ElementFactory.button().class("registration-button");
                         let icon:string, text:string, onClick:(ev:MouseEvent, self:HTMLButtonElement)=>void, disabled:boolean;
-                        const now = new Date();
                         if (now > note.event.ends_at) [icon, text, onClick, disabled] = ["event_busy", "Activiteit is al voorbij", () => {}, true];
                         else if (now > note.event.starts_at) [icon, text, onClick, disabled] = ["calendar_today", "Activiteit is al gestart", () => {}, true];
                         else if (user === null) [icon, text, onClick, disabled] = ["login", "Log in om je in te schrijven", () => location.href = URLUtil.createLinkBackURL("./inloggen.html").toString(), false];
@@ -411,26 +412,41 @@ export namespace EventNote {
                             note.quickActions
                         );
 
-                    })
-                    .catch(err => console.error(err))
-                }
-                else onAuth()
-                    .then(user => note.appendChild(
-                        ElementFactory.p(user !== null && comp.isRegistered(user.uid) ? "how_to_reg" : "calendar_add_on")
-                        .class("icon", "registered-indicator")
-                        .tooltip("Ingeschreven")
-                        .onMake(self => {
-                            comp.onRegistrationsChanged = () => self. textContent = comp.isRegistered(user!.uid) ? "how_to_reg" : "calendar_add_on";
-                        })
-                        .make()
-                    ));
+                    }
+                    else {
+                        const regComp = comp;
+                        let icon:string, tooltip:string;
+                        function getIndicatorState():[string,string] {
+                            const isReg = user !== null && regComp.isRegistered(user.uid);
+                            if (now > note.event.ends_at) return ["event_busy", "Activiteit is al voorbij"];
+                            else if (now > note.event.starts_at) return ["calendar_today", "Activiteit is al gestart"];
+                            else if (isReg) return [canDeregister ? "free_cancellation" : "event_available", "Ingeschreven"];
+                            else return ["calendar_add_on", "Open voor inschrijving!"];
+                        }
+
+                        const state = getIndicatorState();
+
+                        note.appendChild(
+                            ElementFactory.p(state[0])
+                            .class("icon", "registration-indicator")
+                            .tooltip(state[1])
+                            .onMake(self => {
+                                comp.onRegistrationsChanged = () => [self.textContent, self.title] = getIndicatorState();
+                            })
+                            .make()
+                        );
+                    }
+                })
+                .catch(err => console.error(err));
+                
                 
             }
             else if (comp instanceof EventInfo.Components.RegistrationStart) {
-                if (note.lod >= DetailLevel.FULL) {
-                    const regButton = note.getElementsByClassName("registration-button")[0];
-                    const regForm = note.getElementsByClassName("registration-form")[0];
-                    if (new Date() < comp.moment) {
+                if (now < comp.moment) { // is before registration period
+                    if (note.lod >= DetailLevel.FULL) {
+                        const regButton = note.getElementsByClassName("registration-button")[0];
+                        const regForm = note.getElementsByClassName("registration-form")[0];
+
                         regButton.toggleAttribute("disabled", true);
                         regForm.childNodes.forEach(cn => {
                             if (cn !== regButton) cn.remove();
@@ -438,20 +454,35 @@ export namespace EventNote {
                         regButton.firstElementChild!.textContent = "calendar_clock";
                         regButton.lastElementChild!.textContent = `Inschrijven kan pas vanaf ${DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(comp.moment)}`;
                     }
+                    else {
+                        const regIndicator = note.getElementsByClassName("registration-indicator")[0] as HTMLElement;
+
+                        regIndicator.textContent = "calendar_clock";
+                        regIndicator.title = `Inschrijven kan pas vanaf ${DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT_NO_YEAR(comp.moment)}`;
+                    }
                 }
             }
             else if (comp instanceof EventInfo.Components.RegistrationEnd) {
-                if (note.lod >= DetailLevel.FULL) {
-                    const regButton = note.getElementsByClassName("registration-button")[0];
-                    const regForm = note.getElementsByClassName("registration-form")[0];
-                    if (new Date() > comp.moment) {
-                        regButton.toggleAttribute("disabled", true);
-                        regForm.childNodes.forEach(cn => {
-                            if (cn !== regButton) cn.remove();
-                        });
-                        regButton.firstElementChild!.textContent = "event_upcoming";
-                        regButton.lastElementChild!.textContent = `Inschrijving is al gesloten`;
+                if (now > comp.moment) { // is after registration period
+                    if (note.lod >= DetailLevel.FULL) {
+                        const regButton = note.getElementsByClassName("registration-button")[0];
+                        const regForm = note.getElementsByClassName("registration-form")[0];
+                        if (new Date() > comp.moment) {
+                            regButton.toggleAttribute("disabled", true);
+                            regForm.childNodes.forEach(cn => {
+                                if (cn !== regButton) cn.remove();
+                            });
+                            regButton.firstElementChild!.textContent = "event_upcoming";
+                            regButton.lastElementChild!.textContent = "Inschrijving is al gesloten";
+                        }
                     }
+                    else {
+                        const regIndicator = note.getElementsByClassName("registration-indicator")[0] as HTMLElement;
+
+                        regIndicator.textContent = "event_upcoming";
+                        regIndicator.title = "Inschrijving is al gesloten";
+                    }
+
                 }
             }
             else if (comp instanceof EventInfo.Components.Form) {

@@ -161,10 +161,10 @@ event-note, registerable-event-note, editable-event-note, editable-registerable-
         > .delete-button[awaiting-confirmation] { animation: pulsate-in 1000ms ease-in-out 0ms infinite; }
     }
 
-    & .registered-indicator {
+    & .registration-indicator {
         position: absolute;
-        bottom: var(--in-section-gap);
-        right: var(--in-section-gap);
+        bottom: calc(var(--in-section-gap) / 2);
+        right: calc(var(--in-section-gap) / 2);
         width: max-content;
         font-size: 1.25rem;
     }
