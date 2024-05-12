@@ -77,7 +77,16 @@
                 <h1 class="panel-heading">Activiteiten</h1>
                 <place-holder id="event-calendar"></place-holder>
 
-                <div id="add-event">
+                <div id="default-category-colors" class="subpanel flex-rows in-section-gap cross-axis-center">
+                    <h2 class="subpanel-heading">Standaardkleuren</h2>
+                    <p>
+                        Als voor een activiteit geen kleur is gespecificeerd, dan worden deze gebruikt. De standaardkleur wordt gekozen
+                        aan de hand van de categorie van de activiteit. Als de activiteit geen categorie heeft, wordt de naam gebruikt.
+                    </p>
+                    <place-holder id="default-category-color-editor"></place-holder>
+                </div>
+
+                <div id="add-event" class="subpanel flex-rows min-section-gap">
                     <h2 class="subpanel-heading">Nieuwe activiteit toevoegen</h2>
                     <place-holder id="new-event"></place-holder>
                 </div>
@@ -86,12 +95,12 @@
             <div id="articles-panel" class="panel flex-rows section-gap" hidden>
                 <h1 class="panel-heading">Berichten</h1>
 
-                <div id="recent-articles">
+                <div id="recent-articles" class="subpanel flex-rows min-section-gap">
                     <h2 class="subpanel-heading">Recente berichten</h2>
                     <place-holder id="article-list"></place-holder>
                 </div>
 
-                <div>
+                <div class="subpanel flex-rows min-section-gap">
                     <h2 class="subpanel-heading">Nieuw bericht plaatsen</h2>
                     <place-holder id="new-article"></place-holder>
                 </div>

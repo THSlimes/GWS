@@ -1,6 +1,7 @@
 import Permissions from "./firebase/database/Permissions";
 import { ImagedLink, LinkTree } from "./firebase/database/settings/SettingsDatabase";
 import UserFeedback from "./ui/UserFeedback";
+import ColorUtil from "./util/ColorUtil";
 
 /**
  * The Cache helper-class provides a way to more easily cache values
@@ -90,6 +91,7 @@ namespace Cache {
         "navbar-links": LinkTree,
         "sponsor-links": ImagedLink[],
         "social-media-links": ImagedLink[],
+        "default-category-colors": ColorUtil.HexColor[],
         "is-logged-in": true,
         "do-login-expiry": boolean,
         "own-id": string,

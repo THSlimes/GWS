@@ -138,7 +138,6 @@ export default abstract class URLUtil {
     }
 
     public static setHashProperty(key:string, value:string|null):string|null {
-        console.trace(key, value);
         const pairs = this.getHashProperties();
         const out = pairs[key] ?? null; // get original value
 

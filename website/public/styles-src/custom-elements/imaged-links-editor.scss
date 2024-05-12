@@ -12,6 +12,17 @@ imaged-links-editor {
 
     justify-items: center;
     align-items: center;
+
+    > .icon-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+
+        outline: var(--std-border);
+        outline-style: dashed;
+    }
 }
 
 imaged-link-entry {

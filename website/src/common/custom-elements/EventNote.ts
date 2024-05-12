@@ -129,9 +129,12 @@ export class EventNote extends HTMLElement implements HasSections<EventNote.Sect
         this.toggleAttribute("expanded", this._expanded);
 
         // apply color palette
-        const bgColor = ColorUtil.getStringColor(this.event.category);
-        this.style.setProperty("--background-color", bgColor);
-        this.style.setProperty("--text-color", ColorUtil.getMostContrasting(bgColor, "#233452", "#ffffff"));
+        if (!this.event.hasComponent(EventInfo.Components.Color)) ColorUtil.getStringColor(this.event.category || this.event.name)
+            .then(bgColor => {
+                this.style.setProperty("--background-color", bgColor);
+                this.style.setProperty("--text-color", ColorUtil.getMostContrasting(bgColor, "#233452", "#ffffff"));
+            })
+            .catch(err => UserFeedback.error(getErrorMessage(err)));
 
         // name section
         this.name = ElementFactory.heading(this._expanded ? 1 : 5, this.event.name).class("name", "no-margin").make();
@@ -654,9 +657,15 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
 
     private applyComponents() {
         // apply color palette
-        const bgColor = this.event.getComponent(EventInfo.Components.Color)?.bg ?? ColorUtil.getStringColor(this.category.value);
-        this.style.setProperty("--background-color", bgColor);
-        this.style.setProperty("--text-color", ColorUtil.getMostContrasting(bgColor, "#233452", "#ffffff"));
+        const bgColorPromise = this.event.hasComponent(EventInfo.Components.Color) ?
+            Promise.resolve(this.event.getComponent(EventInfo.Components.Color)!.bg) :
+            ColorUtil.getStringColor(this.category.value || this.name.textContent!);
+        
+        bgColorPromise.then(bgColor => {
+            this.style.setProperty("--background-color", bgColor);
+            this.style.setProperty("--text-color", ColorUtil.getMostContrasting(bgColor, "#233452", "#ffffff"));
+
+        });
     }
 
     initElement():void {
@@ -670,6 +679,7 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
                     this.name = ElementFactory.heading(this.expanded ? 1 : 5, this.event.name)
                         .class("name", "no-margin")
                         .attr("contenteditable", "plaintext-only")
+                        .on("input", () => FunctionUtil.setDelayedCallback(() => this.applyComponents(), 250))
                         .make(),
                     this.category = ElementFactory.textarea(this.event.category)
                         .class("category")

@@ -23,18 +23,27 @@ import StringUtil from "../util/StringUtil";
  */
 function makePermissionLabel(perm:Permissions.Permission, editable:boolean, onRemove:(label:HTMLDivElement)=>void):HTMLDivElement {
     const backgroundColor = ColorUtil.getStringColor(perm);
-    const color = ColorUtil.getMostContrasting(backgroundColor, "#000000", "#ffffff");
     return ElementFactory.div(undefined, "permission", "permission-label", "center-content")
         .children(
-            ElementFactory.p(Permissions.translate(perm)).style({ color }),
+            ElementFactory.p(Permissions.translate(perm)),
             label => editable ?
                 ElementFactory.p("close")
                     .class("icon", "click-action")
-                    .style({ color })
                     .on("click", () => onRemove(label)) :
                 null,
         )
-        .style({ backgroundColor })
+        .onMake(self => {
+            ColorUtil.getStringColor(perm, ColorUtil.PALETTES.RAINBOW)
+            .then(bgColor => {
+                const textColor = ColorUtil.getMostContrasting(bgColor, "#233452", "#ffffff");
+
+                self.style.backgroundColor = bgColor;
+                self.childNodes.forEach(cn => {
+                    if (cn instanceof HTMLElement) cn.style.color = textColor;
+                });
+            })
+            .catch(err => UserFeedback.error(getErrorMessage(err)));
+        })
         .make();
 }
 

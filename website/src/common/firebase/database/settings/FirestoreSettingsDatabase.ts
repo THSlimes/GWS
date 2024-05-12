@@ -1,7 +1,9 @@
 import { QueryDocumentSnapshot, collection, doc, getDoc, setDoc } from "@firebase/firestore";
 import { FIRESTORE } from "../../init-firebase";
-import SettingsDatabase, { ImagedLink, LinkTree } from "./SettingsDatabase";
+import SettingsDatabase, { ImagedLink, LinkTree, NamedColors } from "./SettingsDatabase";
 import { AttachmentOrigin } from "../../../util/UtilTypes";
+import ObjectUtil from "../../../util/ObjectUtil";
+import ColorUtil from "../../../util/ColorUtil";
 
 class FirestoreSettingsDatabase extends SettingsDatabase {
 
@@ -70,21 +72,31 @@ class FirestoreSettingsDatabase extends SettingsDatabase {
     });
 
     override getSocialMediaLinks(): Promise<ImagedLink[]> {
-        return new Promise((resolve, reject) => {
-            getDoc(this.SOCIAL_MEDIA_LINKS_DOC)
+        return getDoc(this.SOCIAL_MEDIA_LINKS_DOC)
             .then(docSnapshot => {
-                if (!docSnapshot.exists()) reject(new FirestoreSettingsDatabase.MissingDocError("social-media-links"));
-                else resolve(docSnapshot.data());
-            })
-        });
+                if (!docSnapshot.exists()) throw new FirestoreSettingsDatabase.MissingDocError("social-media-links");
+                else return docSnapshot.data();
+            });
     }
 
     override setSocialMediaLinks(links: ImagedLink[]):Promise<void> {
-        return new Promise((resolve, reject) => {
-            setDoc(this.SOCIAL_MEDIA_LINKS_DOC, links)
-            .then(resolve)
-            .catch(reject);
-        });
+        return setDoc(this.SOCIAL_MEDIA_LINKS_DOC, links);
+    }
+
+    
+    private DEFAULT_CATEGORY_COLORS_DOC = doc(FirestoreSettingsDatabase.COLLECTION, "default-category-colors");
+
+    override getDefaultCategoryColors():Promise<ColorUtil.HexColor[]> {
+        return getDoc(this.DEFAULT_CATEGORY_COLORS_DOC)
+            .then(docRef => ObjectUtil.values(docRef.exists() ? docRef.data() as NamedColors : {}).sort());
+    }
+
+    override setDefaultCategoryColors(colors:ColorUtil.HexColor[]):Promise<void> {
+        const out:Record<`${number}`,ColorUtil.HexColor> = {};
+        colors.forEach((val, i) => out[`${i}`] = val);
+        console.log(out);
+        
+        return setDoc(this.DEFAULT_CATEGORY_COLORS_DOC, out);
     }
 
 }

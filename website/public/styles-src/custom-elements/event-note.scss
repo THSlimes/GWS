@@ -180,7 +180,7 @@ event-note, registerable-event-note, editable-event-note, editable-registerable-
     100% { display: none; scale: 0; opacity: 0; }
 }
 
-editable-event-note{
+editable-event-note {
 
     transition: background-color 250ms ease-out;
 
@@ -188,6 +188,7 @@ editable-event-note{
 
     & .name {
         flex-grow: 1;
+        text-overflow: unset;
         &:empty::before {
             content: "Naam";
             color: var(--shadow-dark);
@@ -205,9 +206,10 @@ editable-event-note{
     & .description { min-height: 30vh; }
 
     & .component-editor {
-        flex-grow: 1;
         overflow: visible scroll;
         padding: var(--in-section-gap);
+        flex-grow: 1;
+        min-height: 3rem;
     }
 
 }

@@ -11,6 +11,11 @@ export default abstract class NumberUtil {
             lower < n && n < upper;
     }
 
+    public static randInt(min:number, max:number):number {
+        if (min > max) [min, max] = [max, min];
+        return Math.floor(min + Math.random() * (max - min));
+    }
+
     /** Determines whether `asString` represents a number. */
     public static isNumber(asString:string):boolean {
         return !isNaN(Number.parseFloat(asString));

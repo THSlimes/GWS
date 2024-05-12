@@ -17,7 +17,7 @@ service cloud.firestore {
         // settings
         match /settings/{settingName} {
             allow get;
-            allow update : if hasPermissions(["UPDATE_SETTINGS"])
+            allow update, create : if hasPermissions(["UPDATE_SETTINGS"])
         }
 
         // articles

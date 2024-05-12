@@ -1,3 +1,4 @@
+import ColorUtil from "../../../util/ColorUtil";
 import { AttachmentOrigin } from "../../../util/UtilTypes";
 
 export type LinkTree = { [name:string]: string | LinkTree };
@@ -26,6 +27,8 @@ export namespace LinkTree {
 
 export type ImagedLink = { name:string, origin:AttachmentOrigin, src:string, href:string };
 
+export type NamedColors = Record<string,ColorUtil.HexColor>;
+
 /**
  * The SettingsDatabase class provides a way to retrieve site-wide settings
  * from a remote data storage.
@@ -40,5 +43,8 @@ export default abstract class SettingsDatabase {
 
     abstract getSocialMediaLinks():Promise<ImagedLink[]>;
     abstract setSocialMediaLinks(links:ImagedLink[]):Promise<void>;
+
+    abstract getDefaultCategoryColors():Promise<ColorUtil.HexColor[]>;
+    abstract setDefaultCategoryColors(colors:ColorUtil.HexColor[]):Promise<void>;
 
 }

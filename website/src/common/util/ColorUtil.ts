@@ -1,23 +1,31 @@
+import Cache from "../Cache";
+import FirestoreSettingsDatabase from "../firebase/database/settings/FirestoreSettingsDatabase";
 import NumberUtil from "./NumberUtil";
+
+type PaletteName = "RAINBOW";
 
 /**
  * The ColorUtil helper-class provides standard functions to manipulate and process colors.
  */
 abstract class ColorUtil {
 
-    private static DEFAULT_COLOR:ColorUtil.HexColor = "#a8c9f5";
-    private static STRING_COLORS:ColorUtil.HexColor[] = [
-        "#FF0000",
-        "#FF8700",
-        "#FFD300",
-        "#DEFF0A",
-        "#A1FF0A",
-        "#0AFF99",
-        "#0AEFFF",
-        "#147DF5",
-        "#580AFF",
-        "#BE0AFF"
-    ];
+    private static DEFAULT_COLOR:ColorUtil.HexColor = "#BBBBBB"; // gray
+    private static STRING_COLORS = Cache.getAndRefresh("default-category-colors", new FirestoreSettingsDatabase().getDefaultCategoryColors());
+
+    public static readonly PALETTES:Record<PaletteName,ColorUtil.HexColor[]> = {
+        RAINBOW: [
+            "#FF0000",
+            "#FF8700",
+            "#FFD300",
+            "#DEFF0A",
+            "#A1FF0A",
+            "#0AFF99",
+            "#0AEFFF",
+            "#147DF5",
+            "#580AFF",
+            "#BE0AFF"
+        ]
+    };
 
     public static isHex(c:ColorUtil.Color): c is ColorUtil.HexColor {
         return typeof c === "string" && c.startsWith('#');
@@ -109,14 +117,19 @@ abstract class ColorUtil {
         return this.toHex(mixed);
     }
 
-    public static getStringColor(cat: string):ColorUtil.HexColor {
-        if (!cat) return this.DEFAULT_COLOR;
-        cat = cat.toLowerCase();
-    
-        let ind = 0;
-        for (let i = 0; i < cat.length; i++) ind = ((ind << 5) - ind) + cat.charCodeAt(i);
-        
-        return this.STRING_COLORS[Math.abs(ind) % this.STRING_COLORS.length];
+    public static getStringColor(str:string, colors?:ColorUtil.HexColor[]):Promise<ColorUtil.HexColor> {
+        const colorsPromise = colors ? Promise.resolve(colors) : ColorUtil.STRING_COLORS;
+
+        return colorsPromise
+            .then(strColors => {
+                if (strColors.length === 0) return ColorUtil.DEFAULT_COLOR;
+                else {
+                    let hash = 0;
+                    for (let i = 0; i < str.length; i ++) hash ^= str.charCodeAt(i) << (i%8);
+
+                    return strColors[Math.abs(hash) % strColors.length];
+                }
+            });
     }
 
 }
