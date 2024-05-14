@@ -649,10 +649,7 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
         let out = new Date(this.startsAt.value);
         if (!DateUtil.Timestamps.isValid(out)) out = this.event.starts_at;
 
-        if (!this.useTime.value) {
-            out.setHours(0, 0, 0, 0);
-            out.setMinutes(out.getMinutes() - new Date().getTimezoneOffset());
-        }
+        if (!this.useTime.value) out.setHours(0, 0, 0, 0);
         
         return out;
     }
@@ -661,10 +658,7 @@ export class EditableEventNote extends HTMLElement implements HasSections<Editab
         let out = new Date(this.endsAt.value);
         if (!DateUtil.Timestamps.isValid(out)) out = this.event.ends_at;
         
-        if (!this.useTime.value) {
-            out.setHours(23, 59, 59, 999);
-            out.setMinutes(out.getMinutes() - new Date().getTimezoneOffset());
-        }
+        if (!this.useTime.value) out.setHours(23, 59, 59, 999);
         
         return out;
     }
