@@ -69,6 +69,6 @@ else Loading.useDynamicContent(Promise.all([DB.getById(articleId), checkPermissi
     }
     
 }, runOnErrorCode("permission-denied", () => {
-    UserFeedback.relayError("Dat bericht is alleen zichtbaar voor leden.");
+    UserFeedback.relayError("Dat artikel is alleen zichtbaar voor leden.");
     location.replace(URLUtil.createLinkBackURL("/inloggen.html", location.href));
 }));

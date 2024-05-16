@@ -12,12 +12,7 @@ abstract class DataView<T extends Record<string,any>> {
     private readonly dataPromise?:Promise<T[]>;
     /** Promise which resolves when the data is ready to be used. */
     public onDataReady():Promise<void> {
-        return new Promise((resolve,reject) => {
-            if (this.entries === null) this.dataPromise!
-                .then(() => resolve())
-                .catch(reject);
-            else resolve();
-        });
+        return this.entries === null ? this.dataPromise!.then() : Promise.resolve();
     }
 
     protected get modifiedEntries() { return this.filter(e => e.isModified); }
@@ -50,12 +45,7 @@ abstract class DataView<T extends Record<string,any>> {
         // wrap save function
         const oldSave = this.save;
         this.save = function() {
-            const out = this.isDataModified ? oldSave.bind(this)() : new Promise<void>((resolve,reject) => resolve());
-            out.then(() => {
-                this._onSave.forEach(h => h());
-            }); // call onSave handlers
-
-            return out;
+            return (this.isDataModified ? oldSave.bind(this)() : Promise.resolve()).then(() => this._onSave.forEach(h => h()));
         }
     }
 
@@ -198,13 +188,9 @@ export class DatabaseDataView<I extends Info> extends DataView<I> {
 
     }
 
-    save(): Promise<void> {
+    save():Promise<void> {
         const modifiedEntries = this.modifiedEntries;
-        return new Promise((resolve,reject) => {
-            this.db.write(...modifiedEntries.map(e => e.copy()))
-            .then(() => resolve())
-            .catch(reject);
-        });
+        return this.db.write(...modifiedEntries.map(e => e.copy())).then();
     }
     
 }

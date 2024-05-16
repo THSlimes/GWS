@@ -47,15 +47,10 @@ class FirestoreArticleDatabase extends ArticleDatabase {
     }
 
     public getById(id:string) {
-        return new Promise<ArticleInfo|undefined>((resolve, reject) => {
-            const docRef = doc(this.COLLECTION, id);
-            getDoc(docRef)
-            .then(snapshot => {
-                if (snapshot.exists()) resolve(snapshot.data());
-                else resolve(undefined);
-            })
-            .catch(reject);
-        });
+        
+        const docRef = doc(this.COLLECTION, id);
+        return getDoc(docRef)
+            .then(snapshot => snapshot.exists() ? snapshot.data() : undefined);
     }
 
     public getByCategory(category: string, options?: Omit<ArticleQueryFilter, "category">) {
@@ -63,40 +58,25 @@ class FirestoreArticleDatabase extends ArticleDatabase {
     }
 
     public getNext(article: ArticleInfo, options?: Omit<ArticleQueryFilter, "limit"|"before"|"after"|"sortByCreatedAt"> | undefined): Promise<ArticleInfo|undefined> {
-        return new Promise((resolve, reject) => {
-            this.getArticles({ after: article.created_at, limit:1, sortByCreatedAt:"ascending", ...options })
-            .then(articles => resolve(articles.length > 0 ? articles[0] : undefined));
-        });
+        return this.getArticles({ after: article.created_at, limit:1, sortByCreatedAt:"ascending", ...options })
+            .then(articles => articles.length > 0 ? articles[0] : undefined);
     }
 
     public getPrevious(article: ArticleInfo, options?: Omit<ArticleQueryFilter, "limit"|"before"|"after"|"sortByCreatedAt"> | undefined): Promise<ArticleInfo|undefined> {
-        return new Promise((resolve, reject) => {
-            this.getArticles({ before: article.created_at, limit:1, sortByCreatedAt:"descending", ...options })
-            .then(articles => resolve(articles.length > 0 ? articles[0] : undefined));
-        });
+        return this.getArticles({ before: article.created_at, limit:1, sortByCreatedAt:"descending", ...options })
+            .then(articles => articles.length > 0 ? articles[0] : undefined);
     }
 
     public doWrite(...records: ArticleInfo[]): Promise<number> {
-        return new Promise((resolve,reject) => {
-            const batch = writeBatch(FIRESTORE);
-            for (const rec of records) batch.set(doc(FIRESTORE, "articles", rec.id), this.converter.toFirestore(rec));
-
-            batch.commit()
-            .then(() => resolve(records.length))
-            .catch(reject);
-        });
-        
+        const batch = writeBatch(FIRESTORE);
+        for (const rec of records) batch.set(doc(FIRESTORE, "articles", rec.id), this.converter.toFirestore(rec));
+        return batch.commit().then(() => records.length);
     }
 
     public doDelete(...records:ArticleInfo[]): Promise<number> {
-        return new Promise((resolve, reject) => {
-            const batch = writeBatch(FIRESTORE);
-            for (const rec of records) batch.delete(doc(FIRESTORE, "articles", rec.id));
-
-            batch.commit()
-            .then(() => resolve(records.length))
-            .catch(reject);
-        });
+        const batch = writeBatch(FIRESTORE);
+        for (const rec of records) batch.delete(doc(FIRESTORE, "articles", rec.id));
+        return batch.commit().then(() => records.length);
     }
 
     private getArticles(options: ArticleQueryFilter, doCount?: false): Promise<ArticleInfo[]>;
@@ -117,22 +97,16 @@ class FirestoreArticleDatabase extends ArticleDatabase {
         if (options.forHomepage !== undefined) constraints.push(where("show_on_homepage", "==", options.forHomepage));
         if (options.forMembers !== undefined) constraints.push(where("only_for_members", "==", options.forMembers));
 
-        return new Promise(async (resolve, reject) => {
-            const q = query(this.COLLECTION, ...constraints); // create query
-            if (doCount) {
-                getCountFromServer(q)
-                .then(res => resolve(res.data().count))
-                .catch(reject);
-            }
-            else getDocs(q)
+        const q = query(this.COLLECTION, ...constraints); // create query
+        return doCount ?
+            getCountFromServer(q)
+            .then(res => res.data().count) :
+            getDocs(q)
             .then(snapshot => {
                 const out: ArticleInfo[] = [];
                 snapshot.forEach(doc => out.push(doc.data()));
-                resolve(out);
-            })
-            .catch(reject);
-        });
-
+                return out;
+            });
     }
 
 }

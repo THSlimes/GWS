@@ -300,7 +300,7 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
                                 const heading = this.heading.value.trim();
                                 const idPromise = this.saveAsNew ?
                                     EditableSmartArticle.findFreeId(this.article.sourceDB, heading) :
-                                    new Promise<string>(resolve => resolve(this.article.id));
+                                    Promise.resolve(this.article.id);
     
                                 idPromise.then(id => {
                                     const newArticle = new ArticleInfo(
@@ -364,17 +364,9 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
 
         /** Iterates over number articles with the same id to find a free one. */
         function findN(base:string, n=0):Promise<string> {
-            return new Promise((resolve, reject) => {
-                const id = base + (n ? `-${n}` : "");
-                db.getById(id)
-                .then(res => {
-                    if (res) findN(base, n + 1) // id already exists, try next n
-                        .then(resolve)
-                        .catch(reject);
-                    else resolve(id);
-                })
-                .catch(reject);
-            });
+            const id = base + (n ? `-${n}` : "");
+            return db.getById(id)
+            .then(res =>  res ? findN(base, n + 1) : id);
         }
 
         return findN(base);

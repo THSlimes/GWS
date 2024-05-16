@@ -76,9 +76,8 @@ class InfoList<I extends Info> extends HTMLElement implements HasSections<InfoLi
 
     private loadPage(pageIndex:number, scrollToTop=false):Promise<void> {
         Loading.markLoadStart(this);
-
-        return new Promise((resolve, reject) => {
-            this.paginator.getPage(pageIndex)
+        
+        return this.paginator.getPage(pageIndex)
             .then(info => {
                 NodeUtil.empty(this.currentPage); // clear old articles
                 this.currentPage.append(...info.infos.map(i => this.elementConstructor(i))); // add article elements
@@ -93,10 +92,7 @@ class InfoList<I extends Info> extends HTMLElement implements HasSections<InfoLi
                 })
                 .catch(console.error);
             })
-            .catch(reject);
-
-            Loading.markLoadEnd(this);
-        });
+            .then(() => Loading.markLoadEnd(this));
     }
 
 }

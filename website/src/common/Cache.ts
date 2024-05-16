@@ -44,21 +44,22 @@ export default abstract class Cache {
      * @returns Promise that resolves with the cached value associated with the given key
      */
     public static getAndRefresh<K extends Cache.Key>(key:K, refreshPromise:Promise<Cache.KeyTypeMap[K]>, refreshFrequency=6*60*60*1000):Promise<Cache.KeyTypeMap[K]> {
-        return new Promise((resolve, reject) => {
-            const cachedValue = this.get(key, true);
-            if (cachedValue === null) refreshPromise
-                .then(realValue => { // not in cache, use Promise
+        const cachedValue = this.get(key, true);
+        if (cachedValue === null) { // no cached value, get with promise
+            return refreshPromise
+                .then(realValue => {
                     this.set(key, realValue, Date.now() + refreshFrequency);
-                    resolve(realValue);
-                })
-                .catch(reject);
-            else { // has cached value, use it
-                resolve(cachedValue);
-                if (!this.has(key)) refreshPromise // value invalidated after getting, get new value
-                    .then(newValue => this.set(key, newValue, Date.now() + refreshFrequency))
-                    .catch(console.error);
+                    return realValue;
+                });
+        }
+        else {
+            if (!this.has(key)) {
+                refreshPromise // value invalidated after getting, get new value
+                .then(newValue => this.set(key, newValue, Date.now() + refreshFrequency))
+                .catch(console.error);
             }
-        });
+            return Promise.resolve(cachedValue);
+        }
     }
 
     /**

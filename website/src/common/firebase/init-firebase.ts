@@ -41,11 +41,8 @@ FIREBASE_AUTH.onAuthStateChanged(user => {
 });
 
 export function onAuth():Promise<User|null> {
-    return new Promise((resolve,reject) => {
-        FIREBASE_AUTH.authStateReady()
-        .then(() => resolve(FIREBASE_AUTH.currentUser))
-        .catch(reject);
-    });
+    return FIREBASE_AUTH.authStateReady()
+        .then(() => FIREBASE_AUTH.currentUser);
 }
 
 /**

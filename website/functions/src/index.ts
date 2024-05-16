@@ -6,31 +6,21 @@ const firestore = admin.firestore();
 const auth = admin.auth();
 
 export const revokeNonMemberPermissions = scheduler.onSchedule("every day 00:00", () => {
-    return new Promise((resolve, reject) => {
-        logger.log("Removing non-member permissions...");
-
-        firestore.collection("users") // get non-member users with permissions
+    logger.log("Removing non-member permissions...");
+    return firestore.collection("users") // get non-member users with permissions
         .where("member_until", "<", admin.firestore.Timestamp.now())
         .get()
         .then(res => {
             const updatePromises:Promise<admin.firestore.WriteResult>[] = [];
-            const userIDs:string[] = [];
             res.forEach(doc => {
                 if (doc.data().permissions.length !== 0) {
                     updatePromises.push(doc.ref.update({ permissions: [] }));
-                    userIDs.push(doc.id);
                 }
             });
 
-            Promise.all(updatePromises)
-            .then(() => {
-                logger.log("Removed permissions from non-members:", userIDs);
-                resolve();
-            })
-            .catch(reject);
+            return Promise.all(updatePromises)
         })
-        .catch(reject);
-    });
+        .then(() => logger.log("Removed permissions from non-members"));
 });
 
 /** Number of days someone has to not be a member for their data to be deleted. */
@@ -40,9 +30,7 @@ export const deleteOldMembers = scheduler.onSchedule("1 of month 00:00", () => {
     cutoffDate.setDate(cutoffDate.getDate() - DAYS_BEFORE_DELETION);
 
     logger.log(`Deleting old users (from before ${cutoffDate.toString()})...`);
-
-    return new Promise((resolve, reject) => {
-        firestore.collection("users") // get long-time non-members
+    return firestore.collection("users") // get long-time non-members
         .where("member_until", "<", admin.firestore.Timestamp.fromDate(cutoffDate))
         .get()
         .then(res => {
@@ -57,15 +45,9 @@ export const deleteOldMembers = scheduler.onSchedule("1 of month 00:00", () => {
 
             if (userIDs.length === 0) {
                 logger.log("No old users to delete");
-                resolve();
+                return
             }
-            else Promise.all(deletePromises)
-            .then(() => {
-                logger.log("Deleted old users:", userIDs);
-                resolve();
-            })
-            .catch(reject);
+            else return Promise.all(deletePromises)
         })
-        .catch(reject);
-    });
+        .then(() => logger.log("Deleted old users"))
 });

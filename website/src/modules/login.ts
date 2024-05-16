@@ -26,18 +26,12 @@ Loading.useDynamicContent(makePhotoCarousel("Studievereniging Den Geitenwollen S
  * @returns Promise that resolves with the logged in user
  */
 function login(email:string, password:string, stayLoggedIn:boolean=false) {
-    return new Promise<UserCredential>(async (resolve, reject) => {
-        FIREBASE_AUTH.setPersistence(browserLocalPersistence) // set login persistance
-        .then(() => { // login
-            signInWithEmailAndPassword(FIREBASE_AUTH, email, password)
-            .then(user => {
-                Cache.set("do-login-expiry", !stayLoggedIn);
-                resolve(user);
-            })
-            .catch(reject);
-        })
-        .catch(reject);
-    });
+    return FIREBASE_AUTH.setPersistence(browserLocalPersistence) // set login persistance
+        .then(() =>  signInWithEmailAndPassword(FIREBASE_AUTH, email, password)) // login
+        .then(user => { // logged in
+            Cache.set("do-login-expiry", !stayLoggedIn);
+            return user;
+        });
 }
 
 // add login form functionality

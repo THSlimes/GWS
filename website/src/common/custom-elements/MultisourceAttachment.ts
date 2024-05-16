@@ -70,9 +70,10 @@ export default class MultisourceAttachment extends HTMLElement implements HasSec
                 MultisourceAttachment.getInfoFromFirebase("beveiligd", this.src) :
                 MultisourceAttachment.getInfoFromFirebase("openbaar", this.src);
 
-        return new Promise((resolve, reject) => {
-            Loading.markLoadStart(this);
-            infoPromise.then(info => {
+        Loading.markLoadStart(this);
+
+        return infoPromise
+            .then(info => {
                 this.classList.remove("error");
 
                 this.filetypeIcon.textContent = MultisourceAttachment.FILE_TYPE_ICONS[info.fileType];
@@ -97,7 +98,6 @@ export default class MultisourceAttachment extends HTMLElement implements HasSec
                 this.downloadButton.removeAttribute("download");
                 Loading.markLoadEnd(this);
             });
-        });
         
     }
 
@@ -159,41 +159,33 @@ export default class MultisourceAttachment extends HTMLElement implements HasSec
     }
 
     public static getInfoFromFirebase(base:"openbaar"|"beveiligd", ...segments:string[]):Promise<FileInfo> {
-        return new Promise((resolve, reject) => {
-            if (base === "beveiligd" && !this.CAN_DOWNLOAD_PROTECTED_ATTACHMENTS) {
-                reject(new Error("Geen toegang tot bestand", { cause: "missing permissions" }));
-            }
-            else {
-                const fullPath = [base, ...segments].join('/');
-                const fileRef = ref(STORAGE, fullPath);
+        if (base === "beveiligd" && !this.CAN_DOWNLOAD_PROTECTED_ATTACHMENTS) {
+            return Promise.reject(new Error("Geen toegang tot bestand", { cause: "missing permissions" }));
+        }
+        else {
+            const fullPath = [base, ...segments].join('/');
+            const fileRef = ref(STORAGE, fullPath);
 
-                Promise.all([getMetadata(fileRef), getDownloadURL(fileRef)])
-                .then(([metadata, downloadUrl]) => {
-                    resolve({
-                        href: downloadUrl,
-                        name: metadata.name,
-                        contentType: metadata.contentType ?? "unknown/unknown",
-                        fileType: FileType.fromContentType(metadata.contentType ?? "unknown/unknown"),
-                        size: metadata.size,
-                        lastModified: new Date(metadata.updated)
-                    });
-                })
-                .catch(err => {
-                    if (err instanceof StorageError) switch(err.code) {
-                        case "storage/object-not-found":
-                            reject(new Error("Kan bestand niet vinden", { cause: "not found" }));
-                            break;
-                        case "storage/unauthorized":
-                            reject(new Error("Geen toegang tot bestand", { cause: "missing permissions" }));
-                            break;
-                        default:
-                            reject(new Error("Er ging iets mis", { cause: "unknown" }));
-                            break;
-                    }
-                    else reject(err);
-                });
-            }
-        });
+            return Promise.all([getMetadata(fileRef), getDownloadURL(fileRef)])
+            .then(([metadata, downloadUrl]) => {
+                return {
+                    href: downloadUrl,
+                    name: metadata.name,
+                    contentType: metadata.contentType ?? "unknown/unknown",
+                    fileType: FileType.fromContentType(metadata.contentType ?? "unknown/unknown"),
+                    size: metadata.size,
+                    lastModified: new Date(metadata.updated)
+                };
+            })
+            .catch(err => {
+                if (err instanceof StorageError) switch(err.code) {
+                    case "storage/object-not-found": throw new Error("Kan bestand niet vinden", { cause: "not found" });
+                    case "storage/unauthorized": throw new Error("Geen toegang tot bestand", { cause: "missing permissions" });
+                    default: throw new Error("Er ging iets mis", { cause: "unknown" });
+                }
+                else throw err; // unknown error
+            });
+        }
     }
 
 }

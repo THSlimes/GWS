@@ -78,11 +78,8 @@ export default abstract class URLUtil {
     }
 
     public static getType(url:URL|string):Promise<FileType> {
-        return new Promise((resolve, reject) => {
-            this.getInfo(url)
-            .then(info => resolve(info.fileType))
-            .catch(reject);
-        });
+        return this.getInfo(url)
+            .then(info => info.fileType);
     }
 
     public static getInfo(link:URL|string):Promise<FileInfo> {

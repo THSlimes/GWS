@@ -39,35 +39,27 @@ class FirestoreUserDatabase extends UserDatabase {
     }
     
     getById(id: string): Promise<UserInfo|undefined> {
-        return new Promise<UserInfo|undefined>((resolve, reject) => {
-            const docRef = doc(FirestoreUserDatabase.COLLECTION, id);
-            getDoc(docRef)
-            .then(snapshot => {
-                if (snapshot.exists()) resolve(snapshot.data());
-                else resolve(undefined);
-            })
-            .catch(reject);
-        });
+        const docRef = doc(FirestoreUserDatabase.COLLECTION, id);
+        return getDoc(docRef)
+            .then(snapshot => snapshot.exists() ? snapshot.data() : undefined);
     }
 
     /** @see https://firebase.google.com/docs/firestore/query-data/queries#query_limitations */
     private static MAX_BATCH_SIZE = 30;
     getByIds<S extends string>(...ids: S[]): Promise<{[id in S]?: UserInfo}> {
-        if (ids.length === 1) return new Promise((resolve, reject) => {
-            this.getById(ids[0])
-            .then(userInfo => {
-                const out:{[id in S]?: UserInfo} = {};
-                if (userInfo) out[ids[0]] = userInfo;
-                resolve(out);
-            })
-            .catch(reject);
-        });
+        if (ids.length === 1) {
+            return this.getById(ids[0])
+                .then(userInfo => {
+                    const out:{[id in S]?: UserInfo} = {};
+                    if (userInfo) out[ids[0]] = userInfo;
+                    return out;
+                });
+        }
         else {
             const batches = ArrayUtil.batch(ids, FirestoreUserDatabase.MAX_BATCH_SIZE);
             const queries = batches.map(batch => query(FirestoreUserDatabase.COLLECTION, where(documentId(), "in", batch)));
 
-            return new Promise((resolve, reject) => {
-                Promise.all(queries.map(q => getDocs(q)))
+            return Promise.all(queries.map(q => getDocs(q)))
                 .then(snapshots => {
                     const out:{[id in S]?: UserInfo} = {};
 
@@ -78,33 +70,23 @@ class FirestoreUserDatabase extends UserDatabase {
                         });
                     }
 
-                    resolve(out);
-                })
-                .catch(reject);
-            });
+                    return out;
+                });
         }
     }
 
     public doWrite(...records: UserInfo[]): Promise<number> {
-        return new Promise((resolve,reject) => {
-            const batch = writeBatch(FIRESTORE);
-            for (const rec of records) batch.set(doc(FIRESTORE, "users", rec.id), USER_CONVERTER.toFirestore(rec));
-
-            batch.commit()
-            .then(() => resolve(records.length))
-            .catch(reject);
-        });
+        const batch = writeBatch(FIRESTORE);
+        for (const rec of records) batch.set(doc(FIRESTORE, "users", rec.id), USER_CONVERTER.toFirestore(rec));
+        return batch.commit()
+            .then(() => records.length);
     }
 
     public doDelete(...records:UserInfo[]): Promise<number> {
-        return new Promise((resolve, reject) => {
-            const batch = writeBatch(FIRESTORE);
-            for (const rec of records) batch.delete(doc(FIRESTORE, "users", rec.id));
-
-            batch.commit()
-            .then(() => resolve(records.length))
-            .catch(reject);
-        });
+        const batch = writeBatch(FIRESTORE);
+        for (const rec of records) batch.delete(doc(FIRESTORE, "users", rec.id));
+        return batch.commit()
+            .then(() => records.length);
     }
 
     private static getUsers(options: UserQueryFilter, doCount?: false): Promise<UserInfo[]>;
@@ -123,24 +105,22 @@ class FirestoreUserDatabase extends UserDatabase {
         if (options.joined_after) constraints.push(where("joined_at", ">", Timestamp.fromDate(options.joined_after)));
         if (options.joined_before) constraints.push(where("joined_at", "<", Timestamp.fromDate(options.joined_before)));
 
-        return new Promise(async (resolve, reject) => {
-            const q = query(FirestoreUserDatabase.COLLECTION, ...constraints); // create query
-            if (doCount) getCountFromServer(q) // get count
-                .then(res => resolve(res.data().count))
-                .catch(reject);
-            else getDocs(q)
-                .then(snapshot => { // get documents
-                    const out: UserInfo[] = [];
-                    snapshot.forEach(doc => out.push(doc.data()));
-                    // save permissions into cache
-                    out.forEach(user => Cache.set(`permissions-${user.id}`, user.permissions));
-                    resolve(out);
-                })
-                .catch(err => {
-                    console.log("failed to get user", options, err);
-                    
-                });
-        });
+        const q = query(FirestoreUserDatabase.COLLECTION, ...constraints); // create query
+        return doCount ?
+            getCountFromServer(q) // get count
+            .then(res => res.data().count) :
+            getDocs(q)
+            .then(snapshot => { // get documents
+                const out: UserInfo[] = [];
+                snapshot.forEach(doc => out.push(doc.data()));
+                
+                out.forEach(user => Cache.set(`permissions-${user.id}`, user.permissions)); // save permissions into cache
+                return out;
+            })
+            .catch(err => {
+                console.log("failed to get user", options, err);
+                return err;
+            });
     }
 
 }

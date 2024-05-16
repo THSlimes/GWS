@@ -11,10 +11,9 @@ import ElementFactory from "../common/html-element-factory/ElementFactory";
 const SETTINGS_DB:SettingsDatabase = new FirestoreSettingsDatabase();
 
 function makeSplitView(settingsDB:SettingsDatabase):Promise<HTMLElement> {
-    return new Promise((resolve, reject) => {
-        Cache.getAndRefresh("sponsor-links", settingsDB.getSponsorLinks())
-        .then(sponsorLinks => resolve(
-            ElementFactory.div("split-view")
+    return Cache.getAndRefresh("sponsor-links", settingsDB.getSponsorLinks())
+        .then(sponsorLinks => {
+            return ElementFactory.div("split-view")
                 .children(
                     new Placeholder("split-view-content"),
                     ElementFactory.div("news-letters", "boxed", "flex-rows", "cross-axis-center")
@@ -51,9 +50,7 @@ function makeSplitView(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                         )
                 )
                 .make()
-        ))
-        .catch(reject);
-    });
+        });
 }
 
 Loading.useDynamicContent(makeSplitView(SETTINGS_DB), splitView => {

@@ -126,13 +126,10 @@ export default abstract class Database<I extends Info> {
      * @returns Promise that resolves with the number of edited records
      */
     public write(...records:I[]):Promise<number> {
-        return new Promise((resolve,reject) => {
-            this.doWrite(...records)
-            .then(count => {
-                resolve(count);
-                this.writeHandlers.forEach(h => h(...records));
-            })
-            .catch(reject);
+        return this.doWrite(...records)
+        .then(count => {
+            this.writeHandlers.forEach(h => h(...records));
+            return count;
         });
     }
     
@@ -149,14 +146,11 @@ export default abstract class Database<I extends Info> {
      * @returns Promise that resolves with the number of deleted records
      */
     public delete(...records:I[]):Promise<number> {
-        return new Promise((resolve,reject) => {
-            this.doDelete(...records)
+        return this.doDelete(...records)
             .then(count => {
-                resolve(count);
                 this.deleteHandlers.forEach(h => h(...records));
-            })
-            .catch(reject);
-        });
+                return count;
+            });
     }
 
 }

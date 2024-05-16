@@ -21,22 +21,15 @@ class FirestoreSettingsDatabase extends SettingsDatabase {
         });
 
     override getNavbarLinks(defaultLink='/'): Promise<LinkTree> {
-        return new Promise((resolve, reject) => {
-            getDoc(FirestoreSettingsDatabase.NAVBAR_LINKS_DOC)
+        return getDoc(FirestoreSettingsDatabase.NAVBAR_LINKS_DOC)
             .then(docSnapshot => {
-                if (!docSnapshot.exists()) reject(new FirestoreSettingsDatabase.MissingDocError("navbar-links"));
-                else resolve(docSnapshot.data());
-            })
-            .catch(reject);
-        });
+                if (!docSnapshot.exists()) throw new FirestoreSettingsDatabase.MissingDocError("navbar-links");
+                else return docSnapshot.data();
+            });
     }
     
     override setNavbarLinks(newLinks:LinkTree):Promise<void> {
-        return new Promise((resolve, reject) => {
-            setDoc(FirestoreSettingsDatabase.NAVBAR_LINKS_DOC, newLinks)
-            .then(resolve)
-            .catch(reject);
-        });
+        return setDoc(FirestoreSettingsDatabase.NAVBAR_LINKS_DOC, newLinks);
     }
 
 
@@ -47,21 +40,15 @@ class FirestoreSettingsDatabase extends SettingsDatabase {
     });
 
     override getSponsorLinks(): Promise<ImagedLink[]> {
-        return new Promise((resolve, reject) => {
-            getDoc(this.SPONSOR_LINKS_DOC)
+        return getDoc(this.SPONSOR_LINKS_DOC)
             .then(docSnapshot => {
-                if (!docSnapshot.exists()) reject(new FirestoreSettingsDatabase.MissingDocError("sponsor-links"));
-                else resolve(docSnapshot.data());
-            })
-        });
+                if (!docSnapshot.exists()) throw new FirestoreSettingsDatabase.MissingDocError("sponsor-links");
+                else return docSnapshot.data();
+            });
     }
 
     override setSponsorLinks(links: ImagedLink[]):Promise<void> {
-        return new Promise((resolve, reject) => {
-            setDoc(this.SPONSOR_LINKS_DOC, links)
-            .then(resolve)
-            .catch(reject);
-        });
+        return setDoc(this.SPONSOR_LINKS_DOC, links);
     }
 
 
@@ -93,9 +80,7 @@ class FirestoreSettingsDatabase extends SettingsDatabase {
 
     override setDefaultCategoryColors(colors:ColorUtil.HexColor[]):Promise<void> {
         const out:Record<`${number}`,ColorUtil.HexColor> = {};
-        colors.forEach((val, i) => out[`${i}`] = val);
-        console.log(out);
-        
+        colors.forEach((val, i) => out[`${i}`] = val);        
         return setDoc(this.DEFAULT_CATEGORY_COLORS_DOC, out);
     }
 

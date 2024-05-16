@@ -95,15 +95,9 @@ class FirestoreEventDatebase extends EventDatabase {
     }
 
     getById(id: string): Promise<EventInfo | undefined> {
-        return new Promise<EventInfo|undefined>((resolve, reject) => {
-            const docRef = doc(this.collection, id);
-            getDoc(docRef)
-            .then(snapshot => {
-                if (snapshot.exists()) resolve(snapshot.data());
-                else resolve(undefined);
-            })
-            .catch(reject);
-        });
+        const docRef = doc(this.collection, id);
+        return getDoc(docRef)
+            .then(snapshot => snapshot.exists() ? snapshot.data() : undefined);
     }
     
     getByCategory(category: string, options?: Omit<EventQueryFilter, "category"> | undefined): Promise<EventInfo[]> {
@@ -168,25 +162,17 @@ class FirestoreEventDatebase extends EventDatabase {
     }
 
     public doWrite(...records: EventInfo[]): Promise<number> {
-        return new Promise((resolve,reject) => {
-            const batch = writeBatch(FIRESTORE);
-            for (const rec of records) batch.set(doc(FIRESTORE, "events", rec.id), this.converter.toFirestore(rec));
-
-            batch.commit()
-            .then(() => resolve(records.length))
-            .catch(reject);
-        });
+        const batch = writeBatch(FIRESTORE);
+        for (const rec of records) batch.set(doc(FIRESTORE, "events", rec.id), this.converter.toFirestore(rec));
+        return batch.commit()
+            .then(() => records.length);
     }
 
     public doDelete(...records: EventInfo[]): Promise<number> {
-        return new Promise((resolve, reject) => {
-            const batch = writeBatch(FIRESTORE);
-            for (const rec of records) batch.delete(doc(FIRESTORE, "events", rec.id));
-
-            batch.commit()
-            .then(() => resolve(records.length))
-            .catch(reject);
-        });
+        const batch = writeBatch(FIRESTORE);
+        for (const rec of records) batch.delete(doc(FIRESTORE, "events", rec.id));
+        return batch.commit()
+            .then(() => records.length);
     }
 
     private getEvents(options: EventQueryFilter, doCount?: false): Promise<EventInfo[]>;
@@ -214,24 +200,19 @@ class FirestoreEventDatebase extends EventDatabase {
         }
         else rangeConstraints.push([]);
 
-        return new Promise(async (resolve, reject) => {
-            const queries = rangeConstraints.map(rc => query(this.collection, ...rc, ...baseConstraints));
-
-            if (doCount && queries.length === 1) getCountFromServer(queries[0])
-                .then(res => resolve(res.data().count))
-                .catch(reject);
-            else Promise.all(queries.map(q => getDocs(q)))
+        const queries = rangeConstraints.map(rc => query(this.collection, ...rc, ...baseConstraints));
+        return doCount && queries.length === 1 ?
+            getCountFromServer(queries[0])
+                .then(res => res.data().count) :
+            Promise.all(queries.map(q => getDocs(q)))
                 .then(snapshots => {
                     let out:Record<string, EventInfo> = {};
                     snapshots.forEach(sn => {
                         sn.forEach(doc => out[doc.id] = doc.data());
                     });
 
-                    resolve(doCount ? Object.keys(out).length : Object.values(out));
-                })
-                .catch(reject);
-        });
-
+                    return doCount ? Object.keys(out).length : Object.values(out);
+                });
     }
 
 }

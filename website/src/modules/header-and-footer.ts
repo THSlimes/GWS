@@ -55,8 +55,7 @@ function makeFolderContents(config:LinkTree, nestingLvl=0):(FolderElement|HTMLAn
 function useSidebar() { return Responsive.isSlimmerOrEq(Responsive.Viewport.DESKTOP_SLIM); }
 
 function makeNavbar(settingsDB:SettingsDatabase):Promise<HTMLElement> {
-    return new Promise((resolve, reject) => {
-        Cache.getAndRefresh("navbar-links", settingsDB.getNavbarLinks())
+    return Cache.getAndRefresh("navbar-links", settingsDB.getNavbarLinks())
         .then(navbarLinks => {
             let searchButton:HTMLElement;
             let searchBox:HTMLDivElement;
@@ -173,7 +172,6 @@ function makeNavbar(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                 )
                 .make();
 
-            resolve(out);
         
             function openSidebar() {
                 $(sidebarContainer).stop().fadeIn(200);
@@ -214,19 +212,18 @@ function makeNavbar(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                     });
                 }
             }, true);
-        })
-        .catch(reject);
-    });
+
+            return out;
+        });
 }
 
 // FOOTER + COPYRIGHT NOTICE
 function makeFooter(settingsDB:SettingsDatabase):Promise<HTMLElement> {
-    return new Promise((resolve, reject) => {
-        Loading.markLoadStart(makeFooter);
+    Loading.markLoadStart(makeFooter);
 
-        Cache.getAndRefresh("social-media-links", settingsDB.getSocialMediaLinks())
-        .then(socialMediaLinks => resolve(
-            ElementFactory.footer()
+    return Cache.getAndRefresh("social-media-links", settingsDB.getSocialMediaLinks())
+        .then(socialMediaLinks => {
+            return ElementFactory.footer()
                 .class("page-footer", "flex-rows", "cross-axis-center")
                 .children(
                     ElementFactory.h4("Je vindt ons ook op").id("link-text"),
@@ -247,10 +244,9 @@ function makeFooter(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                         .class("copyright-notice")
                 )
                 .make()
-        ))
-        .catch(reject)
+
+        })
         .finally(() => Loading.markLoadEnd(makeFooter));
-    });
 }
 
 // insert both after page-load

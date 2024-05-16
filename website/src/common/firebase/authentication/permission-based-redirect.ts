@@ -13,42 +13,30 @@ function toArray<P extends Permissions.Permission>(perm:P|P[]):P[] {
 const USER_DB: UserDatabase = new FirestoreUserDatabase();
 
 function hasPermissions<P extends Permissions.Permission>(perm:P[], userId:string, useCache:boolean):Promise<checkPermissions.Results<P>> {
-    
-    const userPermsPromise = new Promise<Permissions.Permission[]>((resolve,reject) => { // get user permissions
-        if (useCache) {
-            const cachedUserPerms = Cache.get(`permissions-${userId}`);
-            if (cachedUserPerms) resolve(cachedUserPerms);
-            else reject(new Error(`useCache is true, but permissions of user ${userId} are not in the cache`));
-        }
-        else USER_DB.getById(userId)
-            .then(userInfo => resolve(userInfo?.permissions ?? []))
-            .catch(reject);
-    });
-
-    return new Promise((resolve, reject) => {
-        userPermsPromise.then(userPerms => {
-            resolve(ObjectUtil.mapToObject(perm, p => userPerms.includes(p)));
-        })
-        .catch(reject);
-    });
+    if (useCache) {
+        const cachedUserPerms = Cache.get(`permissions-${userId}`);
+        return cachedUserPerms === null ?
+            Promise.reject(new Error(`useCache is true, but permissions of user ${userId} are not in the cache`)) :
+            Promise.resolve(ObjectUtil.mapToObject(perm, p => cachedUserPerms.includes(p)));
+    }
+    else return USER_DB.getById(userId)
+        .then(userInfo => {
+            const perms = userInfo?.permissions ?? [];
+            return ObjectUtil.mapToObject(perm, p => perms.includes(p));
+        });
 }
 
 export function checkPermissions<P extends Permissions.Permission>(perms:P|P[], useCache=false):Promise<checkPermissions.Results<P>> {
     const permArr = toArray(perms);
 
-    return new Promise((resolve, reject) => {
-        onAuth()
+    return onAuth()
         .then(user => {
-            if (user) {
-                if (useCache) hasPermissions(permArr, user.uid, true) // try to use cache
-                    .then(resolve) // got from cache
-                    .catch(() => hasPermissions(permArr, user.uid, false).then(resolve).catch(reject)); // not in cache, get from DB
-                else hasPermissions(permArr, user.uid, false).then(resolve).catch(reject); // get from DB
-            }
-            else resolve(ObjectUtil.mapToObject(permArr, p => false));
-        })
-        .catch(reject);
-    });
+            if (user) return useCache ?
+                hasPermissions(permArr, user.uid, true) // try to use cache
+                .catch(() => hasPermissions(permArr, user.uid, false)) : // not in cache, get from DB
+                hasPermissions(permArr, user.uid, false); // get from DB immediately
+            else return ObjectUtil.mapToObject(permArr, p => false);
+        });
 }
 namespace checkPermissions {
     export type Results<P extends Permissions.Permission> = { [key in P]:boolean };

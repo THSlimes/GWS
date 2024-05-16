@@ -222,15 +222,12 @@ class EventCalendar extends HTMLElement {
             return EventCalendar.createDayCell(d, new Date(), EventCalendar.Viewmode.LIST, { markedAttrs: [ EventCalendar.DayCell.Attribute.IS_TODAY, EventCalendar.DayCell.Attribute.IS_IN_WEEKEND ] })
         });
         dayCells.unshift(...extensionCells);
-
-        return new Promise((resolve,reject) => {
-            Promise.all([this.db.getRange(from,to), this.db.count({range: checkCount === "before" ? {to} : {from}})])
+        
+        return Promise.all([this.db.getRange(from,to), this.db.count({range: checkCount === "before" ? {to} : {from}})])
             .then(([events, numLeft]) => {
                 this.insertEventNotes(events, extensionCells, EventCalendar.Viewmode.LIST);
-                resolve([extensionCells, numLeft]);
-            })
-            .catch(reject);
-        });
+                return [extensionCells, numLeft];
+            });
     }
 
     /** Adds day cells and event notes to element */

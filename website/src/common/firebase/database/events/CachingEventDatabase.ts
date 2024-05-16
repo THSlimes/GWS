@@ -24,15 +24,10 @@ export default class CachingEventDatabase extends EventDatabase {
         const optionsJSON = JSON.stringify(options);
         if (invalidateCache) delete this.getCache[optionsJSON];
 
-        return new Promise(async (resolve, reject) => {
-            if (optionsJSON in this.getCache) resolve(this.getCache[optionsJSON]);
-            else this.relay.get(options)
-                .then(res => {
-                    this.addToCaches(...res);
-                    resolve(res);
-                })
-                .catch(reject);
-        });
+        return optionsJSON in this.getCache ?
+            Promise.resolve(this.getCache[optionsJSON]) :
+            this.relay.get(options)
+            .then(res => this.addToCaches(...res));
     }
 
     count(options?:EventQueryFilter): Promise<number> {
@@ -45,24 +40,18 @@ export default class CachingEventDatabase extends EventDatabase {
         
         const fromCopy = from ? DateUtil.Timestamps.copy(from) : DateUtil.FIRST;
         const toCopy = to ? DateUtil.Timestamps.copy(to) : DateUtil.LAST;
-
-        return new Promise((resolve,reject) => {
-            if (this.retrievedRange.from <= fromCopy && toCopy <= this.retrievedRange.to) { // already has entire range
-                resolve(Object.values(this.rangeCache).filter(e => e.satisfies({range:{from:fromCopy, to:toCopy}, ...options })));
-            }
-            else this.relay.getRange(from, to) // have to retrieve some events
-                .then(newEvents => {
-                    // update range
-                    this.retrievedRange.from = DateUtil.Timestamps.earliest(this.retrievedRange.from, fromCopy);
-                    this.retrievedRange.to = DateUtil.Timestamps.latest(this.retrievedRange.to, toCopy);
-
-                    // update caches
-                    this.addToCaches(...newEvents);
-
-                    resolve(newEvents);
-                })
-                .catch(reject);
-        });
+        
+        if (this.retrievedRange.from <= fromCopy && toCopy <= this.retrievedRange.to) { // already has entire range
+            return Promise.resolve(Object.values(this.rangeCache).filter(e => e.satisfies({range:{from:fromCopy, to:toCopy}, ...options })));
+        }
+        else return this.relay.getRange(from, to) // have to retrieve some events
+            .then(newEvents => {
+                // update range
+                this.retrievedRange.from = DateUtil.Timestamps.earliest(this.retrievedRange.from, fromCopy);
+                this.retrievedRange.to = DateUtil.Timestamps.latest(this.retrievedRange.to, toCopy);
+                
+                return this.addToCaches(...newEvents); // update caches
+            });
     }
     public get earliest():EventInfo|null {
         let earliest:EventInfo|null = null;
@@ -87,32 +76,26 @@ export default class CachingEventDatabase extends EventDatabase {
     getById(id: string, invalidateCache=false): Promise<EventInfo | undefined> {
         if (invalidateCache) delete this.idCache[id];
 
-        return new Promise((resolve, reject) => {
-            if (id in this.idCache) resolve(this.idCache[id]);
-            else this.relay.getById(id)
-                .then(event => {
-                    if (event) this.addToCaches(event);
-                    resolve(event);
-                })
-                .catch(reject);
-        });
+        return id in this.idCache ?
+            Promise.resolve(this.idCache[id]) :
+            this.relay.getById(id)
+            .then(event => {
+                if (event) this.addToCaches(event);
+                return event;
+            });
     }
 
     private readonly categoryCache:Record<string, EventInfo[]> = {}
     getByCategory(category: string, options?: Omit<EventQueryFilter, "category"> | undefined, invalidateCache=false): Promise<EventInfo[]> {
         if (invalidateCache) delete this.categoryCache[category];
 
-        return new Promise((resolve, reject) => {
-            if (category in this.categoryCache) {
-                resolve(this.categoryCache[category].filter(e => e.satisfies({category, ...options})));
-            }
-            else this.relay.getByCategory(category)
+        return category in this.categoryCache ?
+            Promise.resolve(this.categoryCache[category].filter(e => e.satisfies({category, ...options}))) :
+            this.relay.getByCategory(category)
                 .then(events => {
                     this.addToCaches(...events);
-                    resolve(events.filter(e => e.satisfies({category, ...options})));
-                })
-                .catch(reject)
-        });
+                    return events.filter(e => e.satisfies({category, ...options}));
+                });
     }
 
     doRegisterFor(event:EventInfo, comment?:string, formResponses?:EventInfo.Components.Form.Response[]):Promise<[string,string]> {
@@ -128,19 +111,17 @@ export default class CachingEventDatabase extends EventDatabase {
     fetchResponsesFor(event:EventInfo):Promise<Record<string, EventInfo.Components.Registerable.Response>> {
         if (!event.hasComponent(EventInfo.Components.Registerable)) throw new Error("Event is not registerable, thus does not have any comments");
 
-        return new Promise((resolve,reject) => {
-            if (event.id in this.responseCache) resolve(this.responseCache[event.id]);
-            else this.relay.getResponsesFor(event)
-                .then(responses => resolve(this.responseCache[event.id] = responses))
-                .catch(reject);
-        });
+        return event.id in this.responseCache ?
+            Promise.resolve(this.responseCache[event.id]) :
+            this.relay.getResponsesFor(event)
+                .then(responses => this.responseCache[event.id] = responses);
     }
 
     public override set onWrite(newHandler:(...newRecords:EventInfo[])=>void) {
         this.relay.onWrite = newHandler;
     }
 
-    private addToCaches(...events: EventInfo[]):void {
+    private addToCaches(...events: EventInfo[]):EventInfo[] {
         this.removeFromCaches(...events); // remove in case some event are already caches
 
         for (const optionsJSON in this.getCache) { // add to getCache
@@ -159,6 +140,8 @@ export default class CachingEventDatabase extends EventDatabase {
         for (const cat in this.categoryCache) { // update categoryCache
             this.categoryCache[cat].push(...events.filter(e => e.category === cat));
         }
+
+        return events;
     }
 
     doWrite(...records:EventInfo[]): Promise<number> {

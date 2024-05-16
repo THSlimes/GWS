@@ -36,39 +36,27 @@ class FirestoreIBSubmissionDatabase extends IBSubmissionDatabase {
     }
 
     override doWrite(...records:IBSubmissionInfo[]): Promise<number> {
-        return new Promise((resolve,reject) => {
-            const batch = writeBatch(FIRESTORE);
-            for (const rec of records) {
-                batch.set(doc(FIRESTORE, "idea-box-submissions", rec.id), FirestoreIBSubmissionDatabase.COLLECTION.converter!.toFirestore(rec));
-            }
+        const batch = writeBatch(FIRESTORE);
+        for (const rec of records) {
+            batch.set(doc(FIRESTORE, "idea-box-submissions", rec.id), FirestoreIBSubmissionDatabase.COLLECTION.converter!.toFirestore(rec));
+        }
 
-            batch.commit()
-            .then(() => resolve(records.length))
-            .catch(reject);
-        });
+        return batch.commit()
+            .then(() => records.length);
     }
 
     override doDelete(...records:IBSubmissionInfo[]): Promise<number> {
-        return new Promise((resolve, reject) => {
-            const batch = writeBatch(FIRESTORE);
-            for (const rec of records) batch.delete(doc(FIRESTORE, "idea-box-submissions", rec.id));
-
-            batch.commit()
-            .then(() => resolve(records.length))
-            .catch(reject);
-        });
+        const batch = writeBatch(FIRESTORE);
+        for (const rec of records) batch.delete(doc(FIRESTORE, "idea-box-submissions", rec.id));
+        
+        return batch.commit()
+            .then(() => records.length);
     }
 
     public override getById(id:string):Promise<IBSubmissionInfo|undefined> {
-        return new Promise<IBSubmissionInfo|undefined>((resolve, reject) => {
-            const docRef = doc(FirestoreIBSubmissionDatabase.COLLECTION, id);
-            getDoc(docRef)
-            .then(snapshot => {
-                if (snapshot.exists()) resolve(snapshot.data());
-                else resolve(undefined);
-            })
-            .catch(reject);
-        });
+        const docRef = doc(FirestoreIBSubmissionDatabase.COLLECTION, id);
+        return getDoc(docRef)
+            .then(snapshot => snapshot.exists() ? snapshot.data() : undefined);
     }
 
     private static getSubmissions(options:IBSubmissionQueryFilter, doCount?: false): Promise<IBSubmissionInfo[]>;
@@ -87,22 +75,16 @@ class FirestoreIBSubmissionDatabase extends IBSubmissionDatabase {
         if (options.after) constraints.push(where("created_at", '>', Timestamp.fromDate(options.after)));
         if (options.isAnonymous !== undefined) constraints.push(where("author", options.isAnonymous ? "==" : "!=", "anonymous"));
 
-        return new Promise(async (resolve, reject) => {
-            const q = query(this.COLLECTION, ...constraints); // create query
-            if (doCount) {
-                getCountFromServer(q)
-                .then(res => resolve(res.data().count))
-                .catch(reject);
-            }
-            else getDocs(q)
+        const q = query(this.COLLECTION, ...constraints); // create query
+        return doCount ?
+            getCountFromServer(q)
+                .then(res => res.data().count) :
+            getDocs(q)
             .then(snapshot => {
                 const out:IBSubmissionInfo[] = [];
                 snapshot.forEach(doc => out.push(doc.data()));
-                resolve(out);
-            })
-            .catch(reject);
-        });
-
+                return out;
+            });
     }
 }
 

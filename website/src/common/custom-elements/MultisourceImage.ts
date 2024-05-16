@@ -45,7 +45,7 @@ export default class MultisourceImage extends HTMLElement implements HasSections
         Loading.markLoadStart(this);
 
         const infoPromise = this.origin === "external" ?
-            new Promise<string>((resolve) => resolve(this.src)) :
+            Promise.resolve(this.src) :
             this.origin === "firebase-storage-protected" ?
                 MultisourceImage.getSrcFromFirebase("beveiligd", this.src) :
                 MultisourceImage.getSrcFromFirebase("openbaar", this.src);
@@ -100,37 +100,29 @@ export default class MultisourceImage extends HTMLElement implements HasSections
     }
 
     private static getSrcFromFirebase(base:"openbaar"|"beveiligd", ...segments:string[]):Promise<string> {
-        return new Promise((resolve, reject) => {
-            if (base === "beveiligd" && !this.CAN_DOWNLOAD_PROTECTED_FILES) {
-                reject(new Error("Geen toegang tot afbeelding", { cause: "missing permissions" }));
-            }
-            else {
-                const fullPath = [base, ...segments].join('/');
-                const fileRef = ref(STORAGE, fullPath);
+        if (base === "beveiligd" && !this.CAN_DOWNLOAD_PROTECTED_FILES) {
+            return Promise.reject(new Error("Geen toegang tot afbeelding", { cause: "missing permissions" }));
+        }
+        else {
+            const fullPath = [base, ...segments].join('/');
+            const fileRef = ref(STORAGE, fullPath);
 
-                Promise.all([getMetadata(fileRef), getDownloadURL(fileRef)])
-                .then(([metadata, downloadUrl]) => {
-                    if (metadata.contentType?.startsWith("image/")) resolve(downloadUrl);
-                    else reject(new Error("Bestand is geen afbeelding", { cause: "non-image file" }));
-                })
-                .catch(err => {
+            return Promise.all([getMetadata(fileRef), getDownloadURL(fileRef)])
+            .then(([metadata, downloadUrl]) => {
+                if (metadata.contentType?.startsWith("image/")) return downloadUrl;
+                else throw new Error("Bestand is geen afbeelding", { cause: "non-image file" });
+            })
+            .catch(err => {
 
-                    if (err instanceof StorageError) switch(err.code) {
-                        case "storage/object-not-found":
-                            reject(new Error("Kan afbeelding niet vinden", { cause: "not found" }));
-                            break;
-                        case "storage/unauthorized":
-                            reject(new Error("Geen toegang tot afbeelding", { cause: "missing permissions" }));
-                            break;
-                        default:
-                            reject(new Error("Er ging iets mis", { cause: "unknown" }));
-                            break;
-                    }
-                    else reject(err);
+                if (err instanceof StorageError) switch(err.code) {
+                    case "storage/object-not-found": throw new Error("Kan afbeelding niet vinden", { cause: "not found" });
+                    case "storage/unauthorized": throw new Error("Geen toegang tot afbeelding", { cause: "missing permissions" });
+                    default: throw new Error("Er ging iets mis", { cause: "unknown" });
+                }
+                else throw err; // unknown error
 
-                });
-            }
-        });
+            });
+        }
     }
 
 }

@@ -29,17 +29,16 @@ abstract class Paginator<I extends Info , QF extends QueryFilter<I>> {
      * Determines the number of infos and pages.
      */
     public getSize():Promise<{numInfos:number, numPages:number}> {
-        return new Promise((resolve, reject) => {
-            if (this.numInfos && this.numPages) resolve({ numInfos: this.numInfos, numPages: this.numPages }); // use retrieved value
-            else this.db.count(this.baseFilter) // get count from DB
-                .then(num => {
-                    resolve({
-                        numInfos: this.numInfos = num,
-                        numPages: this.numPages = Math.ceil(num / this.pageSize)
-                    });
-                })
-                .catch(reject);
-        });
+        if (this.numInfos && this.numPages) {
+            return Promise.resolve({ numInfos: this.numInfos, numPages: this.numPages }); // use stored values
+        }
+        else return this.db.count(this.baseFilter) // get count from DB
+            .then(num => {
+                return {
+                    numInfos: this.numInfos = num,
+                    numPages: this.numPages = Math.ceil(num / this.pageSize)
+                };
+            });
     }
 
     /** Computes some metric which the infos are sorted by. (e.g. creation timestamp) */
@@ -70,43 +69,37 @@ abstract class Paginator<I extends Info , QF extends QueryFilter<I>> {
 
     public getPage(pageIndex:number):Promise<Paginator.PageInfo<I>> {
 
-        return new Promise((resolve, reject) => {
-            if (pageIndex in this.pageCache) resolve(this.pageCache[pageIndex]); // use cached value
-            else if (pageIndex < 0) reject(new RangeError(`page index out of range: ${pageIndex} (minimum index is 0)`)); // index too low
-            else this.getSize()
-                .then(counts => {
-                    if (pageIndex >= counts.numPages) {
-                        reject(new RangeError(`page index out of range: ${pageIndex} (maximum index is ${counts.numPages-1})`)); // index too high
-                    }
-                    else if (pageIndex === 0) { // is first page, get fromDB
-                        this.db.get({...this.getFirstPageFilter(this.sortOrder), ...this.baseFilter, limit: this.pageSize})
-                        .then(articles => resolve(this.addToPageCache(pageIndex, articles)))
-                        .catch(reject);
-                    }
-                    else if (pageIndex === counts.numPages - 1) { // is last page, get from DB
-                        const numArticlesInPage = (counts.numInfos % this.pageSize) || this.pageSize; // size of last page may differ
-                        this.db.get({ ...this.getLastPageFilter(this.sortOrder), ...this.baseFilter, limit: numArticlesInPage })
-                        .then(articles => resolve(this.addToPageCache(pageIndex, articles)))
-                        .catch(reject);
-                    }
-                    else { // neither first nor last page, get from DB
-                        const cachedPageIndices = Object.keys(this.pageCache).map(n => parseInt(n));
-                        const closestCachedPageIndex = NumberUtil.closest(pageIndex, cachedPageIndices);
-                        const supportPageIndex = closestCachedPageIndex < pageIndex ? pageIndex - 1 : pageIndex + 1;
-                        
-                        this.getPage(supportPageIndex)
-                        .then(supportPage => {
-                            const filter:QF = { ...this.getFilterBySupportPage(this.sortOrder, supportPage, pageIndex), ...this.baseFilter, limit: this.pageSize };
-                                                        
-                            this.db.get(filter)
-                            .then(articles => resolve(this.addToPageCache(pageIndex, articles)))
-                            .catch(reject);
-                        })
-                        .catch(reject);
-                    }
-                })
-                .catch(reject);
-        });
+        if (pageIndex in this.pageCache) return Promise.resolve(this.pageCache[pageIndex]); // use cached value
+        else if (pageIndex < 0) return Promise.reject(new RangeError(`page index out of range: ${pageIndex} (minimum index is 0)`)); // index too low
+        else return this.getSize()
+            .then(({ numPages, numInfos }) => {
+                if (pageIndex >= numPages) throw new RangeError(`page index out of range: ${pageIndex} (maximum index is ${numPages-1})`); // index too high
+                else if (pageIndex === 0) { // is first page, get from DB
+                    return this.db.get({...this.getFirstPageFilter(this.sortOrder), ...this.baseFilter, limit: this.pageSize})
+                        .then(articles => this.addToPageCache(pageIndex, articles));
+                }
+                else if (pageIndex === numPages - 1) { // is last page, get from DB
+                    const numArticlesInPage = (numInfos % this.pageSize) || this.pageSize; // size of last page may differ
+                    return this.db.get({ ...this.getLastPageFilter(this.sortOrder), ...this.baseFilter, limit: numArticlesInPage })
+                        .then(articles => this.addToPageCache(pageIndex, articles));
+                }
+                else { // neither first nor last page, get from DB
+                    const cachedPageIndices = Object.keys(this.pageCache).map(n => parseInt(n));
+                    const closestCachedPageIndex = NumberUtil.closest(pageIndex, cachedPageIndices);
+                    const supportPageIndex = closestCachedPageIndex < pageIndex ? pageIndex - 1 : pageIndex + 1;
+
+                    return this.getPage(supportPageIndex)
+                    .then(supportPage => {
+                        const filter:QF = {
+                            ...this.getFilterBySupportPage(this.sortOrder, supportPage, pageIndex),
+                            ...this.baseFilter, limit: this.pageSize
+                        };
+
+                        return this.db.get(filter);
+                    })
+                    .then(articles => this.addToPageCache(pageIndex, articles));
+                }
+            });
     }
 }
 
