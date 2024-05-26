@@ -463,7 +463,7 @@ export namespace EventNote {
                 }
             }
             else if (comp instanceof EventInfo.Components.RegistrationEnd) {
-                if (now > comp.moment) { // is after registration period
+                if (note.event.starts_at > now && now > comp.moment) { // is between event start and registration end
                     if (note.lod >= DetailLevel.FULL) {
                         const regButton = note.getElementsByClassName("registration-button")[0];
                         const regForm = note.getElementsByClassName("registration-form")[0];
