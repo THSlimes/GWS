@@ -82,6 +82,7 @@ class EventCalendar extends HTMLElement {
             new EventNote(event, lod, expanded);
     }
 
+    private static oldDocumentTitle = document.title;
     /** Puts the given event in the fullscreen container */
     public static expandNote(event:EventInfo|EventNote) {
         const fsNote = this.createNote(event, DetailLevel.FULL, true);
@@ -90,6 +91,9 @@ class EventCalendar extends HTMLElement {
         document.body.classList.add("no-scroll");
 
         location.hash = `id=${fsNote.event.id}`;
+
+        this.oldDocumentTitle = document.title;
+        document.title = `${fsNote.event.name} - Den Geitenwollen Soc.`;
     }
 
     /** Closes the note opened in fullscreen */
@@ -97,6 +101,8 @@ class EventCalendar extends HTMLElement {
         URLUtil.setHashProperty("id", null);
         document.body.classList.remove("no-scroll");
         this.FULLSCREEN_EVENT_CONTAINER.toggleAttribute("hidden", true);
+
+        document.title = this.oldDocumentTitle;
     }
 
     private readonly db:CachingEventDatabase;
