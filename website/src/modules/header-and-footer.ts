@@ -55,6 +55,15 @@ function makeFolderContents(config:LinkTree, nestingLvl=0):(FolderElement|HTMLAn
 function useSidebar() { return Responsive.isSlimmerOrEq(Responsive.Viewport.DESKTOP_SLIM); }
 
 function makeNavbar(settingsDB:SettingsDatabase):Promise<HTMLElement> {
+    const now = new Date();
+    const isAnniversary = now.getMonth() === 1 && now.getDate() === 5;
+
+    function numToEmojis(n:number) {
+        const EMOJIS = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', ];
+        n = Math.round(n);
+        return [...n.toString()].map(d => EMOJIS[Number.parseInt(d)]).join("");
+    }
+
     return Cache.getAndRefresh("navbar-links", settingsDB.getNavbarLinks())
         .then(navbarLinks => {
             let searchButton:HTMLElement;
@@ -70,7 +79,12 @@ function makeNavbar(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                             ElementFactory.div()
                                 .class("desc", "flex-rows", "main-axis-center")
                                 .children(
-                                    ElementFactory.a('/').children(ElementFactory.h3("Den Geitenwollen Soc.")),
+                                    ElementFactory.a('/')
+                                    .class("flex-columns", "cross-axis-center", "in-section-gap")
+                                    .children(
+                                        ElementFactory.h3("Den Geitenwollen Soc."),
+                                        isAnniversary && ElementFactory.h3(`${numToEmojis(now.getFullYear() - 1993)}🎉`)
+                                    ),
                                     ElementFactory.p("Studievereniging Sociologie Nijmegen").class("subtitle")
                                 ),
                             ElementFactory.div()
