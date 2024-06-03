@@ -1,11 +1,15 @@
+import { Class } from "./UtilTypes";
+
 export default abstract class NodeUtil {
 
     public static isEmpty(node:Node):boolean {
         return Array.from(node.childNodes).every(childNode => childNode.nodeType === Node.TEXT_NODE && childNode.textContent!.length === 0);
     }
 
-    public static empty<N extends Node>(node:N):N {
-        while (node.firstChild) node.removeChild(node.firstChild);
+    public static empty<N extends Node>(node:N, ChildClass:Class<Node>=Node):N {
+        Array.from(node.childNodes).forEach(child => {
+            if (child instanceof ChildClass) node.removeChild(child);
+        });
         return node;
     }
 

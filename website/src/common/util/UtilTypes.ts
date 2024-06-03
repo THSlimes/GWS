@@ -48,6 +48,11 @@ export type HasSections<S extends string = never> = {
     initElement(): void;
 };
 
+export interface HasValue<T> {
+    get value():T;
+    set value(newVal:T);
+}
+
 export type ElementOf<A extends any[]> = A extends (infer E)[] ? E : never;
 
 export type AttachmentOrigin = "firebase-storage-public" | "firebase-storage-protected" | "external";

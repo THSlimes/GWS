@@ -4,6 +4,7 @@ import SettingsDatabase, { ImagedLink, LinkTree, NamedColors } from "./SettingsD
 import { AttachmentOrigin } from "../../../util/UtilTypes";
 import ObjectUtil from "../../../util/ObjectUtil";
 import ColorUtil from "../../../util/ColorUtil";
+import { EmojiConfig } from "../../../Loading";
 
 class FirestoreSettingsDatabase extends SettingsDatabase {
 
@@ -80,8 +81,23 @@ class FirestoreSettingsDatabase extends SettingsDatabase {
 
     override setDefaultCategoryColors(colors:ColorUtil.HexColor[]):Promise<void> {
         const out:Record<`${number}`,ColorUtil.HexColor> = {};
-        colors.forEach((val, i) => out[`${i}`] = val);        
+        colors.forEach((val, i) => out[`${i}`] = val);
         return setDoc(this.DEFAULT_CATEGORY_COLORS_DOC, out);
+    }
+
+    
+    private LOADING_SCREEN_CONFIG_DOC = doc(FirestoreSettingsDatabase.COLLECTION, "loading-screen-config");
+
+    override getLoadingScreenConfig(): Promise<EmojiConfig> {
+        return getDoc(this.LOADING_SCREEN_CONFIG_DOC)
+            .then(docRef => ObjectUtil.values(docRef.exists() ? docRef.data() as Record<number,EmojiConfig.Entry> : {}).sort());
+        
+    }
+
+    override setLoadingScreenConfig(config: EmojiConfig): Promise<void> {
+        const out:Record<`${number}`,EmojiConfig.Entry> = {};
+        config.forEach((val, i) => out[`${i}`] = val);
+        return setDoc(this.LOADING_SCREEN_CONFIG_DOC, out);
     }
 
 }

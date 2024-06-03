@@ -5,7 +5,7 @@ import NodeUtil from "../util/NodeUtil";
 import ObjectUtil from "../util/ObjectUtil";
 import StringUtil from "../util/StringUtil";
 import URLUtil from "../util/URLUtil";
-import { HasSections } from "../util/UtilTypes";
+import { HasSections, HasValue } from "../util/UtilTypes";
 
 type OrderedLinkTree = [string, string|OrderedLinkTree][];
 namespace OrderedLinkTree {
@@ -43,12 +43,12 @@ namespace OrderedLinkTree {
     }
 }
 
-export default class LinkTreeEditor extends HTMLElement implements HasSections<"contents"|"addButtons"> {
+export default class LinkTreeEditor extends HTMLElement implements HasSections<"contents"|"addButton"> {
 
     protected readonly links:OrderedLinkTree;
     private savedLinks:OrderedLinkTree;
     public get value():LinkTree { return OrderedLinkTree.fromOrdered(this.links); }
-    public get isDataModified() {        
+    public get isDataModified() {
         return !ObjectUtil.deepEquals(this.links, this.savedLinks);
     }
     public save() {
@@ -56,7 +56,7 @@ export default class LinkTreeEditor extends HTMLElement implements HasSections<"
     }
 
     public contents!:HTMLDivElement;
-    public addButtons!:HTMLDivElement;
+    public addButton!:HTMLDivElement;
 
     public constructor(root:OrderedLinkTree) {
         super();
@@ -109,11 +109,9 @@ customElements.define("link-tree-editor", LinkTreeEditor);
 
 
 
-interface LinkTreeEntry<E extends string|LinkTree> extends HasSections<"nameInput"|"upButton"|"downButton"|"removeButton"> {
+interface LinkTreeEntry<E extends string|LinkTree> extends HasSections<"nameInput"|"upButton"|"downButton"|"removeButton">, HasValue<E> {
     get name():string;
     set name(newName:string);
-    get value():E;
-    set value(newVal:E);
 }
 
 class NestedLinkTreeEditor extends LinkTreeEditor implements LinkTreeEntry<LinkTree> {

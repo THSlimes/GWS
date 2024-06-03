@@ -117,4 +117,18 @@ export default abstract class ArrayUtil {
         return out;
     }
 
+    /** Randomly orders the given array. */
+    public static shuffled<T>(arr:T[]):T[] { return arr.toSorted(() => Math.random() - .5); }
+
+    /** Picks an element of the given array at random. */
+    public static pick<T>(arr:T[]):T { return arr[Math.floor(Math.random() * arr.length)]; }
+
+    /** Picks n elements of the given array at random. */
+    public static pickNFrom<T>(n:number, arr:T[]):T[] {
+        const out:T[] = [];
+        for (let i = 0; i < n; i ++) out.push(this.pick(arr));
+        
+        return out;
+    }
+
 }

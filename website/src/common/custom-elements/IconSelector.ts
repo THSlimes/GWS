@@ -1,6 +1,7 @@
 import ElementFactory from "../html-element-factory/ElementFactory";
+import { HasValue } from "../util/UtilTypes";
 
-export default class IconSelector<V extends string> extends HTMLElement {
+export default class IconSelector<V extends string> extends HTMLElement implements HasValue<V> {
 
     private readonly options:[V, string][];
     private readonly optionElements:HTMLElement[];

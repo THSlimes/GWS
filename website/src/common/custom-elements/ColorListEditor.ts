@@ -1,9 +1,9 @@
 import ElementFactory from "../html-element-factory/ElementFactory";
 import ColorUtil from "../util/ColorUtil";
 import NumberUtil from "../util/NumberUtil";
-import { HasSections } from "../util/UtilTypes";
+import { HasSections, HasValue } from "../util/UtilTypes";
 
-class ColorListEditor extends HTMLElement implements HasSections<"addButton"> {
+class ColorListEditor extends HTMLElement implements HasSections<"addButton">, HasValue<ColorUtil.HexColor[]> {
 
     public addButton!:HTMLElement;
 
@@ -16,12 +16,19 @@ class ColorListEditor extends HTMLElement implements HasSections<"addButton"> {
         return out;
     }
 
+    public set value(newVal:ColorUtil.HexColor[]) {
+        this.childNodes.forEach(c => {
+            if (c instanceof ColorListEditor.Entry) c.remove();
+        });
+        this.prepend(...newVal.map(val => new ColorListEditor.Entry(this, val)));
+    }
+
     constructor(value:ColorUtil.HexColor[] = []) {
         super();
 
         this.initElement();
 
-        this.prepend(...value.map(val => new ColorListEditor.Entry(this, val)));
+        this.value = value;
     }
 
     public initElement():void {
@@ -43,7 +50,7 @@ class ColorListEditor extends HTMLElement implements HasSections<"addButton"> {
 customElements.define("color-list-editor", ColorListEditor);
 
 namespace ColorListEditor {
-    export class Entry extends HTMLElement implements HasSections<"colorInput"|"removeButton"> {
+    export class Entry extends HTMLElement implements HasSections<"colorInput"|"removeButton">, HasValue<ColorUtil.HexColor> {
 
         private readonly parentEditor:ColorListEditor;
 

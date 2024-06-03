@@ -1,12 +1,12 @@
 import ElementFactory from "../html-element-factory/ElementFactory";
 import Loading from "../Loading";
 import ElementUtil from "../util/ElementUtil";
-import { HasSections } from "../util/UtilTypes";
+import { HasSections, HasValue } from "../util/UtilTypes";
 
 /**
  * A Switch is a type of HTMLElement that works similar to a check box.
  */
-export default class Switch extends HTMLElement implements HasSections<"indicator"> {
+export default class Switch extends HTMLElement implements HasSections<"indicator">, HasValue<boolean> {
 
     private _value!:boolean;
     /** Whether the switch is currently checked */

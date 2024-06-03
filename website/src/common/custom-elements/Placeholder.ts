@@ -1,3 +1,11 @@
+class DuplicateIdError extends Error {
+
+    constructor(id:string) {
+        super(`placeholder with id "${id}" already exists`);
+    }
+
+}
+
 export default class Placeholder extends HTMLElement {
 
     private static readonly ALL_BY_ID:Record<string,Placeholder> = {};
@@ -47,11 +55,3 @@ export default class Placeholder extends HTMLElement {
 }
 
 customElements.define("place-holder", Placeholder);
-
-class DuplicateIdError extends Error {
-
-    constructor(id:string) {
-        super(`placeholder with id "${id}" already exists`);
-    }
-
-}

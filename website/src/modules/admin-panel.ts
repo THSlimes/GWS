@@ -12,12 +12,13 @@ import Loading from "../common/Loading";
 import { initIdeaBoxPanel } from "../common/admin-panels/idea-box-panel";
 import URLUtil from "../common/util/URLUtil";
 import ObjectUtil from "../common/util/ObjectUtil";
+import { initLoadingScreensPanel } from "../common/admin-panels/loading-screens-panel";
 
 // only permitted users can view page
 redirectIfMissingPermission("/", [Permissions.Permission.VIEW_ADMIN_PANEL, Permissions.Permission.READ_OTHER_USER_INFO], true, true);
 
 /** Union type of the IDs of all panels. */
-type PanelID = "users-panel" | "articles-panel" | "events-panel" | "links-panel" | "idea-box-panel";
+type PanelID = "users-panel" | "articles-panel" | "events-panel" | "links-panel" | "idea-box-panel" | "loading-screen-panel";
 
 const PANEL_CONFIG:Record<PanelID, { icon:string, label:string, default?:true, selectCallback?:VoidFunction }> = {
     "users-panel": {
@@ -44,6 +45,11 @@ const PANEL_CONFIG:Record<PanelID, { icon:string, label:string, default?:true, s
         icon: "emoji_objects",
         label: "Ideeënbox",
         selectCallback: initIdeaBoxPanel
+    },
+    "loading-screen-panel": {
+        icon: "pending",
+        label: "Laadscherm",
+        selectCallback: initLoadingScreensPanel
     }
 };
 const preselectedPanel = URLUtil.getHashProperties()["panel"];

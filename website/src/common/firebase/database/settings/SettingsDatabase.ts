@@ -1,3 +1,4 @@
+import { EmojiConfig } from "../../../Loading";
 import ColorUtil from "../../../util/ColorUtil";
 import { AttachmentOrigin } from "../../../util/UtilTypes";
 
@@ -46,5 +47,8 @@ export default abstract class SettingsDatabase {
 
     abstract getDefaultCategoryColors():Promise<ColorUtil.HexColor[]>;
     abstract setDefaultCategoryColors(colors:ColorUtil.HexColor[]):Promise<void>;
+
+    abstract getLoadingScreenConfig():Promise<EmojiConfig>;
+    abstract setLoadingScreenConfig(config:EmojiConfig):Promise<void>;
 
 }

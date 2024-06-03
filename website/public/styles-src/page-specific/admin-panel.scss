@@ -6,6 +6,7 @@
 @import url("../custom-elements/link-tree-editor.css");
 @import url("../custom-elements/imaged-links-editor.css");
 @import url("../custom-elements/color-list-editor.css");
+@import url("../custom-elements/conditioned-char-sequence-editor.css");
 
 .content {
     display: grid;
@@ -43,7 +44,7 @@
         }
         > .subpanel {
             width: 100%;
-            > .subpanel-heading { width: 100%; }
+            > .subpanel-heading, > p { width: 100%; }
         }
     }
 

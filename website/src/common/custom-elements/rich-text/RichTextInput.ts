@@ -2,7 +2,7 @@ import TextStyling from "./TextStyling";
 import ArrayUtil from "../../util/ArrayUtil";
 import ColorUtil from "../../util/ColorUtil";
 import ElementUtil from "../../util/ElementUtil";
-import { HasSections } from "../../util/UtilTypes";
+import { HasSections, HasValue } from "../../util/UtilTypes";
 import FunctionUtil from "../../util/FunctionUtil";
 import NodeUtil from "../../util/NodeUtil";
 import NumberUtil from "../../util/NumberUtil";
@@ -40,7 +40,7 @@ function insertAt(position:InsertionPosition, ...nodes:Node[]):void {
 /**
  * A RichTextInput is a type of HTMLElement that allows for editing text to an advanced degree.
  */
-class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body"> {
+class RichTextInput extends HTMLElement implements HasSections<"toolbar"|"body">, HasValue<string> {
 
     /** Whether the RichTextInput is a smaller, compact verion. */
     public set isCompact(newVal:boolean) { this.toggleAttribute("compact", newVal); }
