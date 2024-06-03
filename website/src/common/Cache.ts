@@ -1,5 +1,6 @@
 import Permissions from "./firebase/database/Permissions";
 import { ImagedLink, LinkTree } from "./firebase/database/settings/SettingsDatabase";
+import { EmojiConfig } from "./Loading";
 import UserFeedback from "./ui/UserFeedback";
 import ColorUtil from "./util/ColorUtil";
 
@@ -93,6 +94,7 @@ namespace Cache {
         "sponsor-links": ImagedLink[],
         "social-media-links": ImagedLink[],
         "default-category-colors": ColorUtil.HexColor[],
+        "loading-screen-config": EmojiConfig,
         "is-logged-in": true,
         "do-login-expiry": boolean,
         "own-id": string,

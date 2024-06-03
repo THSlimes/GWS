@@ -1,3 +1,4 @@
+import Cache from "../Cache";
 import ConditionedCharSequenceEditor from "../custom-elements/ConditionedCharSequenceEditor";
 import Placeholder from "../custom-elements/Placeholder";
 import FirestoreSettingsDatabase from "../firebase/database/settings/FirestoreSettingsDatabase";
@@ -18,9 +19,11 @@ export function initLoadingScreensPanel() {
             const saveButton = document.getElementById("loading-screens-save-button") as HTMLButtonElement;
             saveButton.addEventListener("click", () => {
                 saveButton.disabled = true;
-                DB.setLoadingScreenConfig(SEQUENCE_EDITOR.value)
+                const newConfig = SEQUENCE_EDITOR.value;
+                DB.setLoadingScreenConfig(newConfig)
                 .then(() => {
                     UserFeedback.success("Wijzigingen opgeslagen! Het kan tot zes uur duren voordat anderen de wijzigingen zien.");
+                    Cache.set("loading-screen-config", newConfig);
                 })
                 .finally(() => saveButton.disabled = false);
             });

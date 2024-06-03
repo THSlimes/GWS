@@ -1,3 +1,5 @@
+import Cache from "./Cache";
+import FirestoreSettingsDatabase from "./firebase/database/settings/FirestoreSettingsDatabase";
 import { Class } from "./util/UtilTypes";
 
 /** @see https://stackoverflow.com/questions/1284314/easter-date-in-javascript */
@@ -41,6 +43,8 @@ export namespace EmojiConfig {
 
 }
 
+const SETTINGS_DB = new FirestoreSettingsDatabase();
+
 /**
  * The Loading helper-class handles functionality of the loading-screen
  */
@@ -48,141 +52,153 @@ export default abstract class Loading {
 
     
     /** Emojis to show if no date from `EMOJI_CONFIG` applies. */
-    private static readonly DEFAULT_SEQUENCE:Record<string,number> = { "🐐🧶🧦": 1  };
+    private static readonly DEFAULT_SEQUENCES:Record<string,number> = { "🐐🧶🧦": 1  };
     
-    /** Config of what emojis to show and when to show them. */
-    public static readonly EMOJI_CONFIG:EmojiConfig = [
-        // "1-1": () => { // new years
-        //     const numbers = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
-        //     const indices = new Date().getFullYear().toString().split("").map(n => Number.parseInt(n));
-        //     return ['🎉', ...indices.map(i => numbers[i]), '🎉'];
-        // },
-        {
-            condition: ["date is", 1, 1],
-            sequences: {
-                "🎆🎇🎆": 1,
-                "🎇🎆🎇": 1
-            }
-        },
-        {
-            condition: ["date is", 2, 5],
-            sequences: {
-                "🥳🎊🥳": 1,
-                "🎈🪅🎈": 1,
-                "🍰🎂🍰": 1,
-                "🎉🎉🎉": 1
-            }
-        },
-        {
-            condition: ["date is", 2, 14],
-            sequences: {
-                "👨❤️👨": 1 ,
-                "👨❤️👩": 1 ,
-                "👩❤️👨": 1 ,
-                "👩❤️👩": 1
-            }
-        },
-        {
-            condition: ["is Easter Sunday"],
-            sequences: {
-                "🐔🥚🐣": 1,
-                "🍫🥚🧺": 1,
-                "🌻🐰🌻": 1
-            }
-        },
-        {
-            condition: ["date is", 4, 1],
-            sequences: {
-                "🤡🤡🤡": 1,
-                "🐐🧶🧦": 99
-            }
-        },
-        {
-            condition: ["date is", 4, 27],
-            sequences: {
-                "🟠🫅🟠": 1,
-                "🟠👑🟠": 1,
-                "🔶🫅🔶": 1,
-                "🔶👑🔶": 1
-            }
-        },
-        {
-            condition: ["date is", 5, 4],
-            sequences: {
-                "🧡🕊️🧡": 1
-            }
-        },
-        {
-            condition: ["date is", 5, 5],
-            sequences: {
-                "🇳🇱🇳🇱🇳🇱": 1,
-                "🎉🇳🇱🎉": 1,
-                "🧡🇳🇱🧡": 1
-            }
-        },
-        // "6-28": pick( // pride day
-        //     ['🏳️‍🌈', '🌈', '🏳️‍🌈'],
-        //     ['❤️', '🧡', '💛', '💚', '💙', '💜'],
-        //     pick(
-        //         ['🩵', '🩷', '🤍', '🩷', '🩵'],
-        //         ['💛', '🤍', '💜', '🖤'],
-        //         ['🖤', '🩶', '🤍', '💜'],
-        //         ['🩷', '💜', '💙'],
-        //         ['🩷', '💛', '🩵'],
-        //         ['🧡', '🤍', '🩷'],
-        //         ['💚', '🤍', '🩷'],
-        //         ['💚', '🤍', '💙']
-        //     ),
-        //     pick(
-        //         [pick(...MALE_EMOJIS), '🧡', pick(...MALE_EMOJIS)],
-        //         [pick(...FEMALE_EMOJIS), '🧡', pick(...FEMALE_EMOJIS)],
-        //     )
-        // ),
-        // "7-1": ['✊🏿', '🇸🇷', '✊🏿'], // Keti Koti
-        {
-            condition: ["date is", 10, 31],
-            sequences: {
-                "🦇🧛🏻🦇": 1,
-                "🧔‍♂️🌑🐺": 1,
-                "🐈‍⬛🧙‍♀️🐦‍⬛": 1,
-                "👽🛸🐄": 1,
-                "💀👻💀": 1,
-                "🎃🕯️🎃": 1,
-                "🕷️🕸️🕷️": 1
-            }
-        },
-        {
-            condition: ["date is", 12, 5],
-            sequences: {
-                "🧔🏼‍♂️🎁👟🥾": 1,
-                "👀👉💨🚢": 1,
-                "👂🍃🌳🐎": 1,
-                "🧑🚲💥🚶‍♂️": 1
-            }
-        },
-        {
-            condition: ["date is", 12, 25],
-                sequences: {
-                "🎁🎄🎁": 1,
-                "❄️☃️❄️": 1,
-                "🎅🎄🤶": 1,
-                "🧦🌟🧦": 1
-            }
-        },
-        {
-            condition: ["date is", 12, 31],
-            sequences: {
-                "🎆🎇🎆": 1,
-                "🎇🎆🎇": 1,
-                "🕛🍾🥂": 1,
-                "🎊📆🎊": 1,
-                "🌉🎆🌉": 1
-            }
+    // /** Config of what emojis to show and when to show them. */
+    // public static readonly EMOJI_CONFIG:EmojiConfig = [
+    //     // "1-1": () => { // new years
+    //     //     const numbers = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
+    //     //     const indices = new Date().getFullYear().toString().split("").map(n => Number.parseInt(n));
+    //     //     return ['🎉', ...indices.map(i => numbers[i]), '🎉'];
+    //     // },
+    //     {
+    //         condition: ["date is", 1, 1],
+    //         sequences: {
+    //             "🎆🎇🎆": 1,
+    //             "🎇🎆🎇": 1
+    //         }
+    //     },
+    //     {
+    //         condition: ["date is", 2, 5],
+    //         sequences: {
+    //             "🥳🎊🥳": 1,
+    //             "🎈🪅🎈": 1,
+    //             "🍰🎂🍰": 1,
+    //             "🎉🎉🎉": 1
+    //         }
+    //     },
+    //     {
+    //         condition: ["date is", 2, 14],
+    //         sequences: {
+    //             "👨❤️👨": 1 ,
+    //             "👨❤️👩": 1 ,
+    //             "👩❤️👨": 1 ,
+    //             "👩❤️👩": 1
+    //         }
+    //     },
+    //     {
+    //         condition: ["is Easter Sunday"],
+    //         sequences: {
+    //             "🐔🥚🐣": 1,
+    //             "🍫🥚🧺": 1,
+    //             "🌻🐰🌻": 1
+    //         }
+    //     },
+    //     {
+    //         condition: ["date is", 4, 1],
+    //         sequences: {
+    //             "🤡🤡🤡": 1,
+    //             "🐐🧶🧦": 99
+    //         }
+    //     },
+    //     {
+    //         condition: ["date is", 4, 27],
+    //         sequences: {
+    //             "🟠🫅🟠": 1,
+    //             "🟠👑🟠": 1,
+    //             "🔶🫅🔶": 1,
+    //             "🔶👑🔶": 1
+    //         }
+    //     },
+    //     {
+    //         condition: ["date is", 5, 4],
+    //         sequences: {
+    //             "🧡🕊️🧡": 1
+    //         }
+    //     },
+    //     {
+    //         condition: ["date is", 5, 5],
+    //         sequences: {
+    //             "🇳🇱🇳🇱🇳🇱": 1,
+    //             "🎉🇳🇱🎉": 1,
+    //             "🧡🇳🇱🧡": 1
+    //         }
+    //     },
+    //     // "6-28": pick( // pride day
+    //     //     ['🏳️‍🌈', '🌈', '🏳️‍🌈'],
+    //     //     ['❤️', '🧡', '💛', '💚', '💙', '💜'],
+    //     //     pick(
+    //     //         ['🩵', '🩷', '🤍', '🩷', '🩵'],
+    //     //         ['💛', '🤍', '💜', '🖤'],
+    //     //         ['🖤', '🩶', '🤍', '💜'],
+    //     //         ['🩷', '💜', '💙'],
+    //     //         ['🩷', '💛', '🩵'],
+    //     //         ['🧡', '🤍', '🩷'],
+    //     //         ['💚', '🤍', '🩷'],
+    //     //         ['💚', '🤍', '💙']
+    //     //     ),
+    //     //     pick(
+    //     //         [pick(...MALE_EMOJIS), '🧡', pick(...MALE_EMOJIS)],
+    //     //         [pick(...FEMALE_EMOJIS), '🧡', pick(...FEMALE_EMOJIS)],
+    //     //     )
+    //     // ),
+    //     // "7-1": ['✊🏿', '🇸🇷', '✊🏿'], // Keti Koti
+    //     {
+    //         condition: ["date is", 10, 31],
+    //         sequences: {
+    //             "🦇🧛🏻🦇": 1,
+    //             "🧔‍♂️🌑🐺": 1,
+    //             "🐈‍⬛🧙‍♀️🐦‍⬛": 1,
+    //             "👽🛸🐄": 1,
+    //             "💀👻💀": 1,
+    //             "🎃🕯️🎃": 1,
+    //             "🕷️🕸️🕷️": 1
+    //         }
+    //     },
+    //     {
+    //         condition: ["date is", 12, 5],
+    //         sequences: {
+    //             "🧔🏼‍♂️🎁👟🥾": 1,
+    //             "👀👉💨🚢": 1,
+    //             "👂🍃🌳🐎": 1,
+    //             "🧑🚲💥🚶‍♂️": 1
+    //         }
+    //     },
+    //     {
+    //         condition: ["date is", 12, 25],
+    //             sequences: {
+    //             "🎁🎄🎁": 1,
+    //             "❄️☃️❄️": 1,
+    //             "🎅🎄🤶": 1,
+    //             "🧦🌟🧦": 1
+    //         }
+    //     },
+    //     {
+    //         condition: ["date is", 12, 31],
+    //         sequences: {
+    //             "🎆🎇🎆": 1,
+    //             "🎇🎆🎇": 1,
+    //             "🕛🍾🥂": 1,
+    //             "🎊📆🎊": 1,
+    //             "🌉🎆🌉": 1
+    //         }
+    //     }
+    // ];
+
+    private static EMOJI_CONFIG = Cache.get("loading-screen-config", true) ?? [];
+    static {
+        if (!Cache.has("loading-screen-config")) {
+            SETTINGS_DB.getLoadingScreenConfig()
+            .then(config => Cache.set("loading-screen-config", config));
         }
-    ];
+    }
 
     private static getSequence(now = new Date):string {
-        const pool = this.EMOJI_CONFIG.find(({ condition }) => EmojiConfig.Condition.evaluate(condition, now))?.sequences ?? this.DEFAULT_SEQUENCE
+        const matches = this.EMOJI_CONFIG.filter(({ condition }) => EmojiConfig.Condition.evaluate(condition, now));
+        const pool = matches.length === 0 ?
+            this.DEFAULT_SEQUENCES :
+            matches.reduce<Record<string,number>>((prev, curr) => { return {...prev, ...curr.sequences }}, {});
+
         const totalWeight = Object.values(pool).reduce((prev, curr) => prev + curr, 0);
         
         let n = Math.random() * totalWeight;
@@ -248,6 +264,7 @@ export default abstract class Loading {
 
         const now = new Date();
         this.showLoadingScreen(this.getSequence(now));
+
     }
 
     private static currentlyLoading:object[] = [];
