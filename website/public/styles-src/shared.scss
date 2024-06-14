@@ -210,6 +210,7 @@ div#split-view {
 
         > .display_archive {
             padding: var(--section-gap-y) var(--in-section-gap);
+            & * { font-family: "Noto Color Emoji", var(--std-font); }
         }
     }
 

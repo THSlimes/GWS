@@ -4,8 +4,11 @@ import Cache from "../common/Cache";
 import Loading from "../common/Loading";
 import MultisourceImage from "../common/custom-elements/MultisourceImage";
 import Placeholder from "../common/custom-elements/Placeholder";
+import { checkPermissions } from "../common/firebase/authentication/permission-based-redirect";
+import Permissions from "../common/firebase/database/Permissions";
 import FirestoreSettingsDatabase from "../common/firebase/database/settings/FirestoreSettingsDatabase";
 import SettingsDatabase from "../common/firebase/database/settings/SettingsDatabase";
+import { onAuth } from "../common/firebase/init-firebase";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
 
 const SETTINGS_DB:SettingsDatabase = new FirestoreSettingsDatabase();
@@ -23,11 +26,28 @@ function makeSplitView(settingsDB:SettingsDatabase):Promise<HTMLElement> {
                         )
                         .onMake(self => {
                             const displayArchive = self.lastElementChild as HTMLDivElement;
-                            displayArchive.classList.add("flex-rows", "in-section-gap");
-                            displayArchive.childNodes.forEach(campaign => {
-                                campaign.firstChild?.remove();
-                                const link = campaign.firstChild as HTMLAnchorElement;
-                                link.addEventListener("click", () => location.href = link.href);
+
+                            Loading.useDynamicContent(checkPermissions(Permissions.Permission.READ_MEMBER_ARTICLES), res => {
+                                if (res.READ_MEMBER_ARTICLES) {
+                                    displayArchive.classList.add("flex-rows", "in-section-gap");
+                                    displayArchive.childNodes.forEach(campaign => {
+                                        campaign.firstChild?.remove();
+                                        const link = campaign.firstChild as HTMLAnchorElement;
+                                        link.addEventListener("click", () => location.href = link.href);
+                                    });
+                                }
+                                else {
+                                    displayArchive.remove();
+                                    self.appendChild(
+                                        ElementFactory.div(undefined, "flex-rows", "center-content", "in-section-gap", "in-section-padding")
+                                        .children(
+                                            ElementFactory.p("Nieuwsbrieven zijn exclusief voor leden").class("no-margin", "text-center"),
+                                            ElementFactory.iconButton("login", () => location.href = "./inloggen.html", "Inloggen")
+                                        )
+                                        .style({ flexGrow: '1' })
+                                        .make()
+                                    );
+                                }
                             });
                         }),
                     ElementFactory.div("sponsors", "boxed", "flex-rows")
