@@ -8,7 +8,6 @@ import { checkPermissions } from "../common/firebase/authentication/permission-b
 import Permissions from "../common/firebase/database/Permissions";
 import FirestoreSettingsDatabase from "../common/firebase/database/settings/FirestoreSettingsDatabase";
 import SettingsDatabase from "../common/firebase/database/settings/SettingsDatabase";
-import { onAuth } from "../common/firebase/init-firebase";
 import ElementFactory from "../common/html-element-factory/ElementFactory";
 
 const SETTINGS_DB:SettingsDatabase = new FirestoreSettingsDatabase();

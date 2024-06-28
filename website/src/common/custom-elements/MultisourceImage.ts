@@ -41,30 +41,49 @@ export default class MultisourceImage extends HTMLElement implements HasSections
         this.image.alt = newAlt;
     }
 
+    private showError(err?:string) {
+        this.classList.add("error");
+        this.image.removeAttribute("src");
+        this.image.toggleAttribute("hidden", true);
+        this.errorMessage.lastChild!.textContent = err ?? "Er ging iets mis.";
+        this.errorMessage.removeAttribute("hidden");
+    }
+
     private refresh() {
         Loading.markLoadStart(this);
 
-        const infoPromise = this.origin === "external" ?
+        const srcPromise = this.origin === "external" ?
             Promise.resolve(this.src) :
             this.origin === "firebase-storage-protected" ?
                 MultisourceImage.getSrcFromFirebase("beveiligd", this.src) :
                 MultisourceImage.getSrcFromFirebase("openbaar", this.src);
         
-        infoPromise.then(url => { // got image url
+        srcPromise.then(url => { // got image url
             this.classList.remove("error");
             Loading.markLoadStart(this.image); // wait for image load
-            this.image.addEventListener("load", () => Loading.markLoadEnd(this.image), { once: true });
-            this.image.src = url;
+
+            this.image.addEventListener("error", () => { // image fails to load
+                this.showError("Kan afbeelding niet vinden");
+                Loading.markLoadEnd(this.image);
+            }, { once: true });
+            this.image.addEventListener("load", () => {
+                
+                if (this.image.classList.toggle("flashing", this.image.naturalWidth > this.sizeWarning || this.image.naturalHeight > this.sizeWarning)) {
+                    this.image.title = "Dit bestand is waarschijnlijk te groot, het wordt geadviseerd op een kleiner formaat te gebruiken!";
+                }
+                else this.image.title = "";
+
+                Loading.markLoadEnd(this.image);
+            }, { once: true });
+
+            this.image.src = url; // start load
             this.image.removeAttribute("hidden");
             this.errorMessage.toggleAttribute("hidden", true);
-            Loading.markLoadEnd(this);
         })
         .catch(err => { // couldn't get image url
-            this.classList.add("error");
-            this.image.removeAttribute("src");
-            this.image.toggleAttribute("hidden", true);
-            this.errorMessage.lastChild!.textContent = err instanceof Error ? err.message : "Er ging iets mis.";
-            this.errorMessage.removeAttribute("hidden");
+            this.showError(err instanceof Error ? err.message : "Er ging iets mis.");
+        })
+        .finally(() => {
             Loading.markLoadEnd(this);
         });
     }
@@ -72,13 +91,16 @@ export default class MultisourceImage extends HTMLElement implements HasSections
     public image!:HTMLImageElement;
     public errorMessage!:HTMLDivElement;
 
-    constructor(origin?:AttachmentOrigin, src?:string) {
+    private readonly sizeWarning:number;
+
+    constructor(origin?:AttachmentOrigin, src?:string, sizeWarning=Infinity) {
         super();
 
         this.initElement();
 
         this._origin = origin ?? ElementUtil.getAttrAs(this, "origin", AttachmentOrigin.checkType) ?? "firebase-storage-public";
         this._src = src ?? this.getAttribute("src") ?? "";
+        this.sizeWarning = sizeWarning;
 
         this.refresh();
     }

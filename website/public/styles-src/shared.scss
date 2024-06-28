@@ -344,6 +344,13 @@ span.bold { font-weight: 700; }
     100% { scale: 1; }
 }
 
+.flashing { animation: flashing 1s linear 0ms infinite; }
+@keyframes flashing {
+    0% { outline: 2px solid red; }
+    49% { outline: 2px solid red; }
+    50% { outline: none; }
+}
+
 /* standard indication of being click-able */
 button, input[type="button"], .button {
     display: flex;

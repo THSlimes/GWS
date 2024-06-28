@@ -32,7 +32,7 @@ class ImagedLinksEditor extends HTMLElement implements HasSections<"addButton"> 
     constructor(links:ImagedLink[]) {
         super();
 
-        this.links = links;
+        this.links = links.toSorted((a,b) => a.name.localeCompare(b.name));
         this.savedLinks = ObjectUtil.deepCopy(this.links);
 
         this.initElement();
@@ -97,7 +97,7 @@ namespace ImagedLinksEditor {
                     .make()
             );
     
-            this.image = this.appendChild(new MultisourceImage(this.link.origin, this.link.src));
+            this.image = this.appendChild(new MultisourceImage(this.link.origin, this.link.src, 500));
             this.image.classList.add("image");
     
             this.originInput = this.appendChild(
