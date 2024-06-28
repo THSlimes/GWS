@@ -32,8 +32,8 @@ FIREBASE_AUTH.onAuthStateChanged(user => {
     }
     else { // logged in
         if (Cache.get("do-login-expiry")) {
-            Cache.set("is-logged-in", true, Date.now() + 60000);
-            setInterval(() => Cache.set("is-logged-in", true, Date.now() + 60000), 30000);
+            Cache.set("is-logged-in", true, Date.now() + 3600000);
+            setInterval(() => Cache.set("is-logged-in", true, Date.now() + 3600000), 30000);
         }
         else Cache.set("is-logged-in", true);
         Cache.set("own-id", user.uid);

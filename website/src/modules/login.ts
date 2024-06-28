@@ -63,7 +63,7 @@ Loading.onDOMContentLoaded({
             .then(userCred => {
                 FIREBASE_AUTH.updateCurrentUser(userCred.user)
                 .then(() => {
-                    Cache.set("is-logged-in", true, elements["stay-logged-in"].checked ? undefined : Date.now() + 60000);
+                    Cache.set("is-logged-in", true, elements["stay-logged-in"].checked ? undefined : Date.now() + 3600000);
                     const returnUrl = new URLSearchParams(window.location.search).get("return-to");
                     if (returnUrl !== null && URLUtil.isLocal(returnUrl)) location.replace(returnUrl);
                     else location.href = '/';

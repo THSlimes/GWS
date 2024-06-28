@@ -23,7 +23,7 @@ export function initLoadingScreensPanel() {
                 DB.setLoadingScreenConfig(newConfig)
                 .then(() => {
                     UserFeedback.success("Wijzigingen opgeslagen! Het kan tot zes uur duren voordat anderen de wijzigingen zien.");
-                    Cache.set("loading-screen-config", newConfig);
+                    Cache.set("loading-screen-config-fixed", newConfig, Date.now() + 3600000);
                 })
                 .finally(() => saveButton.disabled = false);
             });

@@ -94,7 +94,7 @@ namespace Cache {
         "sponsor-links": ImagedLink[],
         "social-media-links": ImagedLink[],
         "default-category-colors": ColorUtil.HexColor[],
-        "loading-screen-config": EmojiConfig,
+        "loading-screen-config-fixed": EmojiConfig,
         "is-logged-in": true,
         "do-login-expiry": boolean,
         "own-id": string,
