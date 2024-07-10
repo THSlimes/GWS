@@ -68,7 +68,8 @@ export default class MultisourceImage extends HTMLElement implements HasSections
             }, { once: true });
             this.image.addEventListener("load", () => {
                 
-                if (this.image.classList.toggle("flashing", this.image.naturalWidth > this.sizeWarning || this.image.naturalHeight > this.sizeWarning)) {
+                const imageTooLarge = !(new URL(url).pathname.endsWith(".svg")) && (this.image.naturalWidth > this.sizeWarning || this.image.naturalHeight > this.sizeWarning);
+                if (this.image.classList.toggle("flashing", imageTooLarge)) {
                     this.image.title = "Dit bestand is waarschijnlijk te groot, het wordt geadviseerd op een kleiner formaat te gebruiken!";
                 }
                 else this.image.title = "";
