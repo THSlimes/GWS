@@ -267,7 +267,7 @@ export namespace EventNote {
                                     "in-section-gap"
                                 )
                                 .children(
-                                    ElementFactory.heading(note.expanded ? 3 : 4, "Ingeschreven geitjes")
+                                    ElementFactory.heading(note.expanded ? 3 : 4, user === null ? `${ObjectUtil.sizeOf(comp.registrations)} ingeschreven geitjes` : "Ingeschreven geitjes")
                                     .children(Number.isFinite(spacesLeft) && ElementFactory.span(` (${spacesLeft} plekken over)`).class("subtitle"))
                                     .class("no-margin"),
                                     canReadResponses && ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "in-section-gap")
@@ -322,7 +322,7 @@ export namespace EventNote {
                                         }, "Opmerkingen verbergen").attr("selected").attr("can-unselect")
                                     )
                                 ),
-                                ElementFactory.div(undefined, "registrations-list", "no-margin")
+                                (user !== null) && ElementFactory.div(undefined, "registrations-list", "no-margin")
                                 .children(
                                     ...sortedIDs.map(id => {
                                         const name = comp.registrations[id];

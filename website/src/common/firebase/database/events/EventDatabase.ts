@@ -1,9 +1,11 @@
+import ArrayUtil from "../../../util/ArrayUtil";
 import ColorUtil from "../../../util/ColorUtil";
 import DateUtil from "../../../util/DateUtil";
 import ObjectUtil from "../../../util/ObjectUtil";
 import StringUtil from "../../../util/StringUtil";
 import { Class, Opt } from "../../../util/UtilTypes";
 import { checkPermissions } from "../../authentication/permission-based-redirect";
+import { onAuth } from "../../init-firebase";
 import Database, { Info, QueryFilter } from "../Database";
 import Permissions from "../Permissions";
 
@@ -180,6 +182,10 @@ export namespace EventInfo {
             constructor(registrations:Record<string,string>, capacity?:number) {
                 super();
                 this._registrations = { ...registrations };
+                onAuth().then(user => this._registrations = user === null ?
+                    ObjectUtil.mapToObject(Object.keys(this._registrations), () => Registerable.generateName()) :
+                    this._registrations
+                );
                 this.capacity = capacity;
             }
 
@@ -218,6 +224,13 @@ export namespace EventInfo {
             protected override validateValues(ev: EventInfo):boolean { // extra check
                 return this._capacity === undefined || ObjectUtil.sizeOf(this._registrations) < this._capacity;
             }
+
+            private static readonly FIRST_NAMES = ["Jesse", "Bas", "Thijs", "Nick", "Femke", "Julia", "Noa", "Roos", "Britt", "Niels", "Lucas", "Ruben", "Jayden", "Daan", "Anna", "Thomas"];
+            private static readonly LAST_NAMES = ["Beek", "Linden", "Dijk", "Jansen", "Janssen", "de Jong", "Klein", "Hendriks", "Wal", "Graaf", "Meer", "Visser", "Smit", "Vermeer", "de Vries"];
+            private static generateName() {
+                return `${ArrayUtil.pick(this.FIRST_NAMES)} ${ArrayUtil.pick(this.LAST_NAMES)}`;
+            }
+
         }
 
         export namespace Registerable {
