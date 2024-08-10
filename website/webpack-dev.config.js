@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const childProcess = require("node:child_process");
 
 const ENTRIES_FOLDER_PATH = './src/modules';
 const ENTRIES = fs.readdirSync(ENTRIES_FOLDER_PATH);
@@ -14,7 +15,7 @@ console.log("DEVELOPMENT MODE:");
 console.log("entry");
 console.log(ENTRY);
 
-module.exports = {
+const out = {
     entry: ENTRY,
     module: {
         rules: [
@@ -24,7 +25,7 @@ module.exports = {
     output: {
         filename: (pathData, assetInfo) => {
             const fullPath = pathData.chunk.name;
-            return `${fullPath.substring(fullPath.lastIndexOf('/')+1)}.js`;
+            return `${fullPath.substring(fullPath.lastIndexOf('/') + 1)}.js`;
         },
         path: path.resolve(__dirname, 'public/scripts'),
         publicPath: '/public/'
@@ -41,3 +42,13 @@ module.exports = {
         }
     }
 }
+module.exports = out;
+
+// setting up live sass compiler
+const stylesSrcPath = path.join(__dirname, out.output.publicPath, "styles-src");
+const stylesOutPath = path.join(__dirname, out.output.publicPath, "styles");
+
+const sassProcess = childProcess.exec(`sass "${stylesSrcPath}":"${stylesOutPath}" --style compressed --watch`);
+sassProcess.on("message", (code, signal) => {
+    console.log(code);
+});

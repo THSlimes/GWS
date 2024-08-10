@@ -16,7 +16,7 @@ import Loading from "../Loading";
  * A SmartArticle is a custom type of article. It provides a consistent way
  * to display textual articles.
  */
-export default class SmartArticle extends HTMLElement implements HasSections<"heading"|"body"|"readMore"|"postDate"|"quickActions"> {
+export default class SmartArticle extends HTMLElement implements HasSections<"heading" | "body" | "readMore" | "postDate" | "quickActions"> {
 
     protected static CAN_DELETE = false;
     protected static CAN_UPDATE = false;
@@ -28,33 +28,34 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
         }, true, true);
     }
 
-    private static LOD_CUTOFFS:Record<DetailLevel, number> = {
+    private static LOD_CUTOFFS: Record<DetailLevel, number> = {
         [DetailLevel.FULL]: Infinity,
         [DetailLevel.HIGH]: 100,
         [DetailLevel.MEDIUM]: 50,
         [DetailLevel.LOW]: 30
     };
-    private static LOD_HIDDEN_ELEMENT_TYPES:Record<DetailLevel, string[]> = {
+    private static LOD_HIDDEN_ELEMENT_TYPES: Record<DetailLevel, string[]> = {
         [DetailLevel.FULL]: [],
         [DetailLevel.HIGH]: [],
         [DetailLevel.MEDIUM]: ["IMG", "MULTISOURCE-IMAGE", "MULTISOURCE-ATTACHMENT", "UL", "OL"],
         [DetailLevel.LOW]: ["H1", "H2", "H3", "H4", "H5", "H6", "IMG", "MULTISOURCE-IMAGE", "MULTISOURCE-ATTACHMENT", "UL", "OL"]
     };
 
-    protected readonly article:ArticleInfo;
-    public readonly lod:DetailLevel;
+    protected readonly article: ArticleInfo;
+    public readonly lod: DetailLevel;
 
-    public heading!:HTMLElement;
-    public body!:HTMLElement;
-    public readMore!:HTMLElement;
-    public postDate!:HTMLElement;
+    public heading!: HTMLElement;
+    public body!: HTMLElement;
+    public readMore!: HTMLElement;
+    public postDate!: HTMLElement;
 
-    public quickActions!:HTMLDivElement;
+    public quickActions!: HTMLDivElement;
 
-    constructor(articleInfo:ArticleInfo, lod=DetailLevel.MEDIUM) {
+    constructor(articleInfo: ArticleInfo, lod = DetailLevel.MEDIUM) {
         super();
 
         this.article = articleInfo;
+        console.log(articleInfo.body);
         this.lod = lod;
 
         this.initElement();
@@ -63,7 +64,7 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
     initElement(): void {
         this.style.display = "flex";
         this.style.position = "relative";
-        this.setAttribute("lod", DetailLevel.toString(this.lod));        
+        this.setAttribute("lod", DetailLevel.toString(this.lod));
 
         // heading element
         this.heading = ElementFactory.a(this.lod !== DetailLevel.FULL ? SmartArticle.getLinkTo(this.article) : undefined)
@@ -88,7 +89,7 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
             .class("post-date", "no-margin")
             .make();
 
-        
+
         // link to full article
         this.readMore = this.lod === DetailLevel.LOW ?
             this.readMore = ElementFactory.a(SmartArticle.getLinkTo(this.article), "article_shortcut")
@@ -99,7 +100,7 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
                 .class("read-more")
                 .make()
 
-        
+
         // quick-actions
         this.quickActions = ElementFactory.div(undefined, "quick-actions", "flex-columns", "cross-axis-center")
             .children(
@@ -122,12 +123,12 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
                     .on("click", (ev, self) => {
                         if (self.hasAttribute("awaiting-confirmation")) {
                             this.article.sourceDB.delete(this.article)
-                            .then(() => {
-                                UserFeedback.success("Bericht succesvol verwijderd.");
-                                if (location.pathname.startsWith("/artikel")) location.href = '/'; // go to homepage
-                                else location.reload();
-                            })
-                            .catch(err => UserFeedback.error(getErrorMessage(err)));
+                                .then(() => {
+                                    UserFeedback.success("Bericht succesvol verwijderd.");
+                                    if (location.pathname.startsWith("/artikel")) location.href = '/'; // go to homepage
+                                    else location.reload();
+                                })
+                                .catch(err => UserFeedback.error(getErrorMessage(err)));
                         }
                         else {
                             self.textContent = "delete_forever";
@@ -192,7 +193,7 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
         }
     }
 
-    public static getLinkTo(article:ArticleInfo|string, editMode=false):string {
+    public static getLinkTo(article: ArticleInfo | string, editMode = false): string {
         if (article instanceof ArticleInfo) article = article.id;
 
         let out = `${location.origin}/artikel.html?id=${article}`;
@@ -203,20 +204,20 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
 
 }
 
-Loading.onDOMContentLoaded().then(() => customElements.define("smart-article", SmartArticle, {extends: "article"}));
+Loading.onDOMContentLoaded().then(() => customElements.define("smart-article", SmartArticle, { extends: "article" }));
 
 
 
-export class EditableSmartArticle extends SmartArticle implements HasSections<"category"|"showOnHomepage"|"onlyForMembers"|"saveButton"> {
-    
-    public override heading!:HTMLInputElement;
-    public override body!:RichTextInput;
-    public category!:HTMLInputElement;
-    public showOnHomepage!:Switch;
-    public onlyForMembers!:Switch;
-    public saveButton!:HTMLParagraphElement;
+export class EditableSmartArticle extends SmartArticle implements HasSections<"category" | "showOnHomepage" | "onlyForMembers" | "saveButton"> {
 
-    protected get data():EditableSmartArticle.PartialArticleInfo {
+    public override heading!: HTMLInputElement;
+    public override body!: RichTextInput;
+    public category!: HTMLInputElement;
+    public showOnHomepage!: Switch;
+    public onlyForMembers!: Switch;
+    public saveButton!: HTMLParagraphElement;
+
+    protected get data(): EditableSmartArticle.PartialArticleInfo {
         return {
             heading: this.heading.value.trim(),
             body: this.body.value,
@@ -227,10 +228,10 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
         };
     }
 
-    private readonly saveAsNew:boolean;
-    public onSave:(newArticle:ArticleInfo)=>void = () => {};
+    private readonly saveAsNew: boolean;
+    public onSave: (newArticle: ArticleInfo) => void = () => { };
 
-    constructor(articleInfo:ArticleInfo, lod:DetailLevel, saveAsNew=false) {
+    constructor(articleInfo: ArticleInfo, lod: DetailLevel, saveAsNew = false) {
         super(articleInfo, lod);
 
         if (this.saveAsNew = saveAsNew) {
@@ -249,7 +250,7 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
         this.style.display = "flex";
         this.classList.add("flex-rows", "min-section-gap");
         this.setAttribute("lod", DetailLevel.toString(this.lod));
-        
+
         this.heading = this.appendChild(
             ElementFactory.input.text(this.article.heading)
                 .placeholder("Koptitel")
@@ -269,7 +270,7 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
                             ElementFactory.label("Zichtbaar op homepagina?"),
                             this.showOnHomepage = new Switch(this.article.show_on_homepage)
                         ),
-                        
+
                     ElementFactory.div(undefined, "only-for-members", "flex-columns", "main-axis-space-between", "cross-axis-center", "in-section-gap")
                         .children(
                             ElementFactory.label("Alleen te lezen door leden?"),
@@ -278,7 +279,7 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
                 )
                 .make()
         );
-        
+
         this.body = this.appendChild(
             ElementFactory.input.richText(this.article.body)
                 .placeholder("Tekst")
@@ -301,7 +302,7 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
                                 const idPromise = this.saveAsNew ?
                                     EditableSmartArticle.findFreeId(this.article.sourceDB, heading) :
                                     Promise.resolve(this.article.id);
-    
+
                                 idPromise.then(id => {
                                     const newArticle = new ArticleInfo(
                                         this.article.sourceDB,
@@ -313,17 +314,17 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
                                         data.show_on_homepage,
                                         data.only_for_members
                                     );
-    
+
                                     this.article.sourceDB.write(newArticle)
-                                    .then(() => {
-                                        UserFeedback.success("Wijzigingen opgeslagen!");
-                                        this.replaceWith(new SmartArticle(newArticle, this.lod));
-                                        this.onSave(newArticle);
-                                    })
-                                    .catch(err => UserFeedback.error(getErrorMessage(err)));
-    
+                                        .then(() => {
+                                            UserFeedback.success("Wijzigingen opgeslagen!");
+                                            this.replaceWith(new SmartArticle(newArticle, this.lod));
+                                            this.onSave(newArticle);
+                                        })
+                                        .catch(err => UserFeedback.error(getErrorMessage(err)));
+
                                 })
-                                .catch(err => UserFeedback.error(getErrorMessage(err)));
+                                    .catch(err => UserFeedback.error(getErrorMessage(err)));
                             }
                         })
                         .make(),
@@ -345,11 +346,11 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
     }
 
     private static readonly ALPHANUMERIC_REGEX = /[a-zA-Z0-9]/;
-    private static findFreeId(db:ArticleDatabase, heading:string):Promise<string> {
+    private static findFreeId(db: ArticleDatabase, heading: string): Promise<string> {
 
-        const words:string[] = [];
+        const words: string[] = [];
         let word = "";
-        for (let i = 0; i < heading.length; i ++) {
+        for (let i = 0; i < heading.length; i++) {
             const c = heading[i];
 
             if (this.ALPHANUMERIC_REGEX.test(c)) word += c;
@@ -363,10 +364,10 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
         const base = words.join('-');
 
         /** Iterates over number articles with the same id to find a free one. */
-        function findN(base:string, n=0):Promise<string> {
+        function findN(base: string, n = 0): Promise<string> {
             const id = base + (n ? `-${n}` : "");
             return db.getById(id)
-            .then(res =>  res ? findN(base, n + 1) : id);
+                .then(res => res ? findN(base, n + 1) : id);
         }
 
         return findN(base);
@@ -376,16 +377,16 @@ export class EditableSmartArticle extends SmartArticle implements HasSections<"c
 
 export namespace EditableSmartArticle {
     export interface PartialArticleInfo {
-        heading:string,
-        body:string,
-        created_at:Date,
-        category:string,
-        show_on_homepage:boolean,
-        only_for_members:boolean
+        heading: string,
+        body: string,
+        created_at: Date,
+        category: string,
+        show_on_homepage: boolean,
+        only_for_members: boolean
     }
 
     export namespace PartialArticleInfo {
-        export function equals(partial:PartialArticleInfo, full:ArticleInfo):boolean {
+        export function equals(partial: PartialArticleInfo, full: ArticleInfo): boolean {
             return partial.heading === full.heading
                 && partial.body === full.body
                 && partial.created_at.getTime() === full.created_at.getTime()

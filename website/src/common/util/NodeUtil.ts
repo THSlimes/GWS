@@ -62,6 +62,18 @@ export default abstract class NodeUtil {
         }
     }
 
+    public static getAncestors(node:Node):ParentNode[] {
+        const out:ParentNode[] = [];
+
+        let ancestor = node.parentNode;
+        while (ancestor) {
+            out.push(ancestor);
+            ancestor = ancestor.parentNode;
+        }
+
+        return out;
+    }
+
     /**
      * Gives the index of a child of a node.
      * @param parent parent node

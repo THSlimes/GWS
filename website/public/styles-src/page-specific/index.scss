@@ -53,8 +53,10 @@ element-carousel#photo-carousel { border-bottom: var(--std-border); }
 /* PHONE-VIEWPORT OVERRIDE */
 
 @media (max-aspect-ratio: 4 / 3) {
-    #photo-carousel > h1[cover] {
-        font-size: 2em;
+    #photo-carousel {
+        height: 30vh;
+
+        > h1[cover] { font-size: 2em; }
     }
 
     #page-word { display: none; }

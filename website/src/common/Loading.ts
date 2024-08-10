@@ -121,7 +121,7 @@ export default abstract class Loading {
                     clearInterval(checkLoadedInterval);
                     console.log(`Loading done: ${Date.now() - loadStart}ms`);
                 }
-                else console.info(`${this.numLoading} things still loading...`);
+                else console.info(`${this.numLoading} things still loading...`, ...this.currentlyLoading);
             }, 50);
 
         }

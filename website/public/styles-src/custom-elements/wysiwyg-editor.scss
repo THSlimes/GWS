@@ -1,0 +1,117 @@
+@import url("./folder-element.css");
+@import url("../rich-text.css");
+
+wysiwyg-editor {
+
+    box-sizing: border-box;
+
+    min-width: 25vw;
+    height: min-content;
+
+    position: relative;
+
+    background-color: var(--primary);
+
+    padding: var(--in-section-gap);
+
+    outline: calc(var(--in-section-gap) / 2) solid var(--tertiary);
+    border-radius: var(--in-section-gap);
+
+    > .toolbar {
+
+        box-sizing: border-box;
+        width: 100%;
+
+        left: 0px;
+
+        position: absolute;
+
+        padding: calc(var(--in-section-gap) / 2) var(--min-section-gap);
+        gap: 0px var(--min-section-gap);
+
+        background-color: var(--primary);
+    
+        outline: calc(var(--in-section-gap) / 2) solid var(--tertiary);
+        border-radius: var(--in-section-gap);
+
+        > * {
+            background-color: var(--primary);
+            font-size: .75rem !important;
+            & input, & .heading { font-size: .75rem; }
+        }
+
+        & folder-element {
+
+            display: flex !important;
+            
+            > .topper {
+                padding: calc(var(--in-section-gap) / 2);
+            }
+
+            > .contents {
+                transform-origin: top left;
+                scale: .75;
+                > * {
+                    background-color: var(--primary);
+                    --hover-bg-color: #B0B0B0;
+                }
+            }
+        }
+
+        & .style-options > * {
+
+            > .topper {
+                outline: var(--std-border);
+                border-radius: var(--in-section-gap);
+            }
+
+            &.style-dropdown {
+                > .contents {
+                    > * {
+                        display: flex;
+                        align-items: center;
+        
+                        margin: 0px;
+                        height: 4rem;
+                    }
+                }
+            }
+
+            &.font-dropdown {
+                > .contents {
+                    > * {
+                        display: flex;
+                        align-items: center;
+        
+                        margin: 0px;
+                        height: 2rem;
+                    }
+                }
+            }
+        }
+
+        > .fullscreen-button {
+            position: absolute;
+            top: 0px;
+            right: 0px;
+            font-size: 1rem !important;
+        }
+
+    }
+
+    > .body {
+
+        width: 100%;
+        min-height: 25vh;
+
+        background-color: var(--text-light);
+
+        border-radius: var(--in-section-gap);
+
+    }
+
+    &[fullscreen] {
+        overflow-y: scroll;
+    }
+
+}

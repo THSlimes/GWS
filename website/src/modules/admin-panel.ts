@@ -11,7 +11,6 @@ import { initLinksPanel } from "../common/admin-panels/links-panel";
 import Loading from "../common/Loading";
 import { initIdeaBoxPanel } from "../common/admin-panels/idea-box-panel";
 import URLUtil from "../common/util/URLUtil";
-import ObjectUtil from "../common/util/ObjectUtil";
 import { initLoadingScreensPanel } from "../common/admin-panels/loading-screens-panel";
 
 // only permitted users can view page
