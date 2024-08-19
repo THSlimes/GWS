@@ -215,8 +215,18 @@ export default abstract class ElementFactory {
         const out = new SelectAssemblyLine<V>();
         return out.options(options);
     }
-    public static option() { return AssemblyLine.specific("option", ["value", "selected"], () => document.createElement("option")); }
-    public static optgroup() { return AssemblyLine.specific("optgroup", ["label"], () => document.createElement("optgroup")); }
+    public static option(value?:string, selected?:boolean, hidden?:boolean) {
+        const out = AssemblyLine.specific("option", ["value", "selected", "hidden"], () => document.createElement("option"));
+        if (value !== undefined) out.value(value);
+        if (selected !== undefined) out.selected(selected);
+        if (hidden !== undefined) out.hidden(hidden);
+        return out;
+    }
+    public static optgroup(label?:string) {
+        const out = AssemblyLine.specific("optgroup", ["label"], () => document.createElement("optgroup"));
+        if (label !== undefined) out.label(label);
+        return out;
+    }
 
     public static iconSelector<V extends string>(...options:[V, string, string?, boolean?][]) {
         const out = new IconSelectorAssemblyLine<V>();

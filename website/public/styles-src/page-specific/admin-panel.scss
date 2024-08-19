@@ -150,14 +150,11 @@
     > .new-permission {
         width: 2em;
         height: min-content;
-        text-align: center;
         font-weight: bold;
         appearance: none;
 
-        > option {
-            background-color: var(--primary);
+        > optgroup {
             color: var(--text-dark);
-            text-align: center;
             font-weight: normal;
         }
     }
