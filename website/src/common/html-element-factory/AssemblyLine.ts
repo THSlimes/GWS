@@ -106,9 +106,10 @@ class AssemblyLine<TN extends string, E extends AssemblyLine.ElementType<TN> = A
     /** Defines key-value pairs for CSS-properties. */
     public style(styleMap:StyleUtil.StyleMap) {
         for (const k in styleMap) {
-            const v = styleMap[k];
-            if (v === undefined) delete this._styleMap[k];
-            else this._styleMap[k] = v;
+            const key = k as keyof StyleUtil.StyleMap;
+            const v = styleMap[key];
+            if (v === undefined) delete this._styleMap[key];
+            else this._styleMap[key] = v;
         }
         return this;
     }

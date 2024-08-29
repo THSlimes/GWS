@@ -62,8 +62,8 @@ export default abstract class NodeUtil {
         }
     }
 
-    public static getAncestors(node:Node):ParentNode[] {
-        const out:ParentNode[] = [];
+    public static getAncestors(node:Node, includeSelf = false):Node[] {
+        const out:Node[] = includeSelf ? [node] : [];
 
         let ancestor = node.parentNode;
         while (ancestor) {

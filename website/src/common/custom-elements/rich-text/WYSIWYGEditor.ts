@@ -1,7 +1,10 @@
 import ElementFactory from "../../html-element-factory/ElementFactory";
-import ColorUtil from "../../util/ColorUtil";
 import NodeUtil from "../../util/NodeUtil";
+import StyleUtil from "../../util/StyleUtil";
 import { HasSections } from "../../util/UtilTypes";
+import FolderElement from "../FolderElement";
+
+const EMPTY_CHAR = '‎';
 
 class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsButton" | "body"> {
 
@@ -35,74 +38,49 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
     }
 
     public initElement(): void {
+        this.classList.add("in-section-padding");
 
-        // toolbar
+        let fontFolder: FolderElement;
+
         this.toolbar = this.appendChild(
-            ElementFactory.div(undefined, "toolbar", "flex-columns", "main-axis-center", "cross-axis-center", "flex-wrap")
+            ElementFactory.div(undefined, "toolbar", "flex-columns", "main-axis-space-around", "flex-wrap", "in-section-gap")
                 .children(
-                    ElementFactory.div(undefined, "history-controls", "center-content", "flex-columns")
+                    ElementFactory.div(undefined, "category")
                         .children(
                             ElementFactory.iconButton("undo", () => { }, "Ongedaan maken"),
                             ElementFactory.iconButton("redo", () => { }, "Opnieuw doen"),
                         ),
-
-                    ElementFactory.div(undefined, "style-options", "center-content", "flex-columns", "in-section-gap")
+                    ElementFactory.div(undefined, "category", "center-content", "in-section-gap")
                         .children(
                             ElementFactory.folderElement("down", 250, false)
-                                .class("style-dropdown")
-                                .contentPosition("absolute")
                                 .heading(
                                     ElementFactory.p("Tekst")
                                         .class("no-margin")
-                                        .tooltip("Tekst stijl")
                                 )
                                 .children(
                                     ElementFactory.p("Tekst")
-                                        .class("no-margin", "click-action")
-                                        .on("click", ev => {
-                                            ev.preventDefault();
-                                            this.toggleStyle(WYSIWYGEditor.createStyleElement("TEXT_STYLE_TEXT"));
-                                        }),
+                                        .class("no-margin", "click-action"),
                                     ElementFactory.h1("Titel")
-                                        .class("no-margin", "title", "click-action")
-                                        .on("click", ev => {
-                                            ev.preventDefault();
-                                            this.toggleStyle(WYSIWYGEditor.createStyleElement("TEXT_STYLE_TITLE"));
-                                        }),
-                                    ElementFactory.h2("Ondertitel")
-                                        .class("no-margin", "subtitle", "click-action")
-                                        .style({ fontSize: "1rem", color: "gray" })
-                                        .on("click", ev => {
-                                            ev.preventDefault();
-                                            this.toggleStyle(WYSIWYGEditor.createStyleElement("TEXT_STYLE_SUBTITLE"));
-                                        }),
+                                        .class("title", "no-margin", "click-action"),
                                     ElementFactory.h1("Kop 1")
-                                        .class("no-margin", "click-action")
-                                        .on("click", ev => {
-                                            ev.preventDefault();
-                                            this.toggleStyle(WYSIWYGEditor.createStyleElement("TEXT_STYLE_HEADING_1"));
-                                        }),
+                                        .class("no-margin", "click-action"),
                                     ElementFactory.h2("Kop 2")
-                                        .class("no-margin", "click-action")
-                                        .on("click", ev => {
-                                            ev.preventDefault();
-                                            this.toggleStyle(WYSIWYGEditor.createStyleElement("TEXT_STYLE_HEADING_2"));
-                                        }),
+                                        .class("no-margin", "click-action"),
                                     ElementFactory.h3("Kop 3")
-                                        .class("no-margin", "click-action")
-                                        .on("click", ev => {
-                                            ev.preventDefault();
-                                            this.toggleStyle(WYSIWYGEditor.createStyleElement("TEXT_STYLE_HEADING_3"));
-                                        })
+                                        .class("no-margin", "click-action"),
                                 ),
-
-                            ElementFactory.folderElement("down", 250, false)
-                                .class("font-dropdown")
-                                .contentPosition("absolute")
+                            fontFolder = ElementFactory.folderElement("down", 250, false)
                                 .heading(
                                     ElementFactory.p("Standaard")
                                         .class("no-margin")
-                                        .tooltip("Lettertype")
+                                        .style({ fontFamily: "var(--std-font)" })
+                                        .onMake(self => document.addEventListener("selectionchange", () => {
+                                            const selected = Array.from(fontFolder.contents.children).find(c => c.hasAttribute("selected"));
+                                            if (selected instanceof HTMLElement) {
+                                                self.textContent = selected.textContent;
+                                                self.style.fontFamily = selected.style.fontFamily;
+                                            }
+                                        }))
                                 )
                                 .children(
                                     ElementFactory.p("Standaard")
@@ -110,442 +88,427 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
                                         .style({ fontFamily: "var(--std-font)" })
                                         .on("click", (ev, self) => {
                                             ev.preventDefault();
-                                            this.toggleStyle(WYSIWYGEditor.createStyleElement("TEXT_FONT", self.style.fontFamily));
-                                        }),
-                                    ElementFactory.p("Sans-serif")
-                                        .class("no-margin", "click-action")
-                                        .style({ fontFamily: "sans-serif" })
-                                        .on("click", (ev, self) => {
-                                            ev.preventDefault();
-                                            this.toggleStyle(WYSIWYGEditor.createStyleElement("TEXT_FONT", self.style.fontFamily));
-                                        }),
+                                            self.toggleAttribute("selected", this.toggleStyle([], { fontFamily: "var(--std-font)" }, "font-family"));
+                                        })
+                                        .onMake(self => // apply selected
+                                            document.addEventListener("selectionchange", () => {
+                                                const isInDefaultFontElement = this.isInStyle([], { fontFamily: "var(--std-font)" });
+                                                const isInFontElement = this.isInStyleGroup("font-family");
+
+                                                self.toggleAttribute("selected", isInDefaultFontElement || !isInFontElement);
+                                            })
+                                        ),
                                     ElementFactory.p("Serif")
                                         .class("no-margin", "click-action")
                                         .style({ fontFamily: "serif" })
                                         .on("click", (ev, self) => {
                                             ev.preventDefault();
-                                            this.toggleStyle(WYSIWYGEditor.createStyleElement("TEXT_FONT", self.style.fontFamily));
-                                        }),
-                                    ElementFactory.p("Handgeschreven")
-                                        .class("no-margin", "click-action")
-                                        .style({ fontFamily: "cursive" })
-                                        .on("click", (ev, self) => {
-                                            ev.preventDefault();
-                                            this.toggleStyle(WYSIWYGEditor.createStyleElement("TEXT_FONT", self.style.fontFamily));
-                                        }),
-                                    ElementFactory.p("Monospace")
-                                        .class("no-margin", "click-action")
-                                        .style({ fontFamily: "monospace" })
-                                        .on("click", (ev, self) => {
-                                            ev.preventDefault();
-                                            this.toggleStyle(WYSIWYGEditor.createStyleElement("TEXT_FONT", self.style.fontFamily));
-                                        }),
-                                    ElementFactory.p("Fantasie")
-                                        .class("no-margin", "click-action")
-                                        .style({ fontFamily: "fantasy" })
-                                        .on("click", (ev, self) => {
-                                            ev.preventDefault();
-                                            this.toggleStyle(WYSIWYGEditor.createStyleElement("TEXT_FONT", self.style.fontFamily));
+                                            self.toggleAttribute("selected", this.toggleStyle([], { fontFamily: "serif" }, "font-family"));
                                         })
-                                ),
+                                        .onMake(self => // apply selected
+                                            document.addEventListener("selectionchange", () => self.toggleAttribute("selected", this.isInStyle([], { fontFamily: "serif" })))
+                                        ),
+                                    ElementFactory.p("Sans-serif")
+                                        .class("no-margin", "click-action")
+                                        .style({ fontFamily: "sans-serif" })
+                                        .on("click", (ev, self) => {
+                                            ev.preventDefault();
+                                            self.toggleAttribute("selected", this.toggleStyle([], { fontFamily: "sans-serif" }, "font-family"));
+                                        })
+                                        .onMake(self => // apply selected
+                                            document.addEventListener("selectionchange", () => self.toggleAttribute("selected", this.isInStyle([], { fontFamily: "sans-serif" })))
+                                        ),
+                                    ElementFactory.p("Handschrift")
+                                        .class("no-margin", "click-action")
+                                        .style({ fontFamily: "cursive" }),
+                                    ElementFactory.p("Cool")
+                                        .class("no-margin", "click-action")
+                                        .style({ fontFamily: "fantasy" }),
+                                )
+                                .make(),
                         ),
-
-                    ElementFactory.div(undefined, "font-size-selector", "center-content", "flex-columns")
+                    ElementFactory.div(undefined, "category", "center-content", "in-section-gap")
                         .children(
                             ElementFactory.iconButton("remove", () => { }, "Kleinere tekstgrootte"),
-                            ElementFactory.input.number(16, 4, 32, 1)
+                            ElementFactory.input.number(11, 1, 72, 1)
                                 .class("text-center")
                                 .attr("hide-controls")
-                                .tooltip("Tekstgrootte")
-                                .style({ "width": "2rem" }),
+                                .style({ width: "3rem" }),
                             ElementFactory.iconButton("add", () => { }, "Grotere tekstgrootte"),
                         ),
-
-                    ElementFactory.div(undefined, "format-options", "center-content", "flex-columns")
+                    ElementFactory.div(undefined, "category")
                         .children(
-                            ElementFactory.iconButton("format_bold", ev => {
-                                ev.preventDefault();
-                                this.toggleStyle(WYSIWYGEditor.createStyleElement("TEXT_DECORATION", "bold"));
-                            }, "Dikgedrukt"),
-                            ElementFactory.iconButton("format_italic", ev => {
-                                ev.preventDefault();
-                                this.toggleStyle(WYSIWYGEditor.createStyleElement("TEXT_DECORATION", "italic"));
-                            }, "Cursief"),
-                            ElementFactory.iconButton("format_underlined", ev => {
-                                ev.preventDefault();
-                                this.toggleStyle(WYSIWYGEditor.createStyleElement("TEXT_DECORATION", "underlined"));
-                            }, "Onderlijnd"),
-                            ElementFactory.iconButton("format_strikethrough", ev => {
-                                ev.preventDefault();
-                                this.toggleStyle(WYSIWYGEditor.createStyleElement("TEXT_DECORATION", "strikethrough"));
-                            }, "Doorgestreept"),
+                            ElementFactory.iconButton("format_bold", () => { }, "Dikgedrukt") // apply bold
+                                .attr("applies-style")
+                                .attr("can-unselect")
+                                .on("click", (ev, self) => {
+                                    ev.preventDefault();
+                                    self.toggleAttribute("selected", this.toggleStyle("bold"));
+                                })
+                                .onMake(self => // apply selected
+                                    document.addEventListener("selectionchange", () => self.toggleAttribute("selected", this.isInStyle("bold")))
+                                ),
+                            ElementFactory.iconButton("format_italic", () => { }, "Schuingedrukt") // apply italic
+                                .attr("applies-style")
+                                .attr("can-unselect")
+                                .on("click", (ev, self) => {
+                                    ev.preventDefault();
+                                    self.toggleAttribute("selected", this.toggleStyle("italic"));
+                                })
+                                .onMake(self => // apply selected
+                                    document.addEventListener("selectionchange", () => self.toggleAttribute("selected", this.isInStyle("italic")))
+                                ),
+                            ElementFactory.iconButton("format_underlined", () => { }, "Onderstreept") // apply underline
+                                .attr("applies-style")
+                                .attr("can-unselect")
+                                .on("click", (ev, self) => {
+                                    ev.preventDefault();
+                                    self.toggleAttribute("selected", this.toggleStyle("underlined"));
+                                })
+                                .onMake(self => // apply selected
+                                    document.addEventListener("selectionchange", () => self.toggleAttribute("selected", this.isInStyle("underlined")))
+                                ),
+                            ElementFactory.iconButton("format_strikethrough", () => { }, "Doorgestreept") // apply strikethrough
+                                .attr("applies-style")
+                                .attr("can-unselect")
+                                .on("click", (ev, self) => {
+                                    ev.preventDefault();
+                                    self.toggleAttribute("selected", this.toggleStyle("strikethrough"));
+                                })
+                                .onMake(self => // apply selected
+                                    document.addEventListener("selectionchange", () => self.toggleAttribute("selected", this.isInStyle("strikethrough")))
+                                ),
                         ),
-
-                    ElementFactory.div(undefined, "color-options", "center-content", "flex-columns")
+                    ElementFactory.div(undefined, "category")
                         .children(
-                            ElementFactory.folderElement("down", 250, false)
-                                .heading(ElementFactory.p("format_color_text").class("icon", "no-margin"))
-                                .tooltip("Tekstkleur"),
-                            ElementFactory.folderElement("down", 250, false)
-                                .heading(ElementFactory.p("format_ink_highlighter").class("icon", "no-margin"))
-                                .tooltip("Tekstmarkering"),
+                            ElementFactory.iconButton("add_link", () => { }, "Koppeling toevoegen"),
+                            ElementFactory.iconButton("attach_file_add", () => { }, "Bijlage toevoegen"),
+                            ElementFactory.iconButton("add_photo_alternate", () => { }, "Afbeelding toevoegen"),
                         ),
-
-                    ElementFactory.div(undefined, "media-options", "center-content", "flex-columns")
+                    ElementFactory.div(undefined, "category", "center-content", "in-section-gap")
                         .children(
                             ElementFactory.folderElement("down", 250, false)
-                                .heading(ElementFactory.p("add_link").class("icon", "no-margin"))
-                                .tooltip("Koppeling toevoegen"),
-                            ElementFactory.folderElement("down", 250, false)
-                                .heading(ElementFactory.p("add_photo_alternate").class("icon", "no-margin"))
-                                .tooltip("Afbeelding toevoegen"),
-                            ElementFactory.folderElement("down", 250, false)
-                                .heading(ElementFactory.p("attach_file_add").class("icon", "no-margin"))
-                                .tooltip("Bijlage toevoegen"),
-                            ElementFactory.folderElement("down", 250, false)
-                                .heading(ElementFactory.p("widgets").class("icon", "no-margin"))
-                                .tooltip("Widgets"),
-                        ),
-
-                    ElementFactory.div(undefined, "placement-options", "center-content", "flex-columns")
-                        .children(
-                            ElementFactory.folderElement("down", 250, false)
-                                .heading(ElementFactory.p("format_align_left").class("icon", "no-margin"))
-                                .children(
-                                    ElementFactory.iconButton("format_align_left", ev => {
-                                        ev.preventDefault();
-                                        this.toggleStyle(WYSIWYGEditor.createStyleElement("TEXT_ALIGN", "left"));
-                                    }, "Links uitlijnen"),
-                                    ElementFactory.iconButton("format_align_center", ev => {
-                                        ev.preventDefault();
-                                        this.toggleStyle(WYSIWYGEditor.createStyleElement("TEXT_ALIGN", "center"));
-                                    }, "Centreren"),
-                                    ElementFactory.iconButton("format_align_right", ev => {
-                                        ev.preventDefault();
-                                        this.toggleStyle(WYSIWYGEditor.createStyleElement("TEXT_ALIGN", "right"));
-                                    }, "Rechts uitlijnen"),
-                                    ElementFactory.iconButton("format_align_justify", ev => {
-                                        ev.preventDefault();
-                                        this.toggleStyle(WYSIWYGEditor.createStyleElement("TEXT_ALIGN", "justify"));
-                                    }, "Spreiden"),
+                                .tooltip("Tekst uitlijnen")
+                                .heading(
+                                    ElementFactory.p("format_align_left")
+                                        .class("no-margin", "icon")
                                 )
-                                .tooltip("Uitlijnen"),
+                                .children(
+                                    ElementFactory.iconButton("format_align_left", () => { }, "Links uitlijnen"),
+                                    ElementFactory.iconButton("format_align_center", () => { }, "Centreren"),
+                                    ElementFactory.iconButton("format_align_right", () => { }, "Rechts uitlijnen"),
+                                    ElementFactory.iconButton("format_align_justify", () => { }, "Gespreid uitlijnen"),
+                                ),
                             ElementFactory.folderElement("down", 250, false)
-                                .heading(ElementFactory.p("format_line_spacing").class("icon", "no-margin"))
+                                .tooltip("Regelafstand")
+                                .heading(
+                                    ElementFactory.p("format_line_spacing")
+                                        .class("no-margin", "icon")
+                                )
                                 .children(
                                     ElementFactory.input.button("Enkel"),
                                     ElementFactory.input.button("1.15"),
                                     ElementFactory.input.button("1.5"),
                                     ElementFactory.input.button("Dubbel"),
-                                )
-                                .tooltip("Regelafstand"),
-                            ElementFactory.iconButton("format_list_bulleted", () => { }, "Lijst toevoegen"),
-                            ElementFactory.iconButton("format_list_numbered", () => { }, "Genummerde lijst toevoegen"),
-                            ElementFactory.iconButton("table_chart", () => { }, "Tabel toevoegen"),
-                        ),
-
-
-                    this.fsButton = ElementFactory.iconButton("open_in_full", () => this.isFullscreen = !this.isFullscreen, "Volledig scherm openen")
-                        .class("fullscreen-button")
-                        .make()
-
+                                ),
+                            ElementFactory.iconButton("format_list_bulleted", () => { }, "Nieuwe lijst"),
+                            ElementFactory.iconButton("format_list_numbered", () => { }, "Nieuwe genummerde lijst"),
+                        )
                 )
                 .make()
         );
 
-        const scrollCB = () => { // keep toolbar on screen
-            const rect = this.toolbar.getBoundingClientRect();
-            const top = window.scrollY - rect.height;
-            const maxTop = this.getBoundingClientRect().height - rect.height;
-            this.toolbar.style.top = this.isFullscreen ?
-                `${this.scrollTop}px` :
-                `calc(min(${maxTop}px, max(0px, ${top}px - var(--in-section-gap) - 1.5px)))`;
-
-        };
-        window.addEventListener("scroll", scrollCB);
-        window.addEventListener("scrollend", scrollCB);
-        this.addEventListener("scroll", scrollCB);
-        this.addEventListener("scrollend", scrollCB);
-        window.addEventListener("load", () => requestAnimationFrame(() => scrollCB())); // set initial value
-
-        document.addEventListener("fullscreenchange", () => {
-            if (this.isFullscreen) {
-                this.fsButton.textContent = "close_fullscreen";
-                this.fsButton.title = "Volledig scherm sluiten";
-                this.toggleAttribute("fullscreen", true);
-            }
-            else {
-                this.fsButton.textContent = "open_in_full";
-                this.fsButton.title = "Volledig scherm openen";
-                this.toggleAttribute("fullscreen", false);
-            }
-        });
-
-
-        // body
         this.body = this.appendChild(
-            ElementFactory.div(undefined, "body", "rich-text")
-                .attr("contenteditable", true)
-                .children(document.createElement("br"))
-                .on("keydown", (ev, self) => {
+            ElementFactory.div(undefined, "body", "rich-text", "in-section-padding")
+                .attr("contenteditable")
+                .on("keydown", ev => {
                     if (ev.key === "Enter") {
-                        const selection = getSelection();
-                        if (selection && self.contains(selection.anchorNode) && selection.rangeCount !== 0) {
-                            ev.preventDefault();
-
-                            const range = selection.getRangeAt(0);
-                            if (!range.collapsed) range.deleteContents();
-
-                            const br = document.createElement("br");
-                            range.insertNode(br);
-                            range.setStartAfter(br);
-                            range.setEndAfter(br);
-                        }
+                        ev.preventDefault();
+                        this.insertNode(document.createElement("br"));
                     }
                 })
                 .make()
         );
 
-        const resizeCB = () => { // make space for toolbar
-            const rect = this.toolbar.getBoundingClientRect();
-            this.body.style.marginTop = `calc(${rect.height}px + var(--in-section-gap))`;
-            scrollCB();
-        }
-        window.addEventListener("resize", resizeCB);
-        window.addEventListener("load", () => requestAnimationFrame(resizeCB));
+        const applyTBHeight = () => this.style.setProperty("--toolbar-height", this.toolbar.getBoundingClientRect().height + "px");
+        window.addEventListener("resize", applyTBHeight);
+        setTimeout(applyTBHeight, 100); // TODO: fix race condition!
 
+        document.addEventListener("selectionchange", () => {
+            const selection = document.getSelection();
+
+            const canApply = this.canApply(selection); // reflect intractability
+            this.querySelectorAll("*[applies-style]").forEach(e => e.toggleAttribute("disabled", !canApply));
+        });
     }
 
-    private canApplyStyle(): boolean {
-        const selection = getSelection();
-
+    private canApply(selection = document.getSelection()): boolean {
         return selection !== null
-            && this.body.contains(selection.anchorNode);
+            && this.body.contains(selection.anchorNode)
+            && this.body.contains(selection.focusNode);
     }
 
-    private toggleStyle(styleElement: Element) {
-        const selection = getSelection();
-        if (!selection) throw new Error("Nothing is selected");
-        else if (!this.body.contains(selection.anchorNode)) throw new Error("Selection is not part of the body");
-        else if (selection.rangeCount === 0) throw new Error("Selection has no ranges");
+    private findStyleElement(classes: string | string[] = [], style: StyleUtil.StyleMap = {}, tagName: string = "span", selection = document.getSelection()): HTMLElement | null {
+        if (typeof classes === "string") classes = [classes];
 
-        const range = selection.getRangeAt(0);
-        const ancestor = range.commonAncestorContainer;
-
-        const matchingStyleElem = [ancestor, ...NodeUtil.getAncestors(ancestor)]
-            .find(n => n instanceof Element && this.isSameStyleElement(n, styleElement));
-
-
-        if (matchingStyleElem) {
-            const rangeContents = Array.from(range.extractContents().childNodes);
-            for (const n of rangeContents) range.insertNode(n); // reinsert to separate out nodes
-
-            matchingStyleElem.childNodes.forEach(cn => {
-                if (!rangeContents.includes(cn)) { // wrap unselected part with style element
-                    const wrapper = matchingStyleElem.cloneNode(false);
-                    cn.replaceWith(wrapper);
-                    wrapper.appendChild(cn);
-                }
-            });
-
-            (matchingStyleElem as ChildNode).replaceWith(...Array.from(matchingStyleElem.childNodes));
-            // reselect old selection
-            selection.removeAllRanges();
-            for (const n of rangeContents) {
-                const newRange = document.createRange();
-                newRange.selectNode(n);
-                selection.addRange(newRange);
-            }
-
-        }
+        if (selection === null || selection.rangeCount === 0) return null;
         else {
-            const rangeContents = Array.from(range.extractContents().childNodes);
+            const range = selection.getRangeAt(0);
 
-            const styleElementClone = styleElement.cloneNode(false);
-            for (const n of rangeContents) styleElementClone.appendChild(n);
-            range.insertNode(styleElementClone);
+            let node: Node | null = range.commonAncestorContainer;
 
-            selection.removeAllRanges();
-            for (const n of rangeContents) {
-                const newRange = document.createRange();
-                newRange.selectNode(n);
-                selection.addRange(newRange);
+            while (this.body.contains(node) && node !== null) {
+                if (WYSIWYGEditor.isStyleElement(node) && WYSIWYGEditor.isStyle(node, classes, style, tagName)) return node; // style element found
+                node = node.parentNode;
+            }
+
+            return null; // no style element found
+        }
+    }
+    private isInStyle(classes: string | string[] = [], style: StyleUtil.StyleMap = {}, tagName: string = "span", selection = document.getSelection()): boolean {
+        return this.findStyleElement(classes, style, tagName, selection) !== null;
+    }
+
+
+    private findStyleGroupElement(group: string, selection = document.getSelection()): HTMLElement | null {
+        if (!selection?.rangeCount) return null;
+        else {
+            const range = selection.getRangeAt(0);
+
+            let node: Node | null = range.commonAncestorContainer;
+            while (this.body.contains(node) && node !== null) {
+                if (WYSIWYGEditor.isStyleElement(node) && WYSIWYGEditor.isInGroup(node, group)) return node; // style element in group found
+                else node = node.parentNode;
+            }
+
+            return null; // no style element in group found
+        }
+    }
+
+    private isInStyleGroup(group: string, selection = document.getSelection()): boolean {
+        return this.findStyleGroupElement(group, selection) !== null;
+    }
+
+    private makeTemporaryTextNode(): Text {
+        const out = document.createTextNode(EMPTY_CHAR);
+
+        const checkTextNode = () => {
+            if (out.textContent!.length !== 0) out.splitText(EMPTY_CHAR.length);
+            out.remove();
+
+            obs.disconnect();
+            document.removeEventListener("selectionchange", selectionChangeCB);
+
+            this.normalizeBody();
+        }
+
+        const obs = new MutationObserver(checkTextNode);
+        obs.observe(out, { characterData: true });
+
+        const selectionChangeCB = () => {
+            if (!document.getSelection()?.anchorNode?.contains(out)) checkTextNode();
+        }
+        document.addEventListener("selectionchange", selectionChangeCB);
+
+        return out;
+    }
+
+
+    private normalizeBody() {
+        let html: string;
+        do {
+            html = this.body.innerHTML;
+
+            // remove redundant nested style elements
+            NodeUtil.onEach(this.body, n => {
+                const isRedundant = WYSIWYGEditor.isStyleElement(n) && NodeUtil.getAncestors(n).some(anc =>
+                    WYSIWYGEditor.isStyleElement(anc)
+                    && this.body.contains(anc)
+                    && (WYSIWYGEditor.areSameStyle(n, anc) || WYSIWYGEditor.areInSameGroup(n, anc))
+                );
+
+                if (isRedundant) n.replaceWith(...Array.from(n.childNodes));
+            });
+            this.body.normalize();
+
+            // combine same adjacent style elements
+            NodeUtil.onEach(this.body, n => {
+                if (WYSIWYGEditor.isStyleElement(n)) {
+                    const combineWithPrevSibling = n.previousSibling !== null
+                        && WYSIWYGEditor.isStyleElement(n.previousSibling)
+                        && WYSIWYGEditor.areSameStyle(n, n.previousSibling);
+                    if (combineWithPrevSibling) {
+                        n.prepend(...Array.from(n.previousSibling.childNodes));
+                        n.previousSibling.remove();
+                    }
+                }
+            });
+            this.body.normalize();
+
+            // remove empty style elements
+            NodeUtil.onEach(this.body, n => {
+                if (WYSIWYGEditor.isStyleElement(n) && !n.innerHTML) n.remove();
+            });
+            this.body.normalize();
+        }
+        while (this.body.innerHTML !== html); // apply until inner html doesn't change
+    }
+
+    private toggleStyle(classes: string | string[] = [], style: StyleUtil.StyleMap = {}, group?: string, tagName: string = "span", selection = document.getSelection()): boolean {
+        if (!this.canApply(selection)) throw new Error("style elements can't be applied here");
+
+        let styleElem = this.findStyleElement(classes, style, tagName, selection);
+
+        if (group !== undefined) {
+            const styleGroupElement = this.findStyleGroupElement(group, selection);
+            if (styleGroupElement) { // un-apply same group style first
+                this.toggleStyle(Array.from(styleGroupElement.classList), styleGroupElement.style, undefined, styleGroupElement.tagName, selection);                
             }
         }
 
-        this.normalizeStyleElements(this.body);
+        let out: boolean;
+        if (styleElem === null) { // apply style
+            styleElem = WYSIWYGEditor.makeStyleElement(classes, style, group, tagName);
+            const range = selection!.getRangeAt(0);
+
+            if (range.collapsed) { // insert new style element
+                range.insertNode(styleElem);
+                const temp = styleElem.appendChild(this.makeTemporaryTextNode());
+                range.selectNode(temp);
+                range.collapse();
+
+                const selectionChangeCB = () => {
+                    const selection = document.getSelection();
+                    if (selection && selection.rangeCount !== 0) {
+                        const range = selection.getRangeAt(0);
+                        if (!styleElem?.contains(range.commonAncestorContainer) && (temp.textContent === EMPTY_CHAR || temp.textContent?.length === 0)) styleElem?.remove();
+                        else document.removeEventListener("selectionchange", selectionChangeCB);
+                    }
+                };
+                document.addEventListener("selectionchange", selectionChangeCB);
+            }
+            else { // surround range contents
+                styleElem.append(range.extractContents());
+                range.insertNode(styleElem);
+                range.selectNodeContents(styleElem);
+            }
+
+            out = true;
+        }
+        else { // remove style
+            const range = selection!.getRangeAt(0);
+
+            // wrap selection
+            const selectionRoot = document.createElement("div");
+            selectionRoot.appendChild(range.extractContents());
+            range.insertNode(selectionRoot);
+
+            // replace style elem with its children
+            let children = Array.from(styleElem.childNodes);
+            styleElem.replaceWith(...children);
+
+            while (children.some(c => c.contains(selectionRoot))) { // reapply style element to all unselected descendants
+                const containerIndex = children.findIndex(c => c.contains(selectionRoot));
+                const container = children[containerIndex];
+
+                const beforeContainer = children.slice(0, containerIndex);
+                if (beforeContainer.length !== 0) { // wrap nodes before container in copy
+                    const copy = styleElem.cloneNode(false) as HTMLElement;
+                    copy.append(...beforeContainer);
+                    container.before(copy);
+                }
+
+                const afterContainer = children.slice(containerIndex + 1);
+                if (afterContainer.length !== 0) { // wrap nodes before container in copy
+                    const copy = styleElem.cloneNode(false) as HTMLElement;
+                    copy.append(...afterContainer);
+                    container.after(copy);
+                }
+
+                range.selectNodeContents(selectionRoot);
+                children = Array.from(container.childNodes);
+            }
+
+            // unwrap selection
+            const selectionContents = Array.from(selectionRoot.childNodes);
+            if (selectionContents.length) { // replace selection root with selection contents
+                selectionRoot.replaceWith(...selectionContents);
+                range.setStartBefore(selectionContents[0]);
+                range.setEndAfter(selectionContents.at(-1)!);
+            }
+            else { // empty selection, insert temp text node
+                const temp = this.makeTemporaryTextNode();
+                selectionRoot.replaceWith(temp);
+                range.selectNode(temp);
+                range.collapse();
+            }
+
+            out = false;
+        }
+
+        // apply normalization
+        this.normalizeBody();
+
+        return out;
 
     }
 
-    /**
-     * Normalized the descendants of the root to use as few style elements as possible.
-     * @param root root of a subtree
-     */
-    private normalizeStyleElements(root: Element) {
-
-        let prevHTML;
-        do {
-            prevHTML = root.outerHTML;
-
-            root.normalize();
-
-            NodeUtil.onEach(root, n => {
-                if (n !== root && n instanceof Element && n.childNodes.length === 0) n.parentElement?.removeChild(n);
-            });
-
-            // remove redundant nested elements
-            NodeUtil.onEach(root, node => {
-                if (node instanceof Element) {
-
-                    let ancestor = node.parentElement!;
-                    while (root.contains(ancestor)) {
-
-                        if (this.isSameStyleElement(node, ancestor)) { // node is redundant
-                            node.replaceWith(...Array.from(node.childNodes));
-                            break;
-                        }
-
-                        ancestor = ancestor.parentElement!;
-                    }
-                }
-            });
-
-            root.normalize();
-
-            // combine adjacent identical style elements
-            NodeUtil.onEach(root, node => {
-                if (node instanceof Element && node !== root) {
-                    const prevSibling = node.previousSibling;
-                    if (prevSibling instanceof Element && this.isSameStyleElement(prevSibling, node)) { // same style, combine
-                        node.prepend(...Array.from(prevSibling.childNodes));
-                        prevSibling.remove();
-                    }
-                }
-            });
-
-            // normalize text nodes
-            root.normalize();
-
-        } while (prevHTML !== root.outerHTML);
-
-    }
-
-    private isSameStyleElement(a: Element, b: Element): boolean {
-        return a.tagName === b.tagName &&
-            (
-                (a.tagName === "H1" && a.classList.contains("title") === b.classList.contains("title")) || // both (non) titles
-                (a.tagName === "H2" && a.classList.contains("subtitle") === b.classList.contains("subtitle")) || // both subtitles or H2
-                a.tagName === "H3" || // both H3
-                ( // identically styled spans
-                    (
-                        a.tagName === "SPAN" ||
-                        a.tagName === "P"
-                    ) &&
-                    a instanceof HTMLElement &&
-                    b instanceof HTMLElement &&
-                    a.style.cssText === b.style.cssText &&
-                    a.classList.length === b.classList.length &&
-                    Array.from(a.classList).every(cls => b.classList.contains(cls))
-                )
-            )
-
+    private insertNode(elem: Node) {
+        const selection = document.getSelection();
+        if (!this.canApply(selection)) throw new Error("elements can't be inserted here");
+        else if (selection?.rangeCount === 0) throw new Error("no range exists to insert in");
+        else {
+            const range = selection!.getRangeAt(0);
+            range.deleteContents();
+            range.insertNode(elem);
+            range.setEndAfter(elem);
+            range.collapse();
+        }
     }
 
 }
 
 namespace WYSIWYGEditor {
 
-    interface ArgMap {
-        // Text styles
-        "TEXT_STYLE_TEXT": [],
-        "TEXT_STYLE_TITLE": [],
-        "TEXT_STYLE_SUBTITLE": [],
-        "TEXT_STYLE_HEADING_1": [],
-        "TEXT_STYLE_HEADING_2": [],
-        "TEXT_STYLE_HEADING_3": [],
+    export function makeStyleElement(classes: string | string[] = [], style: StyleUtil.StyleMap = {}, group?: string, tagName: string = "span"): HTMLElement {
+        const out = document.createElement(tagName);
+        out.toggleAttribute("style-element", true);
 
-        // Font styles,
-        "TEXT_FONT": [string],
+        StyleUtil.apply(style, out); // apply style
 
-        // Font size
-        "TEXT_FONT_SIZE": [number],
+        if (typeof classes === "string") classes = [classes]; // force to array
+        out.classList.add(...classes); // apply classes
+        if (group !== undefined) out.setAttribute("group", group); // apply group
 
-        // Text decoration
-        "TEXT_DECORATION": [string],
-
-        // Color
-        "TEXT_COLOR_TEXT": [ColorUtil.HexColor],
-        "TEXT_COLOR_MARKING": [ColorUtil.HexColor],
-
-        // Media
-        "MEDIA_LINK": [string],
-
-        // Text placement
-        "TEXT_ALIGN": ["left" | "center" | "right" | "justify"],
-        "TEXT_LINE_SPACING": [number]
+        return out;
     }
 
-    export type StyleElementType = keyof ArgMap;
+    export function isStyleElement(n: Node): n is HTMLElement {
+        return n instanceof HTMLElement && n.hasAttribute("style-element");
+    }
 
-    const CREATOR_FUNCTIONS: { [T in keyof ArgMap]: (args: ArgMap[T]) => Element } = {
-        TEXT_STYLE_TEXT: () => document.createElement("p"),
-        TEXT_STYLE_TITLE: () => {
-            const out = document.createElement("h1");
-            out.classList.add("title");
-            return out;
-        },
-        TEXT_STYLE_SUBTITLE: () => {
-            const out = document.createElement("h2");
-            out.classList.add("subtitle");
-            return out;
-        },
-        TEXT_STYLE_HEADING_1: () => document.createElement("h1"),
-        TEXT_STYLE_HEADING_2: () => document.createElement("h2"),
-        TEXT_STYLE_HEADING_3: () => document.createElement("h3"),
-        TEXT_FONT: ([font]: [string]) => {
-            const out = document.createElement("span");
-            out.style.fontFamily = font;
-            return out;
-        },
-        TEXT_FONT_SIZE: ([size]: [number]) => {
-            const out = document.createElement("span");
-            out.style.fontSize = `${size}px`;
-            return out;
-        },
-        TEXT_DECORATION: ([cls]: [string]) => {
-            const out = document.createElement("span");
-            out.classList.add(cls);
-            return out;
-        },
-        TEXT_COLOR_TEXT: ([color]: [`#${string}`]) => {
-            const out = document.createElement("span");
-            out.style.color = color;
-            return out;
-        },
-        TEXT_COLOR_MARKING: ([color]: [`#${string}`]) => {
-            const out = document.createElement("span");
-            out.style.backgroundColor = color;
-            return out;
-        },
-        MEDIA_LINK: ([href]: [string]) => {
-            const out = document.createElement("a");
-            out.href = href;
-            return out;
-        },
-        TEXT_ALIGN: ([alignment]: ["left" | "center" | "right" | "justify"]) => {
-            const out = document.createElement("p");
-            out.style.textAlign = alignment;
-            return out;
-        },
-        TEXT_LINE_SPACING: ([spacing]: [number]) => {
-            const out = document.createElement("span");
-            out.style.lineHeight = spacing.toString();
-            return out;
-        }
-    };
+    export function isStyle(node: Node, classes: string | string[] = [], style: StyleUtil.StyleMap = {}, tagName: string = "span") {
+        if (typeof classes === "string") classes = [classes];
 
-    export function createStyleElement<T extends StyleElementType>(type: T, ...args: ArgMap[T]): Element {
-        return CREATOR_FUNCTIONS[type](args);
+        return isStyleElement(node) // is style element
+            && node.tagName.toLowerCase() === tagName.toLowerCase() // same tag
+            // same classes
+            && node.classList.length === classes.length
+            && classes.every(c => node.classList.contains(c))
+            // same style
+            && Object.entries(style).every(([k, v]) => node.style[k as keyof StyleUtil.StyleMap] === v);
+    }
+
+    export function isInGroup(node: Node, group: string) {
+        return isStyleElement(node) && node.getAttribute("group") === group;
+    }
+
+    export function areSameStyle(a: HTMLElement, b: HTMLElement): boolean {
+        return isStyle(a, Array.from(b.classList), b.style, b.tagName);
+    }
+
+    export function areInSameGroup(a: HTMLElement, b: HTMLElement): boolean {
+        return a.hasAttribute("group") && a.getAttribute("group") === b.getAttribute("group");
     }
 
 }

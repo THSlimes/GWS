@@ -120,6 +120,11 @@
         }
     }
 
+    & br {
+        display: block;
+        width: 100%;
+    }
+
     > iframe-container.newspaper {
         width: 100%;
         > .contents { min-height: 150vh; }

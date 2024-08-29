@@ -5,7 +5,8 @@
 #content { height: 500vh; }
 
 wysiwyg-editor {
-    min-width: 50vw;
+    min-width: 60vw;
     max-width: 60vw;
+    
     > .body { height: 200vh; }
 }

@@ -13,7 +13,7 @@ abstract class StyleUtil {
 
     public static apply<E extends HTMLElement>(styleMap:StyleUtil.StyleMap, elem:E):E {
         for (const k in styleMap) {
-            const v = styleMap[k]!;
+            const v = styleMap[k as keyof StyleUtil.StyleMap]!;
             elem.style.setProperty(this.toKebabCase(k), v);
         }
 
@@ -24,8 +24,8 @@ abstract class StyleUtil {
 
 namespace StyleUtil {
     export type StyleMap = {
-        [PN in Exclude<keyof CSSStyleDeclaration, "length"|"parentRule">]?: Extract<CSSStyleDeclaration[PN], string>;
-    };
+        [k in Exclude<keyof CSSStyleDeclaration, "cssText" | "length" | "parentRule" | "cssFloat" | "getPropertyPriority" | "getPropertyValue" | "item" | number | "removeProperty" | "setProperty" | "getPropertyCSSValue">]?: string | undefined
+    }
 }
 
 export default StyleUtil;

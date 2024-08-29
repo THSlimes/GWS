@@ -387,7 +387,9 @@ button, input[type="button"], .button {
         &:hover { background-color: var(--hover-bg-color) !important; }
         &:active { scale: 105%; }
     }
-    &:disabled, &[disabled] { filter: contrast(.65); }
+    &:disabled, &[disabled] {
+        filter: contrast(.65);
+    }
 
     > * { margin: 0px; }
 }
@@ -397,7 +399,9 @@ button, input[type="button"], .button {
     --hover-bg-color: var(--shadow-dark);
     border-radius: var(--in-section-gap);
 
-    &[disabled] { filter: contrast(.5); }
+    &[disabled] {
+        filter: contrast(.5);
+    }
 
     &:not([disabled]) {
 
