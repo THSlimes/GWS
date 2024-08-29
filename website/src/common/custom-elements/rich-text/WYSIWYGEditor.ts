@@ -1,3 +1,4 @@
+import AssemblyLine from "../../html-element-factory/AssemblyLine";
 import ElementFactory from "../../html-element-factory/ElementFactory";
 import NodeUtil from "../../util/NodeUtil";
 import StyleUtil from "../../util/StyleUtil";
@@ -7,6 +8,27 @@ import FolderElement from "../FolderElement";
 const EMPTY_CHAR = '‎';
 
 class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsButton" | "body"> {
+
+    private static readonly TEXT_TYPES: { name: string, tagName: string, cls?: string, createPreviewAsmLine():AssemblyLine<any> }[] = [
+        { name: "Tekst", tagName: 'p', createPreviewAsmLine: () => ElementFactory.p() },
+        { name: "Titel", tagName: 'h1', cls: "title", createPreviewAsmLine: () => ElementFactory.h1().class("title") },
+        { name: "Kop 1", tagName: 'h1', createPreviewAsmLine: () => ElementFactory.h1() },
+        { name: "Kop 2", tagName: 'h2', createPreviewAsmLine: () => ElementFactory.h2() },
+        { name: "Kop 3", tagName: 'h3', createPreviewAsmLine: () => ElementFactory.h3() }
+    ];
+    private static readonly FONTS: { name: string, family: string }[] = [
+        { name: "Times New Roman", family: `"Times New Roman", Times, serif` },
+        { name: "Arial", family: "Arial, Helvetica, sans-serif" },
+        // { name: "Handschrift", family: "cursive" },
+        { name: "Impact", family: `Impact, Haettenschweiler, "Arial Narrow Bold", fantasy` },
+        { name: "Courier New", family: `"Courier New", Courier, monospace` }
+    ];
+    private static readonly EFFECTS: { cls: string, icon: string, tooltip: string }[] = [
+        { cls: "bold", icon: "format_bold", tooltip: "Dikgedrukt" },
+        { cls: "italic", icon: "format_italic", tooltip: "Schuingedrukt" },
+        { cls: "underlined", icon: "format_underlined", tooltip: "Onderstreept" },
+        { cls: "strikethrough", icon: "format_strikethrough", tooltip: "Doorgestreept" },
+    ];
 
     public toolbar!: HTMLDivElement;
     public fsButton!: HTMLElement;
@@ -41,6 +63,7 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
         this.classList.add("in-section-padding");
 
         let fontFolder: FolderElement;
+        let textTypeFolder: FolderElement;
 
         this.toolbar = this.appendChild(
             ElementFactory.div(undefined, "toolbar", "flex-columns", "main-axis-space-around", "flex-wrap", "in-section-gap")
@@ -52,24 +75,32 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
                         ),
                     ElementFactory.div(undefined, "category", "center-content", "in-section-gap")
                         .children(
-                            ElementFactory.folderElement("down", 250, false)
+                            textTypeFolder = ElementFactory.folderElement("down", 250, false)
+                                .attr("applies-style")
                                 .heading(
                                     ElementFactory.p("Tekst")
                                         .class("no-margin")
+                                        .onMake(self => document.addEventListener("selectionchange", () => {
+                                            const selected = Array.from(textTypeFolder.contents.children).find(c => c.hasAttribute("selected"));
+                                            if (selected instanceof HTMLElement) self.textContent = selected.textContent;
+                                        }))
                                 )
                                 .children(
-                                    ElementFactory.p("Tekst")
-                                        .class("no-margin", "click-action"),
-                                    ElementFactory.h1("Titel")
-                                        .class("title", "no-margin", "click-action"),
-                                    ElementFactory.h1("Kop 1")
-                                        .class("no-margin", "click-action"),
-                                    ElementFactory.h2("Kop 2")
-                                        .class("no-margin", "click-action"),
-                                    ElementFactory.h3("Kop 3")
-                                        .class("no-margin", "click-action"),
-                                ),
+                                    ...WYSIWYGEditor.TEXT_TYPES.map(({ name, tagName, cls, createPreviewAsmLine }) => createPreviewAsmLine()
+                                        .text(name)
+                                        .class("no-margin", "click-action")
+                                        .on("click", (ev, self) => {
+                                            ev.preventDefault();
+                                            this.body.focus();
+                                            self.toggleAttribute("selected", this.toggleStyle(cls, {}, "text-type", tagName));
+                                        })
+                                        .onMake(self => // apply selected
+                                            document.addEventListener("selectionchange", () => self.toggleAttribute("selected", this.isInStyle(cls, {}, tagName)))
+                                        ))
+                                )
+                                .make(),
                             fontFolder = ElementFactory.folderElement("down", 250, false)
+                                .attr("applies-style")
                                 .heading(
                                     ElementFactory.p("Standaard")
                                         .class("no-margin")
@@ -88,6 +119,7 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
                                         .style({ fontFamily: "var(--std-font)" })
                                         .on("click", (ev, self) => {
                                             ev.preventDefault();
+                                            this.body.focus();
                                             self.toggleAttribute("selected", this.toggleStyle([], { fontFamily: "var(--std-font)" }, "font-family"));
                                         })
                                         .onMake(self => // apply selected
@@ -98,32 +130,17 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
                                                 self.toggleAttribute("selected", isInDefaultFontElement || !isInFontElement);
                                             })
                                         ),
-                                    ElementFactory.p("Serif")
+                                    ...WYSIWYGEditor.FONTS.map(({ name, family }) => ElementFactory.p(name)
                                         .class("no-margin", "click-action")
-                                        .style({ fontFamily: "serif" })
+                                        .style({ fontFamily: family })
                                         .on("click", (ev, self) => {
                                             ev.preventDefault();
-                                            self.toggleAttribute("selected", this.toggleStyle([], { fontFamily: "serif" }, "font-family"));
+                                            this.body.focus();
+                                            self.toggleAttribute("selected", this.toggleStyle([], { fontFamily: family }, "font-family"));
                                         })
                                         .onMake(self => // apply selected
-                                            document.addEventListener("selectionchange", () => self.toggleAttribute("selected", this.isInStyle([], { fontFamily: "serif" })))
-                                        ),
-                                    ElementFactory.p("Sans-serif")
-                                        .class("no-margin", "click-action")
-                                        .style({ fontFamily: "sans-serif" })
-                                        .on("click", (ev, self) => {
-                                            ev.preventDefault();
-                                            self.toggleAttribute("selected", this.toggleStyle([], { fontFamily: "sans-serif" }, "font-family"));
-                                        })
-                                        .onMake(self => // apply selected
-                                            document.addEventListener("selectionchange", () => self.toggleAttribute("selected", this.isInStyle([], { fontFamily: "sans-serif" })))
-                                        ),
-                                    ElementFactory.p("Handschrift")
-                                        .class("no-margin", "click-action")
-                                        .style({ fontFamily: "cursive" }),
-                                    ElementFactory.p("Cool")
-                                        .class("no-margin", "click-action")
-                                        .style({ fontFamily: "fantasy" }),
+                                            document.addEventListener("selectionchange", () => self.toggleAttribute("selected", this.isInStyle([], { fontFamily: family })))
+                                        ))
                                 )
                                 .make(),
                         ),
@@ -138,46 +155,18 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
                         ),
                     ElementFactory.div(undefined, "category")
                         .children(
-                            ElementFactory.iconButton("format_bold", () => { }, "Dikgedrukt") // apply bold
-                                .attr("applies-style")
-                                .attr("can-unselect")
-                                .on("click", (ev, self) => {
-                                    ev.preventDefault();
-                                    self.toggleAttribute("selected", this.toggleStyle("bold"));
-                                })
-                                .onMake(self => // apply selected
-                                    document.addEventListener("selectionchange", () => self.toggleAttribute("selected", this.isInStyle("bold")))
-                                ),
-                            ElementFactory.iconButton("format_italic", () => { }, "Schuingedrukt") // apply italic
-                                .attr("applies-style")
-                                .attr("can-unselect")
-                                .on("click", (ev, self) => {
-                                    ev.preventDefault();
-                                    self.toggleAttribute("selected", this.toggleStyle("italic"));
-                                })
-                                .onMake(self => // apply selected
-                                    document.addEventListener("selectionchange", () => self.toggleAttribute("selected", this.isInStyle("italic")))
-                                ),
-                            ElementFactory.iconButton("format_underlined", () => { }, "Onderstreept") // apply underline
-                                .attr("applies-style")
-                                .attr("can-unselect")
-                                .on("click", (ev, self) => {
-                                    ev.preventDefault();
-                                    self.toggleAttribute("selected", this.toggleStyle("underlined"));
-                                })
-                                .onMake(self => // apply selected
-                                    document.addEventListener("selectionchange", () => self.toggleAttribute("selected", this.isInStyle("underlined")))
-                                ),
-                            ElementFactory.iconButton("format_strikethrough", () => { }, "Doorgestreept") // apply strikethrough
-                                .attr("applies-style")
-                                .attr("can-unselect")
-                                .on("click", (ev, self) => {
-                                    ev.preventDefault();
-                                    self.toggleAttribute("selected", this.toggleStyle("strikethrough"));
-                                })
-                                .onMake(self => // apply selected
-                                    document.addEventListener("selectionchange", () => self.toggleAttribute("selected", this.isInStyle("strikethrough")))
-                                ),
+                            ...WYSIWYGEditor.EFFECTS.map(({ cls, icon, tooltip }) =>
+                                ElementFactory.iconButton(icon, () => { }, tooltip)
+                                    .attr("applies-style")
+                                    .attr("can-unselect")
+                                    .on("click", (ev, self) => {
+                                        ev.preventDefault();
+                                        self.toggleAttribute("selected", this.toggleStyle(cls));
+                                    })
+                                    .onMake(self => // apply selected
+                                        document.addEventListener("selectionchange", () => self.toggleAttribute("selected", this.isInStyle(cls)))
+                                    )
+                            )
                         ),
                     ElementFactory.div(undefined, "category")
                         .children(
@@ -232,6 +221,7 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
 
         const applyTBHeight = () => this.style.setProperty("--toolbar-height", this.toolbar.getBoundingClientRect().height + "px");
         window.addEventListener("resize", applyTBHeight);
+        new ResizeObserver(applyTBHeight).observe(this.toolbar);
         setTimeout(applyTBHeight, 100); // TODO: fix race condition!
 
         document.addEventListener("selectionchange", () => {
@@ -362,7 +352,7 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
         if (group !== undefined) {
             const styleGroupElement = this.findStyleGroupElement(group, selection);
             if (styleGroupElement) { // un-apply same group style first
-                this.toggleStyle(Array.from(styleGroupElement.classList), styleGroupElement.style, undefined, styleGroupElement.tagName, selection);                
+                this.toggleStyle(Array.from(styleGroupElement.classList), styleGroupElement.style, undefined, styleGroupElement.tagName, selection);
             }
         }
 
