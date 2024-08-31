@@ -34,7 +34,7 @@ export namespace DetailLevel {
     }
 }
 
-export interface toStringable { toString():string }
+export interface ToStringable { toString():string }
 
 /**
  * Type to be implemented by custom element types which have distinct sections.

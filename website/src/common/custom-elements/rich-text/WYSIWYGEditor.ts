@@ -9,7 +9,7 @@ const EMPTY_CHAR = '‎';
 
 class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsButton" | "body"> {
 
-    private static readonly TEXT_TYPES: { name: string, tagName: string, cls?: string, createPreviewAsmLine():AssemblyLine<any> }[] = [
+    private static readonly TEXT_TYPES: { name: string, tagName: string, cls?: string, createPreviewAsmLine(): AssemblyLine<any> }[] = [
         { name: "Tekst", tagName: 'p', createPreviewAsmLine: () => ElementFactory.p() },
         { name: "Titel", tagName: 'h1', cls: "title", createPreviewAsmLine: () => ElementFactory.h1().class("title") },
         { name: "Kop 1", tagName: 'h1', createPreviewAsmLine: () => ElementFactory.h1() },
@@ -64,6 +64,20 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
 
         let fontFolder: FolderElement;
         let textTypeFolder: FolderElement;
+
+        const getFontSize = () => {
+            const selection = document.getSelection();
+            if (selection?.rangeCount) {
+                const range = selection.getRangeAt(0);
+                const commonAncestor = range.commonAncestorContainer;
+                if (this.body.contains(commonAncestor)) {
+                    const elem = commonAncestor instanceof HTMLElement ? commonAncestor : commonAncestor.parentElement!;
+                    return Number.parseFloat(getComputedStyle(elem).fontSize.slice(0, -2));
+                }
+                else return NaN;
+            }
+            return NaN;
+        }
 
         this.toolbar = this.appendChild(
             ElementFactory.div(undefined, "toolbar", "flex-columns", "main-axis-space-around", "flex-wrap", "in-section-gap")
@@ -146,12 +160,22 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
                         ),
                     ElementFactory.div(undefined, "category", "center-content", "in-section-gap")
                         .children(
-                            ElementFactory.iconButton("remove", () => { }, "Kleinere tekstgrootte"),
-                            ElementFactory.input.number(11, 1, 72, 1)
-                                .class("text-center")
-                                .attr("hide-controls")
-                                .style({ width: "3rem" }),
-                            ElementFactory.iconButton("add", () => { }, "Grotere tekstgrootte"),
+                            ElementFactory.iconButton("remove", () => this.toggleStyle([], { fontSize: `${getFontSize() - 1}px` }, "font-size"), "Kleinere tekstgrootte")
+                                .onMake(self => {
+                                    document.addEventListener("selectionchange", () => self.toggleAttribute("disabled", isNaN(getFontSize())));
+                                }),
+                            ElementFactory.p(16)
+                                .class("text-center", "no-margin")
+                                .onMake(self =>
+                                    document.addEventListener("selectionchange", () => {
+                                        const fontSize = getFontSize();
+                                        if (!isNaN(fontSize)) self.textContent = fontSize.toString();
+                                    })
+                                ),
+                            ElementFactory.iconButton("add", () => this.toggleStyle([], { fontSize: `${getFontSize() + 1}px` }, "font-size"), "Grotere tekstgrootte")
+                                .onMake(self => {
+                                    document.addEventListener("selectionchange", () => self.toggleAttribute("disabled", isNaN(getFontSize())));
+                                }),
                         ),
                     ElementFactory.div(undefined, "category")
                         .children(

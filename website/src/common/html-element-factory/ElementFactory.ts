@@ -8,6 +8,7 @@ import ColorUtil from "../util/ColorUtil";
 import IconSelectorAssemblyLine from "./IconSelectorAssemblyLine";
 import Switch from "../custom-elements/Switch";
 import SwitchAssemblyLine from "./SwitchAssemblyLine";
+import { ToStringable } from "../util/UtilTypes";
 
 /**
  * The ElementFactory helper-class provides static methods that allow
@@ -58,9 +59,9 @@ export default abstract class ElementFactory {
         return text ? out.text(text) : out;
     }
 
-    public static p(text?:string) {
+    public static p(text?:ToStringable) {
         const out = new AssemblyLine('p');
-        return text ? out.text(text) : out;
+        return text === undefined ? out : out.text(text.toString());
     }
     public static richText(richText:string) {
         return ElementFactory.div().class("rich-text").children(...RichTextSerializer.deserialize(richText));
