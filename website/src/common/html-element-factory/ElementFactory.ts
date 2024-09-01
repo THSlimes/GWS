@@ -203,7 +203,9 @@ export default abstract class ElementFactory {
             .class("icon", "icon-button", "click-action", "no-margin")
             .tooltip(tooltip ? tooltip : null)
             .noFocus()
-            .on("click", onClick)
+            .on("click", (ev, self) => {
+                if (!self.hasAttribute("disabled")) onClick(ev, self);
+            })
     }
 
     public static textarea(text?:string) {
@@ -243,7 +245,7 @@ export default abstract class ElementFactory {
     }
 
     public static ol() {
-        return AssemblyLine.specific("ul", [], () => document.createElement("ol"));
+        return AssemblyLine.specific("ol", [], () => document.createElement("ol"));
     }
 
     public static li(text?:string) {

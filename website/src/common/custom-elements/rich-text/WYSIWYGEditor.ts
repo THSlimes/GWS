@@ -19,7 +19,7 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
     private static readonly FONTS: { name: string, family: string }[] = [
         { name: "Times New Roman", family: `"Times New Roman", Times, serif` },
         { name: "Arial", family: "Arial, Helvetica, sans-serif" },
-        // { name: "Handschrift", family: "cursive" },
+        { name: "Comic Sans", family: "cursive" },
         { name: "Impact", family: `Impact, Haettenschweiler, "Arial Narrow Bold", fantasy` },
         { name: "Courier New", family: `"Courier New", Courier, monospace` }
     ];
@@ -224,8 +224,10 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
                                     ElementFactory.input.button("1.5"),
                                     ElementFactory.input.button("Dubbel"),
                                 ),
-                            ElementFactory.iconButton("format_list_bulleted", () => { }, "Nieuwe lijst"),
-                            ElementFactory.iconButton("format_list_numbered", () => { }, "Nieuwe genummerde lijst"),
+                            ElementFactory.iconButton("format_list_bulleted", () => this.insertNode(this.makeList("ul")), "Nieuwe lijst")
+                                .onMake(self => document.addEventListener("selectionchange", () => self.toggleAttribute("disabled", !this.canApply()))),
+                            ElementFactory.iconButton("format_list_numbered", () => this.insertNode(this.makeList("ol")), "Nieuwe genummerde lijst")
+                                .onMake(self => document.addEventListener("selectionchange", () => self.toggleAttribute("disabled", !this.canApply()))),
                         )
                 )
                 .make()
@@ -240,6 +242,7 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
                         this.insertNode(document.createElement("br"));
                     }
                 })
+                .on("input", () => this.normalizeBody())
                 .make()
         );
 
@@ -254,6 +257,7 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
             const canApply = this.canApply(selection); // reflect intractability
             this.querySelectorAll("*[applies-style]").forEach(e => e.toggleAttribute("disabled", !canApply));
         });
+        document.dispatchEvent(new Event("selectionchange"));
     }
 
     private canApply(selection = document.getSelection()): boolean {
@@ -298,12 +302,11 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
             return null; // no style element in group found
         }
     }
-
     private isInStyleGroup(group: string, selection = document.getSelection()): boolean {
         return this.findStyleGroupElement(group, selection) !== null;
     }
 
-    private makeTemporaryTextNode(): Text {
+    private makeTemporaryTextNode(doSelect = true): Text {
         const out = document.createTextNode(EMPTY_CHAR);
 
         const checkTextNode = () => {
@@ -324,7 +327,83 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
         }
         document.addEventListener("selectionchange", selectionChangeCB);
 
+        if (doSelect) NodeUtil.whenInsertedIn(out, this.body)
+            .then(() => {
+                const range = document.getSelection()?.getRangeAt(0);
+                range?.selectNode(out);
+                range?.collapse();
+            });
+
         return out;
+    }
+
+    private makeList(type: "ul" | "ol"): HTMLUListElement | HTMLOListElement {
+        const itemAsmLine = ElementFactory.li()
+            .children(() => this.makeTemporaryTextNode());
+
+        return ElementFactory[type]()
+            .children(itemAsmLine)
+            .onMake(list => {
+                const keydownCB: (ev: KeyboardEvent) => void = ev => {
+                    const range = document.getSelection()?.getRangeAt(0);
+
+                    if (range && list.contains(range.commonAncestorContainer)) {
+                        const listItem = NodeUtil.getAncestors(range.commonAncestorContainer, true).find(anc => anc instanceof HTMLLIElement) as HTMLLIElement | undefined;
+                        if (listItem) {
+                            if ((!listItem.textContent || listItem.textContent === EMPTY_CHAR)) { // if list item is empty
+                                if (["Backspace", "Enter"].includes(ev.key)) { // remove empty item
+                                    if (listItem.previousElementSibling && listItem.nextElementSibling) { // is in middle of list
+                                        list.after( // put following items into new list
+                                            document.createElement("br"),
+                                            ElementFactory[type]()
+                                                .children(
+                                                    ...Array.from(list.children)
+                                                        .filter(c => listItem.compareDocumentPosition(c) === Node.DOCUMENT_POSITION_FOLLOWING)
+                                                )
+                                                .make()
+                                        );
+                                    }
+                                    else if (listItem.previousElementSibling) { // is last child
+                                        const br = document.createElement("br");
+                                        list.after(br);
+                                        range.selectNode(br);
+                                        range.collapse();
+                                    }
+                                    else if (listItem.nextElementSibling) { // is first child
+                                        const br = document.createElement("br");
+                                        list.before(br);
+                                        range.selectNode(br);
+                                        range.collapse();
+                                    }
+                                    else { // is only child
+                                        list.remove(); // remove entire list
+                                        this.body.removeEventListener("keydown", keydownCB);
+                                    }
+
+                                    listItem.remove(); // remove regardless
+                                }
+                            }
+                            else if (ev.key === "Enter" && !ev.shiftKey) { // create new entry
+                                range.deleteContents();
+                                const temp = document.createElement("div");
+                                range.insertNode(temp);
+
+                                const newItem = itemAsmLine.make();
+                                listItem.after(newItem);
+                                newItem.append(
+                                    ...Array.from(listItem.childNodes)
+                                        .filter(c => temp.compareDocumentPosition(c) === Node.DOCUMENT_POSITION_FOLLOWING)
+                                );
+
+                                temp.remove();
+                                this.body.addEventListener("keyup", () => listItem.lastElementChild?.remove());
+                            }
+                        }
+                    }
+                };
+                document.addEventListener("keydown", keydownCB);
+            })
+            .make();
     }
 
 
@@ -347,10 +426,13 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
 
             // combine same adjacent style elements
             NodeUtil.onEach(this.body, n => {
-                if (WYSIWYGEditor.isStyleElement(n)) {
+                if (n instanceof HTMLElement && n.previousSibling instanceof HTMLElement) {
                     const combineWithPrevSibling = n.previousSibling !== null
-                        && WYSIWYGEditor.isStyleElement(n.previousSibling)
-                        && WYSIWYGEditor.areSameStyle(n, n.previousSibling);
+                    && (
+                        WYSIWYGEditor.areSameStyle(n, n.previousSibling) // are same style element
+                        || (n.tagName === "UL" && n.previousSibling.tagName === "UL") // are both unordered lists
+                        || (n.tagName === "OL" && n.previousSibling.tagName === "OL") // are both ordered lists
+                    );
                     if (combineWithPrevSibling) {
                         n.prepend(...Array.from(n.previousSibling.childNodes));
                         n.previousSibling.remove();
@@ -388,8 +470,6 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
             if (range.collapsed) { // insert new style element
                 range.insertNode(styleElem);
                 const temp = styleElem.appendChild(this.makeTemporaryTextNode());
-                range.selectNode(temp);
-                range.collapse();
 
                 const selectionChangeCB = () => {
                     const selection = document.getSelection();
@@ -453,8 +533,6 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
             else { // empty selection, insert temp text node
                 const temp = this.makeTemporaryTextNode();
                 selectionRoot.replaceWith(temp);
-                range.selectNode(temp);
-                range.collapse();
             }
 
             out = false;
@@ -518,7 +596,7 @@ namespace WYSIWYGEditor {
     }
 
     export function areSameStyle(a: HTMLElement, b: HTMLElement): boolean {
-        return isStyle(a, Array.from(b.classList), b.style, b.tagName);
+        return isStyleElement(a) && isStyle(b, Array.from(a.classList), a.style, a.tagName);
     }
 
     export function areInSameGroup(a: HTMLElement, b: HTMLElement): boolean {
