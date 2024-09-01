@@ -1,0 +1,22 @@
+color-picker {
+    padding: var(--in-section-gap);
+    gap: calc(var(--in-section-gap) / 2);
+
+    background-color: var(--primary);
+
+    outline: var(--std-border);
+    border-radius: var(--in-section-gap);
+
+    > div {
+        gap: calc(var(--in-section-gap) / 2);
+
+        > .bulb {
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 2rem;
+    
+            &[selected] { outline: 2px solid var(--accent); }
+        }
+    }
+
+}

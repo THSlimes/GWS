@@ -3,6 +3,7 @@ import ElementFactory from "../../html-element-factory/ElementFactory";
 import NodeUtil from "../../util/NodeUtil";
 import StyleUtil from "../../util/StyleUtil";
 import { HasSections } from "../../util/UtilTypes";
+import ColorPicker from "../ColorPicker";
 import FolderElement from "../FolderElement";
 
 const EMPTY_CHAR = '‎';
@@ -177,7 +178,7 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
                                     document.addEventListener("selectionchange", () => self.toggleAttribute("disabled", isNaN(getFontSize())));
                                 }),
                         ),
-                    ElementFactory.div(undefined, "category")
+                    ElementFactory.div(undefined, "category", "center-content")
                         .children(
                             ...WYSIWYGEditor.EFFECTS.map(({ cls, icon, tooltip }) =>
                                 ElementFactory.iconButton(icon, () => { }, tooltip)
@@ -190,7 +191,17 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
                                     .onMake(self => // apply selected
                                         document.addEventListener("selectionchange", () => self.toggleAttribute("selected", this.isInStyle(cls)))
                                     )
-                            )
+                            ),
+                            ElementFactory.folderElement("down", 250, false)
+                                .attr("applies-style")
+                                .tooltip("Tekstkleur")
+                                .heading(
+                                    ElementFactory.p("format_color_text").class("icon", "no-margin")
+                                )
+                                .children(
+                                    new ColorPicker()
+                                )
+                                .make()
                         ),
                     ElementFactory.div(undefined, "category")
                         .children(
@@ -428,11 +439,11 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
             NodeUtil.onEach(this.body, n => {
                 if (n instanceof HTMLElement && n.previousSibling instanceof HTMLElement) {
                     const combineWithPrevSibling = n.previousSibling !== null
-                    && (
-                        WYSIWYGEditor.areSameStyle(n, n.previousSibling) // are same style element
-                        || (n.tagName === "UL" && n.previousSibling.tagName === "UL") // are both unordered lists
-                        || (n.tagName === "OL" && n.previousSibling.tagName === "OL") // are both ordered lists
-                    );
+                        && (
+                            WYSIWYGEditor.areSameStyle(n, n.previousSibling) // are same style element
+                            || (n.tagName === "UL" && n.previousSibling.tagName === "UL") // are both unordered lists
+                            || (n.tagName === "OL" && n.previousSibling.tagName === "OL") // are both ordered lists
+                        );
                     if (combineWithPrevSibling) {
                         n.prepend(...Array.from(n.previousSibling.childNodes));
                         n.previousSibling.remove();

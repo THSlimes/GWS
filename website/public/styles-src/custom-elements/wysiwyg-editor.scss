@@ -1,4 +1,5 @@
 @import url("./folder-element.css");
+@import url("./color-picker.css");
 @import url("../rich-text.css");
 
 wysiwyg-editor {
@@ -32,6 +33,10 @@ wysiwyg-editor {
             width: max-content;
             background-color: var(--primary);
             border-radius: var(--in-section-gap);
+
+            > folder-element {
+                width: min-content;
+            }
         }
 
     }
