@@ -9,7 +9,7 @@ export default class ColorPicker extends HTMLElement implements HasValue<ColorUt
 
     get value(): `#${string}` {
         const selectedBulb = this.querySelector(".bulb[selected]");
-        
+
         return selectedBulb instanceof HTMLElement ? selectedBulb.style.backgroundColor as ColorUtil.HexColor : "#";
     }
     set value(newVal: `#${string}`) {
@@ -18,7 +18,6 @@ export default class ColorPicker extends HTMLElement implements HasValue<ColorUt
                 if (b instanceof HTMLElement) b.toggleAttribute("selected", b.getAttribute("value")?.toLowerCase() === newVal.toLowerCase());
             });
 
-            this.dispatchEvent(new Event("input"));
             this.dispatchEvent(new Event("change"));
         }
     }
@@ -38,7 +37,10 @@ export default class ColorPicker extends HTMLElement implements HasValue<ColorUt
             const bulbLine = ElementFactory.div(undefined, "bulb", "click-action")
                 .attr("can-unselect")
                 .on("click", (_, self) => {
-                    if (!this.hasAttribute("disabled")) this.value = self.getAttribute("value") as ColorUtil.HexColor
+                    if (!this.hasAttribute("disabled") && !this.hasAttribute("selected")) {
+                        this.value = self.getAttribute("value") as ColorUtil.HexColor;
+                        this.dispatchEvent(new Event("input"));
+                    }
                 });
 
             this.append(
