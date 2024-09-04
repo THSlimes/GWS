@@ -1,5 +1,6 @@
 import AssemblyLine from "../../html-element-factory/AssemblyLine";
 import ElementFactory from "../../html-element-factory/ElementFactory";
+import ColorUtil from "../../util/ColorUtil";
 import NodeUtil from "../../util/NodeUtil";
 import StyleUtil from "../../util/StyleUtil";
 import { HasSections } from "../../util/UtilTypes";
@@ -65,6 +66,9 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
 
         let fontFolder: FolderElement;
         let textTypeFolder: FolderElement;
+
+        let textColorFolder: FolderElement;
+        let textBackgroundFolder: FolderElement;
 
         const getFontSize = () => {
             const selection = document.getSelection();
@@ -181,25 +185,63 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
                     ElementFactory.div(undefined, "category", "center-content")
                         .children(
                             ...WYSIWYGEditor.EFFECTS.map(({ cls, icon, tooltip }) =>
-                                ElementFactory.iconButton(icon, () => { }, tooltip)
+                                ElementFactory.iconButton(icon, (ev, self) => {
+                                    ev.preventDefault();
+                                    self.toggleAttribute("selected", this.toggleStyle(cls));
+                                }, tooltip)
                                     .attr("applies-style")
                                     .attr("can-unselect")
-                                    .on("click", (ev, self) => {
-                                        ev.preventDefault();
-                                        self.toggleAttribute("selected", this.toggleStyle(cls));
-                                    })
                                     .onMake(self => // apply selected
                                         document.addEventListener("selectionchange", () => self.toggleAttribute("selected", this.isInStyle(cls)))
                                     )
                             ),
-                            ElementFactory.folderElement("down", 250, false)
+                            textColorFolder = ElementFactory.folderElement("down", 250, false)
                                 .attr("applies-style")
                                 .tooltip("Tekstkleur")
                                 .heading(
-                                    ElementFactory.p("format_color_text").class("icon", "no-margin")
+                                    ElementFactory.p("format_color_text")
+                                        .class("icon", "no-margin")
+                                        .style({ textShadow: "0px 0px 1.5px var(--tertiary)" })
                                 )
                                 .children(
-                                    new ColorPicker()
+                                    ElementFactory.colorPicker("#000000")
+                                        .on("input", (_, self) => {
+                                            textColorFolder.close();
+                                            this.body.focus();
+                                            this.toggleStyle([], { color: self.value }, "text-color");
+                                        })
+                                        .on("mousedown", ev => ev.preventDefault())
+                                        .onMake(self => document.addEventListener("selectionchange", () => {
+                                            const colorGroupElement = this.findStyleGroupElement("text-color");
+                                            const selectedColor = ColorUtil.toHex((colorGroupElement?.style.color ?? "#000000") as ColorUtil.Color);;
+
+                                            textColorFolder.heading.style.color = self.value = selectedColor;
+                                        }))
+                                )
+                                .make(),
+
+                            textBackgroundFolder = ElementFactory.folderElement("down", 250, false)
+                                .attr("applies-style")
+                                .tooltip("Tekstkleur")
+                                .heading(
+                                    ElementFactory.p("format_ink_highlighter")
+                                        .class("icon", "no-margin")
+                                        .style({ textShadow: "0px 0px 1.5px var(--tertiary)" })
+                                )
+                                .children(
+                                    ElementFactory.colorPicker("#000000")
+                                        .on("input", (_, self) => {
+                                            textBackgroundFolder.close();
+                                            this.body.focus();
+                                            this.toggleStyle([], { backgroundColor: self.value }, "text-background");
+                                        })
+                                        .on("mousedown", ev => ev.preventDefault())
+                                        .onMake(self => document.addEventListener("selectionchange", () => {
+                                            const colorGroupElement = this.findStyleGroupElement("text-background");
+                                            const selectedColor = ColorUtil.toHex((colorGroupElement?.style.backgroundColor ?? "#000000") as ColorUtil.Color);;
+
+                                            textBackgroundFolder.heading.style.color = self.value = selectedColor;
+                                        }))
                                 )
                                 .make()
                         ),

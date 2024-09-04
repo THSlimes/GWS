@@ -15,7 +15,10 @@ color-picker {
             height: 1.5rem;
             border-radius: 2rem;
     
-            &[selected] { outline: 2px solid var(--accent); }
+            &[selected] {
+                outline: 2px solid var(--accent);
+                scale: 1.125;
+            }
         }
     }
 

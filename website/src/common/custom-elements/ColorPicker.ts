@@ -36,7 +36,8 @@ export default class ColorPicker extends HTMLElement implements HasValue<ColorUt
 
             const bulbLine = ElementFactory.div(undefined, "bulb", "click-action")
                 .attr("can-unselect")
-                .on("click", (_, self) => {
+                .on("click", (ev, self) => {
+                    ev.preventDefault();
                     if (!this.hasAttribute("disabled") && !this.hasAttribute("selected")) {
                         this.value = self.getAttribute("value") as ColorUtil.HexColor;
                         this.dispatchEvent(new Event("input"));
