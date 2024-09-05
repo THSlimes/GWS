@@ -31,6 +31,12 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
         { cls: "underlined", icon: "format_underlined", tooltip: "Onderstreept" },
         { cls: "strikethrough", icon: "format_strikethrough", tooltip: "Doorgestreept" },
     ];
+    private static readonly LINE_HEIGHTS: { value: number, name?: string }[] = [
+        { value: 1, name: "Enkel" },
+        { value: 1.15 },
+        { value: 1.5 },
+        { value: 2, name: "Dubbel" }
+    ];
 
     public toolbar!: HTMLDivElement;
     public fsButton!: HTMLElement;
@@ -71,6 +77,7 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
         let textBackgroundFolder: FolderElement;
 
         let textAlignFolder: FolderElement;
+        let lineHeightFolder: FolderElement;
 
         const getFontSize = () => {
             const selection = document.getSelection();
@@ -291,18 +298,31 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
                                         .attr("value", "justify"),
                                 )
                                 .make(),
-                            ElementFactory.folderElement("down", 250, false)
+                            lineHeightFolder = ElementFactory.folderElement("down", 250, false)
+                                .attr("applies-style")
                                 .tooltip("Regelafstand")
                                 .heading(
                                     ElementFactory.p("format_line_spacing")
                                         .class("no-margin", "icon")
                                 )
                                 .children(
-                                    ElementFactory.input.button("Enkel"),
-                                    ElementFactory.input.button("1.15"),
-                                    ElementFactory.input.button("1.5"),
-                                    ElementFactory.input.button("Dubbel"),
-                                ),
+                                    ...WYSIWYGEditor.LINE_HEIGHTS.map(({ value, name }) =>
+                                        ElementFactory.input.button(name ?? value.toString())
+                                        .on("click", ev => {
+                                            this.body.focus();
+                                            this.toggleStyle([], { lineHeight: (value * 1.35).toString() }, "line-height", "div");
+                                            lineHeightFolder.close();
+                                        })
+                                        .onMake(self => document.addEventListener("selectionchange", () => {
+                                            const lineHeightGroupElement = this.findStyleGroupElement("line-height");
+                                            const lineHeight = lineHeightGroupElement?.style.lineHeight ?? 1.35;
+                                            console.log(value * 1.35, lineHeight);
+                                            
+                                            self.toggleAttribute("selected", value * 1.35 == lineHeight);
+                                        }))
+                                    )
+                                )
+                                .make(),
                             ElementFactory.iconButton("format_list_bulleted", () => this.insertNode(this.makeList("ul")), "Nieuwe lijst")
                                 .onMake(self => document.addEventListener("selectionchange", () => self.toggleAttribute("disabled", !this.canApply()))),
                             ElementFactory.iconButton("format_list_numbered", () => this.insertNode(this.makeList("ol")), "Nieuwe genummerde lijst")
@@ -655,8 +675,6 @@ namespace WYSIWYGEditor {
     }
 
     export function cloneStyleElement(elem: HTMLElement) {
-        console.log(elem);
-
         if (!isStyleElement(elem)) throw new Error("element is not a style element");
         else return makeStyleElement(Array.from(elem.classList), elem.style, elem.getAttribute("group") ?? undefined, elem.tagName);
     }

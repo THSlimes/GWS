@@ -380,15 +380,31 @@ button, input[type="button"], .button {
 
     &, & * { user-select: none; }
 
-    &:not(:disabled):not([selected]:not([can-unselect])) {
-        cursor: pointer;
-        transition: background-color 100ms ease-in, color 50ms ease-in;
-
-        &:hover { background-color: var(--hover-bg-color) !important; }
-        &:active { scale: 105%; }
+    &[disabled] {
+        filter: contrast(.5);
     }
-    &:disabled, &[disabled] {
-        filter: contrast(.65);
+
+    &:not([disabled]) {
+
+        &[selected][can-unselect] {
+            cursor: pointer;
+
+            &:hover { background-color: color-mix(in srgb, var(--accent), white 12.5%); }
+            &:active { scale: 105%; }
+        }
+
+        &:not([selected]) {
+            cursor: pointer;
+    
+            transition: background-color 100ms ease-in, color 50ms ease-in;
+            &:hover { background-color: var(--hover-bg-color); }
+            &:active { scale: 105%; }
+        }
+
+    }
+
+    &[selected] {
+        background-color: var(--accent) !important;
     }
 
     > * { margin: 0px; }

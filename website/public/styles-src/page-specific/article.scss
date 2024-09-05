@@ -6,7 +6,7 @@
     gap: var(--in-section-gap);
     
     > * {
-        flex-grow: 1;
+        width: 50%;
         > .article-title { flex-grow: 1; }
     }
 }
