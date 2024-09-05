@@ -70,6 +70,8 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
         let textColorFolder: FolderElement;
         let textBackgroundFolder: FolderElement;
 
+        let textAlignFolder: FolderElement;
+
         const getFontSize = () => {
             const selection = document.getSelection();
             if (selection?.rangeCount) {
@@ -219,7 +221,6 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
                                         }))
                                 )
                                 .make(),
-
                             textBackgroundFolder = ElementFactory.folderElement("down", 250, false)
                                 .attr("applies-style")
                                 .tooltip("Tekstkleur")
@@ -253,18 +254,43 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
                         ),
                     ElementFactory.div(undefined, "category", "center-content", "in-section-gap")
                         .children(
-                            ElementFactory.folderElement("down", 250, false)
+                            textAlignFolder = ElementFactory.folderElement("down", 250, false)
+                                .attr("applies-style")
                                 .tooltip("Tekst uitlijnen")
                                 .heading(
                                     ElementFactory.p("format_align_left")
                                         .class("no-margin", "icon")
+                                        .onMake(self => document.addEventListener("selectionchange", () => {
+                                            const alignGroupElement = this.findStyleGroupElement("text-align");
+                                            const alignment = alignGroupElement?.style.textAlign ?? "left";
+
+                                            self.textContent = `format_align_${alignment}`;
+                                            Array.from(textAlignFolder.contents.children).forEach(c => c.toggleAttribute("selected", c.getAttribute("value") === alignment));
+                                        }))
                                 )
                                 .children(
-                                    ElementFactory.iconButton("format_align_left", () => { }, "Links uitlijnen"),
-                                    ElementFactory.iconButton("format_align_center", () => { }, "Centreren"),
-                                    ElementFactory.iconButton("format_align_right", () => { }, "Rechts uitlijnen"),
-                                    ElementFactory.iconButton("format_align_justify", () => { }, "Gespreid uitlijnen"),
-                                ),
+                                    ElementFactory.iconButton("format_align_left", () => {
+                                        this.toggleStyle([], { textAlign: "left" }, "text-align", "div");
+                                        textAlignFolder.close();
+                                    }, "Links uitlijnen")
+                                        .attr("value", "left"),
+                                    ElementFactory.iconButton("format_align_center", () => {
+                                        this.toggleStyle([], { textAlign: "center" }, "text-align", "div");
+                                        textAlignFolder.close();
+                                    }, "Centreren")
+                                        .attr("value", "center"),
+                                    ElementFactory.iconButton("format_align_right", () => {
+                                        this.toggleStyle([], { textAlign: "right" }, "text-align", "div");
+                                        textAlignFolder.close();
+                                    }, "Rechts uitlijnen")
+                                        .attr("value", "right"),
+                                    ElementFactory.iconButton("format_align_justify", () => {
+                                        this.toggleStyle([], { textAlign: "justify" }, "text-align", "div");
+                                        textAlignFolder.close();
+                                    }, "Gespreid uitlijnen")
+                                        .attr("value", "justify"),
+                                )
+                                .make(),
                             ElementFactory.folderElement("down", 250, false)
                                 .tooltip("Regelafstand")
                                 .heading(
@@ -560,14 +586,14 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
 
                 const beforeContainer = children.slice(0, containerIndex);
                 if (beforeContainer.length !== 0) { // wrap nodes before container in copy
-                    const copy = styleElem.cloneNode(false) as HTMLElement;
+                    const copy = WYSIWYGEditor.cloneStyleElement(styleElem);
                     copy.append(...beforeContainer);
                     container.before(copy);
                 }
 
                 const afterContainer = children.slice(containerIndex + 1);
                 if (afterContainer.length !== 0) { // wrap nodes before container in copy
-                    const copy = styleElem.cloneNode(false) as HTMLElement;
+                    const copy = WYSIWYGEditor.cloneStyleElement(styleElem);
                     copy.append(...afterContainer);
                     container.after(copy);
                 }
@@ -626,6 +652,13 @@ namespace WYSIWYGEditor {
         if (group !== undefined) out.setAttribute("group", group); // apply group
 
         return out;
+    }
+
+    export function cloneStyleElement(elem: HTMLElement) {
+        console.log(elem);
+
+        if (!isStyleElement(elem)) throw new Error("element is not a style element");
+        else return makeStyleElement(Array.from(elem.classList), elem.style, elem.getAttribute("group") ?? undefined, elem.tagName);
     }
 
     export function isStyleElement(n: Node): n is HTMLElement {
