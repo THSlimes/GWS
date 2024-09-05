@@ -1,0 +1,38 @@
+grid-size-input {
+
+    padding: var(--in-section-gap);
+    gap: calc(var(--in-section-gap) / 2);
+
+    background-color: var(--primary);
+
+    outline: var(--std-border);
+    border-radius: var(--in-section-gap);
+
+    >.cells {
+        gap: 4px;
+
+        >.row {
+            gap: 4px;
+
+            >.cell {
+                width: 1rem;
+                height: 1rem;
+
+                background-color: var(--shadow-light);
+
+                outline: 1px solid var(--shadow-dark);
+                border-radius: 1px;
+
+                transition: background-color 100ms ease-in, color 50ms ease-in;
+
+                &[highlighted] {
+                    filter: brightness(.65);
+                }
+            }
+        }
+
+    }
+
+    >.value-display {}
+
+}

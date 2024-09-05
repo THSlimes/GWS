@@ -6,6 +6,7 @@ import StyleUtil from "../../util/StyleUtil";
 import { HasSections } from "../../util/UtilTypes";
 import ColorPicker from "../ColorPicker";
 import FolderElement from "../FolderElement";
+import GridSizeInput from "../GridSizeInput";
 
 const EMPTY_CHAR = '‎';
 
@@ -316,7 +317,6 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
                                         .onMake(self => document.addEventListener("selectionchange", () => {
                                             const lineHeightGroupElement = this.findStyleGroupElement("line-height");
                                             const lineHeight = lineHeightGroupElement?.style.lineHeight ?? 1.35;
-                                            console.log(value * 1.35, lineHeight);
                                             
                                             self.toggleAttribute("selected", value * 1.35 == lineHeight);
                                         }))
@@ -327,6 +327,14 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
                                 .onMake(self => document.addEventListener("selectionchange", () => self.toggleAttribute("disabled", !this.canApply()))),
                             ElementFactory.iconButton("format_list_numbered", () => this.insertNode(this.makeList("ol")), "Nieuwe genummerde lijst")
                                 .onMake(self => document.addEventListener("selectionchange", () => self.toggleAttribute("disabled", !this.canApply()))),
+                            ElementFactory.folderElement("down", 250, false)
+                                .heading(
+                                    ElementFactory.p("table_chart")
+                                        .class("icon", "no-margin")
+                                )
+                                .children(
+                                    new GridSizeInput()
+                                )
                         )
                 )
                 .make()
