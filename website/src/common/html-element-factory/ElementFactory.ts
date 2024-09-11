@@ -6,11 +6,10 @@ import RichTextSerializer from "../custom-elements/rich-text/RichTextSerializer"
 import FolderElement from "../custom-elements/FolderElement";
 import ColorUtil from "../util/ColorUtil";
 import IconSelectorAssemblyLine from "./IconSelectorAssemblyLine";
-import Switch from "../custom-elements/Switch";
 import SwitchAssemblyLine from "./SwitchAssemblyLine";
 import { ToStringable } from "../util/UtilTypes";
-import ColorPicker from "../custom-elements/ColorPicker";
 import ColorPickerAssemblyLine from "./ColorPickerAssemblyLine";
+import GridSizeInputAssemblyLine from "./GridSizeInputAssemblyLine";
 
 /**
  * The ElementFactory helper-class provides static methods that allow
@@ -183,6 +182,9 @@ export default abstract class ElementFactory {
             if (val) out.value(val);
             if (compact !== undefined) out.compact(compact);
             return out;
+        },
+        gridSize() {
+            return new GridSizeInputAssemblyLine();
         }
     };
 
@@ -254,6 +256,20 @@ export default abstract class ElementFactory {
         const out = AssemblyLine.specific("li", [], () => document.createElement("li"));
         if (text) out.text(text);
         return out;
+    }
+
+    public static table(width: number, height: number) {
+        return AssemblyLine.specific("table", [], () => document.createElement("table"))
+            .children(
+                AssemblyLine.specific("tbody", [], () => document.createElement("tbody"))
+                    .children(
+                        ...NumberUtil.range(0, height).map(() =>
+                            AssemblyLine.specific("tr", [], () => document.createElement("tr"))
+                                .children(...NumberUtil.range(0, width).map(() => document.createElement("td")))
+                        )
+
+                    ),
+            );
     }
 
     // custom elements

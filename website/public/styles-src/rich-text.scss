@@ -120,6 +120,30 @@
         }
     }
 
+    & table {
+        outline: var(--std-border);
+        border-radius: var(--in-section-gap);
+
+        > tbody {
+            
+            > tr {
+                
+                > td {
+                    padding: calc(var(--in-section-gap) / 2);
+
+                    min-width: 2rem;
+                    height: 1rem;
+
+                    outline: var(--std-border);
+                }
+
+                &:nth-child(2n - 1) {
+                    background-color: var(--primary);
+                }
+            }
+        }
+    }
+
     & br {
         display: block;
         width: 100%;

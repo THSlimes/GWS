@@ -187,7 +187,7 @@ class AssemblyLine<TN extends string, E extends AssemblyLine.ElementType<TN> = A
      * @param exposedKeys keys of specific properties of the out HTMLElement type
      * @returns AssemblyLine with extra methods to set the properties with the keys from 'exposedKeys'
      */
-    public static specific<TN extends keyof HTMLElementTagNameMap, EKs extends keyof AssemblyLine.ElementType<TN>>(tagName:TN, exposedKeys:EKs[], initElem:()=>AssemblyLine.ElementType<TN>) {
+    public static specific<TN extends keyof HTMLElementTagNameMap, EKs extends keyof AssemblyLine.ElementType<TN>>(tagName:TN, exposedKeys:EKs[]=[], initElem:()=>AssemblyLine.ElementType<TN>) {
         const out = new AssemblyLine(tagName, initElem) as AssemblyLine<TN> & {
             [K in EKs]:(newVal:AssemblyLine.ElementType<TN>[K])=>typeof out;
         };

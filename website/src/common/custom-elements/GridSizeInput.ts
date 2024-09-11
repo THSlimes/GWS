@@ -2,7 +2,7 @@ import ElementFactory from "../html-element-factory/ElementFactory";
 import NumberUtil from "../util/NumberUtil";
 import { HasSections, HasValue } from "../util/UtilTypes";
 
-interface GridSize {
+export interface GridSize {
     width: number,
     height: number
 }
@@ -57,7 +57,7 @@ export default class GridSizeInput extends HTMLElement implements HasSections<"c
                                         ElementFactory.div(undefined, "cell", "click-action")
                                             .attrs({ x, y })
                                             .on("mouseover", (_, self) => this.value = { width: x, height: y })
-                                            .on("click", () => {
+                                            .on("click", ev => {
                                                 this.value = { width: x, height: y };
                                                 this.dispatchEvent(new Event("input"));
                                             })

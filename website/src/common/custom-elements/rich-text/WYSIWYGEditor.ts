@@ -4,11 +4,12 @@ import ColorUtil from "../../util/ColorUtil";
 import NodeUtil from "../../util/NodeUtil";
 import StyleUtil from "../../util/StyleUtil";
 import { HasSections } from "../../util/UtilTypes";
-import ColorPicker from "../ColorPicker";
 import FolderElement from "../FolderElement";
-import GridSizeInput from "../GridSizeInput";
 
 const EMPTY_CHAR = '‎';
+function getRange(selection = document.getSelection()): Range | undefined {
+    return selection?.rangeCount ? selection.getRangeAt(0) : undefined;
+}
 
 class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsButton" | "body"> {
 
@@ -81,9 +82,8 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
         let lineHeightFolder: FolderElement;
 
         const getFontSize = () => {
-            const selection = document.getSelection();
-            if (selection?.rangeCount) {
-                const range = selection.getRangeAt(0);
+            const range = getRange();
+            if (range) {
                 const commonAncestor = range.commonAncestorContainer;
                 if (this.body.contains(commonAncestor)) {
                     const elem = commonAncestor instanceof HTMLElement ? commonAncestor : commonAncestor.parentElement!;
@@ -309,17 +309,17 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
                                 .children(
                                     ...WYSIWYGEditor.LINE_HEIGHTS.map(({ value, name }) =>
                                         ElementFactory.input.button(name ?? value.toString())
-                                        .on("click", ev => {
-                                            this.body.focus();
-                                            this.toggleStyle([], { lineHeight: (value * 1.35).toString() }, "line-height", "div");
-                                            lineHeightFolder.close();
-                                        })
-                                        .onMake(self => document.addEventListener("selectionchange", () => {
-                                            const lineHeightGroupElement = this.findStyleGroupElement("line-height");
-                                            const lineHeight = lineHeightGroupElement?.style.lineHeight ?? 1.35;
-                                            
-                                            self.toggleAttribute("selected", value * 1.35 == lineHeight);
-                                        }))
+                                            .on("click", ev => {
+                                                this.body.focus();
+                                                this.toggleStyle([], { lineHeight: (value * 1.35).toString() }, "line-height", "div");
+                                                lineHeightFolder.close();
+                                            })
+                                            .onMake(self => document.addEventListener("selectionchange", () => {
+                                                const lineHeightGroupElement = this.findStyleGroupElement("line-height");
+                                                const lineHeight = lineHeightGroupElement?.style.lineHeight ?? 1.35;
+
+                                                self.toggleAttribute("selected", value * 1.35 == lineHeight);
+                                            }))
                                     )
                                 )
                                 .make(),
@@ -329,11 +329,16 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
                                 .onMake(self => document.addEventListener("selectionchange", () => self.toggleAttribute("disabled", !this.canApply()))),
                             ElementFactory.folderElement("down", 250, false)
                                 .heading(
-                                    ElementFactory.p("table_chart")
+                                    ElementFactory.p("table")
                                         .class("icon", "no-margin")
                                 )
                                 .children(
-                                    new GridSizeInput()
+                                    ElementFactory.input.gridSize()
+                                        .on("input", (_, self) => {
+                                            this.body.focus();
+                                            const { width, height } = self.value;
+                                            this.insertNode(ElementFactory.table(width, height).make());
+                                        })
                                 )
                         )
                 )
@@ -359,27 +364,23 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
         setTimeout(applyTBHeight, 100); // TODO: fix race condition!
 
         document.addEventListener("selectionchange", () => {
-            const selection = document.getSelection();
-
-            const canApply = this.canApply(selection); // reflect intractability
+            const canApply = this.canApply(); // reflect intractability
             this.querySelectorAll("*[applies-style]").forEach(e => e.toggleAttribute("disabled", !canApply));
         });
         document.dispatchEvent(new Event("selectionchange"));
     }
 
-    private canApply(selection = document.getSelection()): boolean {
-        return selection !== null
-            && this.body.contains(selection.anchorNode)
-            && this.body.contains(selection.focusNode);
+    private canApply(range = getRange()): range is Range {        
+        return range !== undefined
+            && this.body.contains(range.startContainer)
+            && this.body.contains(range.endContainer);
     }
 
-    private findStyleElement(classes: string | string[] = [], style: StyleUtil.StyleMap = {}, tagName: string = "span", selection = document.getSelection()): HTMLElement | null {
+    private findStyleElement(classes: string | string[] = [], style: StyleUtil.StyleMap = {}, tagName: string = "span", range = getRange()): HTMLElement | null {
         if (typeof classes === "string") classes = [classes];
 
-        if (selection === null || selection.rangeCount === 0) return null;
+        if (!range) return null;
         else {
-            const range = selection.getRangeAt(0);
-
             let node: Node | null = range.commonAncestorContainer;
 
             while (this.body.contains(node) && node !== null) {
@@ -390,16 +391,14 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
             return null; // no style element found
         }
     }
-    private isInStyle(classes: string | string[] = [], style: StyleUtil.StyleMap = {}, tagName: string = "span", selection = document.getSelection()): boolean {
-        return this.findStyleElement(classes, style, tagName, selection) !== null;
+    private isInStyle(classes: string | string[] = [], style: StyleUtil.StyleMap = {}, tagName: string = "span", range = getRange()): boolean {
+        return this.findStyleElement(classes, style, tagName, range) !== null;
     }
 
 
-    private findStyleGroupElement(group: string, selection = document.getSelection()): HTMLElement | null {
-        if (!selection?.rangeCount) return null;
+    private findStyleGroupElement(group: string, range = getRange()): HTMLElement | null {
+        if (!range) return null;
         else {
-            const range = selection.getRangeAt(0);
-
             let node: Node | null = range.commonAncestorContainer;
             while (this.body.contains(node) && node !== null) {
                 if (WYSIWYGEditor.isStyleElement(node) && WYSIWYGEditor.isInGroup(node, group)) return node; // style element in group found
@@ -409,8 +408,8 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
             return null; // no style element in group found
         }
     }
-    private isInStyleGroup(group: string, selection = document.getSelection()): boolean {
-        return this.findStyleGroupElement(group, selection) !== null;
+    private isInStyleGroup(group: string, range = getRange()): boolean {
+        return this.findStyleGroupElement(group, range) !== null;
     }
 
     private makeTemporaryTextNode(doSelect = true): Text {
@@ -436,7 +435,7 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
 
         if (doSelect) NodeUtil.whenInsertedIn(out, this.body)
             .then(() => {
-                const range = document.getSelection()?.getRangeAt(0);
+                const range = getRange();
                 range?.selectNode(out);
                 range?.collapse();
             });
@@ -452,7 +451,7 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
             .children(itemAsmLine)
             .onMake(list => {
                 const keydownCB: (ev: KeyboardEvent) => void = ev => {
-                    const range = document.getSelection()?.getRangeAt(0);
+                    const range = getRange();
 
                     if (range && list.contains(range.commonAncestorContainer)) {
                         const listItem = NodeUtil.getAncestors(range.commonAncestorContainer, true).find(anc => anc instanceof HTMLLIElement) as HTMLLIElement | undefined;
@@ -514,6 +513,7 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
     }
 
 
+    private static readonly UNSTYLABLE_ELEMENT_NAMES: (keyof HTMLElementTagNameMap)[] = ["table", "tbody", "thead", "tr", "td"];
     private normalizeBody() {
         let html: string;
         do {
@@ -553,35 +553,35 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
                 if (WYSIWYGEditor.isStyleElement(n) && !n.innerHTML) n.remove();
             });
             this.body.normalize();
+
+            this.body.normalize();
         }
         while (this.body.innerHTML !== html); // apply until inner html doesn't change
     }
 
-    private toggleStyle(classes: string | string[] = [], style: StyleUtil.StyleMap = {}, group?: string, tagName: string = "span", selection = document.getSelection()): boolean {
-        if (!this.canApply(selection)) throw new Error("style elements can't be applied here");
+    private toggleStyle(classes: string | string[] = [], style: StyleUtil.StyleMap = {}, group?: string, tagName: string = "span", range = getRange()): boolean {
+        if (!this.canApply(range)) throw new Error("style elements can't be applied here");
 
-        let styleElem = this.findStyleElement(classes, style, tagName, selection);
+        let styleElem = this.findStyleElement(classes, style, tagName, range);
 
         if (group !== undefined) {
-            const styleGroupElement = this.findStyleGroupElement(group, selection);
+            const styleGroupElement = this.findStyleGroupElement(group, range);
             if (styleGroupElement) { // un-apply same group style first
-                this.toggleStyle(Array.from(styleGroupElement.classList), styleGroupElement.style, undefined, styleGroupElement.tagName, selection);
+                this.toggleStyle(Array.from(styleGroupElement.classList), styleGroupElement.style, undefined, styleGroupElement.tagName, range);
             }
         }
 
         let out: boolean;
         if (styleElem === null) { // apply style
             styleElem = WYSIWYGEditor.makeStyleElement(classes, style, group, tagName);
-            const range = selection!.getRangeAt(0);
 
             if (range.collapsed) { // insert new style element
                 range.insertNode(styleElem);
                 const temp = styleElem.appendChild(this.makeTemporaryTextNode());
 
                 const selectionChangeCB = () => {
-                    const selection = document.getSelection();
-                    if (selection && selection.rangeCount !== 0) {
-                        const range = selection.getRangeAt(0);
+                    const range = getRange();
+                    if (range) {
                         if (!styleElem?.contains(range.commonAncestorContainer) && (temp.textContent === EMPTY_CHAR || temp.textContent?.length === 0)) styleElem?.remove();
                         else document.removeEventListener("selectionchange", selectionChangeCB);
                     }
@@ -589,16 +589,26 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
                 document.addEventListener("selectionchange", selectionChangeCB);
             }
             else { // surround range contents
-                styleElem.append(range.extractContents());
-                range.insertNode(styleElem);
-                range.selectNodeContents(styleElem);
+                const rangeContents = range.extractContents();
+
+                if (rangeContents.querySelector("td")) {
+                    const tableCells = rangeContents.querySelectorAll("td").forEach(tc => {
+                        const tcRange = document.createRange();
+                        tcRange.selectNodeContents(tc);
+                        // this.toggleStyle(classes, style, group, tagName, tcRange);
+                    });
+                    range.insertNode(rangeContents);
+                }
+                else {
+                    styleElem.append(rangeContents);
+                    range.insertNode(styleElem);
+                    range.selectNodeContents(styleElem);
+                }
             }
 
             out = true;
         }
         else { // remove style
-            const range = selection!.getRangeAt(0);
-
             // wrap selection
             const selectionRoot = document.createElement("div");
             selectionRoot.appendChild(range.extractContents());
@@ -653,11 +663,9 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
     }
 
     private insertNode(elem: Node) {
-        const selection = document.getSelection();
-        if (!this.canApply(selection)) throw new Error("elements can't be inserted here");
-        else if (selection?.rangeCount === 0) throw new Error("no range exists to insert in");
+        const range = getRange();
+        if (!this.canApply(range)) throw new Error("elements can't be inserted here");
         else {
-            const range = selection!.getRangeAt(0);
             range.deleteContents();
             range.insertNode(elem);
             range.setEndAfter(elem);
@@ -687,7 +695,7 @@ namespace WYSIWYGEditor {
         else return makeStyleElement(Array.from(elem.classList), elem.style, elem.getAttribute("group") ?? undefined, elem.tagName);
     }
 
-    export function isStyleElement(n: Node): n is HTMLElement {
+    export function isStyleElement(n: Node | null): n is HTMLElement {
         return n instanceof HTMLElement && n.hasAttribute("style-element");
     }
 
