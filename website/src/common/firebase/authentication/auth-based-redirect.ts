@@ -27,7 +27,7 @@ export function redirectIfLoggedIn(url="/", useCachedValue=false):void {
 export function redirectIfLoggedOut(url="/", useCachedValue=false):void {
     if (FIREBASE_AUTH.currentUser === null && (useCachedValue && Cache.get("is-logged-in") !== true)) location.href = url; // redirect now
     else {
-        Loading.markLoadStart(redirectIfLoggedIn);
+        Loading.markLoadStart(redirectIfLoggedOut);
         onAuth()
         .then(user => {
             if (user === null) location.replace(url);

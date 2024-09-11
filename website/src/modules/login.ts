@@ -1,6 +1,6 @@
 import "./header-and-footer";
 
-import { UserCredential, browserLocalPersistence, signInWithEmailAndPassword } from "@firebase/auth";
+import { browserLocalPersistence, signInWithEmailAndPassword } from "@firebase/auth";
 import { FIREBASE_AUTH } from "../common/firebase/init-firebase";
 import getErrorMessage from "../common/firebase/authentication/error-messages";
 import { redirectIfLoggedIn } from "../common/firebase/authentication/auth-based-redirect";

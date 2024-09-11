@@ -55,7 +55,6 @@ export default class SmartArticle extends HTMLElement implements HasSections<"he
         super();
 
         this.article = articleInfo;
-        console.log(articleInfo.body);
         this.lod = lod;
 
         this.initElement();
