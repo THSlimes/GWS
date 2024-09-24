@@ -126,37 +126,39 @@ function makeUserEntry(userEntry: DataView.Entry<UserInfo>, canEdit: boolean, ca
         ElementFactory.h4(joinedAtText) // join date
             .class("joined-at", "center-content")
             .make(),
-        (userEntry.get("member_until").getTime() <= Date.now()) ? // membership status
-            ElementFactory.iconButton( // show button to make user a member
-                "add_card",
-                () => {
-                    userEntry.set("member_until", getMembershipExtensionDate()); // edit membership date
-                    userEntry.set("permissions", [...Permissions.PRESETS.Lid]); // add member permissions
-                    out.replaceWith(makeUserEntry(userEntry, canEdit, canEditPerms));
-                }, "Maak lid")
-                .class("member-until", "text-center")
-                .make() :
-            ElementFactory.div(undefined, "member-until", "flex-columns", "cross-axis-center", "in-section-gap")
-                .children(
-                    ElementFactory.input.date(userEntry.get("member_until"), minTimestamp, maxTimestamp) // membership expiration date
-                        .onValueChanged(val => {
-                            const date = new Date(val);
-                            if (DateUtil.Timestamps.isValid(date)) userEntry.set("member_until", DateUtil.Timestamps.clamp(date, minTimestamp, maxTimestamp));
-                        })
-                        .on("change", (_, self) => {
-                            const date = new Date(self.value);
-                            if (DateUtil.Timestamps.isValid(date)) userEntry.set("member_until", DateUtil.Timestamps.clamp(date, minTimestamp, maxTimestamp));
-                            DateUtil.Timestamps.setInputValue(self, userEntry.get("member_until"));
-                        })
-                        .make(),
-                    ElementFactory.iconButton("more_time", () => { // button to extend membership to next year
-                        const memberUntil = userEntry.get("member_until");
-                        memberUntil.setFullYear(memberUntil.getFullYear() + 1, 9, 1);
-                        userEntry.set("member_until", memberUntil);
-                        out.replaceWith(makeUserEntry(userEntry, canEdit, canEditPerms));
-                    }, "Lidmaatschap verlengen")
-                )
-                .make()
+        ElementFactory.div(undefined, "member-until", "center-content")
+            .children(
+                ElementFactory.input.switch(userEntry.get("member_until") > NOW)
+                    .on("change", (_, self) => {
+                        const newVal = self.value;
+
+                        if (newVal) {
+                            userEntry.set("member_until", new Date(10000, 0, 1));
+
+                            if (canEditPerms) {
+                                userEntry.set( // add member permissions
+                                    "permissions",
+                                    ArrayUtil.union(userEntry.get("permissions"), Permissions.PRESETS.Lid)
+                                );
+                                out.replaceWith(makeUserEntry(userEntry, canEdit, canEditPerms));
+                            }
+                        }
+                        else {
+                            const beforeNow = new Date(NOW);
+                            beforeNow.setMilliseconds(beforeNow.getMilliseconds() - 1);
+                            userEntry.set("member_until", beforeNow);
+
+                            if (canEditPerms) {
+                                userEntry.set( // remove member permissions
+                                    "permissions",
+                                    ArrayUtil.difference(userEntry.get("permissions"), Permissions.PRESETS.Lid)
+                                );
+                                out.replaceWith(makeUserEntry(userEntry, canEdit, canEditPerms));
+                            }
+                        }
+                    })
+            )
+            .make()
     );
     else out.append( // add non-editable versions
         ElementFactory.h4(`${userEntry.get("first_name")} ${userEntry.get("family_name")}`) // name
@@ -165,8 +167,11 @@ function makeUserEntry(userEntry: DataView.Entry<UserInfo>, canEdit: boolean, ca
         ElementFactory.h4(joinedAtText) // join date
             .class("joined-at", "center-content")
             .make(),
-        ElementFactory.h4(DateUtil.DATE_FORMATS.DAY_AND_TIME.SHORT(userEntry.get("member_until"))) // membership status
-            .class("member-until", "center-content")
+        ElementFactory.div(undefined, "member-until", "center-content")
+            .children(
+                ElementFactory.input.switch(userEntry.get("member_until") > NOW)
+                    .attr("disabled")
+            )
             .make()
     );
 

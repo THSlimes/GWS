@@ -347,7 +347,7 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
 
         this.body = this.appendChild(
             ElementFactory.div(undefined, "body", "rich-text", "in-section-padding")
-                .attr("contenteditable")
+                .attr("contenteditable", "plaintext-only")
                 .on("keydown", ev => {
                     if (ev.key === "Enter") {
                         ev.preventDefault();
@@ -370,7 +370,7 @@ class WYSIWYGEditor extends HTMLElement implements HasSections<"toolbar" | "fsBu
         document.dispatchEvent(new Event("selectionchange"));
     }
 
-    private canApply(range = getRange()): range is Range {        
+    private canApply(range = getRange()): range is Range {
         return range !== undefined
             && this.body.contains(range.startContainer)
             && this.body.contains(range.endContainer);
