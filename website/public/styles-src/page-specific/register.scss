@@ -50,7 +50,7 @@ article {
         }
         & ul {
             padding-left: var(--in-section-gap);
-            & input { flex-grow: 1; }
+            & input, & select { flex-grow: 1; }
         }
     }
 }

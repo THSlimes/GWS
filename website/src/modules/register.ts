@@ -21,7 +21,7 @@ import getErrorMessage from "../common/firebase/authentication/error-messages";
 
 // loading associated article
 const ARTICLE_ID = "Inschrijven-Den-Geitenwollen-Soc";
-const DB:ArticleDatabase = new FirestoreArticleDatabase();
+const DB: ArticleDatabase = new FirestoreArticleDatabase();
 Loading.useDynamicContent(DB.getById(ARTICLE_ID), articleInfo => { // load article
     if (!articleInfo) console.error(`article with ID "${ARTICLE_ID}" was now found`);
     else Placeholder.replaceWith("article", new SmartArticle(articleInfo, DetailLevel.FULL));
@@ -36,22 +36,22 @@ Loading.useDynamicContent(MultisourceAttachment.getInfoFromFirebase("openbaar", 
 
 
 interface RegistrationFormData {
-    name: { first_name:string, infix:string, family_name:string },
-    email:string,
-    password: { password:string, confirmation:string },
-    phone_number:string,
-    birth_date:Date|null,
-    study:string,
-    student_number:string,
-    bank_account: { iban:string, bic:string, holder:string }
-    allow_social_media: { public:boolean, private:boolean },
-    receive_news_letter:boolean,
-    add_to_whatsapp:boolean,
-    accept_privacy_statement:boolean,
-    allow_auto_transactions:boolean
+    name: { first_name: string, infix: string, family_name: string },
+    email: string,
+    password: { password: string, confirmation: string },
+    phone_number: string,
+    birth_date: Date | null,
+    study: string,
+    student_number: string,
+    bank_account: { iban: string, bic: string, holder: string }
+    allow_social_media: { public: boolean, private: boolean },
+    receive_news_letter: boolean,
+    add_to_whatsapp: boolean,
+    accept_privacy_statement: boolean,
+    allow_auto_transactions: boolean
 }
 
-let getFormData:()=>RegistrationFormData = () => { throw new Error("function to be implemented after load."); }
+let getFormData: () => RegistrationFormData = () => { throw new Error("function to be implemented after load."); }
 
 const FORM_INPUTS_QUERY = {
     "first-name": HTMLInputElement,
@@ -62,7 +62,7 @@ const FORM_INPUTS_QUERY = {
     "confirm-password": HTMLInputElement,
     "phone-number": HTMLInputElement,
     "birth-date": HTMLInputElement,
-    "study": HTMLInputElement,
+    "study": HTMLSelectElement,
     "student-number": HTMLInputElement,
     "iban": HTMLInputElement,
     "bic": HTMLInputElement,
@@ -75,69 +75,69 @@ const FORM_INPUTS_QUERY = {
     "allow-bank-transactions": Switch
 };
 Loading.onDOMContentLoaded(FORM_INPUTS_QUERY)
-.then(elements => {
-    getFormData = () => {
-        return {
-            name: { first_name: elements["first-name"].value.trim(), infix: elements.infix.value.trim(), family_name: elements["family-name"].value.trim() },
-            email: elements.email.value.trim(),
-            password: { password: elements.password.value.trim(), confirmation: elements["confirm-password"].value.trim() },
-            phone_number: elements["phone-number"].value.trim(),
-            birth_date: elements["birth-date"].valueAsDate,
-            study: elements.study.value.trim(),
-            student_number: elements["student-number"].value.trim(),
-            bank_account: { iban: elements.iban.value.trim(), bic: elements.bic.value.trim(), holder: elements["bank-account-name"].value.trim() },
-            receive_news_letter: elements["receive-news-letter"].value,
-            allow_social_media: { public: elements["allow-public-photos"].value, private: elements["allow-private-photos"].value },
-            add_to_whatsapp: elements["add-to-whatsapp"].value,
-            accept_privacy_statement: elements["accept-privacy-statement"].value,
-            allow_auto_transactions: elements["allow-bank-transactions"].value
-        };
-    }
-});
+    .then(elements => {
+        getFormData = () => {
+            return {
+                name: { first_name: elements["first-name"].value.trim(), infix: elements.infix.value.trim(), family_name: elements["family-name"].value.trim() },
+                email: elements.email.value.trim(),
+                password: { password: elements.password.value.trim(), confirmation: elements["confirm-password"].value.trim() },
+                phone_number: elements["phone-number"].value.trim(),
+                birth_date: elements["birth-date"].valueAsDate,
+                study: elements.study.value.trim(),
+                student_number: elements["student-number"].value.trim(),
+                bank_account: { iban: elements.iban.value.trim(), bic: elements.bic.value.trim(), holder: elements["bank-account-name"].value.trim() },
+                receive_news_letter: elements["receive-news-letter"].value,
+                allow_social_media: { public: elements["allow-public-photos"].value, private: elements["allow-private-photos"].value },
+                add_to_whatsapp: elements["add-to-whatsapp"].value,
+                accept_privacy_statement: elements["accept-privacy-statement"].value,
+                allow_auto_transactions: elements["allow-bank-transactions"].value
+            };
+        }
+    });
 
 interface RegistrationFormDataValidity {
-    name: { first_name:boolean, infix:boolean, family_name:boolean },
-    email:boolean,
+    name: { first_name: boolean, infix: boolean, family_name: boolean },
+    email: boolean,
     password: {
-        is_min_length:boolean,
-        has_capital_letter:boolean,
-        has_number:boolean,
-        has_special_char:boolean,
-        password:boolean,
-        confirmation:boolean
+        is_min_length: boolean,
+        has_capital_letter: boolean,
+        has_number: boolean,
+        has_special_char: boolean,
+        password: boolean,
+        confirmation: boolean
     },
-    phone_number:boolean,
-    birth_date:boolean,
-    study:boolean,
-    student_number:boolean,
-    bank_account: { iban:boolean, bic:boolean, holder:boolean }
-    receive_news_letter:boolean,
-    allow_social_media: { public:boolean, private:boolean },
-    add_to_whatsapp:boolean,
-    accept_privacy_statement:boolean,
-    allow_auto_transactions:boolean
+    phone_number: boolean,
+    birth_date: boolean,
+    study: boolean,
+    student_number: boolean,
+    bank_account: { iban: boolean, bic: boolean, holder: boolean }
+    receive_news_letter: boolean,
+    allow_social_media: { public: boolean, private: boolean },
+    add_to_whatsapp: boolean,
+    accept_privacy_statement: boolean,
+    allow_auto_transactions: boolean
 }
 
-const LEGAL_NAME_REGEX:RegExp = /^[A-Za-zÀ-öø-ȳ\.]+([ \-`'\/,][A-Za-zÀ-öø-ȳ\.]+)*$/;
+const LEGAL_NAME_REGEX: RegExp = /^[A-Za-zÀ-öø-ȳ\.]+([ \-`'\/,][A-Za-zÀ-öø-ȳ\.]+)*$/;
 
 /** @see https://stackoverflow.com/questions/46155/how-can-i-validate-an-email-address-in-javascript */
 const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
 const MAX_BIRTH_DATE = new Date();
-MAX_BIRTH_DATE.setFullYear(MAX_BIRTH_DATE.getFullYear()-18);
+MAX_BIRTH_DATE.setFullYear(MAX_BIRTH_DATE.getFullYear() - 18);
 
 const NUMBER_REGEX = /[0-9]+/;
 
 const BIC_REGEX = /^[A-Z]{4}[A-Z]{2}[0-9A-Z]{2}([0-9A-Z]{3})?$/;
 
 /** Check whether the registration form has been filled in correctly. */
-function getDataValidity(data:RegistrationFormData):{ status:boolean, components:RegistrationFormDataValidity, message:string } {
+function getDataValidity(data: RegistrationFormData): { status: boolean, components: RegistrationFormDataValidity, message: string } {
     const password_is_min_length = data.password.password.length >= 8;
     const password_has_capital_letter = data.password.password.split("").some(c => /[A-ZÀ-öø-ȳ]/.test(c) && c === c.toLocaleUpperCase());
     const password_has_number = /[0-9]/.test(data.password.password);
     const password_has_special_char = !/^[a-zA-Z0-9]*$/.test(data.password.password);
 
-    const components:RegistrationFormDataValidity = {
+    const components: RegistrationFormDataValidity = {
         name: {
             first_name: data.name.first_name.length > 0 && LEGAL_NAME_REGEX.test(data.name.first_name),
             infix: data.name.infix.length === 0 || LEGAL_NAME_REGEX.test(data.name.infix),
@@ -205,179 +205,179 @@ Loading.onDOMContentLoaded({
     "show-password-button": HTMLElement,
     "show-confirm-password-button": HTMLElement
 })
-.then(elements => {
-    // show password buttons
-    elements["show-password-button"].addEventListener("click", () => {
-        elements.password.type = elements["show-password-button"].toggleAttribute("selected") ? "text" : "password";
-    });
-    elements["show-confirm-password-button"].addEventListener("click", () => {
-        elements["confirm-password"].type = elements["show-confirm-password-button"].toggleAttribute("selected") ? "text" : "password";
-    });
+    .then(elements => {
+        // show password buttons
+        elements["show-password-button"].addEventListener("click", () => {
+            elements.password.type = elements["show-password-button"].toggleAttribute("selected") ? "text" : "password";
+        });
+        elements["show-confirm-password-button"].addEventListener("click", () => {
+            elements["confirm-password"].type = elements["show-confirm-password-button"].toggleAttribute("selected") ? "text" : "password";
+        });
 
 
-    // members must be at least 18 years old
-    let max = MAX_BIRTH_DATE.toISOString();
-    max = max.substring(0, max.indexOf('T'));
-    elements["birth-date"].max = max;
-    elements["birth-date"].addEventListener("change", () => {
-        if (elements["birth-date"].valueAsNumber > MAX_BIRTH_DATE.getTime()) {
-            let newValue = MAX_BIRTH_DATE.toISOString();
-            newValue = newValue.substring(0, newValue.indexOf('T'))
-            elements["birth-date"].value = newValue;
-        }
-    });
+        // members must be at least 18 years old
+        let max = MAX_BIRTH_DATE.toISOString();
+        max = max.substring(0, max.indexOf('T'));
+        elements["birth-date"].max = max;
+        elements["birth-date"].addEventListener("change", () => {
+            if (elements["birth-date"].valueAsNumber > MAX_BIRTH_DATE.getTime()) {
+                let newValue = MAX_BIRTH_DATE.toISOString();
+                newValue = newValue.substring(0, newValue.indexOf('T'))
+                elements["birth-date"].value = newValue;
+            }
+        });
 
-    // student numbers must start with an 'S', followed by numbers
-    elements["student-number"].addEventListener("input", () => {
-        const oldValue = elements["student-number"].value;
-        elements["student-number"].value = 'S' + oldValue.split("").filter(c => NUMBER_REGEX.test(c)).join("");
-    });
+        // student numbers must start with an 'S', followed by numbers
+        elements["student-number"].addEventListener("input", () => {
+            const oldValue = elements["student-number"].value;
+            elements["student-number"].value = 'S' + oldValue.split("").filter(c => NUMBER_REGEX.test(c)).join("");
+        });
 
-    const showValidity = () => {
-        const components = getDataValidity(getFormData()).components;
+        const showValidity = () => {
+            const components = getDataValidity(getFormData()).components;
 
-        elements["first-name"].toggleAttribute("invalid", !components.name.first_name);
-        elements.infix.toggleAttribute("invalid", !components.name.infix);
-        elements["family-name"].toggleAttribute("invalid", !components.name.family_name);
-    
-        elements.email.toggleAttribute("invalid", !components.email);
-        elements["password-min-length"].toggleAttribute("invalid", !components.password.is_min_length);
-        elements["password-has-capital"].toggleAttribute("invalid", !components.password.has_capital_letter);
-        elements["password-has-number"].toggleAttribute("invalid", !components.password.has_number);
-        elements["password-has-special-char"].toggleAttribute("invalid", !components.password.has_special_char);
-        elements.password.toggleAttribute("invalid", !components.password.password);
-        elements["confirm-password"].toggleAttribute("invalid", !components.password.confirmation);
-    
-        elements["phone-number"].toggleAttribute("invalid", !components.phone_number);
-        elements["birth-date"].toggleAttribute("invalid", !components.birth_date);
-        elements.study.toggleAttribute("invalid", !components.study);
-        elements["student-number"].toggleAttribute("invalid", !components.student_number);
-    
-        elements.iban.toggleAttribute("invalid", !components.bank_account.iban);
-        elements.bic.toggleAttribute("invalid", !components.bank_account.bic);
-        elements["bank-account-name"].toggleAttribute("invalid", !components.bank_account.holder);
-    };
-    elements.form.addEventListener("input", showValidity);
-    elements.form.addEventListener("change", showValidity);
-})
-.catch(console.error);
+            elements["first-name"].toggleAttribute("invalid", !components.name.first_name);
+            elements.infix.toggleAttribute("invalid", !components.name.infix);
+            elements["family-name"].toggleAttribute("invalid", !components.name.family_name);
+
+            elements.email.toggleAttribute("invalid", !components.email);
+            elements["password-min-length"].toggleAttribute("invalid", !components.password.is_min_length);
+            elements["password-has-capital"].toggleAttribute("invalid", !components.password.has_capital_letter);
+            elements["password-has-number"].toggleAttribute("invalid", !components.password.has_number);
+            elements["password-has-special-char"].toggleAttribute("invalid", !components.password.has_special_char);
+            elements.password.toggleAttribute("invalid", !components.password.password);
+            elements["confirm-password"].toggleAttribute("invalid", !components.password.confirmation);
+
+            elements["phone-number"].toggleAttribute("invalid", !components.phone_number);
+            elements["birth-date"].toggleAttribute("invalid", !components.birth_date);
+            elements.study.toggleAttribute("invalid", !components.study);
+            elements["student-number"].toggleAttribute("invalid", !components.student_number);
+
+            elements.iban.toggleAttribute("invalid", !components.bank_account.iban);
+            elements.bic.toggleAttribute("invalid", !components.bank_account.bic);
+            elements["bank-account-name"].toggleAttribute("invalid", !components.bank_account.holder);
+        };
+        elements.form.addEventListener("input", showValidity);
+        elements.form.addEventListener("change", showValidity);
+    })
+    .catch(console.error);
 
 
 
-const USER_DB:UserDatabase = new FirestoreUserDatabase();
+const USER_DB: UserDatabase = new FirestoreUserDatabase();
 Loading.onDOMContentLoaded({ "submit-button": HTMLButtonElement })
-.then(elements => elements["submit-button"])
-.then(submitButton => {
-    submitButton.addEventListener("click", ev => {
-        ev.preventDefault();
-        submitButton.disabled = true;
+    .then(elements => elements["submit-button"])
+    .then(submitButton => {
+        submitButton.addEventListener("click", ev => {
+            ev.preventDefault();
+            submitButton.disabled = true;
 
-        const data = getFormData();
-        const validity = getDataValidity(data);
-        if (validity.status) { // data valid, submit
-            // create new user
-            createUserWithEmailAndPassword(FIREBASE_AUTH, data.email, data.password.password)
-            .then(userCred => userCred.user)
-            .then(user => {
-                // create new user entry in database
-                const userInfo = new UserInfo(
-                    user.uid,
-                    new Date(),
-                    new Date(Date.now() - 1000*60*60*24),
-                    data.name.first_name,
-                    data.name.infix ? `${data.name.infix} ${data.name.family_name}` : data.name.family_name,
-                    []
-                );
-                USER_DB.write(userInfo)
-                .then(() => {
-                    submitToConscribo(data)
-                    .then(response => {
-                        UserFeedback.success("Je account is aangemaakt. Welkom bij GWS!", 5000, () => location.href = '/');
+            const data = getFormData();
+            const validity = getDataValidity(data);
+            if (validity.status) { // data valid, submit
+                // create new user
+                createUserWithEmailAndPassword(FIREBASE_AUTH, data.email, data.password.password)
+                    .then(userCred => userCred.user)
+                    .then(user => {
+                        // create new user entry in database
+                        const userInfo = new UserInfo(
+                            user.uid,
+                            new Date(),
+                            new Date(Date.now() - 1000 * 60 * 60 * 24),
+                            data.name.first_name,
+                            data.name.infix ? `${data.name.infix} ${data.name.family_name}` : data.name.family_name,
+                            []
+                        );
+                        USER_DB.write(userInfo)
+                            .then(() => {
+                                submitToConscribo(data)
+                                    .then(response => {
+                                        UserFeedback.success("Je account is aangemaakt. Welkom bij GWS!", 5000, () => location.href = '/');
+                                    });
+                            })
+                            .catch(err => {
+                                UserFeedback.error(getErrorMessage(err));
+                                // creation failed, delete user
+                                user.delete().then(() => console.log("user deleted"));
+                                submitButton.disabled = false;
+                            });
+                    })
+                    .catch(err => {
+                        UserFeedback.error(getErrorMessage(err));
+                        submitButton.disabled = false;
                     });
-                })
-                .catch(err => {
-                    UserFeedback.error(getErrorMessage(err));
-                    // creation failed, delete user
-                    user.delete().then(() => console.log("user deleted"));
-                    submitButton.disabled = false;
-                });
-            })
-            .catch(err => {
-                UserFeedback.error(getErrorMessage(err));
-                submitButton.disabled = false;
-            });
-        }
-        else UserFeedback.error(validity.message); // show error
-    });
-})
-.catch(console.error);
+            }
+            else UserFeedback.error(validity.message); // show error
+        });
+    })
+    .catch(console.error);
 
 
 
-function submitToConscribo(data:RegistrationFormData):Promise<string> {
+function submitToConscribo(data: RegistrationFormData): Promise<string> {
     return new Promise((resolve, reject) => {
         submitToConscribo.getURL()
-        .then(url => {
+            .then(url => {
 
-            const postData = {
-                "2": data.name.first_name,
-                "3": data.name.infix,
-                "4": data.name.family_name,
-                "5": data.email,
-                "6": data.phone_number,
-                "7":{
-                    "iban": data.bank_account.iban,
-                    "bic": data.bank_account.bic,
-                    "name": data.bank_account.holder
-                },
-                "8": data.birth_date && `${data.birth_date.getFullYear()}-${data.birth_date.getMonth() + 1}-${data.birth_date.getDate()}`,
-                "9": data.student_number,
-                "13": data.receive_news_letter ? "Wel de nieuwsbrief" : "Niet de nieuwsbrief",
-                "16": data.study,
-                "20": data.allow_auto_transactions,
-                "26": data.accept_privacy_statement,
-                "28": data.add_to_whatsapp ? { "0":"Whatsappgroep" } : {},
-                "29": {
-                    ...(data.allow_social_media.public ? { "0": "Openbare sociale media" } : {}),
-                    ...(data.allow_social_media.private ? { "1": "Besloten sociale media" } : {})
+                const postData = {
+                    "2": data.name.first_name,
+                    "3": data.name.infix,
+                    "4": data.name.family_name,
+                    "5": data.email,
+                    "6": data.phone_number,
+                    "7": {
+                        "iban": data.bank_account.iban,
+                        "bic": data.bank_account.bic,
+                        "name": data.bank_account.holder
+                    },
+                    "8": data.birth_date && `${data.birth_date.getFullYear()}-${data.birth_date.getMonth() + 1}-${data.birth_date.getDate()}`,
+                    "9": data.student_number,
+                    "13": data.receive_news_letter ? "Wel de nieuwsbrief" : "Niet de nieuwsbrief",
+                    "16": data.study,
+                    "20": data.allow_auto_transactions,
+                    "26": data.accept_privacy_statement,
+                    "28": data.add_to_whatsapp ? { "0": "Whatsappgroep" } : {},
+                    "29": {
+                        ...(data.allow_social_media.public ? { "0": "Openbare sociale media" } : {}),
+                        ...(data.allow_social_media.private ? { "1": "Besloten sociale media" } : {})
+                    }
+                };
+
+                const req = new XMLHttpRequest();
+                req.onerror = () => reject(req.statusText);
+                req.onload = () => {
+                    if (req.status < 200 || req.status >= 300) reject(req.statusText);
+                    else resolve(req.responseText);
                 }
-            };
-
-            const req = new XMLHttpRequest();
-            req.onerror = () => reject(req.statusText);
-            req.onload = () => {
-                if (req.status < 200 || req.status >= 300) reject(req.statusText);
-                else resolve(req.responseText);
-            }
-            req.open("POST", url, true);
-            req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-            req.send(`formData=${encodeURIComponent(JSON.stringify(postData))}`);
-        })
-        .catch(reject);
+                req.open("POST", url, true);
+                req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                req.send(`formData=${encodeURIComponent(JSON.stringify(postData))}`);
+            })
+            .catch(reject);
     });
 }
 
 namespace submitToConscribo {
 
     const FORM_SRC = "https://leden.conscribo.nl/dengeitenwollensoc/jsForm/load/4a34/cwfWordpressForm";
-    function getSessionID():Promise<string> {
+    function getSessionID(): Promise<string> {
         return fetch(FORM_SRC) // fetch form insertion script
-        .then(res => res.text()) // get text
-        .then(text => {
-            // extract session id
-            const match = text.match(/this.sessionId = '(.+)';/)![0];
-            const [fromInd, toInd] = [match.indexOf(`'`) + 1, match.lastIndexOf(`'`)]
-            return match.substring(fromInd, toInd);
-        })
-        .catch()
+            .then(res => res.text()) // get text
+            .then(text => {
+                // extract session id
+                const match = text.match(/this.sessionId = '(.+)';/)![0];
+                const [fromInd, toInd] = [match.indexOf(`'`) + 1, match.lastIndexOf(`'`)]
+                return match.substring(fromInd, toInd);
+            })
+            .catch()
     }
 
     const BASE_URL = new URL("https://leden.conscribo.nl/dengeitenwollensoc/jsForm/postForm/4a34/");
-    export function getURL():Promise<string> {
+    export function getURL(): Promise<string> {
         return getSessionID()
-        .then(sessionID => {
-            BASE_URL.searchParams.set("sessionId", sessionID);
-            return BASE_URL.toString();
-        });
+            .then(sessionID => {
+                BASE_URL.searchParams.set("sessionId", sessionID);
+                return BASE_URL.toString();
+            });
     }
 }
