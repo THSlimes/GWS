@@ -1,9 +1,11 @@
 import Loading from "../common/Loading";
 import "./header-and-footer";
+import "../common/custom-elements/PasswordInput"
 import { FIREBASE_AUTH } from "../common/firebase/init-firebase";
 import UserFeedback from "../common/ui/UserFeedback";
 import getErrorMessage from "../common/firebase/authentication/error-messages";
 import { signInWithEmailAndPassword, verifyBeforeUpdateEmail } from "@firebase/auth";
+import PasswordInput from "../common/custom-elements/PasswordInput";
 
 
 /** @see https://stackoverflow.com/questions/46155/how-can-i-validate-an-email-address-in-javascript */
@@ -11,7 +13,7 @@ const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"
 
 Loading.onDOMContentLoaded({
     "current-email-input": HTMLInputElement,
-    "password-input": HTMLInputElement,
+    "password-input": PasswordInput,
 
     "new-email-confirmation-input": HTMLInputElement,
     "new-email-input": HTMLInputElement,
@@ -33,6 +35,7 @@ Loading.onDOMContentLoaded({
             if (!newEmail) UserFeedback.error("Vul een nieuw e-mailadres in."); // no new email given
             else if (!newEmailConfirmation) UserFeedback.error("Vul het nieuwe e-mailadres nogmaals in."); // no new email confirmation given
             else if (!EMAIL_REGEX.test(newEmail)) UserFeedback.error("Het nieuwe e-mailadres is ongeldig."); // new email is invalid
+            else if (newEmail === currentEmail) UserFeedback.error("Nieuwe en huidige email zijn hetzelfde."); // cannot change to exact same password
             else if (newEmail !== newEmailConfirmation) UserFeedback.error("Herhaal-email is niet hetzelfde."); // new email confirmation does not match
             else {
                 elements["update-email-button"].disabled = true;

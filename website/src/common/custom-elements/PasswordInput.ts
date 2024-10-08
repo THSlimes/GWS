@@ -1,4 +1,5 @@
 import ElementFactory from "../html-element-factory/ElementFactory";
+import Loading from "../Loading";
 import { HasSections } from "../util/UtilTypes";
 
 class PasswordInput extends HTMLElement implements HasSections<"input" | "button"> {
@@ -42,6 +43,7 @@ class PasswordInput extends HTMLElement implements HasSections<"input" | "button
 
         this.input = this.appendChild(
             ElementFactory.input.password()
+                .style({ flexGrow: '1' })
                 .autocomplete(this.type)
                 .size(32)
                 .make()
@@ -78,5 +80,7 @@ namespace PasswordInput {
 
 }
 
-customElements.define("password-input", PasswordInput);
+Loading.onDOMContentLoaded()
+    .then(() => customElements.define("password-input", PasswordInput));
+
 export default PasswordInput;
