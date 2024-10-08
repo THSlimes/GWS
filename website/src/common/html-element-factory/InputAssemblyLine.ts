@@ -10,7 +10,7 @@ namespace SmartInput {
         "button": [string];
         "checkbox": [string];
         "color": [number, number, number] | [ColorUtil.HexColor];
-        "date": [number, number, number];
+        "date": [number, number, number] | [Date];
         "datetime-local": [number, number, number, number, number] | [Date];
         "email": [string];
         "file": [string];
@@ -31,52 +31,97 @@ namespace SmartInput {
         "week": [number, number];
     };
 
-    const INPUT_TYPE_TRANSLATORS:{ [K in keyof InputTypeMap]: (...args:InputTypeMap[K]) => string } = {
-        button: text => text,
-        checkbox: value => value,
-        color: (...args) => {
-            if (args.length === 1) return args[0];
-            else {
-                const [r,g,b] = args;
-                return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+    interface ValueTranslator<T extends keyof InputTypeMap> {
+        fromString: (v: string) => InputTypeMap[T],
+        toString: (...v: InputTypeMap[T]) => string
+    }
+
+    const VALUE_TRANSLATORS: { [T in keyof InputTypeMap]: ValueTranslator<T> } = {
+        button: { fromString: v => [v], toString: v => v },
+        checkbox: { fromString: v => [v], toString: v => v },
+        color: {
+            fromString: v => ColorUtil.toRGB(v as ColorUtil.HexColor),
+            toString: (...v) => v.length === 1 ?
+                v[0] :
+                `#${v.map(c => c.toString(16).padStart(2, '0')).join("")}`
+        },
+        date: {
+            fromString(v) {
+                const [year, month, day] = v.split('-')
+                    .map(Number);
+                return [new Date(year, month - 1, day)];
+            },
+            toString(...v) {
+                const [year, monthInd, date] = v.length === 1 ?
+                    [v[0].getFullYear(), v[0].getMonth(), v[0].getDate()] :
+                    v;
+
+                return `${year.toString().padStart(4, '0')}-${(monthInd + 1).toString().padStart(2, '0')}-${date.toString().padStart(2, '0')}`;
             }
         },
-        date: (...args) => {
-            return `${args[0].toString().padStart(4,'0')}-${(args[1]+1).toString().padStart(2,'0')}-${args[2].toString().padStart(2,'0')}`;
+        "datetime-local": {
+            fromString: v => [new Date(v)],
+            toString(...v) {
+                let iso: string;
+                if (v.length === 1) {
+                    const date = DateUtil.Timestamps.copy(v[0]);
+                    date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+                    iso = date.toISOString();
+                }
+                else iso = new Date(...v).toISOString();
+
+                return iso.includes('.') ?
+                    iso.substring(0, iso.lastIndexOf('.')) :
+                    iso;
+            },
         },
-        "datetime-local": (...args) => {
-            let iso:string;
-            if (args[0] instanceof Date) {
-                const d = DateUtil.Timestamps.copy(args[0]);
-                d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-                iso = d.toISOString();
-            }
-            else {
-                iso = new Date(args[0], args[1]!, args[2]!, args[3]!, args[4]!).toISOString();
-            }
-            return iso.includes('.') ? iso.substring(0, iso.indexOf('.')) : iso;
+        email: { fromString: v => [v], toString: v => v },
+        file: { fromString: v => [v], toString: v => v },
+        hidden: { fromString: v => [v], toString: v => v },
+        image: { fromString: v => [], toString: () => "" },
+        month: {
+            fromString(v) {
+                const [y, mi] = v.split('-')
+                    .map(Number);
+                return [y, mi + 1];
+            },
+            toString: (y, mi) => `${y.toString().padStart(4, '0')}-${(mi + 1).toString().padStart(2, '0')}`
         },
-        email: email => email,
-        file: path => path,
-        hidden: value => value,
-        image: () => "",
-        month: (year, month) => `${year.toString().padStart(4,'0')}-${(month+1).toString().padStart(2,'0')}`,
-        number: num => num.toString(),
-        password: password => password,
-        radio: value => value,
-        range: num => num.toString(),
-        reset: text => text,
-        search: query => query,
-        submit: text => text,
-        tel: telNumber => telNumber,
-        text: text => text,
-        time: (hrs, min) => `${hrs.toString().padStart(2,'0')}:${min.toString().padStart(2,'0')}`,
-        url: url => url,
-        week: (year, weekInd) => `${year.toString().padStart(4,'0')}-W${weekInd.toString().padStart(2,'0')}`
+        number: { fromString: v => [Number.parseFloat(v)], toString: v => v.toString() },
+        password: { fromString: v => [v], toString: v => v },
+        radio: { fromString: v => [v], toString: v => v },
+        range: { fromString: v => [Number.parseFloat(v)], toString: v => v.toString() },
+        reset: { fromString: v => [v], toString: v => v },
+        search: { fromString: v => [v], toString: v => v },
+        submit: { fromString: v => [v], toString: v => v },
+        tel: { fromString: v => [v], toString: v => v },
+        text: { fromString: v => [v], toString: v => v },
+        time: {
+            fromString(v) {
+                const [hrs, min] = v.split(':')
+                    .map(Number);
+                return [hrs, min];
+            },
+            toString: (...v) => v.map(p => p.toString().padStart(2, '0'))
+                .join(':')
+        },
+        url: { fromString: v => [v], toString: v => v },
+        week: {
+            fromString(v) {
+                const [year, week] = v.split("-W")
+                    .map(Number);
+                return [week, year];
+            },
+            toString: (year, week) => `${year.toString().padStart(4, '0')}-W${week.toString().padStart(2, '0')}`
+        }
     };
 
-    export function translateTypedValue<T extends keyof InputTypeMap>(type:T, ...val:InputTypeMap[T]):string {
-        return INPUT_TYPE_TRANSLATORS[type](...val);
+    export function translateValueToString<T extends keyof InputTypeMap>(type: T, ...val: InputTypeMap[T]): string {
+        return VALUE_TRANSLATORS[type].toString(...val);
+    }
+
+    export function translateStringToValue<T extends keyof InputTypeMap>(type: T, str: string): InputTypeMap[T] {
+        return VALUE_TRANSLATORS[type].fromString(str);
     }
 }
 
@@ -135,12 +180,24 @@ export class InputAssemblyLine<T extends keyof SmartInput.InputTypeMap> extends 
         return this;
     }
 
+    private _autocomplete: "on" | "off" | AutoFill = "off";
+    public autocomplete(tokens: "on" | "off" | AutoFill) {
+        this._autocomplete = tokens;
+        return this;
+    }
+
+    private validationPredicate?: (...value: SmartInput.InputTypeMap[T]) => boolean | string;
+    public validateValue(predicate: (...value: SmartInput.InputTypeMap[T]) => boolean | string) {
+        this.validationPredicate = predicate;
+        return this;
+    }
+
     public override make() {
         const out = super.make() as SmartInput;
         out.type = this.type;
 
         if (this._value !== undefined) {
-            const v = SmartInput.translateTypedValue(this.type, ...this._value);
+            const v = SmartInput.translateValueToString(this.type, ...this._value);
             out.value = v;
         }
         out.prevValue = out.value;
@@ -152,6 +209,20 @@ export class InputAssemblyLine<T extends keyof SmartInput.InputTypeMap> extends 
         if (this._onValueChanged) { // calling callback after value changed
             const valueCallback = this._onValueChanged;
             out.addEventListener("input", () => valueCallback(out.value, out.prevValue));
+        }
+
+        out.autocomplete = this._autocomplete;
+
+        if (this.validationPredicate) {
+            const pred = this.validationPredicate;
+            const validateCB = () => {
+                const validity = pred(...SmartInput.translateStringToValue(this.type, out.value));
+                if (typeof validity === "string") out.setAttribute("invalid", validity);
+                else out.toggleAttribute("invalid", !validity);
+            }
+            out.addEventListener("input", validateCB);
+            out.addEventListener("change", validateCB);
+            validateCB();
         }
 
         if (this._name !== undefined) out.name = this._name;
@@ -254,8 +325,8 @@ export class RangedInputAssemblyLine<RT extends RangedInputAssemblyLine.InputTyp
 
     protected _max?: SmartInput.InputTypeMap[RT];
     /** Provides a maximum value for the input. */
-    public max(...minValue: SmartInput.InputTypeMap[RT]) {
-        this._max = minValue;
+    public max(...maxValue: SmartInput.InputTypeMap[RT]) {
+        this._max = maxValue;
         return this;
     }
 
@@ -269,8 +340,8 @@ export class RangedInputAssemblyLine<RT extends RangedInputAssemblyLine.InputTyp
     public override make() {
         const out = super.make();
 
-        if (this._min !== undefined) out.min = SmartInput.translateTypedValue(this.type, ...this._min);
-        if (this._max !== undefined) out.max = SmartInput.translateTypedValue(this.type, ...this._max);
+        if (this._min !== undefined) out.min = SmartInput.translateValueToString(this.type, ...this._min);
+        if (this._max !== undefined) out.max = SmartInput.translateValueToString(this.type, ...this._max);
         out.step = this._step.toString();
 
         return out;

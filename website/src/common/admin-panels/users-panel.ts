@@ -1,3 +1,5 @@
+import Placeholder from "../custom-elements/Placeholder";
+import RegistrationForm from "../custom-elements/RegistrationForm";
 import DataView, { DatabaseDataView } from "../DataView";
 import getErrorMessage from "../firebase/authentication/error-messages";
 import { checkPermissions } from "../firebase/authentication/permission-based-redirect";
@@ -302,10 +304,13 @@ export function initUsersPanel() {
         initializedUsersPanel = true;
 
 
-
-        window.addEventListener("beforeunload", ev => {
+        window.addEventListener("beforeunload", ev => { // show "are you sure?" prompt
             if (!ev.defaultPrevented && USERS_DV.isDataModified) ev.preventDefault();
         });
+
+
+        Placeholder.replaceWith("registration-form", new RegistrationForm(false));
+
     }
 }
 

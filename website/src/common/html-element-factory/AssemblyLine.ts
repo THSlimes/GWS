@@ -10,101 +10,101 @@ import StyleUtil from "../util/StyleUtil";
  */
 class AssemblyLine<TN extends string, E extends AssemblyLine.ElementType<TN> = AssemblyLine.ElementType<TN>> {
 
-    private readonly tagName:TN;
-    private readonly initElem?:()=>E;
+    private readonly tagName: TN;
+    private readonly initElem?: () => E;
 
-    private readonly elementTypeSpecific:AssemblyLine.OptionalProperties<E> = {};
+    private readonly elementTypeSpecific: AssemblyLine.OptionalProperties<E> = {};
 
     /**
      * Creates a new AssemblyLine.
      * @param tagName element tag name (e.g. "a" or "h3")
      * @param initElem custom function to instantiate the element
      */
-    constructor(tagName:TN, initElem?:()=>E) {
+    constructor(tagName: TN, initElem?: () => E) {
         this.tagName = tagName; // store tag for element creation
         this.initElem = initElem;
     }
 
-    protected _id?:string;
+    protected _id?: string;
     /** Sets the id of the new element. */
-    public id(newId:string) {
+    public id(newId: string) {
         this._id = newId;
         return this;
     }
 
     protected _classes = new Set<string>();
     /** Adds classes to the new element */
-    public class(...classes:(string|null|false)[]) {
+    public class(...classes: (string | null | false)[]) {
         for (const c of classes) {
             if (typeof c === "string") this._classes.add(c);
         }
         return this;
     }
 
-    protected _attributes:Record<string,string> = {};
+    protected _attributes: Record<string, string> = {};
     /** Sets a single attribute of the new element. */
-    public attr(k:string, v:{toString():string}|null="") {
+    public attr(k: string, v: { toString(): string } | null = "") {
         if (v !== null) this._attributes[k] = v.toString();
         return this;
     }
     /** Sets multiple attributes of the new element. */
-    public attrs(attributes:Record<string,{toString():string}>) {
+    public attrs(attributes: Record<string, { toString(): string }>) {
         for (const k in attributes) this._attributes[k] = attributes[k].toString();
         return this;
     }
 
-    private _text?:string;
+    private _text?: string;
     /** Sets the ```textContent``` property. */
-    public text(txt:string) {
+    public text(txt: string) {
         this._text = txt;
         return this;
     }
 
-    private _tooltip?:string;
+    private _tooltip?: string;
     /** Provides text to be displayed when hovering over the element (value for the ```title``` attribute) */
-    public tooltip(txt:string|null) {
+    public tooltip(txt: string | null) {
         if (txt) this._tooltip = txt;
         return this;
     }
 
-    private _draggable?:boolean;
-    public draggable(isDraggable:boolean):this {
+    private _draggable?: boolean;
+    public draggable(isDraggable: boolean): this {
         this._draggable = isDraggable;
         return this;
     }
 
-    private _noFocus?:boolean;
-    public noFocus(doNoFocus=true):this {
+    private _noFocus?: boolean;
+    public noFocus(doNoFocus = true): this {
         this._noFocus = doNoFocus;
         return this;
     }
 
-    private _canSelect?:AssemblyLine.UserSelect;
-    public canSelect(canSelect:AssemblyLine.UserSelect|boolean):this {
+    private _canSelect?: AssemblyLine.UserSelect;
+    public canSelect(canSelect: AssemblyLine.UserSelect | boolean): this {
         if (canSelect === true) canSelect = "all";
         else if (canSelect === false) canSelect = "none";
-        
+
         this._canSelect = canSelect;
         return this;
     }
 
-    private _html?:string;
+    private _html?: string;
     /** Sets the ```innerHTML``` property. */
-    public html(html:string) {
+    public html(html: string) {
         this._html = html;
         return this;
     }
 
-    private _children:(AssemblyLine.Child|AssemblyLine.Child.Generator<E>)[]= [];
+    private _children: (AssemblyLine.Child | AssemblyLine.Child.Generator<E>)[] = [];
     /** Provides child elements to be appended to the output element. */
-    public children(...children:(AssemblyLine.Child|AssemblyLine.Child.Generator<E>)[]) {
+    public children(...children: (AssemblyLine.Child | AssemblyLine.Child.Generator<E>)[]) {
         this._children.push(...children.filter(n => n !== null));
         return this;
     }
 
-    private _styleMap:StyleUtil.StyleMap = {};
+    private _styleMap: StyleUtil.StyleMap = {};
     /** Defines key-value pairs for CSS-properties. */
-    public style(styleMap:StyleUtil.StyleMap) {
+    public style(styleMap: StyleUtil.StyleMap) {
         for (const k in styleMap) {
             const key = k as keyof StyleUtil.StyleMap;
             const v = styleMap[key];
@@ -114,21 +114,21 @@ class AssemblyLine<TN extends string, E extends AssemblyLine.ElementType<TN> = A
         return this;
     }
 
-    private _handlers:AssemblyLine.EventHandlers<E> = {};
-    public on<T extends keyof HTMLElementEventMap>(keyword:T, handler:AssemblyLine.EventHandlers<E>[T]) {
+    private _handlers: AssemblyLine.EventHandlers<E> = {};
+    public on<T extends keyof HTMLElementEventMap>(keyword: T, handler: AssemblyLine.EventHandlers<E>[T]) {
         this._handlers[keyword] = handler;
         return this;
     }
 
-    private _onMakeHandlers:((self:E)=>void)[] = [];
+    private _onMakeHandlers: ((self: E) => void)[] = [];
     /** Provides a callback to be run after the element is created. */
-    public onMake(handler:(self:E)=>void) {
+    public onMake(handler: (self: E) => void) {
         this._onMakeHandlers.push(handler);
         return this;
     }
 
     /** Finalizes and creates the new element. */
-    public make():E {
+    public make(): E {
         const out = this.initElem ? this.initElem() : document.createElement(this.tagName) as E;
 
         // id, class and attributes
@@ -174,8 +174,8 @@ class AssemblyLine<TN extends string, E extends AssemblyLine.ElementType<TN> = A
         }
 
         for (const h of this._onMakeHandlers) h(out);
-        
-        
+
+
 
         return out;
     }
@@ -187,14 +187,14 @@ class AssemblyLine<TN extends string, E extends AssemblyLine.ElementType<TN> = A
      * @param exposedKeys keys of specific properties of the out HTMLElement type
      * @returns AssemblyLine with extra methods to set the properties with the keys from 'exposedKeys'
      */
-    public static specific<TN extends keyof HTMLElementTagNameMap, EKs extends keyof AssemblyLine.ElementType<TN>>(tagName:TN, exposedKeys:EKs[]=[], initElem:()=>AssemblyLine.ElementType<TN>) {
+    public static specific<TN extends keyof HTMLElementTagNameMap, EKs extends keyof AssemblyLine.ElementType<TN>>(tagName: TN, exposedKeys: EKs[] = [], initElem: () => AssemblyLine.ElementType<TN>) {
         const out = new AssemblyLine(tagName, initElem) as AssemblyLine<TN> & {
-            [K in EKs]:(newVal:AssemblyLine.ElementType<TN>[K])=>typeof out;
+            [K in EKs]: (newVal: AssemblyLine.ElementType<TN>[K]) => typeof out;
         };
 
         for (const k of exposedKeys) Reflect.defineProperty(out, k, {
-            writable:false,
-            value:(newVal:any) => {
+            writable: false,
+            value: (newVal: any) => {
                 out.elementTypeSpecific[k] = newVal;
                 return out;
             }
@@ -215,29 +215,29 @@ namespace AssemblyLine {
     export type OptionalProperties<E extends HTMLElement> = {
         [K in keyof E]?: E[K];
     }
-    
+
     export type EventHandlers<S> = {
-        [T in keyof HTMLElementEventMap]?: (event:HTMLElementEventMap[T], self:S) => void;
+        [T in keyof HTMLElementEventMap]?: (event: HTMLElementEventMap[T], self: S) => void;
     }
-    
-    export type Child = Node|string|AssemblyLine<any>|null|false;
+
+    export type Child = Node | string | AssemblyLine<any> | null | false;
     export namespace Child {
-        export function toNodes(children:Child[]):Node[] {
-            const out:Node[] = [];
+        export function toNodes(children: Child[]): Node[] {
+            const out: Node[] = [];
             for (const c of children) {
                 if (c instanceof Node) out.push(c);
                 else if (typeof c === "string") out.push(document.createTextNode(c));
                 else if (c instanceof AssemblyLine) out.push(c.make());
             }
-        
+
             return out;
         }
-        export type Generator<SelfType extends HTMLElement> = (self:SelfType) => Child|Child[];
+        export type Generator<SelfType extends HTMLElement> = (self: SelfType) => Child | Child[];
     }
-    
+
     export type ElementType<S extends string> = S extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[S] : HTMLElement;
-    
-    export type UserSelect =  "none" | "auto" | "text" | "contain" | "all";
+
+    export type UserSelect = "none" | "auto" | "text" | "contain" | "all";
 
 }
 
@@ -252,21 +252,22 @@ export class AnchorElementAssemblyLine extends AssemblyLine<"a"> {
         super("a");
     }
 
-    private _href?:string;
+    private _href?: string;
     /** Provides the URL that the anchor will link to. */
-    public href(linkTo:string) {
+    public href(linkTo: string) {
         this._href = linkTo;
         return this;
     }
 
-    private _downloadLink?:string;
-    public download(downloadLink:string="") {
+    private _downloadLink?: string;
+    public download(downloadLink: string = "") {
         this._downloadLink = downloadLink;
+        return this;
     }
 
     private _openInNewTab = false;
     /** Determines whether the link opens in a new tab. */
-    public openInNewTab(openInNewTab:boolean) {
+    public openInNewTab(openInNewTab: boolean) {
         this._openInNewTab = openInNewTab;
         return this;
     }
@@ -283,22 +284,22 @@ export class AnchorElementAssemblyLine extends AssemblyLine<"a"> {
 
 }
 
-type SmartSelect<V extends string> = HTMLSelectElement & { prevValue?:V };
+type SmartSelect<V extends string> = HTMLSelectElement & { prevValue?: V };
 export class SelectAssemblyLine<V extends string> extends AssemblyLine<"select"> {
 
     constructor() {
         super("select");
     }
 
-    private _options:Record<string,[string,boolean]> = {};
+    private _options: Record<string, [string, boolean]> = {};
     /** Adds a single option to the select element. */
-    public option<AV extends string>(value:AV, displayText=value as string, hidden=false) {
+    public option<AV extends string>(value: AV, displayText = value as string, hidden = false) {
         this._options[value] = [displayText, hidden];
-        return this as SelectAssemblyLine<V|AV>;
+        return this as SelectAssemblyLine<V | AV>;
     }
 
     /** Adds multiple options at once to the select element. */
-    public options<AV extends string>(values:(AV|[AV,boolean])[]|Record<AV,string|[string,boolean]>) {
+    public options<AV extends string>(values: (AV | [AV, boolean])[] | Record<AV, string | [string, boolean]>) {
         if (Array.isArray(values)) values.forEach(v => {
             if (Array.isArray(v)) this._options[v[0]] = v;
             else this._options[v] = [v, false];
@@ -308,23 +309,23 @@ export class SelectAssemblyLine<V extends string> extends AssemblyLine<"select">
             this._options[v] = Array.isArray(display) ? display : [display, false];
         }
 
-        return this as SelectAssemblyLine<V|AV>;
+        return this as SelectAssemblyLine<V | AV>;
     }
 
-    private _value?:V;
-    public value(value:V) {
+    private _value?: V;
+    public value(value: V) {
         this._value = value;
         return this;
     }
 
-    private _onValueChanged?:(curr:V, prev?:V)=>void
-    public onValueChanged(callback:(curr:V, prev?:V)=>void) {
+    private _onValueChanged?: (curr: V, prev?: V) => void
+    public onValueChanged(callback: (curr: V, prev?: V) => void) {
         this._onValueChanged = callback;
         return this;
     }
 
-    public override make(): SmartSelect<V> & { value:V } {
-        const out = super.make() as SmartSelect<V> & { value:V };
+    public override make(): SmartSelect<V> & { value: V } {
+        const out = super.make() as SmartSelect<V> & { value: V };
 
         for (const v in this._options) {
             const option = document.createElement("option");
@@ -355,19 +356,19 @@ export class RichTextInputAssemblyLine extends AssemblyLine<"rich-text-input", R
         super("rich-text-input", () => new RichTextInput);
     }
 
-    private _value?:string;
-    public value(val:string):this {
+    private _value?: string;
+    public value(val: string): this {
         this._value = val;
         return this;
     }
 
-    private _placeholder?:string;
-    public placeholder(plc:string):this {
+    private _placeholder?: string;
+    public placeholder(plc: string): this {
         this._placeholder = plc;
         return this;
     }
 
-    public compact(isCompact=true):this {
+    public compact(isCompact = true): this {
         if (isCompact) super.attr("compact");
         return this;
     }

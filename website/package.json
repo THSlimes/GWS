@@ -1,6 +1,6 @@
 {
   "name": "gws-website",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "description": "website for Den Geitenwollen Soc",
   "main": "webpack.config.js",
   "scripts": {

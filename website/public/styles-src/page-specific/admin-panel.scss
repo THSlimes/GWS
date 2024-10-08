@@ -7,6 +7,7 @@
 @import url("../custom-elements/imaged-links-editor.css");
 @import url("../custom-elements/color-list-editor.css");
 @import url("../custom-elements/conditioned-char-sequence-editor.css");
+@import url("../custom-elements/registration-form.css");
 
 .content {
     display: grid;
@@ -107,11 +108,6 @@
                 }
 
                 > .name > * { font-size: 75% }
-                > .member-until {
-                    // > * { padding: calc(var(--in-section-gap) / 2) var(--in-section-gap); }
-                    // > input { font-size: 75%; }
-                    // > .icon { font-size: 150%; }
-                }
             }
         }
     }
@@ -183,9 +179,6 @@
             > .cancel-edit-button { display: none; }
         }
     }
-}
-
-#links-panel {
 }
 
 .feedback {

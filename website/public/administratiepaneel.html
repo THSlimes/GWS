@@ -1,171 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="robots" content="noindex,nofollow"> <!-- hide from search results -->
-        
-        <title>Administratiepaneel - Den Geitenwollen Soc.</title>
-        <link rel="shortcut icon" href="./images/logos/favicon.ico" type="image/x-icon">
 
-        <link rel="stylesheet" href="./styles/page-specific/admin-panel.css">
+<head>
+    <meta charset="UTF-8">
 
-        <script type="module" src="./scripts/admin-panel.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex,nofollow"> <!-- hide from search results -->
 
-    </head>
-    <body class="flex-rows">
-        <div class="content" style="opacity: 0;">
-            <div id="section-selector" class="flex-rows cross-axis-center">
-                <!-- filled in by script -->
-            </div>
+    <title>Administratiepaneel - Den Geitenwollen Soc.</title>
+    <link rel="shortcut icon" href="./images/logos/favicon.ico" type="image/x-icon">
 
-            <div id="users-panel" class="panel flex-rows min-section-gap" hidden>
-                <h1 class="panel-heading">Accounts</h1>
-                <div id="users-list" class="flex-rows center-content min-section-gap">
-                    <div id="users-search-options" class="flex-columns main-axis-space-evenly cross-axis-center in-section-gap">
-                        <div class="flex-columns cross-axis-center in-section-gap" title="Zoeken op naam">
-                            <p class="icon">filter_list</p>
-                            <input type="text" id="users-filter-name" placeholder="Naam...">
-                        </div>
-                        <div class="flex-columns cross-axis-center in-section-gap" title="Zoeken op lidmaatschapsstatus">
-                            <p class="icon">credit_card_heart</p>
-                            <select id="users-filter-membership-status">
-                                <option value="both">Leden en niet-leden</option>
-                                <option value="members-only">Alleen leden</option>
-                                <option value="non-members-only">Alleen niet-leden</option>
-                            </select>
-                        </div>
-                        <div class="flex-columns cross-axis-center in-section-gap" title="Zoeken op machtigingen">
-                            <p class="icon">label</p>
-                            <select id="users-filter-permissions"></select>
-                        </div>
-                        <div class="flex-columns cross-axis-center in-section-gap" title="Zoeken op groep">
-                            <p class="icon">interests</p>
-                            <select id="users-filter-permission-preset"></select>
-                        </div>
-                        <div class="flex-columns cross-axis-center in-section-gap" title="Sorteren">
-                            <p class="icon">swap_vert</p>
-                            <select id="users-filter-sort">
-                                <option value="name-asc">Naam (A→Z)</option>
-                                <option value="name-desc">Naam (Z→A)</option>
-                                <option value="created-at-asc">Toevoeging (oplopend)</option>
-                                <option value="created-at-desc">Toevoeging (aflopend)</option>
-                                <option value="member-until-asc">Lidmaatschap t/m (oplopend)</option>
-                                <option value="member-until-desc">Lidmaatschap t/m (aflopend)</option>
-                                <option value="num-permissions-asc">Aantal machtigingen (oplopend)</option>
-                                <option value="num-permissions-desc">Aantal machtigingen (aflopend)</option>
-                            </select>
-                        </div>
+    <link rel="stylesheet" href="./styles/page-specific/admin-panel.css">
+
+    <script type="module" src="./scripts/admin-panel.js"></script>
+
+</head>
+
+<body class="flex-rows">
+    <div class="content" style="opacity: 0;">
+        <div id="section-selector" class="flex-rows cross-axis-center">
+            <!-- filled in by script -->
+        </div>
+
+        <div id="users-panel" class="panel flex-rows section-gap-y" hidden>
+            <h1 class="panel-heading">Accounts</h1>
+            <div id="users-list" class="flex-rows center-content min-section-gap">
+                <div id="users-search-options"
+                    class="flex-columns main-axis-space-evenly cross-axis-center in-section-gap">
+                    <div class="flex-columns cross-axis-center in-section-gap" title="Zoeken op naam">
+                        <p class="icon">filter_list</p>
+                        <input type="text" id="users-filter-name" placeholder="Naam...">
                     </div>
-                    <div class="list flex-rows">
-                        <div class="entry column-labels">
-                            <h4 class="center-content">ID</h4>
-                            <h4 class="center-content">Naam</h4>
-                            <h4 class="center-content">Toegevoegd op</h4>
-                            <h4 class="center-content">Is lid?</h4>
-                            <h4 class="center-content">Machtigingen</h4>
-                        </div>
+                    <div class="flex-columns cross-axis-center in-section-gap" title="Zoeken op lidmaatschapsstatus">
+                        <p class="icon">credit_card_heart</p>
+                        <select id="users-filter-membership-status">
+                            <option value="both">Leden en niet-leden</option>
+                            <option value="members-only">Alleen leden</option>
+                            <option value="non-members-only">Alleen niet-leden</option>
+                        </select>
                     </div>
-                    <button id="users-save-button" class="flex-columns cross-axis-center in-section-gap" disabled>
-                        <h4>Opslaan</h4>
-                        <h4 class="icon">save</h4>
-                    </button>
+                    <div class="flex-columns cross-axis-center in-section-gap" title="Zoeken op machtigingen">
+                        <p class="icon">label</p>
+                        <select id="users-filter-permissions"></select>
+                    </div>
+                    <div class="flex-columns cross-axis-center in-section-gap" title="Zoeken op groep">
+                        <p class="icon">interests</p>
+                        <select id="users-filter-permission-preset"></select>
+                    </div>
+                    <div class="flex-columns cross-axis-center in-section-gap" title="Sorteren">
+                        <p class="icon">swap_vert</p>
+                        <select id="users-filter-sort">
+                            <option value="name-asc">Naam (A→Z)</option>
+                            <option value="name-desc">Naam (Z→A)</option>
+                            <option value="created-at-asc">Toevoeging (oplopend)</option>
+                            <option value="created-at-desc">Toevoeging (aflopend)</option>
+                            <option value="member-until-asc">Lidmaatschap t/m (oplopend)</option>
+                            <option value="member-until-desc">Lidmaatschap t/m (aflopend)</option>
+                            <option value="num-permissions-asc">Aantal machtigingen (oplopend)</option>
+                            <option value="num-permissions-desc">Aantal machtigingen (aflopend)</option>
+                        </select>
+                    </div>
                 </div>
+                <div class="list flex-rows">
+                    <div class="entry column-labels">
+                        <h4 class="center-content">ID</h4>
+                        <h4 class="center-content">Naam</h4>
+                        <h4 class="center-content">Toegevoegd op</h4>
+                        <h4 class="center-content">Is lid?</h4>
+                        <h4 class="center-content">Machtigingen</h4>
+                    </div>
+                </div>
+                <button id="users-save-button" class="flex-columns cross-axis-center in-section-gap" disabled>
+                    <h4>Opslaan</h4>
+                    <h4 class="icon">save</h4>
+                </button>
             </div>
 
-            <div id="events-panel" class="panel flex-rows min-section-gap" hidden>
-                <h1 class="panel-heading">Activiteiten</h1>
-                <place-holder id="event-calendar"></place-holder>
-
-                <div id="default-category-colors" class="subpanel flex-rows in-section-gap cross-axis-center">
-                    <h2 class="subpanel-heading">Standaardkleuren</h2>
-                    <p>
-                        Als voor een activiteit geen kleur is gespecificeerd, dan worden deze gebruikt. De standaardkleur wordt gekozen
-                        aan de hand van de categorie van de activiteit. Als de activiteit geen categorie heeft, wordt de naam gebruikt.
-                    </p>
-                    <place-holder id="default-category-color-editor"></place-holder>
-                </div>
-
-                <div id="add-event" class="subpanel flex-rows min-section-gap">
-                    <h2 class="subpanel-heading">Nieuwe activiteit toevoegen</h2>
-                    <place-holder id="new-event"></place-holder>
-                </div>
-            </div>
-
-            <div id="articles-panel" class="panel flex-rows section-gap" hidden>
-                <h1 class="panel-heading">Berichten</h1>
-
-                <div id="recent-articles" class="subpanel flex-rows min-section-gap">
-                    <h2 class="subpanel-heading">Recente berichten</h2>
-                    <place-holder id="article-list"></place-holder>
-                </div>
-
-                <div class="subpanel flex-rows min-section-gap">
-                    <h2 class="subpanel-heading">Nieuw bericht plaatsen</h2>
-                    <place-holder id="new-article"></place-holder>
-                </div>
-                
-            </div>
-
-            <div id="links-panel" class="panel flex-rows cross-axis-center min-section-gap" hidden>
-                <h1 class="panel-heading">Koppelingen</h1>
-                <div id="navbar-links" class="subpanel flex-rows cross-axis-center in-section-gap">
-                    <h2 class="subpanel-heading">Navigatiebalk</h2>
-                    <place-holder id="navbar-links"></place-holder>
-                    <button id="navbar-links-save-button" class="flex-columns cross-axis-center in-section-gap">
-                        <h4>Opslaan</h4>
-                        <h4 class="icon">save</h4>
-                    </button>
-                </div>
-
-                <div id="sponsors-editor" class="subpanel flex-rows cross-axis-center in-section-gap" style="display: flex !important;">
-                    <h2 class="subpanel-heading">Sponsoren</h2>
-                    <p>
-                        Dit is de lijst met alle sponsoren. Ze worden op de website geplaatst onder het kopje "Onze Sponsoren".
-                        Aangezien de gegeven afbeeldingen uit de database worden geladen elke keer dat iemand de website bezoekt,
-                        is het belangrijk dat de <span class="underlined">afbeeldingsbestanden klein zijn (maximaal 50kB)</span>. Door dit te doen laadt de pagina sneller en
-                        worden eventuele hoge FireBase kosten voorkomen.
-                    </p>
-                    <place-holder id="sponsor-links"></place-holder>
-                    <button id="sponsor-links-save-button" class="flex-columns cross-axis-center in-section-gap">
-                        <h4>Opslaan</h4>
-                        <h4 class="icon">save</h4>
-                    </button>
-                </div>
-
-                <div id="social-media-links" class="subpanel flex-rows cross-axis-center in-section-gap">
-                    <h2 class="subpanel-heading">Socials</h2>
-                    <p>
-                        Dit is de lijst met alle sponsoren. Ze worden onderaan de website geplaatst. Net als met de sponsoren is
-                        het handig dat de <span class="underlined">afbeeldingsbestanden klein zijn</span>.
-                    </p>
-                    <place-holder id="social-media-links"></place-holder>
-                    <button id="social-media-links-save-button" class="flex-columns cross-axis-center in-section-gap">
-                        <h4>Opslaan</h4>
-                        <h4 class="icon">save</h4>
-                    </button>
-                </div>
-            </div>
-
-            <div id="idea-box-panel" class="panel flex-rows min-section-gap" hidden>
-                <h1 class="panel-heading">Ideeënbox</h1>
+            <div id="manual-registration-form">
+                <h2>Inschrijfformulier</h2>
                 <p>
-                    Hier vind je de ideeën die ingestuurd zijn via de ideeënbox.
+                    Met dit formulier is het mogelijk om leden handmatig toe te voegen. Het doel hiervan is om
+                    minderjarig leden in te kunnen schrijven.
                 </p>
-                <place-holder id="idea-box-submissions-list"></place-holder>
+                <place-holder id="registration-form"></place-holder>
+            </div>
+        </div>
+
+        <div id="events-panel" class="panel flex-rows min-section-gap" hidden>
+            <h1 class="panel-heading">Activiteiten</h1>
+            <place-holder id="event-calendar"></place-holder>
+
+            <div id="default-category-colors" class="subpanel flex-rows in-section-gap cross-axis-center">
+                <h2 class="subpanel-heading">Standaardkleuren</h2>
+                <p>
+                    Als voor een activiteit geen kleur is gespecificeerd, dan worden deze gebruikt. De standaardkleur
+                    wordt gekozen
+                    aan de hand van de categorie van de activiteit. Als de activiteit geen categorie heeft, wordt de
+                    naam gebruikt.
+                </p>
+                <place-holder id="default-category-color-editor"></place-holder>
             </div>
 
-            <div id="loading-screen-panel" class="panel flex-rows min-section-gap" hidden>
-                <h1 class="panel-heading">Laadscherm</h1>
+            <div id="add-event" class="subpanel flex-rows min-section-gap">
+                <h2 class="subpanel-heading">Nieuwe activiteit toevoegen</h2>
+                <place-holder id="new-event"></place-holder>
+            </div>
+        </div>
 
-                <place-holder id="loading-screens-editor"></place-holder>
+        <div id="articles-panel" class="panel flex-rows section-gap" hidden>
+            <h1 class="panel-heading">Berichten</h1>
 
-                <button id="loading-screens-save-button" class="flex-columns cross-axis-center in-section-gap">
+            <div id="recent-articles" class="subpanel flex-rows min-section-gap">
+                <h2 class="subpanel-heading">Recente berichten</h2>
+                <place-holder id="article-list"></place-holder>
+            </div>
+
+            <div class="subpanel flex-rows min-section-gap">
+                <h2 class="subpanel-heading">Nieuw bericht plaatsen</h2>
+                <place-holder id="new-article"></place-holder>
+            </div>
+
+        </div>
+
+        <div id="links-panel" class="panel flex-rows cross-axis-center min-section-gap" hidden>
+            <h1 class="panel-heading">Koppelingen</h1>
+            <div id="navbar-links" class="subpanel flex-rows cross-axis-center in-section-gap">
+                <h2 class="subpanel-heading">Navigatiebalk</h2>
+                <place-holder id="navbar-links"></place-holder>
+                <button id="navbar-links-save-button" class="flex-columns cross-axis-center in-section-gap">
+                    <h4>Opslaan</h4>
+                    <h4 class="icon">save</h4>
+                </button>
+            </div>
+
+            <div id="sponsors-editor" class="subpanel flex-rows cross-axis-center in-section-gap"
+                style="display: flex !important;">
+                <h2 class="subpanel-heading">Sponsoren</h2>
+                <p>
+                    Dit is de lijst met alle sponsoren. Ze worden op de website geplaatst onder het kopje "Onze
+                    Sponsoren".
+                    Aangezien de gegeven afbeeldingen uit de database worden geladen elke keer dat iemand de website
+                    bezoekt,
+                    is het belangrijk dat de <span class="underlined">afbeeldingsbestanden klein zijn (maximaal
+                        50kB)</span>. Door dit te doen laadt de pagina sneller en
+                    worden eventuele hoge FireBase kosten voorkomen.
+                </p>
+                <place-holder id="sponsor-links"></place-holder>
+                <button id="sponsor-links-save-button" class="flex-columns cross-axis-center in-section-gap">
+                    <h4>Opslaan</h4>
+                    <h4 class="icon">save</h4>
+                </button>
+            </div>
+
+            <div id="social-media-links" class="subpanel flex-rows cross-axis-center in-section-gap">
+                <h2 class="subpanel-heading">Socials</h2>
+                <p>
+                    Dit is de lijst met alle sponsoren. Ze worden onderaan de website geplaatst. Net als met de
+                    sponsoren is
+                    het handig dat de <span class="underlined">afbeeldingsbestanden klein zijn</span>.
+                </p>
+                <place-holder id="social-media-links"></place-holder>
+                <button id="social-media-links-save-button" class="flex-columns cross-axis-center in-section-gap">
                     <h4>Opslaan</h4>
                     <h4 class="icon">save</h4>
                 </button>
             </div>
         </div>
-    </body>
+
+        <div id="idea-box-panel" class="panel flex-rows min-section-gap" hidden>
+            <h1 class="panel-heading">Ideeënbox</h1>
+            <p>
+                Hier vind je de ideeën die ingestuurd zijn via de ideeënbox.
+            </p>
+            <place-holder id="idea-box-submissions-list"></place-holder>
+        </div>
+
+        <div id="loading-screen-panel" class="panel flex-rows min-section-gap" hidden>
+            <h1 class="panel-heading">Laadscherm</h1>
+
+            <place-holder id="loading-screens-editor"></place-holder>
+
+            <button id="loading-screens-save-button" class="flex-columns cross-axis-center in-section-gap">
+                <h4>Opslaan</h4>
+                <h4 class="icon">save</h4>
+            </button>
+        </div>
+    </div>
+</body>
+
 </html>

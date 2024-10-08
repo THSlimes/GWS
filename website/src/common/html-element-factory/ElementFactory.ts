@@ -10,6 +10,8 @@ import SwitchAssemblyLine from "./SwitchAssemblyLine";
 import { ToStringable } from "../util/UtilTypes";
 import ColorPickerAssemblyLine from "./ColorPickerAssemblyLine";
 import GridSizeInputAssemblyLine from "./GridSizeInputAssemblyLine";
+import PasswordInput from "../custom-elements/PasswordInput";
+import PasswordInputAssemblyLine from "./PasswordInputAssemblyLine";
 
 /**
  * The ElementFactory helper-class provides static methods that allow
@@ -70,8 +72,9 @@ export default abstract class ElementFactory {
     public static text(text?: string) {
         return document.createTextNode(text ?? "");
     }
-    public static span(text?: string) {
-        const out = new AssemblyLine('span');
+    public static span(text?: string, ...classes: (string | null | false)[]) {
+        const out = new AssemblyLine('span')
+            .class(...classes);
         return text ? out.text(text) : out;
     }
     public static a(href?: string, text?: string) {
@@ -187,6 +190,17 @@ export default abstract class ElementFactory {
             return new GridSizeInputAssemblyLine();
         }
     };
+
+    public static form() {
+        return AssemblyLine.specific("form", [], () => document.createElement("form"));
+    }
+
+    public static passwordInput(type?: PasswordInput.Type, name?: string) {
+        const out = new PasswordInputAssemblyLine();
+        if (type) out.type(type);
+        if (name) out.name(name);
+        return out;
+    }
 
     public static label(text?: string, forName?: string) {
         const out = AssemblyLine.specific("label", ["htmlFor"], () => document.createElement("label"));
