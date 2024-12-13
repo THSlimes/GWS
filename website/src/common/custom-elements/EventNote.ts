@@ -400,7 +400,7 @@ export namespace EventNote {
                         note.insertBefore(
                             ElementFactory.div(undefined, "registration-form", "flex-rows", "center-content", "in-section-gap")
                             .children(
-                                !isReg && !disabled && commentBox,
+                                !isReg && canRegister && commentBox,
                                 newButton.children(
                                     ElementFactory.h4(icon).class("icon", "no-margin"),
                                     ElementFactory.h4(text).class("no-margin")

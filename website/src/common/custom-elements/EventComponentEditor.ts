@@ -5,7 +5,6 @@ import DateUtil from "../util/DateUtil";
 import NumberUtil from "../util/NumberUtil";
 import ObjectUtil from "../util/ObjectUtil";
 import InfoComponentEditor from "./InfoComponentEditor";
-import Switch from "./Switch";
 
 interface NameComponentMap {
     color:EventInfo.Components.Color,
@@ -102,13 +101,13 @@ export class EventComponentEditor extends InfoComponentEditor<EventInfo,Name,Com
                                     ElementFactory.h4('(').class("no-margin"),
                                     ElementFactory.h4("social_distance").class("icon"),
                                     ElementFactory.input.number(component.capacity ?? 999, component.numRegistrations, 999, 1)
-                                        .on("input", (_, self) => {
-                                            try {
-                                                const val = self.valueAsNumber;
-                                                if (!Number.isNaN(val)) self.valueAsNumber = NumberUtil.clamp(val, component.numRegistrations, 999);
-                                            }
-                                            catch { /* ignore */ }
-                                        })
+                                        // .on("input", (_, self) => {
+                                        //     try {
+                                        //         const val = self.valueAsNumber;
+                                        //         if (!Number.isNaN(val)) self.valueAsNumber = NumberUtil.clamp(val, component.numRegistrations, 999);
+                                        //     }
+                                        //     catch { /* ignore */ }
+                                        // })
                                         .on("change", (_, self) => {
                                             try {
                                                 const val = self.valueAsNumber;
