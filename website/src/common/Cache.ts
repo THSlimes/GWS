@@ -4,17 +4,30 @@ import { EmojiConfig } from "./Loading";
 import UserFeedback from "./ui/UserFeedback";
 import ColorUtil from "./util/ColorUtil";
 
+// hotfix?
+const LAST_HOTFIX_DATE = new Date(2025, 1, 2); // feb 2 2025
+
+if (localStorage.length === 0) localStorage.setItem("last-cleared", Date.now().toString()); // first time on website
+
+const lastCleared = localStorage.getItem("last-cleared") === null ? 0 : Number.parseInt(localStorage.getItem("last-cleared")!);
+if (lastCleared <= LAST_HOTFIX_DATE.getTime()) {
+    localStorage.clear();
+    localStorage.setItem("last-cleared", Date.now().toString());
+    location.reload();
+}
+
+
 /**
  * The Cache helper-class provides a way to more easily cache values
  * to localStorage.
  */
 export default abstract class Cache {
-    
+
     // TODO: fix before Sat Sep 13 275760 02:00:00 GMT+0200
     private static readonly MAX_VALID_TIMESTAMP = 8640000000000000;
 
     /** Checks whether the given key has been assigned a value. */
-    public static has(key:Cache.Key) {
+    public static has(key: Cache.Key) {
         return this.get(key) !== null;
     }
 
@@ -25,7 +38,7 @@ export default abstract class Cache {
      * (the cached value is still removed afterwards)
      * @returns value in cache, or null if no value is stored for given key
      */
-    public static get<K extends Cache.Key>(key:K, returnIfInvalidated=false):Cache.KeyTypeMap[K] | null {
+    public static get<K extends Cache.Key>(key: K, returnIfInvalidated = false): Cache.KeyTypeMap[K] | null {
         if (localStorage.getItem(key) === null) return null; // object not in cache
         else {
             const entry = JSON.parse(localStorage.getItem(key)!) as Cache.Entry<K>;
@@ -44,7 +57,7 @@ export default abstract class Cache {
      * @param refreshFrequency how long to the refreshed value is valid (ms, default is 6 hours)
      * @returns Promise that resolves with the cached value associated with the given key
      */
-    public static getAndRefresh<K extends Cache.Key>(key:K, refreshPromise:Promise<Cache.KeyTypeMap[K]>, refreshFrequency=6*60*60*1000):Promise<Cache.KeyTypeMap[K]> {
+    public static getAndRefresh<K extends Cache.Key>(key: K, refreshPromise: Promise<Cache.KeyTypeMap[K]>, refreshFrequency = 6 * 60 * 60 * 1000): Promise<Cache.KeyTypeMap[K]> {
         const cachedValue = this.get(key, true);
         if (cachedValue === null) { // no cached value, get with promise
             return refreshPromise
@@ -56,8 +69,8 @@ export default abstract class Cache {
         else {
             if (!this.has(key)) {
                 refreshPromise // value invalidated after getting, get new value
-                .then(newValue => this.set(key, newValue, Date.now() + refreshFrequency))
-                .catch(console.error);
+                    .then(newValue => this.set(key, newValue, Date.now() + refreshFrequency))
+                    .catch(console.error);
             }
             return Promise.resolve(cachedValue);
         }
@@ -70,16 +83,16 @@ export default abstract class Cache {
      * @param [expires_at=MAX_VALID_TIMESTAMP] UNIX timestamp at which the value is no longer valid
      * @returns old value associated with the key (null if none was present)
      */
-    public static set<K extends Cache.Key>(key:K, value:Cache.KeyTypeMap[K], expires_at:Date|number=Cache.MAX_VALID_TIMESTAMP):Cache.KeyTypeMap[K]|null {
+    public static set<K extends Cache.Key>(key: K, value: Cache.KeyTypeMap[K], expires_at: Date | number = Cache.MAX_VALID_TIMESTAMP): Cache.KeyTypeMap[K] | null {
         const prevValue = this.get(key);
 
-        const newEntry:Cache.Entry<K> = [value, expires_at instanceof Date ? expires_at.getTime() : expires_at];
+        const newEntry: Cache.Entry<K> = [value, expires_at instanceof Date ? expires_at.getTime() : expires_at];
         localStorage.setItem(key, JSON.stringify(newEntry)); // save to localStorage
 
         return prevValue;
     }
 
-    public static remove<K extends Cache.Key>(key:K):Cache.KeyTypeMap[K]|null {
+    public static remove<K extends Cache.Key>(key: K): Cache.KeyTypeMap[K] | null {
         const prevValue = this.get(key);
         localStorage.removeItem(key);
         return prevValue;
@@ -99,11 +112,11 @@ namespace Cache {
         "do-login-expiry": boolean,
         "own-id": string,
         "relayed-message": UserFeedback.MessageData,
-        [key:`permissions-${string}`]: Permissions.Permission[]
+        [key: `permissions-${string}`]: Permissions.Permission[]
     };
     /** Union type of all cache keys */
     export type Key = keyof KeyTypeMap;
-    
+
     /** [value, UNIX expiry timestamp] pair */
     export type Entry<K extends keyof KeyTypeMap> = [KeyTypeMap[K], number];
 }

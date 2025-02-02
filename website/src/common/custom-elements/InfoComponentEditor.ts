@@ -4,18 +4,18 @@ import NodeUtil from "../util/NodeUtil";
 import ObjectUtil from "../util/ObjectUtil";
 import { HasSections } from "../util/UtilTypes";
 
-export default abstract class InfoComponentEditor<I extends Info, Name extends string, Component extends Info.Component<I>, NCMap extends Record<Name,Component>> extends HTMLElement implements HasSections<"componentEditors"|"selector"> {
+export default abstract class InfoComponentEditor<I extends Info, Name extends string, Component extends Info.Component<I>, NCMap extends Record<Name, Component>> extends HTMLElement implements HasSections<"componentEditors" | "selector"> {
 
-    protected readonly info:I;
-    
-    private readonly allNames:Name[];
+    protected readonly info: I;
 
-    public componentEditors!:HTMLDivElement;
-    public selector!:HTMLSelectElement & { value:Name|'+' };
+    private readonly allNames: Name[];
 
-    constructor(info:I, allNames:Name[]) {
+    public componentEditors!: HTMLDivElement;
+    public selector!: HTMLSelectElement & { value: Name | '+' };
+
+    constructor(info: I, allNames: Name[]) {
         super();
-        
+
 
         this.info = info;
         this.allNames = allNames;
@@ -23,7 +23,7 @@ export default abstract class InfoComponentEditor<I extends Info, Name extends s
         this.initElement();
     }
 
-    initElement():void {
+    initElement(): void {
         this.classList.add("info-component-editor", "flex-rows", "cross-axis-center", "in-section-gap");
 
         this.componentEditors = this.appendChild(
@@ -35,19 +35,38 @@ export default abstract class InfoComponentEditor<I extends Info, Name extends s
         this.selector = this.appendChild(
             ElementFactory.select(ObjectUtil.mapToObject(this.allNames, n => {
                 const comp = this.createComponent(n);
-                return [comp.translatedName, !comp.canBeAddedTo(this.info)] as [string,boolean];
+
+                return [comp.translatedName, !comp.canBeAddedTo(this.info)] as [string, boolean];
             }))
-            .option('+', "variable_add", true).value('+')
-            .class("add-button")
-            .onValueChanged(newCompName => {
-                if (newCompName !== '+') {
-                    this.addComponent(newCompName, this.createComponent(newCompName));
-                    this.selector.value = '+';
-                }
-            })
-            .tooltip("Instelling toevoegen")
-            .make()
+                .option('+', "variable_add", true).value('+')
+                .class("add-button")
+                .onValueChanged(newCompName => {
+                    if (newCompName !== '+') {
+                        this.addComponent(newCompName, this.createComponent(newCompName));
+                        this.selector.value = '+';
+                    }
+                })
+                .tooltip("Instelling toevoegen")
+                .make()
         );
+
+        const numComponentIndicator = this.appendChild(
+            ElementFactory.p(this.allNames.map(n => this.createComponent(n)).filter(c => c.canBeAddedTo(this.info)).length)
+                .class("num-component-indicator", "no-margin")
+                .onMake(self => this.addEventListener("change", () => {
+
+                    const numAddableComponents = this.allNames.map(n => this.createComponent(n))
+                        .filter(c => c.canBeAddedTo(this.info))
+                        .length;
+
+                    numComponentIndicator.textContent = numAddableComponents > 9 ? "9+" : numAddableComponents.toString();
+                    numComponentIndicator.hidden = numAddableComponents === 0;
+
+                }))
+                .make()
+        );
+
+
     }
 
     private refresh() {
@@ -61,11 +80,11 @@ export default abstract class InfoComponentEditor<I extends Info, Name extends s
         this.selector.hidden = options.every(opt => opt.hidden);
     }
 
-    protected abstract createComponent<N extends Name>(name:N):NCMap[N];
+    protected abstract createComponent<N extends Name>(name: N): NCMap[N];
 
-    protected abstract makeComponentEditor(info:I, component:Component, canBeRemoved:boolean):HTMLElement;
+    protected abstract makeComponentEditor(info: I, component: Component, canBeRemoved: boolean): HTMLElement;
 
-    public addComponent<N extends Name>(name:N, component:NCMap[N]=this.createComponent(name)) {
+    public addComponent<N extends Name>(name: N, component: NCMap[N] = this.createComponent(name)) {
         if (!component.canBeAddedTo(this.info)) throw new Error(`${name} component cannot be added to info object`);
 
         this.info.components.push(component);
@@ -76,15 +95,15 @@ export default abstract class InfoComponentEditor<I extends Info, Name extends s
         this.dispatchEvent(new Event("change"));
     }
 
-    public removeComponent(component:Component) {
+    public removeComponent(component: Component) {
         const index = this.info.components.indexOf(component);
         if (index === -1) throw new Error("given component is part of info object");
-        
+
         this.info.components.splice(index, 1);
         this.refresh();
 
         this.dispatchEvent(new Event("input"));
         this.dispatchEvent(new Event("change"));
     }
-    
+
 }
