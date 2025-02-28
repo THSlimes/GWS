@@ -344,11 +344,18 @@ class RegistrationForm extends HTMLElement implements HasSections<RegistrationFo
                                 .children(
                                     "Hierbij geef ik aan dat ik akkoord ga met het ",
                                     ElementFactory.a(undefined, "privacy statement")
+                                        .class("privacy-statement-link")
                                         .openInNewTab(true)
                                         .download()
-                                        .style({ color: "var(--accent)" })
                                         .onMake(self => { // get privacy statement link from storage
-                                            Loading.useDynamicContent(MultisourceAttachment.getInfoFromFirebase("openbaar", "privacy-statement.pdf"), fileInfo => self.href = fileInfo.href);
+                                            Loading.useDynamicContent(
+                                                MultisourceAttachment.getInfoFromFirebase("openbaar", "privacy-statement.pdf"),
+                                                fileInfo => self.href = fileInfo.href,
+                                                err => {
+                                                    console.error(err);
+                                                    self.toggleAttribute("error", true);
+                                                }
+                                            );
                                         }),
                                     " van de vereniging.",
                                     ElementFactory.span("*")

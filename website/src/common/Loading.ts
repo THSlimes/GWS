@@ -2,13 +2,13 @@ import Cache from "./Cache";
 import { Class } from "./util/UtilTypes";
 
 /** @see https://stackoverflow.com/questions/1284314/easter-date-in-javascript */
-function getEasterDate(year:number):[number,number,number] {
-    let month=3, G= year % 19+1, C= ~~(year/100)+1, L=~~((3*C)/4)-12,
-        E=(11*G+20+ ~~((8*C+5)/25)-5-L)%30, date;
-    E<0 && (E+=30);
-    (E==25 && G>11 || E==24) && E++;
-    (date=44-E)<21 && (date+=30);
-    (date+=7-(~~((5*year)/4)-L-10+date)%7)>31 && (date-=31,month=4);
+function getEasterDate(year: number): [number, number, number] {
+    let month = 3, G = year % 19 + 1, C = ~~(year / 100) + 1, L = ~~((3 * C) / 4) - 12,
+        E = (11 * G + 20 + ~~((8 * C + 5) / 25) - 5 - L) % 30, date;
+    E < 0 && (E += 30);
+    (E == 25 && G > 11 || E == 24) && E++;
+    (date = 44 - E) < 21 && (date += 30);
+    (date += 7 - (~~((5 * year) / 4) - L - 10 + date) % 7) > 31 && (date -= 31, month = 4);
     return [year, month, date];
 }
 
@@ -20,7 +20,7 @@ export namespace EmojiConfig {
 
     export type Condition = ["date is", number, number] | ["is Easter Sunday"] | ["is Easter Monday"];
     export namespace Condition {
-        export function evaluate(condition:Condition, now = new Date):boolean {
+        export function evaluate(condition: Condition, now = new Date): boolean {
             switch (condition[0]) {
                 case "date is": return now.getMonth() + 1 === condition[1] && now.getDate() === condition[2];
                 case "is Easter Sunday":
@@ -30,13 +30,13 @@ export namespace EmojiConfig {
                     const easter2 = getEasterDate(now.getFullYear());
                     const easterDate = new Date(easter2[0], easter2[1] - 1, easter2[2] + 1);
                     return now.getMonth() === easterDate.getMonth() && now.getDate() === easterDate.getDate();
-                }
             }
+        }
     }
 
     export interface Entry {
-        condition:EmojiConfig.Condition,
-        sequences:Record<string,number>
+        condition: EmojiConfig.Condition,
+        sequences: Record<string, number>
     };
 
 }
@@ -46,30 +46,30 @@ export namespace EmojiConfig {
  */
 export default abstract class Loading {
 
-    
+
     /** Emojis to show if no date from `EMOJI_CONFIG` applies. */
-    private static readonly DEFAULT_SEQUENCES:Record<string,number> = { "🐐🧶🧦": 1  };
+    private static readonly DEFAULT_SEQUENCES: Record<string, number> = { "🐐🧶🧦": 1 };
 
     private static EMOJI_CONFIG = Cache.get("loading-screen-config-fixed", true) ?? [];
     static {
         if (!Cache.has("loading-screen-config-fixed")) { // refresh loading screens
             import("./firebase/database/settings/FirestoreSettingsDatabase")
-            .then(e => {
-                const db = new e.default();
-                db.getLoadingScreenConfig()
-                .then(config => Cache.set("loading-screen-config-fixed", config, Date.now() + 3600000));
-            })
+                .then(e => {
+                    const db = new e.default();
+                    db.getLoadingScreenConfig()
+                        .then(config => Cache.set("loading-screen-config-fixed", config, Date.now() + 3600000));
+                })
         }
     }
 
-    private static getSequence(now = new Date):string {
+    private static getSequence(now = new Date): string {
         const matches = this.EMOJI_CONFIG.filter(({ condition }) => EmojiConfig.Condition.evaluate(condition, now));
         const pool = matches.length === 0 ?
             this.DEFAULT_SEQUENCES :
-            matches.reduce<Record<string,number>>((prev, curr) => { return {...prev, ...curr.sequences }}, {});
+            matches.reduce<Record<string, number>>((prev, curr) => { return { ...prev, ...curr.sequences } }, {});
 
         const totalWeight = Object.values(pool).reduce((prev, curr) => prev + curr, 0);
-        
+
         let n = Math.random() * totalWeight;
         for (const sequence in pool) {
             const weight = pool[sequence];
@@ -80,7 +80,7 @@ export default abstract class Loading {
         return Object.keys(pool).at(-1)!; // failsafe
     }
 
-    private static loadingScreen:HTMLElement = document.createElement("div");
+    private static loadingScreen: HTMLElement = document.createElement("div");
     static {
         this.loadingScreen.id = "loading-screen";
         const styleElem = document.createElement("style");
@@ -88,7 +88,7 @@ export default abstract class Loading {
         this.loadingScreen.appendChild(styleElem);
     }
 
-    public static showLoadingScreen(sequence:string, isPreview=false) {
+    public static showLoadingScreen(sequence: string, isPreview = false) {
         Array.from(this.loadingScreen.childNodes).forEach(c => {
             if (c instanceof HTMLParagraphElement) c.remove();
         });
@@ -136,13 +136,13 @@ export default abstract class Loading {
 
     }
 
-    private static currentlyLoading:object[] = [];
+    private static currentlyLoading: object[] = [];
     /** Number of things that are currently loading. */
     public static get numLoading() { return this.currentlyLoading.length; }
     /** Signifies that something starts loading. */
-    public static markLoadStart(obj:object) { this.currentlyLoading.push(obj); }
+    public static markLoadStart(obj: object) { this.currentlyLoading.push(obj); }
     /** Signifies that something is done loading. */
-    public static markLoadEnd(obj:object) {
+    public static markLoadEnd(obj: object) {
         const ind = this.currentlyLoading.lastIndexOf(obj);
         if (ind !== -1) this.currentlyLoading.splice(ind, 1);
     }
@@ -161,8 +161,8 @@ export default abstract class Loading {
      * @param query a mapping from element IDs to the type of HTMLElement they are
      * @returns a mapping of element IDs to the elements with those IDs
      */
-    public static getElementsById<Query extends Loading.IDQuery>(query:Query):Loading.ResolvedIDQuery<Query> {
-        const out:Record<string,Element> = {};
+    public static getElementsById<Query extends Loading.IDQuery>(query: Query): Loading.ResolvedIDQuery<Query> {
+        const out: Record<string, Element> = {};
         for (const id in query) {
             const elem = document.getElementById(id);
             if (elem === null) throw new Error(`no element with id "${id}" found`);
@@ -176,7 +176,7 @@ export default abstract class Loading {
      * Gives a Promise that resolves with a mapping of elements IDs to the elements with those IDs.
      * @param query same as `Loading.getElementsById`
      */
-    public static onDOMContentLoaded<Query extends Loading.IDQuery>(query:Query = {} as Query):Promise<Loading.ResolvedIDQuery<Query>> {
+    public static onDOMContentLoaded<Query extends Loading.IDQuery>(query: Query = {} as Query): Promise<Loading.ResolvedIDQuery<Query>> {
         return this.DOMContentLoaded ?
             Promise.resolve(this.getElementsById(query)) :
             new Promise(resolve => window.addEventListener("DOMContentLoaded", () => resolve(this.getElementsById(query))));
@@ -189,22 +189,25 @@ export default abstract class Loading {
      * @param loadCallback callback for successful loading
      * @param onFail callback when `dynContentPromise` fails
      */
-    public static useDynamicContent<T>(dynContentPromise:Promise<T>, loadCallback:(val:T)=>void, onFail=(err:any)=>console.error(err)) {
+    public static useDynamicContent<T>(dynContentPromise: Promise<T>, loadCallback: (val: T) => void, onFail = (err: any) => console.error(err)) {
         this.markLoadStart(dynContentPromise);
 
         Promise.all([dynContentPromise, this.onDOMContentLoaded])
-        .then(([val, _]) => {
-            loadCallback(val);
-            this.markLoadEnd(dynContentPromise);
-        })
-        .catch(err => onFail(err));
+            .then(([val, _]) => {
+                loadCallback(val);
+                this.markLoadEnd(dynContentPromise);
+            })
+            .catch(err => {
+                onFail(err);
+                this.markLoadEnd(dynContentPromise);
+            });
     }
 
 }
 
 namespace Loading {
     /** Mapping of element IDs to their type of HTMLElement */
-    export type IDQuery = { [id:string]: Class<HTMLElement> };
+    export type IDQuery = { [id: string]: Class<HTMLElement> };
     /** Mapping of element IDs to the elements with those IDs  */
     export type ResolvedIDQuery<Query extends IDQuery> = {
         [ID in keyof Query]: InstanceType<Query[ID]>

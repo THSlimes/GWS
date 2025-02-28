@@ -1,4 +1,3 @@
-import ArrayUtil from "../../../util/ArrayUtil";
 import ColorUtil from "../../../util/ColorUtil";
 import DateUtil from "../../../util/DateUtil";
 import ObjectUtil from "../../../util/ObjectUtil";
@@ -279,6 +278,29 @@ export namespace EventInfo {
 
             protected override validateValues(ev: EventInfo): boolean {
                 return this.moment < ev.ends_at;
+            }
+        }
+
+        export class DeregistrationEnd extends Info.Component<EventInfo> {
+            public override readonly Class = DeregistrationEnd;
+            public override dependencies = [Registerable];
+            public override translatedName: string = "Eindmoment voor uitschrijving";
+
+            public moment: Date;
+
+            constructor(moment: Date) {
+                super();
+                this.moment = moment;
+            }
+
+            public isNow() { return Date.now() >= this.moment.getTime(); }
+
+            public override copy(): DeregistrationEnd {
+                return new DeregistrationEnd(new Date(this.moment));
+            }
+
+            protected override validateValues(ev: EventInfo): boolean {
+                return this.moment < ev.starts_at;
             }
         }
 

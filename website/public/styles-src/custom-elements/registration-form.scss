@@ -28,7 +28,14 @@ registration-form > form {
     }
 
     & #first-name, & #family-name { flex-grow: 1; }
-    & #privacy-statement-link { color: var(--accent); }
+    & .privacy-statement-link {
+        color: var(--accent);
+
+        &[error] {
+            color: var(--indicate-bad) !important;
+            text-decoration: underline;
+        }
+    }
 }
 
 @media (max-aspect-ratio: 3 / 4) {

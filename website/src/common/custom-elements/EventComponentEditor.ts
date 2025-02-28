@@ -11,6 +11,7 @@ interface NameComponentMap {
     registerable:EventInfo.Components.Registerable,
     registrationStart:EventInfo.Components.RegistrationStart,
     registrationEnd:EventInfo.Components.RegistrationEnd,
+    deregistrationEnd:EventInfo.Components.DeregistrationEnd,
     cost:EventInfo.Components.Cost,
     form:EventInfo.Components.Form
 }
@@ -26,6 +27,7 @@ export class EventComponentEditor extends InfoComponentEditor<EventInfo,Name,Com
         registerable: () => new EventInfo.Components.Registerable({}),
         registrationStart: ev => new EventInfo.Components.RegistrationStart(new Date()),
         registrationEnd: ev => new EventInfo.Components.RegistrationEnd(ev.starts_at),
+        deregistrationEnd: ev => new EventInfo.Components.DeregistrationEnd(ev.starts_at)
     };
 
     constructor(ev:EventInfo) {
@@ -174,7 +176,7 @@ export class EventComponentEditor extends InfoComponentEditor<EventInfo,Name,Com
                     ElementFactory.h4("line_end_square").class("icon", "no-margin"),
                     ElementFactory.div(undefined, "flex-columns", "center-content", "in-section-gap")
                         .children(
-                            ElementFactory.h4("Inschrijven kan tot en met").class("no-margin", "text-center"),
+                            ElementFactory.h4("Inschrijven kan tot").class("no-margin", "text-center"),
                             ElementFactory.input.dateTimeLocal(component.moment)
                                 .on("input", (_, self) => {
                                     try {
@@ -189,7 +191,44 @@ export class EventComponentEditor extends InfoComponentEditor<EventInfo,Name,Com
                                         let val = new Date(self.value);
                                         const min = ev.getComponent(EventInfo.Components.RegistrationStart)?.moment ?? new Date();
                                         
-                                        // if (!DateUtil.Timespans)
+                                        if (DateUtil.Timestamps.isValid(val)) val = DateUtil.Timestamps.clamp(val, min, ev.starts_at);
+                                        else val = component.moment;
+                                        DateUtil.Timestamps.setInputValue(self, val);
+                                    }
+                                    catch (e) {
+                                        console.log(e);
+                                        DateUtil.Timestamps.setInputValue(self, component.moment);
+                                    }
+                                    finally { component.moment = new Date(self.value); }
+                                })
+                        ),
+                    canBeRemoved ?
+                        ElementFactory.iconButton("remove", () => this.removeComponent(component), "Instelling verwijderen").class("no-padding") :
+                        ElementFactory.h4("check").class("icon", "no-margin")
+                )
+                .make();
+        }
+        else if (component instanceof EventInfo.Components.DeregistrationEnd) {
+            return ElementFactory.div(undefined, "flex-columns", "cross-axis-center", "section-gap")
+                .children(
+                    ElementFactory.h4("lock_clock").class("icon", "no-margin"),
+                    ElementFactory.div(undefined, "flex-columns", "center-content", "in-section-gap")
+                        .children(
+                            ElementFactory.h4("Uitschrijven kan tot").class("no-margin", "text-center"),
+                            ElementFactory.input.dateTimeLocal(component.moment)
+                                .on("input", (_, self) => {
+                                    try {
+                                        const val = new Date(self.value);
+                                        const min = ev.getComponent(EventInfo.Components.RegistrationStart)?.moment ?? new Date();
+                                        if (DateUtil.Timestamps.isValid(val)) component.moment = DateUtil.Timestamps.clamp(val, min, ev.starts_at);
+                                    }
+                                    catch (e) { /* ignore */ }
+                                })
+                                .on("change", (_, self) => {
+                                    try {
+                                        let val = new Date(self.value);
+                                        const min = ev.getComponent(EventInfo.Components.RegistrationStart)?.moment ?? new Date();
+                                        
                                         if (DateUtil.Timestamps.isValid(val)) val = DateUtil.Timestamps.clamp(val, min, ev.starts_at);
                                         else val = component.moment;
                                         DateUtil.Timestamps.setInputValue(self, val);

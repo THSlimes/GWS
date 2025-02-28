@@ -84,7 +84,6 @@ export default class MultisourceAttachment extends HTMLElement implements HasSec
                 this.downloadButton.classList.add("click-action")
                 this.downloadButton.setAttribute("href", info.href);
                 this.downloadButton.setAttribute("download", "");
-                Loading.markLoadEnd(this);
             })
             .catch(err => {
                 this.classList.add("error");
@@ -96,8 +95,8 @@ export default class MultisourceAttachment extends HTMLElement implements HasSec
                 this.downloadButton.classList.remove("click-action")
                 this.downloadButton.removeAttribute("href");
                 this.downloadButton.removeAttribute("download");
-                Loading.markLoadEnd(this);
-            });
+            })
+            .finally(() => Loading.markLoadEnd(this));
         
     }
 

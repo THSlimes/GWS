@@ -29,6 +29,9 @@ function createConverter(db: EventDatabase): FirestoreDataConverter<EventInfo, F
                 ...(event.hasComponent(EventInfo.Components.RegistrationEnd) && {
                     can_register_until: Timestamp.fromDate(event.getComponent(EventInfo.Components.RegistrationEnd)!.moment)
                 }),
+                ...(event.hasComponent(EventInfo.Components.DeregistrationEnd) && {
+                    can_deregister_until: Timestamp.fromDate(event.getComponent(EventInfo.Components.DeregistrationEnd)!.moment)
+                }),
                 ...(event.hasComponent(EventInfo.Components.Form) && {
                     form_inputs: event.getComponent(EventInfo.Components.Form)!.inputs.filter(input => {
                         switch (input.type) {
@@ -56,6 +59,7 @@ function createConverter(db: EventDatabase): FirestoreDataConverter<EventInfo, F
                 components.push(new EventInfo.Components.Registerable(data.registrations, data.capacity));
                 if (data.can_register_from) components.push(new EventInfo.Components.RegistrationStart(data.can_register_from.toDate()));
                 if (data.can_register_until) components.push(new EventInfo.Components.RegistrationEnd(data.can_register_until.toDate()));
+                if (data.can_deregister_until) components.push(new EventInfo.Components.DeregistrationEnd(data.can_deregister_until.toDate()));
                 if (data.cost) components.push(new EventInfo.Components.Cost(data.cost));
                 if (data.form_inputs) components.push(new EventInfo.Components.Form(data.form_inputs));
             }
@@ -178,6 +182,7 @@ class FirestoreEventDatebase extends EventDatabase {
                 "capacity",
                 "can_register_from",
                 "can_register_until",
+                "can_deregister_until",
                 "cost",
                 "form_inputs"
             ].filter(k => k in firestoreRec);
@@ -255,6 +260,7 @@ namespace FirestoreEventDatebase {
         capacity?: number,
         can_register_from?: Timestamp,
         can_register_until?: Timestamp,
+        can_deregister_until?: Timestamp,
         registrations: Record<string, string>,
         cost?: number,
         form_inputs?: EventInfo.Components.Form.Input[]
